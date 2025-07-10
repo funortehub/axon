@@ -2,9 +2,7 @@ const CACHE_NAME = 'axon-medical-cache-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/style.css', // Se você tiver um arquivo CSS separado
-  '/script.js', // Se você tiver um arquivo JS separado
-  '/axon.png',
+  '/axon.png', // Certifique-se de que esta imagem está no cache
   '/appicon.jpg'
 ];
 
