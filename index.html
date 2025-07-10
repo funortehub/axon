@@ -618,6 +618,8 @@
             const prompt = `Você é um assistente médico. Sua tarefa é organizar as informações fornecidas nas seções adequadas da anamnese.
             A nova informação recebida é: "${info}".
 
+            É crucial que você **distinga as falas do médico das falas do paciente**. As falas do médico (perguntas, saudações, explicações que não são informações do paciente) **NÃO DEVEM SER ADICIONADAS À ANAMNESE**. Apenas as informações relevantes fornecidas pelo paciente devem ser incluídas.
+
             As informações existentes na anamnese são:
             - QP (Queixa Principal): "${anamnesis.qp || "Nenhuma"}"
             - HMA (História da Moléstia Atual): "${anamnesis.hma || "Nenhuma"}"
@@ -627,11 +629,12 @@
 
             Instruções para atualização:
             1. Analise a "nova informação recebida" e determine a seção MAIS RELEVANTE (QP, HMA, HP, HF, HPS) para ela.
-            2. Adicione a nova informação à seção identificada. Se a seção já contiver informações, anexe a nova informação de forma coerente, mantendo o histórico.
-            3. Se a nova informação CORRIGIR ou ESPECIFICAR algo já existente em uma seção, substitua ou refine APENAS a parte relevante dessa seção.
-            4. Mantenha as informações das OUTRAS seções INALTERADAS, a menos que a nova informação as afete diretamente.
-            5. Seja objetivo, conciso e use terminologia médica apropriada.
-            6. Formate a resposta EXCLUSIVAMENTE como um objeto JSON, contendo TODAS as chaves da anamnese (qp, hma, hp, hf, hps), mesmo que algumas permaneçam vazias ou inalteradas.
+            2. **IGNORE completamente qualquer fala que pareça ser do médico (perguntas, introduções, etc.)**. Concentre-se apenas nas respostas e informações fornecidas pelo paciente.
+            3. Adicione a informação relevante do paciente à seção identificada. Se a seção já contiver informações, anexe a nova informação de forma coerente, mantendo o histórico.
+            4. Se a nova informação CORRIGIR ou ESPECIFICAR algo já existente em uma seção, substitua ou refine APENAS a parte relevante dessa seção.
+            5. Mantenha as informações das OUTRAS seções INALTERADAS, a menos que a nova informação as afete diretamente.
+            6. Seja objetivo, conciso e use terminologia médica apropriada.
+            7. Formate a resposta EXCLUSIVAMENTE como um objeto JSON, contendo TODAS as chaves da anamnese (qp, hma, hp, hf, hps), mesmo que algumas permaneçam vazias ou inalteradas.
 
             Exemplo de resposta esperada (apenas o JSON):
             {
