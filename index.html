@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axon - Terminal de Anamnese</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --terminal-bg: #0a0e14;
+            --text-color: #c9d1d9;
+            --prompt-color: #58a6ff;
+            --command-color: #79c0ff;
+            --output-color: #c9d1d9;
+            --error-color: #ff7b72;
+            --success-color: #3fb950;
+            --border-color: #30363d;
+            --highlight-color: #1f6feb;
+            --diagnosis-color: #a371f7;
+            --conduct-color: #56d364;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: var(--terminal-bg);
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            color: var(--success-color);
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #58a6ff, #79c0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success-color);
+        }
+
+        .status-off {
+            background-color: var(--error-color);
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+            gap: 20px;
+            height: calc(100vh - 65px);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+        }
+
+        .terminal {
+            background-color: var(--terminal-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .terminal-header {
+            padding: 8px 12px;
+            background-color: #161b22;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .terminal-title {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .terminal-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .terminal-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .close-btn {
+            background-color: #ff5f56;
+        }
+
+        .minimize-btn {
+            background-color: #ffbd2e;
+        }
+
+        .maximize-btn {
+            background-color: #27c93f;
+        }
+
+        .terminal-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .interactive-terminal {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .non-interactive-terminal {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .prompt {
+            color: var(--prompt-color);
+            white-space: nowrap;
+        }
+
+        .command-input {
+            background: transparent;
+            border: none;
+            color: var(--command-color);
+            width: 100%;
+            font-size: 16px;
+            caret-color: var(--command-color);
+            outline: none;
+            padding: 2px 0;
+        }
+
+        .command-output {
+            color: var(--output-color);
+            white-space: pre-wrap;
+            line-height: 1.5;
+            text-align: left; /* Adicionado para justificar à esquerda */
+        }
+
+        .command {
+            color: var(--command-color);
+            font-weight: bold;
+        }
+
+        .error {
+            color: var(--error-color);
+        }
+
+        .success {
+            color: var(--success-color);
+        }
+
+        .info {
+            color: var(--prompt-color);
+        }
+
+        .highlight {
+            color: var(--highlight-color);
+        }
+
+        .anamnesis-content {
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-top: 10px;
+            color: var(--highlight-color);
+        }
+
+        .help-list {
+            padding-left: 0; /* Removido padding para alinhar à esquerda */
+            margin: 10px 0;
+            line-height: 1.8;
+            list-style: none; /* Remove bullet points */
+        }
+
+        .help-item {
+            margin-bottom: 5px;
+        }
+        
+        .diagnosis-item {
+            color: var(--diagnosis-color);
+            margin-bottom: 8px;
+            padding-left: 15px;
+            position: relative;
+        }
+        
+        .diagnosis-item:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--diagnosis-color);
+        }
+        
+        .conduct-section {
+            margin-bottom: 15px;
+        }
+        
+        .conduct-title {
+            color: var(--conduct-color);
+            font-weight: bold;
+            margin-bottom: 5px;
+            border-bottom: 1px solid rgba(86, 211, 100, 0.3);
+            padding-bottom: 3px;
+        }
+        
+        .conduct-item {
+            margin-bottom: 8px;
+            padding-left: 15px;
+            position: relative;
+        }
+        
+        .conduct-item:before {
+            content: "-";
+            position: absolute;
+            left: 0;
+        }
+
+        /* Estilo para receituário */
+        .receituario-item {
+            white-space: pre; /* Preserva espaços e quebras de linha */
+            font-family: 'Courier New', monospace; /* Fonte monoespaçada para alinhamento */
+            color: var(--output-color);
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <span class="logo-icon">⚕️</span>
+            <h1 class="logo-text">AXON</h1>
+        </div>
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-indicator" id="api-status"></div>
+                <span>API</span>
+            </div>
+            <div class="status-item">
+                <div class="status-indicator status-off" id="mic-status"></div>
+                <span>Microfone</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="terminal interactive-terminal">
+            <div class="terminal-header">
+                <div class="terminal-title">Terminal Interativo</div>
+                <div class="terminal-actions">
+                    <div class="terminal-btn close-btn"></div>
+                    <div class="terminal-btn minimize-btn"></div>
+                    <div class="terminal-btn maximize-btn"></div>
+                </div>
+            </div>
+            <div class="terminal-content" id="interactive-output">
+                <div id="initial-messages" style="position: relative; z-index: 1;">
+                    <span class="info">Axon - Assistente de Anamnese Médica v1.0</span><br>
+                    <span class="info">Para começar, digite </span><span class="command">/login [usuário] [senha]</span><span class="info">.</span><br><br>
+                </div>
+                <div class="input-line" style="position: relative; z-index: 1;">
+                    <span class="prompt">></span>
+                    <input type="text" class="command-input" id="command-input" autocomplete="off" autofocus>
+                </div>
+            </div>
+        </div>
+
+        <div class="terminal non-interactive-terminal">
+            <div class="terminal-header">
+                <div class="terminal-title">Prévia da Anamnese</div>
+                <div class="terminal-actions">
+                    <div class="terminal-btn close-btn"></div>
+                    <div class="terminal-btn minimize-btn"></div>
+                    <div class="terminal-btn maximize-btn"></div>
+                </div>
+            </div>
+            <div class="terminal-content" id="anamnesis-preview">
+                <div class="info">Aguardando início da anamnese...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elementos DOM
+        const commandInput = document.getElementById('command-input');
+        const interactiveOutput = document.getElementById('interactive-output');
+        const anamnesisPreview = document.getElementById('anamnesis-preview');
+        const apiStatus = document.getElementById('api-status');
+        const micStatus = document.getElementById('mic-status');
+        const initialMessagesContainer = document.getElementById('initial-messages');
+
+        // Estado da aplicação
+        let isActive = false;
+        let isListening = false;
+        let isLoggedIn = false; // Novo estado para controle de login
+        let recognition = null;
+        let anamnesis = {
+            qp: "",
+            hma: "",
+            hp: "",
+            hf: "",
+            hps: ""
+        };
+        let lastAnamnesisInfo = ""; // Armazena a última informação para tentar novamente
+        let apiConnectionStatus = "Desconhecido"; // Para o status da API
+
+        // Configurações da API Gemini
+        const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI'; // Chave de API padrão
+        let currentGeminiAPIKey = defaultGeminiAPIKey; // Chave de API atualmente em uso
+
+        // --- MODIFICAÇÃO AQUI: Variável para o modelo de IA e mapeamento de URLs ---
+        // Mapeamento de modelos de IA com suas URLs e um identificador numérico
+        const apiModels = [
+            { id: 1, name: 'gemini-2.0-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}` },
+            { id: 2, name: 'gemma-3n-e4b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3n-e4b-it:generateContent?key=${key}` }
+        ];
+        let currentAIModel = apiModels[0].name; // Modelo de IA padrão (Gemini 2.0 Flash)
+
+        const getGeminiAPIUrl = () => {
+            const model = apiModels.find(m => m.name === currentAIModel);
+            if (model) {
+                return model.urlBuilder(currentGeminiAPIKey);
+            }
+            return apiModels[0].urlBuilder(currentGeminiAPIKey); // Fallback para Gemini 2.0 Flash
+        };
+        // --- FIM DA MODIFICAÇÃO ---
+
+        // Comandos válidos
+        const validCommands = [
+            '/start', '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
+            '/ia', '/help', '/login', '/clear', '/api', '/api-set', '/api-restore', '/api-engine'
+        ];
+
+        // Verificar suporte a reconhecimento de voz
+        const isSpeechRecognitionSupported = () => {
+            return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+        };
+
+        // Inicializar reconhecimento de voz
+        const initSpeechRecognition = () => {
+            if (!isSpeechRecognitionSupported()) {
+                appendOutput("Reconhecimento de voz não suportado neste navegador.", "error");
+                return;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = false;
+            recognition.lang = 'pt-BR';
+
+            recognition.onstart = () => {
+                isListening = true;
+                micStatus.classList.remove('status-off');
+                appendOutput("Microfone ativado. Gravando consulta...", "success");
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[event.results.length - 1][0].transcript;
+                
+                if (transcript.trim()) {
+                    appendOutput(`[Voz] ${transcript}`, "info");
+                    processAnamnesisInfo(transcript);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                appendOutput(`Erro no reconhecimento de voz: ${event.error}`, "error");
+                stopListening();
+            };
+
+            recognition.onend = () => {
+                if (isListening) {
+                    recognition.start(); // Reinicia o reconhecimento
+                }
+            };
+        };
+
+        // Ativar/desativar microfone
+        const toggleListening = () => {
+            if (!isListening) {
+                // Solicitar permissão de microfone
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(() => {
+                        recognition.start();
+                    })
+                    .catch(err => {
+                        appendOutput(`Permissão de microfone negada: ${err.message}`, "error");
+                    });
+            } else {
+                stopListening();
+            }
+        };
+
+        const stopListening = () => {
+            if (recognition) {
+                recognition.stop();
+            }
+            isListening = false;
+            micStatus.classList.add('status-off');
+            appendOutput("Microfone desativado.", "info");
+        };
+
+        // Função para adicionar saída ao terminal interativo
+        const appendOutput = (text, type = "output") => {
+            const outputElement = document.createElement('div');
+            
+            if (type === "command") {
+                outputElement.innerHTML = `<span class="prompt">></span> <span class="command">${text}</span>`;
+            } else if (type === "error") {
+                outputElement.innerHTML = `<span class="error">${text}</span>`;
+            } else if (type === "success") {
+                outputElement.innerHTML = `<span class="success">${text}</span>`;
+            } else if (type === "info") {
+                outputElement.innerHTML = `<span class="info">${text}</span>`;
+            } else if (type === "receituario") { // Novo tipo para receituário
+                outputElement.classList.add('receituario-item');
+                outputElement.textContent = text; // Usar textContent para preservar espaços
+            }
+            else {
+                outputElement.innerHTML = `<span class="${type}">${text}</span>`;
+            }
+            
+            // Inserir antes do input-line
+            const inputLine = interactiveOutput.querySelector('.input-line');
+            interactiveOutput.insertBefore(outputElement, inputLine);
+            interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
+        };
+
+        // Função para limpar o terminal interativo e mostrar mensagens iniciais
+        const resetInteractiveTerminal = (requireLogin = false) => {
+            // Remove todos os elementos, exceto o initialMessagesContainer e o input-line
+            Array.from(interactiveOutput.children).forEach(child => {
+                if (child !== initialMessagesContainer && !child.classList.contains('input-line')) {
+                    child.remove();
+                }
+            });
+            initialMessagesContainer.style.display = 'block'; // Garante que as mensagens iniciais estejam visíveis
+            
+            if (requireLogin) {
+                isLoggedIn = false;
+                initialMessagesContainer.innerHTML = `
+                    <span class="info">Axon - Assistente de Anamnese Médica v1.0</span><br>
+                    <span class="info">Para começar, digite </span><span class="command">/login [usuário] [senha]</span><span class="info">.</span><br><br>
+                `;
+            } else {
+                // Se não precisar de login, restaura as mensagens normais de início de sessão
+                initialMessagesContainer.innerHTML = `
+                    <span class="info">Axon - Assistente de Anamnese Médica v1.0</span><br>
+                    <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
+                    <span class="info">Digite </span><span class="command">/start</span><span class="info"> para iniciar a anamnese</span><br><br>
+                `;
+            }
+            interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
+        };
+
+        // Função para atualizar a prévia da anamnese
+        const updateAnamnesisPreview = () => {
+            let previewHTML = '';
+            
+            if (Object.values(anamnesis).every(section => !section)) {
+                previewHTML = '<div class="info">Aguardando informações da anamnese...</div>';
+            } else {
+                previewHTML = `
+                    <div class="anamnesis-content">
+                        ${anamnesis.qp ? `<div class="section-title">Queixa Principal (QP):</div><div>${anamnesis.qp}</div><br>` : ''}
+                        ${anamnesis.hma ? `<div class="section-title">História da Moléstia Atual (HMA):</div><div>${anamnesis.hma}</div><br>` : ''}
+                        ${anamnesis.hp ? `<div class="section-title">História Patológica (HP):</div><div>${anamnesis.hp}</div><br>` : ''}
+                        ${anamnesis.hf ? `<div class="section-title">História Familiar (HF):</div><div>${anamnesis.hf}</div><br>` : ''}
+                        ${anamnesis.hps ? `<div class="section-title">História Psicossocial (HPS):</div><div>${anamnesis.hps}</div>` : ''}
+                    </div>
+                `;
+            }
+            
+            anamnesisPreview.innerHTML = previewHTML;
+            anamnesisPreview.scrollTop = anamnesisPreview.scrollHeight;
+        };
+
+        // Função para chamar a API Gemini
+        const callGeminiAPI = async (prompt) => {
+            try {
+                const response = await fetch(getGeminiAPIUrl(), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: prompt
+                            }]
+                        }]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na API: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Não foi possível obter uma resposta.";
+                
+                // Remover asteriscos usados para negrito
+                const cleanText = rawText.replace(/\*\*/g, '');
+                
+                return cleanText;
+            } catch (error) {
+                console.error("Erro na chamada da API:", error);
+                throw error; // Re-throw the error to be caught by the caller
+            }
+        };
+
+        // Processar informações para anamnese com retry
+        const processAnamnesisInfo = async (info, retryCount = 0) => {
+            lastAnamnesisInfo = info; // Armazena a informação para possível retry
+            const maxRetries = 3; // Número máximo de tentativas
+
+            // --- MODIFICAÇÃO AQUI: Prompt para a IA para manter dados existentes ---
+            const currentAnamnesisText = Object.entries(anamnesis)
+                .filter(([, value]) => value)
+                .map(([key, value]) => {
+                    let sectionName = '';
+                    switch (key) {
+                        case 'qp': sectionName = 'Queixa Principal'; break;
+                        case 'hma': sectionName = 'História da Moléstia Atual'; break;
+                        case 'hp': sectionName = 'História Patológica'; break;
+                        case 'hf': sectionName = 'História Familiar'; break;
+                        case 'hps': sectionName = 'História Psicossocial'; break;
+                    }
+                    return `${sectionName}: ${value}`;
+                })
+                .join('\n');
+
+            const prompt = `Você é um assistente médico. Sua tarefa é atualizar a anamnese de um paciente.
+            A anamnese atual é:
+            ${currentAnamnesisText || "Nenhuma informação registrada ainda."}
+
+            Nova informação fornecida: "${info}".
+
+            Com base na nova informação, atualize a anamnese existente.
+            - Se a nova informação complementar uma seção existente (QP, HMA, HP, HF, HPS), adicione-a à seção correspondente.
+            - Se a nova informação for uma correção ou substituição clara para uma seção existente, atualize essa seção.
+            - Se a nova informação for para uma seção ainda vazia, preencha-a.
+            - Mantenha a estrutura nos tópicos: QP (Queixa Principal), HMA (História da Moléstia Atual), HP (História Patológica), HF (História Familiar), HPS (História Psicossocial).
+            - Cada tópico deve ter um parágrafo separado por uma linha em branco.
+            - Use linguagem técnica médica, seja claro e objetivo.
+            - Retorne APENAS a anamnese COMPLETA e ATUALIZADA no formato JSON com as chaves: qp, hma, hp, hf, hps.
+            Exemplo de formato de saída:
+            {
+              "qp": "Dor de cabeça pulsátil há 3 dias.",
+              "hma": "Início súbito, piora com luz e ruído. Associada a náuseas.",
+              "hp": "Nega comorbidades.",
+              "hf": "Mãe com enxaqueca.",
+              "hps": "Estudante, estresse elevado."
+            }`;
+            // --- FIM DA MODIFICAÇÃO ---
+
+            try {
+                const response = await callGeminiAPI(prompt);
+                
+                // Extrair o JSON da resposta
+                const jsonStart = response.indexOf('{');
+                const jsonEnd = response.lastIndexOf('}') + 1;
+                const jsonString = response.substring(jsonStart, jsonEnd);
+                const updatedAnamnesis = JSON.parse(jsonString);
+                
+                // Atualizar todas as seções com os dados retornados pela IA
+                // A IA é responsável por consolidar e retornar a anamnese completa e atualizada
+                anamnesis = { ...updatedAnamnesis };
+                
+                updateAnamnesisPreview();
+                appendOutput("Anamnese atualizada com sucesso.", "success");
+            } catch (error) {
+                console.error("Erro ao processar resposta:", error);
+                if (retryCount < maxRetries) {
+                    const delay = Math.floor(Math.random() * (7000 - 5000 + 1)) + 5000; // Atraso entre 5 e 7 segundos
+                    appendOutput(`Erro ao atualizar a anamnese. Tentando novamente em ${delay / 1000} segundos (${retryCount + 1}/${maxRetries})...`, "error");
+                    setTimeout(() => processAnamnesisInfo(info, retryCount + 1), delay);
+                } else {
+                    appendOutput("Erro ao atualizar a anamnese após várias tentativas. Por favor, tente novamente mais tarde.", "error");
+                }
+            }
+        };
+
+        // Gerar hipóteses diagnósticas formatadas
+        const generateDiagnosticHypotheses = async () => {
+            const prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}, 
+            liste as possíveis hipóteses diagnósticas em ordem de probabilidade. 
+            Formate cada hipótese como um item em uma lista, separando cada hipótese por uma linha em branco. 
+            Seja técnico, objetivo e extremamente resumido. 
+            Retorne apenas a lista de hipóteses, sem introdução ou conclusão.`;
+            
+            const response = await callGeminiAPI(prompt);
+            
+            // Formatar para exibição com espaçamento
+            const formattedDiagnosis = response.split('\n')
+                .map(item => item.trim())
+                .filter(item => item)
+                .map(item => `<div class="diagnosis-item">${item}</div>`)
+                .join('');
+            
+            appendOutput(`<div class="conduct-title">HIPÓTESES DIAGNÓSTICAS:</div>${formattedDiagnosis}`, "output");
+        };
+
+        // Gerar conduta médica formatada (com foco em tratamentos do SUS)
+        const generateMedicalConduct = async () => {
+            const prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}, 
+            proponha uma conduta médica completa, dividida em tópicos:
+            1. Medicações disponíveis no SUS (com dose e posologia resumida)
+            2. Exames complementares disponíveis no SUS
+            3. Condutas não farmacológicas
+            4. Recomendações ao paciente
+            
+            Formate cada tópico com um título e cada item dentro do tópico separado por uma linha em branco. 
+            Seja técnico, objetivo, extremamente resumido e utilize APENAS tratamentos e medicamentos disponíveis no SUS.`;
+            
+            const response = await callGeminiAPI(prompt);
+            
+            // Formatar para exibição com espaçamento e tópicos
+            const formattedConduct = response
+                .replace(/Medicações:|Medicamentos:/gi, '<div class="conduct-title">MEDICAÇÕES (SUS):</div>')
+                .replace(/Exames complementares|Exames:/gi, '<div class="conduct-title">EXAMES COMPLEMENTARES (SUS):</div>')
+                .replace(/Condutas não farmacológicas|Condutas não-farmacológicas:/gi, '<div class="conduct-title">CONDUTAS NÃO FARMACOLÓGICAS:</div>')
+                .replace(/Recomendações ao paciente|Recomendações:/gi, '<div class="conduct-title">RECOMENDAÇÕES:</div>')
+                .split('\n')
+                .map(line => {
+                    if (line.trim() === '') return '';
+                    if (line.includes('MEDICAÇÕES') || line.includes('EXAMES') || 
+                        line.includes('CONDUTAS') || line.includes('RECOMENDAÇÕES')) {
+                        return line;
+                    }
+                    return `<div class="conduct-item">${line.trim()}</div>`;
+                })
+                .join('');
+            
+            appendOutput(formattedConduct, "output");
+        };
+
+        // Copiar anamnese para área de transferência
+        const copyAnamnesis = () => {
+            // Formatar anamnese para cópia
+            let textToCopy = '';
+            if (anamnesis.qp) textToCopy += `Queixa Principal (QP):\n${anamnesis.qp}\n\n`;
+            if (anamnesis.hma) textToCopy += `História da Moléstia Atual (HMA):\n${anamnesis.hma}\n\n`;
+            if (anamnesis.hp) textToCopy += `História Patológica (HP):\n${anamnesis.hp}\n\n`;
+            if (anamnesis.hf) textToCopy += `História Familiar (HF):\n${anamnesis.hf}\n\n`;
+            if (anamnesis.hps) textToCopy += `História Psicossocial (HPS):\n${anamnesis.hps}\n`;
+            
+            if (textToCopy) {
+                navigator.clipboard.writeText(textToCopy)
+                    .then(() => appendOutput("Anamnese copiada para a área de transferência.", "success"))
+                    .catch(err => appendOutput(`Erro ao copiar: ${err}`, "error"));
+            } else {
+                appendOutput("Nenhuma anamnese para copiar.", "info");
+            }
+        };
+
+        // Função para formatar a resposta da medicação como receituário
+        const formatMedicationForReceituario = (medicationText) => {
+            // Tenta extrair nome, dose e o restante da instrução
+            const regex = /^(.*?)\s*(\d+\s*(?:mg|g|ml|mcg|UI|unidades|comprimidos|cápsulas|gotas|ampolas|frascos|bisnagas|saches|seringas|envelopes|aplicações|doses|unid\.)?)\s*(.*)$/i;
+            const match = medicationText.match(regex);
+
+            if (match) {
+                const nameAndDose = (match[1] + ' ' + (match[2] || '')).trim();
+                const instruction = match[3].trim();
+                const totalLength = 80; // Largura total da linha para o receituário
+                const dotsLength = totalLength - nameAndDose.length - instruction.length - 6; // 6 para margem de segurança
+                const dots = dotsLength > 0 ? '.'.repeat(dotsLength) : '';
+                return `${nameAndDose} ${dots} ${instruction}`;
+            }
+            return medicationText; // Retorna o texto original se não conseguir formatar
+        };
+
+        // Função para verificar o status da API
+        const checkApiStatus = async (modelName = currentAIModel) => {
+            const model = apiModels.find(m => m.name === modelName);
+            if (!model) {
+                apiConnectionStatus = `Modelo '${modelName}' não encontrado.`;
+                apiStatus.classList.add('status-off');
+                return false;
+            }
+
+            try {
+                const testUrl = model.urlBuilder(currentGeminiAPIKey);
+                const response = await fetch(testUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: "ping"
+                            }]
+                        }]
+                    }),
+                    signal: AbortSignal.timeout(5000) // Timeout de 5 segundos
+                });
+
+                if (response.ok) {
+                    apiConnectionStatus = "Conectado";
+                    apiStatus.classList.remove('status-off');
+                    return true;
+                } else {
+                    apiConnectionStatus = `Erro (${response.status})`;
+                    apiStatus.classList.add('status-off');
+                    return false;
+                }
+            } catch (error) {
+                apiConnectionStatus = `Offline (${error.message})`;
+                apiStatus.classList.add('status-off');
+                return false;
+            }
+        };
+
+        // --- NOVA FUNÇÃO: Verificar e escolher o melhor engine ao iniciar ---
+        const initializeAIModel = async () => {
+            appendOutput("Verificando motores de IA disponíveis...", "info");
+            let foundWorkingModel = false;
+
+            // Preferência pelo Gemini 2.0 Flash
+            const geminiFlash = apiModels.find(m => m.name === 'gemini-2.0-flash');
+            if (geminiFlash) {
+                appendOutput(`Testando ${geminiFlash.name}...`, "info");
+                const isWorking = await checkApiStatus(geminiFlash.name);
+                if (isWorking) {
+                    currentAIModel = geminiFlash.name;
+                    appendOutput(`Motor de IA selecionado: ${currentAIModel} (funcionando).`, "success");
+                    foundWorkingModel = true;
+                    return;
+                } else {
+                    appendOutput(`${geminiFlash.name} não está respondendo.`, "error");
+                }
+            }
+
+            // Se Gemini 2.0 Flash não funcionar, tenta os outros na ordem definida
+            for (const model of apiModels) {
+                if (model.name === 'gemini-2.0-flash') continue; // Já testado
+                appendOutput(`Testando ${model.name}...`, "info");
+                const isWorking = await checkApiStatus(model.name);
+                if (isWorking) {
+                    currentAIModel = model.name;
+                    appendOutput(`Motor de IA selecionado: ${currentAIModel} (funcionando).`, "success");
+                    foundWorkingModel = true;
+                    return;
+                } else {
+                    appendOutput(`${model.name} não está respondendo.`, "error");
+                }
+            }
+
+            if (!foundWorkingModel) {
+                appendOutput("Nenhum motor de IA disponível está respondendo. As funcionalidades de IA podem estar limitadas.", "error");
+                apiStatus.classList.add('status-off');
+            }
+        };
+        // --- FIM DA NOVA FUNÇÃO ---
+
+        // Processar comandos
+        const processCommand = async (command) => {
+            if (!command.trim()) return;
+            
+            // Adicionar comando ao histórico
+            appendOutput(command, "command");
+            
+            const cmd = command.trim().toLowerCase();
+            const isCommand = cmd.startsWith('/');
+
+            // Lógica de login
+            if (!isLoggedIn) {
+                if (cmd.startsWith('/login')) {
+                    const parts = command.split(' ');
+                    const username = parts[1];
+                    const password = parts[2];
+
+                    if (username === 'ian' && password === 'ian123') {
+                        isLoggedIn = true;
+                        appendOutput("Login bem-sucedido. Digite /help para ver os comandos disponíveis.", "success");
+                        // Atualiza as mensagens iniciais após o login
+                        initialMessagesContainer.innerHTML = `
+                            <span class="info">Axon - Assistente de Anamnese Médica v1.0</span><br>
+                            <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
+                            <span class="info">Digite </span><span class="command">/start</span><span class="info"> para iniciar a anamnese</span><br><br>
+                        `;
+                    } else {
+                        appendOutput("Usuário ou senha incorretos.", "error");
+                    }
+                } else {
+                    appendOutput("Você precisa fazer login para usar o terminal. Digite /login [usuário] [senha]", "error");
+                }
+                commandInput.value = '';
+                return;
+            }
+
+            // Verificar se é um comando válido (após o login)
+            if (isCommand && !validCommands.some(vc => cmd.startsWith(vc.split(' ')[0]))) { // Ajustado para pegar apenas o comando base
+                appendOutput(`Comando '${command}' não existe. Digite /help para ver os comandos disponíveis.`, "error");
+                commandInput.value = '';
+                return;
+            }
+            
+            if (cmd === '/start') {
+                if (isActive) {
+                    appendOutput("A sessão já está ativa.", "info");
+                    return;
+                }
+                isActive = true;
+                anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" }; // Limpa anamnese ao iniciar nova sessão
+                updateAnamnesisPreview();
+                // Esconde as mensagens iniciais quando a sessão começa
+                initialMessagesContainer.style.display = 'none'; 
+                appendOutput("Sessão iniciada. Aguardando informações para anamnese...", "success");
+                appendOutput("Por favor, informe os dados do paciente.", "info");
+            } 
+            else if (cmd === '/exit') {
+                if (!isActive) {
+                    appendOutput("Nenhuma sessão ativa.", "info");
+                    return;
+                }
+                isActive = false;
+                anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+                updateAnamnesisPreview();
+                appendOutput("Sessão encerrada. Você precisará fazer login novamente.", "success");
+                if (isListening) stopListening();
+                resetInteractiveTerminal(true); // Limpa o terminal e exige novo login
+            } 
+            else if (cmd === '/clear') {
+                isActive = false; // Reseta o estado da sessão, mas não o login
+                anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+                updateAnamnesisPreview();
+                appendOutput("Terminal limpo.", "success");
+                if (isListening) stopListening();
+                resetInteractiveTerminal(false); // Limpa o terminal sem exigir novo login
+            }
+            else if (cmd === '/hear on') {
+                if (!isActive) {
+                    appendOutput("Inicie uma sessão primeiro com /start", "error");
+                    return;
+                }
+                if (isListening) {
+                    appendOutput("O microfone já está ativo.", "info");
+                    return;
+                }
+                toggleListening();
+            } 
+            else if (cmd === '/hear off') {
+                if (!isListening) {
+                    appendOutput("O microfone já está desativado.", "info");
+                    return;
+                }
+                stopListening();
+            } 
+            else if (cmd === '/hd') {
+                if (!isActive) {
+                    appendOutput("Inicie uma sessão primeiro com /start", "error");
+                    return;
+                }
+                appendOutput("Gerando hipóteses diagnósticas...", "info");
+                await generateDiagnosticHypotheses();
+            } 
+            else if (cmd === '/cd') {
+                if (!isActive) {
+                    appendOutput("Inicie uma sessão primeiro com /start", "error");
+                    return;
+                }
+                appendOutput("Gerando conduta médica (tratamentos SUS)...", "info");
+                await generateMedicalConduct();
+            } 
+            else if (cmd === '/copy') {
+                if (!isActive) {
+                    appendOutput("Inicie uma sessão primeiro com /start", "error");
+                    return;
+                }
+                copyAnamnesis();
+            } 
+            else if (cmd.startsWith('/ia')) {
+                const question = command.substring(3).trim();
+                if (!question) {
+                    appendOutput("Por favor, faça uma pergunta após o comando /ia", "error");
+                    return;
+                }
+                
+                appendOutput("Processando sua pergunta...", "info");
+                
+                // Prompt modificado para tentar obter formato de receituário para medicamentos
+                const iaPrompt = `Responda de forma objetiva e breve à seguinte pergunta médica: "${question}". 
+                                  Se a pergunta for sobre um medicamento, forneça as informações essenciais (nome, dose, quantidade, posologia, tempo de uso, observações) 
+                                  e tente formatar a resposta como um item de receituário, por exemplo: "Dipirona 500mg - 1 caixa - tomar 1 comprimido de 6/6h caso dor.". 
+                                  Caso não seja sobre medicamento, responda de forma concisa.`;
+                
+                try {
+                    const response = await callGeminiAPI(iaPrompt);
+
+                    // Tenta detectar se a resposta é sobre medicação e formatar
+                    if (question.toLowerCase().includes('medicação') || question.toLowerCase().includes('medicamento') || 
+                        question.toLowerCase().includes('remédio') || question.toLowerCase().includes('posologia') ||
+                        question.toLowerCase().includes('dose')) {
+                        
+                        const formattedResponse = formatMedicationForReceituario(response);
+                        appendOutput(formattedResponse, "receituario");
+                    } else {
+                        appendOutput(response, "output");
+                    }
+                } catch (error) {
+                    appendOutput(`Erro ao consultar a IA: ${error.message}. Verifique sua conexão ou a chave da API.`, "error");
+                }
+            } 
+            else if (cmd.startsWith('/api-set')) {
+                const parts = command.split(' ');
+                const adminPassword = parts[1];
+                const newApiKey = parts[2];
+
+                if (adminPassword === 'admin123') {
+                    if (newApiKey) {
+                        currentGeminiAPIKey = newApiKey;
+                        appendOutput(`Chave da API definida para: ${newApiKey.substring(0, 5)}...`, "success");
+                        await checkApiStatus(); // Verifica o status da nova API
+                    } else {
+                        appendOutput("Uso: /api-set [senha_admin] [nova_chave_api]", "error");
+                    }
+                } else {
+                    appendOutput("Senha de administrador incorreta para o comando /api-set.", "error");
+                }
+            }
+            else if (cmd.startsWith('/api-restore')) {
+                const parts = command.split(' ');
+                const adminPassword = parts[1];
+
+                if (adminPassword === 'admin123') {
+                    currentGeminiAPIKey = defaultGeminiAPIKey;
+                    appendOutput("Chave da API restaurada para a padrão.", "success");
+                    await checkApiStatus(); // Verifica o status da API padrão
+                } else {
+                    appendOutput("Senha de administrador incorreta para o comando /api-restore.", "error");
+                }
+            }
+            // --- MODIFICAÇÃO AQUI: Lógica para /api-engine ---
+            else if (cmd.startsWith('/api-engine')) {
+                const parts = command.split(' ');
+                const adminPassword = parts[1];
+                const engineIdentifier = parts[2]; // Pode ser nome ou número
+
+                if (adminPassword === 'admin123') {
+                    let selectedModel = null;
+
+                    if (engineIdentifier) {
+                        // Tenta encontrar por ID (número)
+                        const id = parseInt(engineIdentifier);
+                        if (!isNaN(id)) {
+                            selectedModel = apiModels.find(m => m.id === id);
+                        }
+                        
+                        // Se não encontrou por ID, tenta encontrar por nome
+                        if (!selectedModel) {
+                            selectedModel = apiModels.find(m => m.name.toLowerCase() === engineIdentifier.toLowerCase());
+                        }
+
+                        if (selectedModel) {
+                            currentAIModel = selectedModel.name;
+                            appendOutput(`Motor da API alterado para: ${currentAIModel}`, "success");
+                            await checkApiStatus(); // Verifica o status com o novo motor
+                        } else {
+                            const availableEngines = apiModels.map(m => `${m.id}. ${m.name}`).join(', ');
+                            appendOutput(`Motor '${engineIdentifier}' não reconhecido. Motores disponíveis: ${availableEngines}.`, "error");
+                        }
+                    } else {
+                        const availableEngines = apiModels.map(m => `${m.id}. ${m.name}`).join(', ');
+                        appendOutput(`Uso: /api-engine [senha_admin] [nome_do_motor_ou_numero]. Motores disponíveis: ${availableEngines}.`, "info");
+                    }
+                } else {
+                    appendOutput("Senha de administrador incorreta para o comando /api-engine.", "error");
+                }
+            }
+            // --- FIM DA MODIFICAÇÃO ---
+            else if (cmd.startsWith('/api')) {
+                const parts = command.split(' ');
+                const adminPassword = parts[1];
+
+                if (adminPassword === 'admin123') {
+                    await checkApiStatus(); // Atualiza o status da API
+                    appendOutput(`API Utilizada: ${getGeminiAPIUrl()}`, "info");
+                    appendOutput(`Motor da IA atual: ${currentAIModel}`, "info"); // Adicionado para mostrar o motor atual
+                    appendOutput(`Status de Conexão: ${apiConnectionStatus}`, apiConnectionStatus.includes("Conectado") ? "success" : "error");
+                } else {
+                    appendOutput("Senha de administrador incorreta para o comando /api.", "error");
+                }
+            }
+            else if (cmd === '/help') {
+                // --- MODIFICAÇÃO AQUI: Atualização do help para /api-engine ---
+                const availableEnginesList = apiModels.map(m => `${m.id}. ${m.name}`).join(' | ');
+                appendOutput(`
+<ul class="help-list">
+    <li class="help-item"><span class="command">/start</span> - Iniciar nova anamnese</li>
+    <li class="help-item"><span class="command">/hear on</span> - Ativar reconhecimento de voz</li>
+    <li class="help-item"><span class="command">/hear off</span> - Desativar reconhecimento de voz</li>
+    <li class="help-item"><span class="command">/hd</span> - Gerar hipóteses diagnósticas</li>
+    <li class="help-item"><span class="command">/cd</span> - Gerar conduta médica (tratamentos SUS)</li>
+    <li class="help-item"><span class="command">/copy</span> - Copiar anamnese completa</li>
+    <li class="help-item"><span class="command">/ia [pergunta]</span> - Fazer pergunta livre à I.A</li>
+    <li class="help-item"><span class="command">/exit</span> - Encerrar sessão (requer novo login)</li>
+    <li class="help-item"><span class="command">/clear</span> - Limpar terminal e reiniciar anamnese</li>
+    <li class="help-item"><span class="command">/api [senha_admin]</span> - Mostrar API utilizada e status de conexão</li>
+    <li class="help-item"><span class="command">/api-set [senha_admin] [nova_chave]</span> - Definir uma nova chave de API</li>
+    <li class="help-item"><span class="command">/api-restore [senha_admin]</span> - Restaurar a chave de API padrão</li>
+    <li class="help-item"><span class="command">/api-engine [senha_admin] [${availableEnginesList}]</span> - Trocar o motor da IA</li>
+    <li class="help-item"><span class="command">/help</span> - Mostrar esta ajuda</li>
+</ul>
+Para inserir informações na anamnese, basta digitar normalmente após iniciar a sessão com /start
+                `, "info");
+                // --- FIM DA MODIFICAÇÃO ---
+            } 
+            else {
+                // Se não for um comando e a sessão estiver ativa, processa como informação de anamnese
+                if (!isActive) {
+                    appendOutput("Inicie uma sessão primeiro com /start ou digite /help para ver os comandos.", "error");
+                    commandInput.value = '';
+                    return;
+                }
+                appendOutput("Processando informações...", "info");
+                await processAnamnesisInfo(command);
+            }
+            
+            // Limpar input e manter foco
+            commandInput.value = '';
+        };
+
+        // Event Listeners
+        commandInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                processCommand(commandInput.value);
+            }
+        });
+
+        // Adiciona um listener global para capturar as teclas digitadas
+        document.addEventListener('keydown', (e) => {
+            // Se a tecla pressionada for uma letra, número, espaço ou pontuação comum
+            if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete' || e.key === ' ') {
+                commandInput.focus(); // Garante que o input esteja focado
+            }
+        });
+
+        // Inicializar reconhecimento de voz se suportado
+        if (isSpeechRecognitionSupported()) {
+            initSpeechRecognition();
+        } else {
+            appendOutput("Reconhecimento de voz não suportado neste navegador.", "error");
+        }
+
+        // Simular status da API (na prática, seria necessário um ping real)
+        // Este setInterval agora apenas alterna a cor do indicador visualmente,
+        // o status real é verificado pelo comando /api
+        setInterval(() => {
+            apiStatus.style.backgroundColor = apiStatus.style.backgroundColor === 'var(--success-color)' ? 
+                'var(--error-color)' : 'var(--success-color)';
+        }, 3000);
+
+        // --- MODIFICAÇÃO AQUI: Chamar a função de inicialização do modelo de IA ao carregar a página ---
+        window.onload = initializeAIModel;
+        // --- FIM DA MODIFICAÇÃO ---
+    </script>
+</body>
+</html>
