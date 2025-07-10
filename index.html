@@ -42,17 +42,21 @@
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-end; /* Alinha o conteúdo restante à direita */
+            position: relative; /* Para posicionar a imagem fora do fluxo */
         }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .logo-container {
+            position: absolute; /* Posiciona a imagem de forma absoluta */
+            top: 0;
+            left: 0;
+            padding: 10px; /* Espaçamento para a imagem */
+            z-index: 10; /* Garante que a imagem fique acima de outros elementos */
         }
 
         .logo-img {
-            height: 105.3px; /* Ajuste o tamanho conforme necessário (30px * 1.95 * 1.80 = 105.3px) */
+            height: calc(105.3px * 1.8); /* Aumenta o tamanho em 80% */
+            width: auto;
         }
 
         .status-bar {
@@ -287,10 +291,10 @@
     </style>
 </head>
 <body>
+    <div class="logo-container">
+        <img src="axon.png" alt="Axon Logo" class="logo-img">
+    </div>
     <div class="header">
-        <div class="logo">
-            <img src="axon.png" alt="Axon Logo" class="logo-img">
-        </div>
         <div class="status-bar">
             <div class="status-item">
                 <div class="status-indicator" id="api-status"></div>
