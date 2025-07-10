@@ -792,7 +792,7 @@
                 const isWorking = await checkApiStatus(geminiFlash.name);
                 if (isWorking) {
                     currentAIModel = geminiFlash.name;
-                    appendOutput(`Motor de IA selecionado: ${currentAIModel} (funcionando).`, "success");
+                    appendOutput(`Motor selecionado: ${currentAIModel} (funcionando).`, "success");
                     foundWorkingModel = true;
                     return;
                 } else {
@@ -806,7 +806,7 @@
                 const isWorking = await checkApiStatus(model.name);
                 if (isWorking) {
                     currentAIModel = model.name;
-                    appendOutput(`Motor de IA selecionado: ${currentAIModel} (funcionando).`, "success");
+                    appendOutput(`Motor selecionado: ${currentAIModel} (funcionando).`, "success");
                     foundWorkingModel = true;
                     return;
                 } else {
@@ -815,7 +815,7 @@
             }
 
             if (!foundWorkingModel) {
-                appendOutput("Nenhum motor de IA disponível está respondendo. As funcionalidades de IA podem estar limitadas.", "error");
+                appendOutput("Nenhum motor disponível está respondendo. As funcionalidades podem estar limitadas.", "error");
                 apiStatus.classList.add('status-off');
             }
         };
