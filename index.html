@@ -486,7 +486,7 @@
             // Inserir antes do input-line
             const inputLine = interactiveOutput.querySelector('.input-line');
             interactiveOutput.insertBefore(outputElement, inputLine);
-            interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
+            interactiveOutput.scrollTop = interactiveOutput.scrollTop + outputElement.scrollHeight; // Ajuste para scrollar corretamente
         };
 
         // Função para limpar o terminal interativo e mostrar mensagens iniciais
@@ -577,7 +577,7 @@
             lastAnamnesisInfo = info; // Armazena a informação para possível retry
             const maxRetries = 3; // Número máximo de tentativas
 
-            // --- MODIFICAÇÃO AQUI: Prompt para a IA para manter dados existentes ---
+            // --- MODIFICAÇÃO AQUI: Prompt para a IA para manter dados existentes e não sugerir ---
             const currentAnamnesisText = Object.entries(anamnesis)
                 .filter(([, value]) => value)
                 .map(([key, value]) => {
@@ -593,27 +593,26 @@
                 })
                 .join('\n');
 
-            const prompt = `Você é um assistente médico. Sua tarefa é atualizar a anamnese de um paciente.
+            const prompt = `Você é um assistente médico. Sua tarefa é atualizar a anamnese de um paciente com base nas informações fornecidas.
             A anamnese atual é:
             ${currentAnamnesisText || "Nenhuma informação registrada ainda."}
 
             Nova informação fornecida: "${info}".
 
-            Com base na nova informação, atualize a anamnese existente.
-            - Se a nova informação complementar uma seção existente (QP, HMA, HP, HF, HPS), adicione-a à seção correspondente.
+            Com base EXCLUSIVAMENTE na nova informação, atualize a anamnese existente.
+            - Preencha apenas os campos (QP, HMA, HP, HF, HPS) para os quais a nova informação se refere diretamente.
+            - NÃO sugira ou infira informações para campos que não foram explicitamente mencionados na nova informação. Mantenha-os em branco se não houver dados.
+            - Se a nova informação complementar uma seção existente, adicione-a de forma coesa.
             - Se a nova informação for uma correção ou substituição clara para uma seção existente, atualize essa seção.
-            - Se a nova informação for para uma seção ainda vazia, preencha-a.
-            - Mantenha a estrutura nos tópicos: QP (Queixa Principal), HMA (História da Moléstia Atual), HP (História Patológica), HF (História Familiar), HPS (História Psicossocial).
-            - Cada tópico deve ter um parágrafo separado por uma linha em branco.
-            - Use linguagem técnica médica, seja claro e objetivo.
+            - Use linguagem técnica médica, seja detalhado, claro e objetivo, utilizando conectivos e termos apropriados para uma anamnese bem elaborada.
             - Retorne APENAS a anamnese COMPLETA e ATUALIZADA no formato JSON com as chaves: qp, hma, hp, hf, hps.
             Exemplo de formato de saída:
             {
-              "qp": "Dor de cabeça pulsátil há 3 dias.",
-              "hma": "Início súbito, piora com luz e ruído. Associada a náuseas.",
-              "hp": "Nega comorbidades.",
-              "hf": "Mãe com enxaqueca.",
-              "hps": "Estudante, estresse elevado."
+              "qp": "Dor de cabeça pulsátil de intensidade 8/10, localizada na região frontal, com início há aproximadamente 3 dias.",
+              "hma": "A dor iniciou-se de forma súbita, apresentando piora significativa com exposição à luz (fotofobia) e ruídos (fonofobia). O paciente relata associação com episódios de náuseas, sem vômitos. Não há fatores de melhora identificados. A dor é contínua, com picos de exacerbação.",
+              "hp": "",
+              "hf": "A mãe do paciente possui histórico documentado de enxaqueca, conforme relato.",
+              "hps": "O paciente é estudante universitário e refere níveis elevados de estresse acadêmico, o que pode estar correlacionado com a sintomatologia atual."
             }`;
             // --- FIM DA MODIFICAÇÃO ---
 
