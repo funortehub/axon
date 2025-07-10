@@ -42,25 +42,14 @@
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
-            justify-content: flex-end; /* Alinha o conteúdo restante à direita */
+            justify-content: space-between; /* Alinha o conteúdo restante à direita */
             position: relative; /* Para posicionar a imagem fora do fluxo */
         }
 
-        .logo-container {
-            position: absolute; /* Posiciona a imagem de forma absoluta */
-            top: 0;
-            left: 0;
-            padding: 5px; /* Espaçamento reduzido para a imagem */
-            z-index: 10; /* Garante que a imagem fique acima de outros elementos */
-            display: flex;
-            align-items: center;
-            height: 100%; /* Para alinhar verticalmente com o header */
-        }
-
-        .logo-img {
-            height: calc(105.3px * 1.8 * 0.7 * 1.2); /* Reduz o tamanho em 30% e aumenta em 20% */
-            width: auto;
-            margin-left: 15px; /* Ajuste para alinhar com o texto da API */
+        .app-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--prompt-color);
         }
 
         .status-bar {
@@ -308,10 +297,8 @@
     </style>
 </head>
 <body>
-    <div class="logo-container">
-        <img src="axon.png" alt="Axon Logo" class="logo-img">
-    </div>
     <div class="header">
+        <div class="app-title">AXON Medical</div>
         <div class="status-bar">
             <div class="status-item">
                 <div class="status-indicator" id="api-status"></div>
@@ -363,7 +350,7 @@
     </div>
 
     <div class="footer">
-        <span>AXON | Sistema inteligente desenvolvido por Ian Bastos</span>
+        <span>AXON | Sistema médico inteligente desenvolvido por Ian Bastos</span>
     </div>
 
     <script>
