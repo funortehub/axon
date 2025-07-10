@@ -3,7 +3,7 @@
   "short_name": "AXON",
   "description": "Assistente Médico Inteligente",
   "start_url": "/",
-  "display": "standalone",
+  "display": "fullscreen",  // Alterado para fullscreen
   "background_color": "#0d1117",
   "theme_color": "#0d1117",
   "icons": [
