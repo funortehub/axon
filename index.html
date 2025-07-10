@@ -352,9 +352,8 @@
         const initialMessagesContainer = document.getElementById('initial-messages');
 
         // Estado da aplicação
-        let isActive = false;
         let isListening = false;
-        let isLoggedIn = false; // Novo estado para controle de login
+        let isLoggedIn = false;
         let recognition = null;
         let anamnesis = {
             qp: "",
@@ -363,15 +362,14 @@
             hf: "",
             hps: ""
         };
-        let lastAnamnesisInfo = ""; // Armazena a última informação para tentar novamente
-        let apiConnectionStatus = "Desconhecido"; // Para o status da API
+        let lastAnamnesisInfo = "";
+        let apiConnectionStatus = "Desconhecido";
 
         // Configurações da API Gemini
-        const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI'; // Chave de API padrão
-        let currentGeminiAPIKey = defaultGeminiAPIKey; // Chave de API atualmente em uso
+        const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI';
+        let currentGeminiAPIKey = defaultGeminiAPIKey;
 
-        // --- ATUALIZADO: Adição de novos engines ---
-        // Mapeamento de modelos de IA com suas URLs e um identificador numérico
+        // Mapeamento de modelos de IA
         const apiModels = [
             { id: 1, name: 'gemini-2.0-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}` },
             { id: 2, name: 'gemma-3n-e4b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3n-e4b-it:generateContent?key=${key}` },
@@ -379,19 +377,19 @@
             { id: 4, name: 'gemma-3-27b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${key}` },
             { id: 5, name: 'learnlm-2.0-flash-experimental', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/learnlm-2.0-flash-experimental:generateContent?key=${key}` }
         ];
-        let currentAIModel = apiModels[0].name; // Modelo de IA padrão (Gemini 2.0 Flash)
+        let currentAIModel = apiModels[0].name;
 
         const getGeminiAPIUrl = () => {
             const model = apiModels.find(m => m.name === currentAIModel);
             if (model) {
                 return model.urlBuilder(currentGeminiAPIKey);
             }
-            return apiModels[0].urlBuilder(currentGeminiAPIKey); // Fallback para Gemini 2.0 Flash
+            return apiModels[0].urlBuilder(currentGeminiAPIKey);
         };
 
-        // Comandos válidos
+        // Comandos válidos (removido /start)
         const validCommands = [
-            '/start', '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
+            '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
             '/ia', '/help', '/login', '/clear', '/api', '/api-set', '/api-restore', '/api-engine'
         ];
 
@@ -435,7 +433,7 @@
 
             recognition.onend = () => {
                 if (isListening) {
-                    recognition.start(); // Reinicia o reconhecimento
+                    recognition.start();
                 }
             };
         };
@@ -443,7 +441,6 @@
         // Ativar/desativar microfone
         const toggleListening = () => {
             if (!isListening) {
-                // Solicitar permissão de microfone
                 navigator.mediaDevices.getUserMedia({ audio: true })
                     .then(() => {
                         recognition.start();
@@ -477,29 +474,27 @@
                 outputElement.innerHTML = `<span class="success">${text}</span>`;
             } else if (type === "info") {
                 outputElement.innerHTML = `<span class="info">${text}</span>`;
-            } else if (type === "receituario") { // Novo tipo para receituário
+            } else if (type === "receituario") {
                 outputElement.classList.add('receituario-item');
-                outputElement.textContent = text; // Usar textContent para preservar espaços
+                outputElement.textContent = text;
             }
             else {
                 outputElement.innerHTML = `<span class="${type}">${text}</span>`;
             }
             
-            // Inserir antes do input-line
             const inputLine = interactiveOutput.querySelector('.input-line');
             interactiveOutput.insertBefore(outputElement, inputLine);
             interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
         };
 
-        // Função para limpar o terminal interativo e mostrar mensagens iniciais
+        // Função para limpar o terminal interativo
         const resetInteractiveTerminal = (requireLogin = false) => {
-            // Remove todos os elementos, exceto o initialMessagesContainer e o input-line
             Array.from(interactiveOutput.children).forEach(child => {
                 if (child !== initialMessagesContainer && !child.classList.contains('input-line')) {
                     child.remove();
                 }
             });
-            initialMessagesContainer.style.display = 'block'; // Garante que as mensagens iniciais estejam visíveis
+            initialMessagesContainer.style.display = 'block';
             
             if (requireLogin) {
                 isLoggedIn = false;
@@ -508,11 +503,9 @@
                     <span class="info">Para começar, digite </span><span class="command">/login [usuário] [senha]</span><span class="info">.</span><br><br>
                 `;
             } else {
-                // Se não precisar de login, restaura as mensagens normais de início de sessão
                 initialMessagesContainer.innerHTML = `
                     <span class="info">Axon - Assistente de Anamnese Médica v1.0</span><br>
                     <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
-                    <span class="info">Digite </span><span class="command">/start</span><span class="info"> para iniciar a anamnese</span><br><br>
                 `;
             }
             interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
@@ -572,46 +565,40 @@
 
                 const data = await response.json();
                 const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Não foi possível obter uma resposta.";
-                
-                // Remover asteriscos usados para negrito
                 const cleanText = rawText.replace(/\*\*/g, '');
                 
                 return cleanText;
             } catch (error) {
                 console.error("Erro na chamada da API:", error);
-                throw error; // Re-throw the error to be caught by the caller
+                throw error;
             }
         };
 
-        // Processar informações para anamnese com retry
+        // Processar informações para anamnese
         const processAnamnesisInfo = async (info, retryCount = 0) => {
-            lastAnamnesisInfo = info; // Armazena a informação para possível retry
-            const maxRetries = 3; // Número máximo de tentativas
+            lastAnamnesisInfo = info;
+            const maxRetries = 3;
 
-            // Prompt atualizado para melhor separação das seções
-            const prompt = `Você é um assistente médico. Sua tarefa é atualizar a anamnese de um paciente.
-            A anamnese atual é:
-            ${JSON.stringify(anamnesis)}
-
-            Nova informação fornecida: "${info}".
+            // Prompt atualizado para evitar sugestões
+            const prompt = `Você é um assistente médico. Sua tarefa é organizar as informações fornecidas nas seções adequadas da anamnese.
+            Informação recebida: "${info}".
 
             Instruções:
             1. Mantenha TODAS as seções (QP, HMA, HP, HF, HPS) mesmo que vazias
-            2. Trabalhe APENAS com as informações fornecidas - não faça suposições
+            2. Trabalhe APENAS com as informações fornecidas - não adicione sugestões
             3. Nunca apague informações existentes, apenas:
                - Acrescente novas informações às seções relevantes
                - Corrija informações se houver correção explícita
-            4. Use linguagem técnica médica com termos adequados e conectivos
-            5. Seja detalhado e descritivo na redação
-            6. Formate a resposta como JSON com as chaves: qp, hma, hp, hf, hps
+            4. Seja objetivo e direto na organização das informações
+            5. Formate a resposta como JSON com as chaves: qp, hma, hp, hf, hps
 
             Exemplo de resposta:
             {
               "qp": "Dor de cabeça pulsátil há 3 dias, com piora progressiva.",
-              "hma": "Sintomas iniciaram repentinamente...",
+              "hma": "",
               "hp": "Hipertensão arterial controlada com captopril 25mg...",
               "hf": "Mãe com história de enxaqueca...",
-              "hps": "Trabalha como enfermeiro em turnos noturnos..."
+              "hps": ""
             }`;
 
             try {
@@ -623,7 +610,7 @@
                 const jsonString = response.substring(jsonStart, jsonEnd);
                 const updatedAnamnesis = JSON.parse(jsonString);
                 
-                // Atualizar todas as seções mantendo a estrutura
+                // Atualizar todas as seções
                 anamnesis = {
                     qp: updatedAnamnesis.qp || "",
                     hma: updatedAnamnesis.hma || "",
@@ -637,7 +624,7 @@
             } catch (error) {
                 console.error("Erro ao processar resposta:", error);
                 if (retryCount < maxRetries) {
-                    const delay = Math.floor(Math.random() * (7000 - 5000 + 1)) + 5000; // Atraso entre 5 e 7 segundos
+                    const delay = Math.floor(Math.random() * (7000 - 5000 + 1)) + 5000;
                     appendOutput(`Erro ao atualizar a anamnese. Tentando novamente em ${delay / 1000} segundos (${retryCount + 1}/${maxRetries})...`, "error");
                     setTimeout(() => processAnamnesisInfo(info, retryCount + 1), delay);
                 } else {
@@ -646,17 +633,16 @@
             }
         };
 
-        // Gerar hipóteses diagnósticas formatadas
+        // Gerar hipóteses diagnósticas
         const generateDiagnosticHypotheses = async () => {
             const prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}, 
             liste as possíveis hipóteses diagnósticas em ordem de probabilidade. 
-            Formate cada hipótese como um item em uma lista, separando cada hipótese por uma linha em branco. 
+            Formate cada hipótese como um item em uma lista. 
             Seja técnico, objetivo e extremamente resumido. 
             Retorne apenas a lista de hipóteses, sem introdução ou conclusão.`;
             
             const response = await callGeminiAPI(prompt);
             
-            // Formatar para exibição com espaçamento
             const formattedDiagnosis = response.split('\n')
                 .map(item => item.trim())
                 .filter(item => item)
@@ -666,7 +652,7 @@
             appendOutput(`<div class="conduct-title">HIPÓTESES DIAGNÓSTICAS:</div>${formattedDiagnosis}`, "output");
         };
 
-        // Gerar conduta médica formatada (com foco em tratamentos do SUS)
+        // Gerar conduta médica
         const generateMedicalConduct = async () => {
             const prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}, 
             proponha uma conduta médica completa, dividida em tópicos:
@@ -676,11 +662,10 @@
             4. Recomendações ao paciente
             
             Formate cada tópico com um título e cada item dentro do tópico separado por uma linha em branco. 
-            Seja técnico, objetivo, extremamente resumido e utilize APENAS tratamentos e medicamentos disponíveis no SUS.`;
+            Seja técnico, objetivo e extremamente resumido.`;
             
             const response = await callGeminiAPI(prompt);
             
-            // Formatar para exibição com espaçamento e tópicos
             const formattedConduct = response
                 .replace(/Medicações:|Medicamentos:/gi, '<div class="conduct-title">MEDICAÇÕES (SUS):</div>')
                 .replace(/Exames complementares|Exames:/gi, '<div class="conduct-title">EXAMES COMPLEMENTARES (SUS):</div>')
@@ -702,7 +687,6 @@
 
         // Copiar anamnese para área de transferência
         const copyAnamnesis = () => {
-            // Formatar anamnese para cópia
             let textToCopy = '';
             textToCopy += `Queixa Principal (QP):\n${anamnesis.qp || "Nenhuma informação"}\n\n`;
             textToCopy += `História da Moléstia Atual (HMA):\n${anamnesis.hma || "Nenhuma informação"}\n\n`;
@@ -719,21 +703,20 @@
             }
         };
 
-        // Função para formatar a resposta da medicação como receituário
+        // Função para formatar a resposta da medicação
         const formatMedicationForReceituario = (medicationText) => {
-            // Tenta extrair nome, dose e o restante da instrução
             const regex = /^(.*?)\s*(\d+\s*(?:mg|g|ml|mcg|UI|unidades|comprimidos|cápsulas|gotas|ampolas|frascos|bisnagas|saches|seringas|envelopes|aplicações|doses|unid\.)?)\s*(.*)$/i;
             const match = medicationText.match(regex);
 
             if (match) {
                 const nameAndDose = (match[1] + ' ' + (match[2] || '')).trim();
                 const instruction = match[3].trim();
-                const totalLength = 80; // Largura total da linha para o receituário
-                const dotsLength = totalLength - nameAndDose.length - instruction.length - 6; // 6 para margem de segurança
+                const totalLength = 80;
+                const dotsLength = totalLength - nameAndDose.length - instruction.length - 6;
                 const dots = dotsLength > 0 ? '.'.repeat(dotsLength) : '';
                 return `${nameAndDose} ${dots} ${instruction}`;
             }
-            return medicationText; // Retorna o texto original se não conseguir formatar
+            return medicationText;
         };
 
         // Função para verificar o status da API
@@ -759,7 +742,7 @@
                             }]
                         }]
                     }),
-                    signal: AbortSignal.timeout(5000) // Timeout de 5 segundos
+                    signal: AbortSignal.timeout(5000)
                 });
 
                 if (response.ok) {
@@ -783,7 +766,6 @@
             appendOutput("Verificando motores de IA disponíveis...", "info");
             let foundWorkingModel = false;
 
-            // Preferência pelo Gemini 2.0 Flash
             const geminiFlash = apiModels.find(m => m.name === 'gemini-2.0-flash');
             if (geminiFlash) {
                 appendOutput(`Testando ${geminiFlash.name}...`, "info");
@@ -798,9 +780,8 @@
                 }
             }
 
-            // Se Gemini 2.0 Flash não funcionar, tenta os outros na ordem definida
             for (const model of apiModels) {
-                if (model.name === 'gemini-2.0-flash') continue; // Já testado
+                if (model.name === 'gemini-2.0-flash') continue;
                 appendOutput(`Testando ${model.name}...`, "info");
                 const isWorking = await checkApiStatus(model.name);
                 if (isWorking) {
@@ -823,7 +804,6 @@
         const processCommand = async (command) => {
             if (!command.trim()) return;
             
-            // Adicionar comando ao histórico
             appendOutput(command, "command");
             
             const cmd = command.trim().toLowerCase();
@@ -839,12 +819,15 @@
                     if (username === 'ian' && password === 'ian123') {
                         isLoggedIn = true;
                         appendOutput("Login bem-sucedido. Digite /help para ver os comandos disponíveis.", "success");
-                        // Atualiza as mensagens iniciais após o login
                         initialMessagesContainer.innerHTML = `
                             <span class="info">Axon - Assistente de Anamnese Médica v1.0</span><br>
                             <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
-                            <span class="info">Digite </span><span class="command">/start</span><span class="info"> para iniciar a anamnese</span><br><br>
                         `;
+                        // Iniciar anamnese imediatamente após login
+                        anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+                        updateAnamnesisPreview();
+                        initialMessagesContainer.style.display = 'none';
+                        appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
                     } else {
                         appendOutput("Usuário ou senha incorretos.", "error");
                     }
@@ -855,51 +838,28 @@
                 return;
             }
 
-            // Verificar se é um comando válido (após o login)
-            if (isCommand && !validCommands.some(vc => cmd.startsWith(vc.split(' ')[0]))) { // Ajustado para pegar apenas o comando base
+            // Verificar se é um comando válido
+            if (isCommand && !validCommands.some(vc => cmd.startsWith(vc.split(' ')[0]))) {
                 appendOutput(`Comando '${command}' não existe. Digite /help para ver os comandos disponíveis.`, "error");
                 commandInput.value = '';
                 return;
             }
             
-            if (cmd === '/start') {
-                if (isActive) {
-                    appendOutput("A sessão já está ativa.", "info");
-                    return;
-                }
-                isActive = true;
-                anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" }; // Limpa anamnese ao iniciar nova sessão
-                updateAnamnesisPreview();
-                // Esconde as mensagens iniciais quando a sessão começa
-                initialMessagesContainer.style.display = 'none'; 
-                appendOutput("Sessão iniciada. Aguardando informações para anamnese...", "success");
-                appendOutput("Por favor, informe os dados do paciente.", "info");
-            } 
-            else if (cmd === '/exit') {
-                if (!isActive) {
-                    appendOutput("Nenhuma sessão ativa.", "info");
-                    return;
-                }
-                isActive = false;
+            if (cmd === '/exit') {
                 anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                 updateAnamnesisPreview();
                 appendOutput("Sessão encerrada. Você precisará fazer login novamente.", "success");
                 if (isListening) stopListening();
-                resetInteractiveTerminal(true); // Limpa o terminal e exige novo login
+                resetInteractiveTerminal(true);
             } 
             else if (cmd === '/clear') {
-                isActive = false; // Reseta o estado da sessão, mas não o login
                 anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                 updateAnamnesisPreview();
                 appendOutput("Terminal limpo.", "success");
                 if (isListening) stopListening();
-                resetInteractiveTerminal(false); // Limpa o terminal sem exigir novo login
+                resetInteractiveTerminal(false);
             }
             else if (cmd === '/hear on') {
-                if (!isActive) {
-                    appendOutput("Inicie uma sessão primeiro com /start", "error");
-                    return;
-                }
                 if (isListening) {
                     appendOutput("O microfone já está ativo.", "info");
                     return;
@@ -914,26 +874,14 @@
                 stopListening();
             } 
             else if (cmd === '/hd') {
-                if (!isActive) {
-                    appendOutput("Inicie uma sessão primeiro com /start", "error");
-                    return;
-                }
                 appendOutput("Gerando hipóteses diagnósticas...", "info");
                 await generateDiagnosticHypotheses();
             } 
             else if (cmd === '/cd') {
-                if (!isActive) {
-                    appendOutput("Inicie uma sessão primeiro com /start", "error");
-                    return;
-                }
                 appendOutput("Gerando conduta médica (tratamentos SUS)...", "info");
                 await generateMedicalConduct();
             } 
             else if (cmd === '/copy') {
-                if (!isActive) {
-                    appendOutput("Inicie uma sessão primeiro com /start", "error");
-                    return;
-                }
                 copyAnamnesis();
             } 
             else if (cmd.startsWith('/ia')) {
@@ -945,7 +893,6 @@
                 
                 appendOutput("Processando sua pergunta...", "info");
                 
-                // Prompt modificado para tentar obter formato de receituário para medicamentos
                 const iaPrompt = `Responda de forma objetiva e breve à seguinte pergunta médica: "${question}". 
                                   Se a pergunta for sobre um medicamento, forneça as informações essenciais (nome, dose, quantidade, posologia, tempo de uso, observações) 
                                   e tente formatar a resposta como um item de receituário, por exemplo: "Dipirona 500mg - 1 caixa - tomar 1 comprimido de 6/6h caso dor.". 
@@ -954,7 +901,6 @@
                 try {
                     const response = await callGeminiAPI(iaPrompt);
 
-                    // Tenta detectar se a resposta é sobre medicação e formatar
                     if (question.toLowerCase().includes('medicação') || question.toLowerCase().includes('medicamento') || 
                         question.toLowerCase().includes('remédio') || question.toLowerCase().includes('posologia') ||
                         question.toLowerCase().includes('dose')) {
@@ -977,7 +923,7 @@
                     if (newApiKey) {
                         currentGeminiAPIKey = newApiKey;
                         appendOutput(`Chave da API definida para: ${newApiKey.substring(0, 5)}...`, "success");
-                        await checkApiStatus(); // Verifica o status da nova API
+                        await checkApiStatus();
                     } else {
                         appendOutput("Uso: /api-set [senha_admin] [nova_chave_api]", "error");
                     }
@@ -992,7 +938,7 @@
                 if (adminPassword === 'admin123') {
                     currentGeminiAPIKey = defaultGeminiAPIKey;
                     appendOutput("Chave da API restaurada para a padrão.", "success");
-                    await checkApiStatus(); // Verifica o status da API padrão
+                    await checkApiStatus();
                 } else {
                     appendOutput("Senha de administrador incorreta para o comando /api-restore.", "error");
                 }
@@ -1000,19 +946,17 @@
             else if (cmd.startsWith('/api-engine')) {
                 const parts = command.split(' ');
                 const adminPassword = parts[1];
-                const engineIdentifier = parts[2]; // Pode ser nome ou número
+                const engineIdentifier = parts[2];
 
                 if (adminPassword === 'admin123') {
                     let selectedModel = null;
 
                     if (engineIdentifier) {
-                        // Tenta encontrar por ID (número)
                         const id = parseInt(engineIdentifier);
                         if (!isNaN(id)) {
                             selectedModel = apiModels.find(m => m.id === id);
                         }
                         
-                        // Se não encontrou por ID, tenta encontrar por nome
                         if (!selectedModel) {
                             selectedModel = apiModels.find(m => m.name.toLowerCase() === engineIdentifier.toLowerCase());
                         }
@@ -1020,7 +964,7 @@
                         if (selectedModel) {
                             currentAIModel = selectedModel.name;
                             appendOutput(`Motor da API alterado para: ${currentAIModel}`, "success");
-                            await checkApiStatus(); // Verifica o status com o novo motor
+                            await checkApiStatus();
                         } else {
                             const availableEngines = apiModels.map(m => `${m.id}. ${m.name}`).join(', ');
                             appendOutput(`Motor '${engineIdentifier}' não reconhecido. Motores disponíveis: ${availableEngines}.`, "error");
@@ -1038,9 +982,9 @@
                 const adminPassword = parts[1];
 
                 if (adminPassword === 'admin123') {
-                    await checkApiStatus(); // Atualiza o status da API
+                    await checkApiStatus();
                     appendOutput(`API Utilizada: ${getGeminiAPIUrl()}`, "info");
-                    appendOutput(`Motor da IA atual: ${currentAIModel}`, "info"); // Adicionado para mostrar o motor atual
+                    appendOutput(`Motor da IA atual: ${currentAIModel}`, "info");
                     appendOutput(`Status de Conexão: ${apiConnectionStatus}`, apiConnectionStatus.includes("Conectado") ? "success" : "error");
                 } else {
                     appendOutput("Senha de administrador incorreta para o comando /api.", "error");
@@ -1050,14 +994,13 @@
                 const availableEnginesList = apiModels.map(m => `${m.id}. ${m.name}`).join(' | ');
                 appendOutput(`
 <ul class="help-list">
-    <li class="help-item"><span class="command">/start</span> - Iniciar nova anamnese</li>
     <li class="help-item"><span class="command">/hear on</span> - Ativar reconhecimento de voz</li>
     <li class="help-item"><span class="command">/hear off</span> - Desativar reconhecimento de voz</li>
     <li class="help-item"><span class="command">/hd</span> - Gerar hipóteses diagnósticas</li>
     <li class="help-item"><span class="command">/cd</span> - Gerar conduta médica (tratamentos SUS)</li>
     <li class="help-item"><span class="command">/copy</span> - Copiar anamnese completa</li>
     <li class="help-item"><span class="command">/ia [pergunta]</span> - Fazer pergunta livre à I.A</li>
-    <li class="help-item"><span class="command">/exit</span> - Encerrar sessão (requer novo login)</li>
+    <li class="help-item"><span class="command">/exit</span> - Encerrar sessão</li>
     <li class="help-item"><span class="command">/clear</span> - Limpar terminal e reiniciar anamnese</li>
     <li class="help-item"><span class="command">/api [senha_admin]</span> - Mostrar API utilizada e status de conexão</li>
     <li class="help-item"><span class="command">/api-set [senha_admin] [nova_chave]</span> - Definir uma nova chave de API</li>
@@ -1065,21 +1008,14 @@
     <li class="help-item"><span class="command">/api-engine [senha_admin] [${availableEnginesList}]</span> - Trocar o motor da IA</li>
     <li class="help-item"><span class="command">/help</span> - Mostrar esta ajuda</li>
 </ul>
-Para inserir informações na anamnese, basta digitar normalmente após iniciar a sessão com /start
+Para inserir informações na anamnese, basta digitar normalmente após fazer login
                 `, "info");
             } 
             else {
-                // Se não for um comando e a sessão estiver ativa, processa como informação de anamnese
-                if (!isActive) {
-                    appendOutput("Inicie uma sessão primeiro com /start ou digite /help para ver os comandos.", "error");
-                    commandInput.value = '';
-                    return;
-                }
                 appendOutput("Processando informações...", "info");
                 await processAnamnesisInfo(command);
             }
             
-            // Limpar input e manter foco
             commandInput.value = '';
         };
 
@@ -1090,30 +1026,23 @@ Para inserir informações na anamnese, basta digitar normalmente após iniciar 
             }
         });
 
-        // Adiciona um listener global para capturar as teclas digitadas
         document.addEventListener('keydown', (e) => {
-            // Se a tecla pressionada for uma letra, número, espaço ou pontuação comum
             if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete' || e.key === ' ') {
-                commandInput.focus(); // Garante que o input esteja focado
+                commandInput.focus();
             }
         });
 
-        // Inicializar reconhecimento de voz se suportado
         if (isSpeechRecognitionSupported()) {
             initSpeechRecognition();
         } else {
             appendOutput("Reconhecimento de voz não suportado neste navegador.", "error");
         }
 
-        // Simular status da API (na prática, seria necessário um ping real)
-        // Este setInterval agora apenas alterna a cor do indicador visualmente,
-        // o status real é verificado pelo comando /api
         setInterval(() => {
             apiStatus.style.backgroundColor = apiStatus.style.backgroundColor === 'var(--success-color)' ? 
                 'var(--error-color)' : 'var(--success-color)';
         }, 3000);
 
-        // Chamar a função de inicialização do modelo de IA ao carregar a página
         window.onload = initializeAIModel;
     </script>
 </body>
