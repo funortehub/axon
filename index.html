@@ -44,7 +44,6 @@
             align-items: center;
             justify-content: flex-end; /* Alinha o conteúdo restante à direita */
             position: relative; /* Para posicionar a imagem fora do fluxo */
-            z-index: 5; /* Garante que o header esteja abaixo da logo principal */
         }
 
         .logo-container {
@@ -53,17 +52,23 @@
             left: 0;
             padding: 5px; /* Espaçamento reduzido para a imagem */
             z-index: 10; /* Garante que a imagem fique acima de outros elementos */
+            display: flex;
+            align-items: center;
+            height: 100%; /* Para alinhar verticalmente com o header */
         }
 
         .logo-img {
-            height: calc(105.3px * 1.8 * 0.7); /* Reduz o tamanho em 30% */
+            height: calc(105.3px * 1.8 * 0.7 * 1.2); /* Reduz o tamanho em 30% e aumenta em 20% */
             width: auto;
+            margin-left: 15px; /* Ajuste para alinhar com o texto da API */
         }
 
         .status-bar {
             display: flex;
             gap: 15px;
             font-size: 14px;
+            /* Adicionado para alinhar com o logo */
+            margin-right: 20px;
         }
 
         .status-item {
@@ -105,6 +110,7 @@
             display: flex;
             flex-direction: column;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            position: relative; /* Para posicionar a logo interna */
         }
 
         .terminal-header {
@@ -151,18 +157,6 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            position: relative; /* Necessário para posicionar a logo interna */
-        }
-
-        .terminal-logo-overlay {
-            position: absolute;
-            top: 1.5cm;
-            right: 1.5cm;
-            height: calc(105.3px * 1.8 * 0.7 * 1.2); /* Aumenta em 20% */
-            width: auto;
-            opacity: 0.25;
-            pointer-events: none; /* Permite clicar através da imagem */
-            z-index: 0; /* Garante que fique atrás do texto */
         }
 
         .interactive-terminal {
@@ -301,6 +295,16 @@
             font-size: 12px;
             color: var(--text-color);
         }
+
+        .terminal-logo-internal {
+            position: absolute;
+            top: 15px; /* Afastamento do topo */
+            right: 15px; /* Afastamento da direita */
+            height: calc(105.3px * 1.8 * 0.7 * 1.2); /* Aumenta o tamanho em 20% */
+            width: auto;
+            opacity: 0.25;
+            z-index: 0; /* Garante que fique atrás do conteúdo do terminal */
+        }
     </style>
 </head>
 <body>
@@ -331,7 +335,7 @@
                 </div>
             </div>
             <div class="terminal-content" id="interactive-output">
-                <img src="axon.png" alt="Axon Logo Terminal" class="terminal-logo-overlay">
+                <img src="axon.png" alt="Axon Logo Terminal" class="terminal-logo-internal">
                 <div id="initial-messages" style="position: relative; z-index: 1;">
                     <span class="info">Axon - Assistente Médico v1.0</span><br>
                     <span class="info">Para começar, digite </span><span class="command">/login [usuário] [senha]</span><span class="info">.</span><br><br>
@@ -510,7 +514,7 @@
         // Função para limpar o terminal interativo
         const resetInteractiveTerminal = (requireLogin = false) => {
             Array.from(interactiveOutput.children).forEach(child => {
-                if (child !== initialMessagesContainer && !child.classList.contains('input-line') && !child.classList.contains('terminal-logo-overlay')) {
+                if (child !== initialMessagesContainer && !child.classList.contains('input-line') && !child.classList.contains('terminal-logo-internal')) {
                     child.remove();
                 }
             });
