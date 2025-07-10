@@ -48,10 +48,10 @@
 
         .logo-container {
             position: absolute; /* Posiciona a imagem de forma absoluta */
-            top: 0;
-            left: 0;
-            padding: 5px; /* Espaçamento reduzido para a imagem */
+            top: 0; /* Ajusta para o topo do header */
+            right: 20px; /* Ajusta para o canto superior direito */
             z-index: 10; /* Garante que a imagem fique acima de outros elementos */
+            transform: translateY(-30%); /* Move a imagem para cima em 30% do seu próprio tamanho */
         }
 
         .logo-img {
@@ -291,10 +291,10 @@
     </style>
 </head>
 <body>
-    <div class="logo-container">
-        <img src="axon.png" alt="Axon Logo" class="logo-img">
-    </div>
     <div class="header">
+        <div class="logo-container">
+            <img src="axon.png" alt="Axon Logo" class="logo-img">
+        </div>
         <div class="status-bar">
             <div class="status-item">
                 <div class="status-indicator" id="api-status"></div>
