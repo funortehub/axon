@@ -370,11 +370,14 @@
         const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI'; // Chave de API padrão
         let currentGeminiAPIKey = defaultGeminiAPIKey; // Chave de API atualmente em uso
 
-        // --- MODIFICAÇÃO AQUI: Variável para o modelo de IA e mapeamento de URLs ---
+        // --- ATUALIZADO: Adição de novos engines ---
         // Mapeamento de modelos de IA com suas URLs e um identificador numérico
         const apiModels = [
             { id: 1, name: 'gemini-2.0-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}` },
-            { id: 2, name: 'gemma-3n-e4b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3n-e4b-it:generateContent?key=${key}` }
+            { id: 2, name: 'gemma-3n-e4b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3n-e4b-it:generateContent?key=${key}` },
+            { id: 3, name: 'gemma-3-12b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-12b-it:generateContent?key=${key}` },
+            { id: 4, name: 'gemma-3-27b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${key}` },
+            { id: 5, name: 'learnlm-2.0-flash-experimental', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/learnlm-2.0-flash-experimental:generateContent?key=${key}` }
         ];
         let currentAIModel = apiModels[0].name; // Modelo de IA padrão (Gemini 2.0 Flash)
 
@@ -385,7 +388,6 @@
             }
             return apiModels[0].urlBuilder(currentGeminiAPIKey); // Fallback para Gemini 2.0 Flash
         };
-        // --- FIM DA MODIFICAÇÃO ---
 
         // Comandos válidos
         const validCommands = [
@@ -486,7 +488,7 @@
             // Inserir antes do input-line
             const inputLine = interactiveOutput.querySelector('.input-line');
             interactiveOutput.insertBefore(outputElement, inputLine);
-            interactiveOutput.scrollTop = interactiveOutput.scrollTop + outputElement.scrollHeight; // Ajuste para scrollar corretamente
+            interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
         };
 
         // Função para limpar o terminal interativo e mostrar mensagens iniciais
@@ -520,19 +522,28 @@
         const updateAnamnesisPreview = () => {
             let previewHTML = '';
             
-            if (Object.values(anamnesis).every(section => !section)) {
-                previewHTML = '<div class="info">Aguardando informações da anamnese...</div>';
-            } else {
-                previewHTML = `
-                    <div class="anamnesis-content">
-                        ${anamnesis.qp ? `<div class="section-title">Queixa Principal (QP):</div><div>${anamnesis.qp}</div><br>` : ''}
-                        ${anamnesis.hma ? `<div class="section-title">História da Moléstia Atual (HMA):</div><div>${anamnesis.hma}</div><br>` : ''}
-                        ${anamnesis.hp ? `<div class="section-title">História Patológica (HP):</div><div>${anamnesis.hp}</div><br>` : ''}
-                        ${anamnesis.hf ? `<div class="section-title">História Familiar (HF):</div><div>${anamnesis.hf}</div><br>` : ''}
-                        ${anamnesis.hps ? `<div class="section-title">História Psicossocial (HPS):</div><div>${anamnesis.hps}</div>` : ''}
-                    </div>
-                `;
-            }
+            previewHTML = `
+                <div class="anamnesis-content">
+                    <div class="section-title">Queixa Principal (QP):</div>
+                    <div>${anamnesis.qp || "Ainda não informado."}</div>
+                    <br>
+                    
+                    <div class="section-title">História da Moléstia Atual (HMA):</div>
+                    <div>${anamnesis.hma || "Ainda não informado."}</div>
+                    <br>
+                    
+                    <div class="section-title">História Patológica (HP):</div>
+                    <div>${anamnesis.hp || "Ainda não informado."}</div>
+                    <br>
+                    
+                    <div class="section-title">História Familiar (HF):</div>
+                    <div>${anamnesis.hf || "Ainda não informado."}</div>
+                    <br>
+                    
+                    <div class="section-title">História Psicossocial (HPS):</div>
+                    <div>${anamnesis.hps || "Ainda não informado."}</div>
+                </div>
+            `;
             
             anamnesisPreview.innerHTML = previewHTML;
             anamnesisPreview.scrollTop = anamnesisPreview.scrollHeight;
@@ -577,44 +588,31 @@
             lastAnamnesisInfo = info; // Armazena a informação para possível retry
             const maxRetries = 3; // Número máximo de tentativas
 
-            // --- MODIFICAÇÃO AQUI: Prompt para a IA para manter dados existentes e não sugerir ---
-            const currentAnamnesisText = Object.entries(anamnesis)
-                .filter(([, value]) => value)
-                .map(([key, value]) => {
-                    let sectionName = '';
-                    switch (key) {
-                        case 'qp': sectionName = 'Queixa Principal'; break;
-                        case 'hma': sectionName = 'História da Moléstia Atual'; break;
-                        case 'hp': sectionName = 'História Patológica'; break;
-                        case 'hf': sectionName = 'História Familiar'; break;
-                        case 'hps': sectionName = 'História Psicossocial'; break;
-                    }
-                    return `${sectionName}: ${value}`;
-                })
-                .join('\n');
-
-            const prompt = `Você é um assistente médico. Sua tarefa é atualizar a anamnese de um paciente com base nas informações fornecidas.
+            // Prompt atualizado para melhor separação das seções
+            const prompt = `Você é um assistente médico. Sua tarefa é atualizar a anamnese de um paciente.
             A anamnese atual é:
-            ${currentAnamnesisText || "Nenhuma informação registrada ainda."}
+            ${JSON.stringify(anamnesis)}
 
             Nova informação fornecida: "${info}".
 
-            Com base EXCLUSIVAMENTE na nova informação, atualize a anamnese existente.
-            - Preencha apenas os campos (QP, HMA, HP, HF, HPS) para os quais a nova informação se refere diretamente.
-            - NÃO sugira ou infira informações para campos que não foram explicitamente mencionados na nova informação. Mantenha-os em branco se não houver dados.
-            - Se a nova informação complementar uma seção existente, adicione-a de forma coesa.
-            - Se a nova informação for uma correção ou substituição clara para uma seção existente, atualize essa seção.
-            - Use linguagem técnica médica, seja detalhado, claro e objetivo, utilizando conectivos e termos apropriados para uma anamnese bem elaborada.
-            - Retorne APENAS a anamnese COMPLETA e ATUALIZADA no formato JSON com as chaves: qp, hma, hp, hf, hps.
-            Exemplo de formato de saída:
+            Instruções:
+            1. Mantenha TODAS as seções (QP, HMA, HP, HF, HPS) mesmo que vazias
+            2. Trabalhe APENAS com as informações fornecidas - não faça suposições
+            3. Nunca apague informações existentes, apenas:
+               - Acrescente novas informações às seções relevantes
+               - Corrija informações se houver correção explícita
+            4. Use linguagem técnica médica com termos adequados e conectivos
+            5. Seja detalhado e descritivo na redação
+            6. Formate a resposta como JSON com as chaves: qp, hma, hp, hf, hps
+
+            Exemplo de resposta:
             {
-              "qp": "Dor de cabeça pulsátil de intensidade 8/10, localizada na região frontal, com início há aproximadamente 3 dias.",
-              "hma": "A dor iniciou-se de forma súbita, apresentando piora significativa com exposição à luz (fotofobia) e ruídos (fonofobia). O paciente relata associação com episódios de náuseas, sem vômitos. Não há fatores de melhora identificados. A dor é contínua, com picos de exacerbação.",
-              "hp": "",
-              "hf": "A mãe do paciente possui histórico documentado de enxaqueca, conforme relato.",
-              "hps": "O paciente é estudante universitário e refere níveis elevados de estresse acadêmico, o que pode estar correlacionado com a sintomatologia atual."
+              "qp": "Dor de cabeça pulsátil há 3 dias, com piora progressiva.",
+              "hma": "Sintomas iniciaram repentinamente...",
+              "hp": "Hipertensão arterial controlada com captopril 25mg...",
+              "hf": "Mãe com história de enxaqueca...",
+              "hps": "Trabalha como enfermeiro em turnos noturnos..."
             }`;
-            // --- FIM DA MODIFICAÇÃO ---
 
             try {
                 const response = await callGeminiAPI(prompt);
@@ -625,9 +623,14 @@
                 const jsonString = response.substring(jsonStart, jsonEnd);
                 const updatedAnamnesis = JSON.parse(jsonString);
                 
-                // Atualizar todas as seções com os dados retornados pela IA
-                // A IA é responsável por consolidar e retornar a anamnese completa e atualizada
-                anamnesis = { ...updatedAnamnesis };
+                // Atualizar todas as seções mantendo a estrutura
+                anamnesis = {
+                    qp: updatedAnamnesis.qp || "",
+                    hma: updatedAnamnesis.hma || "",
+                    hp: updatedAnamnesis.hp || "",
+                    hf: updatedAnamnesis.hf || "",
+                    hps: updatedAnamnesis.hps || ""
+                };
                 
                 updateAnamnesisPreview();
                 appendOutput("Anamnese atualizada com sucesso.", "success");
@@ -701,11 +704,11 @@
         const copyAnamnesis = () => {
             // Formatar anamnese para cópia
             let textToCopy = '';
-            if (anamnesis.qp) textToCopy += `Queixa Principal (QP):\n${anamnesis.qp}\n\n`;
-            if (anamnesis.hma) textToCopy += `História da Moléstia Atual (HMA):\n${anamnesis.hma}\n\n`;
-            if (anamnesis.hp) textToCopy += `História Patológica (HP):\n${anamnesis.hp}\n\n`;
-            if (anamnesis.hf) textToCopy += `História Familiar (HF):\n${anamnesis.hf}\n\n`;
-            if (anamnesis.hps) textToCopy += `História Psicossocial (HPS):\n${anamnesis.hps}\n`;
+            textToCopy += `Queixa Principal (QP):\n${anamnesis.qp || "Nenhuma informação"}\n\n`;
+            textToCopy += `História da Moléstia Atual (HMA):\n${anamnesis.hma || "Nenhuma informação"}\n\n`;
+            textToCopy += `História Patológica (HP):\n${anamnesis.hp || "Nenhuma informação"}\n\n`;
+            textToCopy += `História Familiar (HF):\n${anamnesis.hf || "Nenhuma informação"}\n\n`;
+            textToCopy += `História Psicossocial (HPS):\n${anamnesis.hps || "Nenhuma informação"}\n`;
             
             if (textToCopy) {
                 navigator.clipboard.writeText(textToCopy)
@@ -775,7 +778,7 @@
             }
         };
 
-        // --- NOVA FUNÇÃO: Verificar e escolher o melhor engine ao iniciar ---
+        // Verificar e escolher o melhor engine ao iniciar
         const initializeAIModel = async () => {
             appendOutput("Verificando motores de IA disponíveis...", "info");
             let foundWorkingModel = false;
@@ -815,7 +818,6 @@
                 apiStatus.classList.add('status-off');
             }
         };
-        // --- FIM DA NOVA FUNÇÃO ---
 
         // Processar comandos
         const processCommand = async (command) => {
@@ -995,7 +997,6 @@
                     appendOutput("Senha de administrador incorreta para o comando /api-restore.", "error");
                 }
             }
-            // --- MODIFICAÇÃO AQUI: Lógica para /api-engine ---
             else if (cmd.startsWith('/api-engine')) {
                 const parts = command.split(' ');
                 const adminPassword = parts[1];
@@ -1032,7 +1033,6 @@
                     appendOutput("Senha de administrador incorreta para o comando /api-engine.", "error");
                 }
             }
-            // --- FIM DA MODIFICAÇÃO ---
             else if (cmd.startsWith('/api')) {
                 const parts = command.split(' ');
                 const adminPassword = parts[1];
@@ -1047,7 +1047,6 @@
                 }
             }
             else if (cmd === '/help') {
-                // --- MODIFICAÇÃO AQUI: Atualização do help para /api-engine ---
                 const availableEnginesList = apiModels.map(m => `${m.id}. ${m.name}`).join(' | ');
                 appendOutput(`
 <ul class="help-list">
@@ -1068,7 +1067,6 @@
 </ul>
 Para inserir informações na anamnese, basta digitar normalmente após iniciar a sessão com /start
                 `, "info");
-                // --- FIM DA MODIFICAÇÃO ---
             } 
             else {
                 // Se não for um comando e a sessão estiver ativa, processa como informação de anamnese
@@ -1115,9 +1113,8 @@ Para inserir informações na anamnese, basta digitar normalmente após iniciar 
                 'var(--error-color)' : 'var(--success-color)';
         }, 3000);
 
-        // --- MODIFICAÇÃO AQUI: Chamar a função de inicialização do modelo de IA ao carregar a página ---
+        // Chamar a função de inicialização do modelo de IA ao carregar a página
         window.onload = initializeAIModel;
-        // --- FIM DA MODIFICAÇÃO ---
     </script>
 </body>
 </html>
