@@ -51,17 +51,8 @@
             gap: 10px;
         }
 
-        .logo-icon {
-            color: var(--success-color);
-            font-size: 20px;
-        }
-
-        .logo-text {
-            font-size: 18px;
-            font-weight: bold;
-            background: linear-gradient(90deg, #58a6ff, #79c0ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .logo-img {
+            height: 30px; /* Ajuste o tamanho conforme necessário */
         }
 
         .status-bar {
@@ -92,7 +83,7 @@
             flex: 1;
             padding: 20px;
             gap: 20px;
-            height: calc(100vh - 65px);
+            height: calc(100vh - 65px - 40px); /* Ajuste para o rodapé */
         }
 
         @media (max-width: 768px) {
@@ -284,13 +275,21 @@
             color: var(--output-color);
             margin-bottom: 5px;
         }
+
+        .footer {
+            background-color: var(--terminal-bg);
+            padding: 10px 20px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-color);
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="logo">
-            <span class="logo-icon">⚕️</span>
-            <h1 class="logo-text">AXON</h1>
+            <img src="axon.png" alt="Axon Logo" class="logo-img">
         </div>
         <div class="status-bar">
             <div class="status-item">
@@ -339,6 +338,10 @@
                 <div class="info">Aguardando início da anamnese...</div>
             </div>
         </div>
+    </div>
+
+    <div class="footer">
+        <span>Sistema inteligente desenvolvido por Ian Bastos</span>
     </div>
 
     <script>
@@ -580,29 +583,30 @@
 
             // Construir prompt para acumular informações
             const prompt = `Você é um assistente médico. Sua tarefa é organizar as informações fornecidas nas seções adequadas da anamnese.
-            Informação recebida: "${info}".
+            A nova informação recebida é: "${info}".
 
-            Informações existentes:
-            - QP: ${anamnesis.qp || "Nenhuma"}
-            - HMA: ${anamnesis.hma || "Nenhuma"}
-            - HP: ${anamnesis.hp || "Nenhuma"}
-            - HF: ${anamnesis.hf || "Nenhuma"}
-            - HPS: ${anamnesis.hps || "Nenhuma"}
+            As informações existentes na anamnese são:
+            - QP (Queixa Principal): "${anamnesis.qp || "Nenhuma"}"
+            - HMA (História da Moléstia Atual): "${anamnesis.hma || "Nenhuma"}"
+            - HP (História Patológica): "${anamnesis.hp || "Nenhuma"}"
+            - HF (História Familiar): "${anamnesis.hf || "Nenhuma"}"
+            - HPS (História Psicossocial): "${anamnesis.hps || "Nenhuma"}"
 
-            Instruções:
-            1. Mantenha TODAS as seções (QP, HMA, HP, HF, HPS)
-            2. Adicione a nova informação à seção relevante SEM apagar informações existentes
-            3. Se a nova informação corrigir algo, substitua apenas a parte incorreta
-            4. Seja objetivo e direto na organização das informações
-            5. Formate a resposta como JSON com as chaves: qp, hma, hp, hf, hps
+            Instruções para atualização:
+            1. Analise a "nova informação recebida" e determine a seção MAIS RELEVANTE (QP, HMA, HP, HF, HPS) para ela.
+            2. Adicione a nova informação à seção identificada. Se a seção já contiver informações, anexe a nova informação de forma coerente, mantendo o histórico.
+            3. Se a nova informação CORRIGIR ou ESPECIFICAR algo já existente em uma seção, substitua ou refine APENAS a parte relevante dessa seção.
+            4. Mantenha as informações das OUTRAS seções INALTERADAS, a menos que a nova informação as afete diretamente.
+            5. Seja objetivo, conciso e use terminologia médica apropriada.
+            6. Formate a resposta EXCLUSIVAMENTE como um objeto JSON, contendo TODAS as chaves da anamnese (qp, hma, hp, hf, hps), mesmo que algumas permaneçam vazias ou inalteradas.
 
-            Exemplo de resposta:
+            Exemplo de resposta esperada (apenas o JSON):
             {
               "qp": "Dor de cabeça pulsátil há 3 dias, com piora progressiva.",
-              "hma": "O paciente relata febre baixa associada.",
-              "hp": "Hipertensão arterial controlada com captopril 25mg...",
-              "hf": "Mãe com história de enxaqueca...",
-              "hps": ""
+              "hma": "O paciente relata febre baixa associada e náuseas. Iniciou com dor leve e evoluiu para intensa.",
+              "hp": "Hipertensão arterial controlada com captopril 25mg. Nega diabetes.",
+              "hf": "Mãe com história de enxaqueca. Pai falecido por infarto.",
+              "hps": "Trabalha como professor, casado, dois filhos."
             }`;
 
             try {
@@ -614,13 +618,16 @@
                 const jsonString = response.substring(jsonStart, jsonEnd);
                 const updatedAnamnesis = JSON.parse(jsonString);
                 
-                // Atualizar todas as seções mantendo o conteúdo anterior
+                // Atualizar todas as seções com base na resposta da IA
+                // A IA é responsável por decidir o que vai em cada campo.
+                // Se a IA retornar um campo vazio, ele será atualizado para vazio.
+                // Isso garante que a IA tem controle total sobre o conteúdo de cada seção.
                 anamnesis = {
-                    qp: updatedAnamnesis.qp || anamnesis.qp || "",
-                    hma: updatedAnamnesis.hma || anamnesis.hma || "",
-                    hp: updatedAnamnesis.hp || anamnesis.hp || "",
-                    hf: updatedAnamnesis.hf || anamnesis.hf || "",
-                    hps: updatedAnamnesis.hps || anamnesis.hps || ""
+                    qp: updatedAnamnesis.qp || "",
+                    hma: updatedAnamnesis.hma || "",
+                    hp: updatedAnamnesis.hp || "",
+                    hf: updatedAnamnesis.hf || "",
+                    hps: updatedAnamnesis.hps || ""
                 };
                 
                 updateAnamnesisPreview();
