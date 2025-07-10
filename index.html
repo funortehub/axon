@@ -315,7 +315,7 @@
             </div>
             <div class="terminal-content" id="interactive-output">
                 <div id="initial-messages" style="position: relative; z-index: 1;">
-                    <span class="info">Axon - Assistente de Anamnese Médica v1.0</span><br>
+                    <span class="info">Axon - Assistente Médico v1.0</span><br>
                     <span class="info">Para começar, digite </span><span class="command">/login [usuário] [senha]</span><span class="info">.</span><br><br>
                 </div>
                 <div class="input-line" style="position: relative; z-index: 1;">
@@ -501,12 +501,12 @@
             if (requireLogin) {
                 isLoggedIn = false;
                 initialMessagesContainer.innerHTML = `
-                    <span class="info">Axon - Assistente de Anamnese Médica v1.0</span><br>
+                    <span class="info">Axon - Assistente Médico v1.0</span><br>
                     <span class="info">Para começar, digite </span><span class="command">/login [usuário] [senha]</span><span class="info">.</span><br><br>
                 `;
             } else {
                 initialMessagesContainer.innerHTML = `
-                    <span class="info">Axon - Assistente de Anamnese Médica v1.0</span><br>
+                    <span class="info">Axon - Assistente Médico v1.0</span><br>
                     <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
                 `;
             }
@@ -774,7 +774,7 @@
 
         // Verificar e escolher o melhor engine ao iniciar
         const initializeAIModel = async () => {
-            appendOutput("Verificando motores de IA disponíveis...", "info");
+            appendOutput("Verificando motores disponíveis...", "info");
             let foundWorkingModel = false;
 
             const geminiFlash = apiModels.find(m => m.name === 'gemini-2.0-flash');
@@ -831,7 +831,7 @@
                         isLoggedIn = true;
                         appendOutput("Login bem-sucedido. Digite /help para ver os comandos disponíveis.", "success");
                         initialMessagesContainer.innerHTML = `
-                            <span class="info">Axon - Assistente de Anamnese Médica v1.0</span><br>
+                            <span class="info">Axon - Assistente Médico v1.0</span><br>
                             <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
                         `;
                         // Iniciar anamnese imediatamente após login
