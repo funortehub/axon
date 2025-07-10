@@ -194,7 +194,7 @@
             color: var(--output-color);
             white-space: pre-wrap;
             line-height: 1.5;
-            text-align: left; /* Adicionado para justificar à esquerda */
+            text-align: left;
         }
 
         .command {
@@ -230,10 +230,10 @@
         }
 
         .help-list {
-            padding-left: 0; /* Removido padding para alinhar à esquerda */
+            padding-left: 0;
             margin: 10px 0;
             line-height: 1.8;
-            list-style: none; /* Remove bullet points */
+            list-style: none;
         }
 
         .help-item {
@@ -278,10 +278,9 @@
             left: 0;
         }
 
-        /* Estilo para receituário */
         .receituario-item {
-            white-space: pre; /* Preserva espaços e quebras de linha */
-            font-family: 'Courier New', monospace; /* Fonte monoespaçada para alinhamento */
+            white-space: pre;
+            font-family: 'Courier New', monospace;
             color: var(--output-color);
             margin-bottom: 5px;
         }
@@ -387,7 +386,7 @@
             return apiModels[0].urlBuilder(currentGeminiAPIKey);
         };
 
-        // Comandos válidos (removido /start)
+        // Comandos válidos
         const validCommands = [
             '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
             '/ia', '/help', '/login', '/clear', '/api', '/api-set', '/api-restore', '/api-engine'
@@ -574,28 +573,33 @@
             }
         };
 
-        // Processar informações para anamnese
+        // CORREÇÃO PRINCIPAL: Função para acumular informações na anamnese
         const processAnamnesisInfo = async (info, retryCount = 0) => {
             lastAnamnesisInfo = info;
             const maxRetries = 3;
 
-            // Prompt atualizado para evitar sugestões
+            // Construir prompt para acumular informações
             const prompt = `Você é um assistente médico. Sua tarefa é organizar as informações fornecidas nas seções adequadas da anamnese.
             Informação recebida: "${info}".
 
+            Informações existentes:
+            - QP: ${anamnesis.qp || "Nenhuma"}
+            - HMA: ${anamnesis.hma || "Nenhuma"}
+            - HP: ${anamnesis.hp || "Nenhuma"}
+            - HF: ${anamnesis.hf || "Nenhuma"}
+            - HPS: ${anamnesis.hps || "Nenhuma"}
+
             Instruções:
-            1. Mantenha TODAS as seções (QP, HMA, HP, HF, HPS) mesmo que vazias
-            2. Trabalhe APENAS com as informações fornecidas - não adicione sugestões
-            3. Nunca apague informações existentes, apenas:
-               - Acrescente novas informações às seções relevantes
-               - Corrija informações se houver correção explícita
+            1. Mantenha TODAS as seções (QP, HMA, HP, HF, HPS)
+            2. Adicione a nova informação à seção relevante SEM apagar informações existentes
+            3. Se a nova informação corrigir algo, substitua apenas a parte incorreta
             4. Seja objetivo e direto na organização das informações
             5. Formate a resposta como JSON com as chaves: qp, hma, hp, hf, hps
 
             Exemplo de resposta:
             {
               "qp": "Dor de cabeça pulsátil há 3 dias, com piora progressiva.",
-              "hma": "",
+              "hma": "O paciente relata febre baixa associada.",
               "hp": "Hipertensão arterial controlada com captopril 25mg...",
               "hf": "Mãe com história de enxaqueca...",
               "hps": ""
@@ -610,13 +614,13 @@
                 const jsonString = response.substring(jsonStart, jsonEnd);
                 const updatedAnamnesis = JSON.parse(jsonString);
                 
-                // Atualizar todas as seções
+                // Atualizar todas as seções mantendo o conteúdo anterior
                 anamnesis = {
-                    qp: updatedAnamnesis.qp || "",
-                    hma: updatedAnamnesis.hma || "",
-                    hp: updatedAnamnesis.hp || "",
-                    hf: updatedAnamnesis.hf || "",
-                    hps: updatedAnamnesis.hps || ""
+                    qp: updatedAnamnesis.qp || anamnesis.qp || "",
+                    hma: updatedAnamnesis.hma || anamnesis.hma || "",
+                    hp: updatedAnamnesis.hp || anamnesis.hp || "",
+                    hf: updatedAnamnesis.hf || anamnesis.hf || "",
+                    hps: updatedAnamnesis.hps || anamnesis.hps || ""
                 };
                 
                 updateAnamnesisPreview();
