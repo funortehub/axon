@@ -4,11 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Axon - Medical</title>
-    <link rel="icon" href="appicon.jpg" type="image/jpeg">
-    <link rel="apple-touch-icon" href="appicon.jpg">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="manifest" href="/manifest.json">
     <style>
         :root {
             --bg-color: #0d1117;
@@ -349,7 +344,7 @@
 
         <div class="terminal non-interactive-terminal">
             <div class="terminal-header">
-                <div class="terminal-title">Prévia da Anamnese</div>
+                <div class="terminal-title">Monitor</div>
                 <div class="terminal-actions">
                     <div class="terminal-btn close-btn"></div>
                     <div class="terminal-btn minimize-btn"></div>
@@ -366,7 +361,25 @@
         <span>AXON | Sistema médico inteligente desenvolvido por Ian Bastos</span>
     </div>
 
-    <script>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA4bis9CVQkl1eJDfezsvUKTx1X_kFVT4M",
+            authDomain: "axon-91d0b.firebaseapp.com",
+            projectId: "axon-91d0b",
+            storageBucket: "axon-91d0b.firebasestorage.app",
+            messagingSenderId: "701115983749",
+            appId: "1:701115983749:web:9a57928b678918ffbb86ec"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         // Elementos DOM
         const commandInput = document.getElementById('command-input');
         const interactiveOutput = document.getElementById('interactive-output');
@@ -378,6 +391,7 @@
         // Estado da aplicação
         let isListening = false;
         let isLoggedIn = false;
+        let currentUser = null; // Armazena o usuário logado
         let recognition = null;
         let anamnesis = {
             qp: "",
@@ -388,6 +402,7 @@
         };
         let lastAnamnesisInfo = "";
         let apiConnectionStatus = "Desconhecido";
+        let unsubscribeSnapshot = null; // Para gerenciar a inscrição do Firestore
 
         // Configurações da API Gemini
         const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI';
@@ -414,7 +429,7 @@
         // Comandos válidos
         const validCommands = [
             '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
-            '/ia', '/help', '/login', '/clear', '/api', '/api-set', '/api-restore', '/api-engine'
+            '/ia', '/help', '/login', '/clear', '/api', '/api-set', '/api-restore', '/api-engine', '/register'
         ];
 
         // Verificar suporte a reconhecimento de voz
@@ -487,7 +502,7 @@
         };
 
         // Função para adicionar saída ao terminal interativo
-        const appendOutput = (text, type = "output") => {
+        const appendOutput = (text, type = "output", logToFirebase = true) => {
             const outputElement = document.createElement('div');
             
             if (type === "command") {
@@ -509,6 +524,38 @@
             const inputLine = interactiveOutput.querySelector('.input-line');
             interactiveOutput.insertBefore(outputElement, inputLine);
             interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
+
+            if (logToFirebase && isLoggedIn && currentUser) {
+                logInteractionToFirebase(currentUser, text, type, 'interactive');
+            }
+        };
+
+        // Função para adicionar saída ao terminal de monitoramento (anamnese-preview)
+        const appendMonitorOutput = (text, type = "output", logToFirebase = true) => {
+            const outputElement = document.createElement('div');
+            
+            if (type === "command") {
+                outputElement.innerHTML = `<span class="prompt">></span> <span class="command">${text}</span>`;
+            } else if (type === "error") {
+                outputElement.innerHTML = `<span class="error">${text}</span>`;
+            } else if (type === "success") {
+                outputElement.innerHTML = `<span class="success">${text}</span>`;
+            } else if (type === "info") {
+                outputElement.innerHTML = `<span class="info">${text}</span>`;
+            } else if (type === "receituario") {
+                outputElement.classList.add('receituario-item');
+                outputElement.textContent = text;
+            }
+            else {
+                outputElement.innerHTML = `<span class="${type}">${text}</span>`;
+            }
+            
+            anamnesisPreview.appendChild(outputElement);
+            anamnesisPreview.scrollTop = anamnesisPreview.scrollHeight;
+
+            if (logToFirebase && isLoggedIn && currentUser) {
+                logInteractionToFirebase(currentUser, text, type, 'monitor');
+            }
         };
 
         // Função para limpar o terminal interativo
@@ -522,6 +569,11 @@
             
             if (requireLogin) {
                 isLoggedIn = false;
+                currentUser = null;
+                if (unsubscribeSnapshot) {
+                    unsubscribeSnapshot(); // Desinscreve do listener do Firestore
+                    unsubscribeSnapshot = null;
+                }
                 initialMessagesContainer.innerHTML = `
                     <pre class="info">
  █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
@@ -552,7 +604,7 @@
         };
 
         // Função para atualizar a prévia da anamnese
-        const updateAnamnesisPreview = () => {
+        const updateAnamnesisPreview = (logToFirebase = true) => {
             let previewHTML = '';
             
             previewHTML = `
@@ -580,6 +632,10 @@
             
             anamnesisPreview.innerHTML = previewHTML;
             anamnesisPreview.scrollTop = anamnesisPreview.scrollHeight;
+
+            if (logToFirebase && isLoggedIn && currentUser) {
+                logInteractionToFirebase(currentUser, JSON.stringify(anamnesis), 'anamnesis_update', 'monitor');
+            }
         };
 
         // Função para chamar a API Gemini
@@ -815,40 +871,136 @@
 
         // Verificar e escolher o melhor engine ao iniciar
         const initializeAIModel = async () => {
-            appendOutput("Verificando motores disponíveis...", "info");
+            appendOutput("Verificando motores disponíveis...", "info", false);
             let foundWorkingModel = false;
 
             const geminiFlash = apiModels.find(m => m.name === 'gemini-2.0-flash');
             if (geminiFlash) {
-                appendOutput(`Testando ${geminiFlash.name}...`, "info");
+                appendOutput(`Testando ${geminiFlash.name}...`, "info", false);
                 const isWorking = await checkApiStatus(geminiFlash.name);
                 if (isWorking) {
                     currentAIModel = geminiFlash.name;
-                    appendOutput(`Motor selecionado: ${currentAIModel} (funcionando).`, "success");
+                    appendOutput(`Motor selecionado: ${currentAIModel} (funcionando).`, "success", false);
                     foundWorkingModel = true;
                     return;
                 } else {
-                    appendOutput(`${geminiFlash.name} não está respondendo.`, "error");
+                    appendOutput(`${geminiFlash.name} não está respondendo.`, "error", false);
                 }
             }
 
             for (const model of apiModels) {
                 if (model.name === 'gemini-2.0-flash') continue;
-                appendOutput(`Testando ${model.name}...`, "info");
+                appendOutput(`Testando ${model.name}...`, "info", false);
                 const isWorking = await checkApiStatus(model.name);
                 if (isWorking) {
                     currentAIModel = model.name;
-                    appendOutput(`Motor selecionado: ${currentAIModel} (funcionando).`, "success");
+                    appendOutput(`Motor selecionado: ${currentAIModel} (funcionando).`, "success", false);
                     foundWorkingModel = true;
                     return;
                 } else {
-                    appendOutput(`${model.name} não está respondendo.`, "error");
+                    appendOutput(`${model.name} não está respondendo.`, "error", false);
                 }
             }
 
             if (!foundWorkingModel) {
-                appendOutput("Nenhum motor disponível está respondendo. As funcionalidades podem estar limitadas.", "error");
+                appendOutput("Nenhum motor disponível está respondendo. As funcionalidades podem estar limitadas.", "error", false);
                 apiStatus.classList.add('status-off');
+            }
+        };
+
+        // Firebase Functions
+        const logInteractionToFirebase = async (username, content, type, terminal) => {
+            try {
+                await addDoc(collection(db, "sessions", username, "interactions"), {
+                    content: content,
+                    type: type,
+                    terminal: terminal,
+                    timestamp: new Date()
+                });
+            } catch (e) {
+                console.error("Erro ao registrar interação no Firebase: ", e);
+            }
+        };
+
+        const setupFirebaseListener = (username) => {
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot(); // Desinscreve de qualquer listener anterior
+            }
+
+            const q = query(collection(db, "sessions", username, "interactions"), orderBy("timestamp"));
+            unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        const data = change.doc.data();
+                        // Evita duplicar a própria entrada
+                        // A lógica aqui pode precisar ser mais robusta para identificar a origem
+                        // Por simplicidade, vamos apenas adicionar ao monitor se não for do terminal interativo
+                        if (data.terminal === 'interactive') {
+                            // Se for uma interação do terminal interativo, apenas loga no console para evitar loop
+                            // console.log("Interação do terminal interativo recebida via Firebase:", data);
+                        } else if (data.terminal === 'monitor') {
+                            // Se for uma atualização de anamnese, atualiza o objeto anamnesis e o preview
+                            if (data.type === 'anamnesis_update') {
+                                try {
+                                    const updatedAnamnesis = JSON.parse(data.content);
+                                    anamnesis = updatedAnamnesis;
+                                    updateAnamnesisPreview(false); // Não logar novamente no Firebase
+                                } catch (e) {
+                                    console.error("Erro ao parsear anamnese do Firebase:", e);
+                                }
+                            } else {
+                                // Para outras interações do monitor, apenas adiciona ao monitor
+                                // appendMonitorOutput(data.content, data.type, false); // Não logar novamente no Firebase
+                            }
+                        }
+                    }
+                });
+            });
+        };
+
+        const registerUser = async (adminPassword, username, password) => {
+            if (adminPassword !== 'admin123') {
+                appendOutput("Senha de administrador incorreta.", "error");
+                return;
+            }
+            if (!username || !password) {
+                appendOutput("Uso: /register [senha_admin] [usuário] [senha]", "error");
+                return;
+            }
+
+            try {
+                const userRef = doc(db, "users", username);
+                const docSnap = await getDoc(userRef);
+
+                if (docSnap.exists()) {
+                    appendOutput(`Usuário '${username}' já existe.`, "error");
+                } else {
+                    await setDoc(userRef, { password: password, createdAt: new Date() });
+                    appendOutput(`Usuário '${username}' registrado com sucesso.`, "success");
+                }
+            } catch (e) {
+                appendOutput(`Erro ao registrar usuário: ${e.message}`, "error");
+                console.error("Erro ao registrar usuário:", e);
+            }
+        };
+
+        const authenticateUser = async (username, password) => {
+            if (username === 'ian' && password === 'ian123') {
+                return true; // Exceção para o usuário "ian"
+            }
+
+            try {
+                const userRef = doc(db, "users", username);
+                const docSnap = await getDoc(userRef);
+
+                if (docSnap.exists() && docSnap.data().password === password) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (e) {
+                console.error("Erro ao autenticar usuário:", e);
+                return false;
             }
         };
 
@@ -856,8 +1008,8 @@
         const processCommand = async (command) => {
             if (!command.trim()) return;
             
-            appendOutput(command, "command");
-            
+            appendOutput(command, "command"); // Loga o comando no terminal interativo
+
             const cmd = command.trim().toLowerCase();
             const isCommand = cmd.startsWith('/');
 
@@ -868,8 +1020,9 @@
                     const username = parts[1];
                     const password = parts[2];
 
-                    if (username === 'ian' && password === 'ian123') {
+                    if (await authenticateUser(username, password)) {
                         isLoggedIn = true;
+                        currentUser = username;
                         appendOutput("Login bem-sucedido. Digite /help para ver os comandos disponíveis.", "success");
                         initialMessagesContainer.innerHTML = `
                             <pre class="info">
@@ -888,6 +1041,7 @@
                         updateAnamnesisPreview();
                         initialMessagesContainer.style.display = 'none';
                         appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
+                        setupFirebaseListener(currentUser); // Inicia o listener do Firebase
                     } else {
                         appendOutput("Usuário ou senha incorretos.", "error");
                     }
@@ -1050,6 +1204,13 @@
                     appendOutput("Senha de administrador incorreta para o comando /api.", "error");
                 }
             }
+            else if (cmd.startsWith('/register')) {
+                const parts = command.split(' ');
+                const adminPassword = parts[1];
+                const username = parts[2];
+                const password = parts[3];
+                await registerUser(adminPassword, username, password);
+            }
             else if (cmd === '/help') {
                 const availableEnginesList = apiModels.map(m => `${m.id}. ${m.name}`).join(' | ');
                 appendOutput(`
@@ -1066,6 +1227,7 @@
     <li class="help-item"><span class="command">/api-set [senha_admin] [nova_chave]</span> - Definir uma nova chave de API</li>
     <li class="help-item"><span class="command">/api-restore [senha_admin]</span> - Restaurar a chave de API padrão</li>
     <li class="help-item"><span class="command">/api-engine [senha_admin] [${availableEnginesList}]</span> - Trocar o motor da IA</li>
+    <li class="help-item"><span class="command">/register [senha_admin] [usuário] [senha]</span> - Registrar um novo usuário</li>
     <li class="help-item"><span class="command">/help</span> - Mostrar esta ajuda</li>
 </ul>
 Para inserir informações na anamnese, basta digitar normalmente após fazer login
@@ -1095,7 +1257,7 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         if (isSpeechRecognitionSupported()) {
             initSpeechRecognition();
         } else {
-            appendOutput("Reconhecimento de voz não suportado neste navegador.", "error");
+            appendOutput("Reconhecimento de voz não suportado neste navegador.", "error", false);
         }
 
         setInterval(() => {
