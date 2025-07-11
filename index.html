@@ -1645,6 +1645,28 @@
         const openFullscreenModal = (imageDataURL) => {
             modalImage.src = imageDataURL;
             fullscreenModal.style.display = 'block';
+
+            // For mobile devices, make the image fill the screen more aggressively
+            const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+                modalImage.style.width = '100%';
+                modalImage.style.height = 'auto';
+                modalImage.style.maxHeight = '100vh';
+                modalImage.style.objectFit = 'contain';
+                fullscreenModal.style.paddingTop = '0';
+                fullscreenModal.style.display = 'flex';
+                fullscreenModal.style.alignItems = 'center';
+                fullscreenModal.style.justifyContent = 'center';
+            } else {
+                modalImage.style.width = '80%';
+                modalImage.style.height = 'auto';
+                modalImage.style.maxHeight = 'none';
+                modalImage.style.objectFit = 'initial';
+                fullscreenModal.style.paddingTop = '60px';
+                fullscreenModal.style.display = 'block';
+                fullscreenModal.style.alignItems = 'initial';
+                fullscreenModal.style.justifyContent = 'initial';
+            }
         };
 
         modalClose.onclick = () => {
