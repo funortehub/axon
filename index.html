@@ -300,44 +300,46 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px; /* Aumenta o espaçamento entre os elementos */
-            padding: 20px; /* Aumenta o padding */
+            gap: 10px;
+            padding: 10px;
             background-color: var(--terminal-bg);
             border-top: 1px solid var(--border-color);
             position: relative;
             z-index: 1; /* Garante que fique acima do logo */
-            border-radius: 0 0 8px 8px; /* Borda arredondada na parte inferior */
+            flex: 1; /* Permite que ocupe o espaço disponível */
+            overflow-y: auto; /* Adiciona scroll se o conteúdo for muito grande */
         }
 
         .camera-video {
-            width: 100%; /* Ocupa a largura total disponível */
-            height: auto; /* Mantém a proporção */
+            width: 100%;
+            max-width: 400px; /* Limita a largura do vídeo */
             border: 1px solid var(--border-color);
             background-color: black;
-            border-radius: 4px; /* Borda arredondada para o vídeo */
+            aspect-ratio: 16/9; /* Mantém a proporção do vídeo */
+            object-fit: cover; /* Garante que o vídeo preencha o espaço */
         }
 
         .camera-controls {
             display: flex;
             flex-wrap: wrap; /* Permite que os botões quebrem a linha */
+            justify-content: center;
             gap: 10px; /* Espaçamento entre os botões */
-            justify-content: center; /* Centraliza os botões */
-            width: 100%; /* Ocupa a largura total */
-            margin-top: 10px; /* Espaçamento acima dos controles */
-            margin-bottom: 10px; /* Espaçamento abaixo dos controles */
+            margin-top: 10px;
+            width: 100%; /* Ocupa a largura total do container */
         }
 
         .camera-button {
             background-color: var(--prompt-color);
             color: var(--bg-color);
             border: none;
-            padding: 10px 15px; /* Ajusta o padding para botões menores */
+            padding: 10px 15px; /* Ajusta o padding para caber mais botões */
             border-radius: 5px;
             cursor: pointer;
             font-size: 14px; /* Ajusta o tamanho da fonte */
             transition: background-color 0.3s ease;
             flex-grow: 1; /* Permite que os botões cresçam para preencher o espaço */
-            min-width: 120px; /* Garante um tamanho mínimo para os botões */
+            min-width: 120px; /* Largura mínima para os botões */
+            text-align: center;
         }
 
         .camera-button:hover {
@@ -347,7 +349,6 @@
         .camera-button.disabled {
             background-color: #555;
             cursor: not-allowed;
-            opacity: 0.6;
         }
 
         .preview-container {
@@ -356,46 +357,15 @@
             gap: 10px;
             margin-top: 10px;
             justify-content: center;
-            width: 100%; /* Ocupa a largura total */
-            border-top: 1px solid var(--border-color); /* Linha separadora */
-            padding-top: 15px; /* Espaçamento acima das prévias */
+            width: 100%; /* Ocupa a largura total do container */
+            padding-bottom: 20px; /* Espaço extra para o scroll */
         }
 
         .preview-image {
             max-width: 100px;
             max-height: 100px;
-            width: auto; /* Garante que a imagem se ajuste */
-            height: auto; /* Garante que a imagem se ajuste */
             border: 1px solid var(--border-color);
             object-fit: cover;
-            border-radius: 4px; /* Borda arredondada para as prévias */
-        }
-
-        /* Media Queries para responsividade */
-        @media (max-width: 768px) {
-            .camera-container {
-                padding: 15px;
-                gap: 10px;
-            }
-
-            .camera-controls {
-                flex-direction: column; /* Empilha os botões em telas pequenas */
-                gap: 8px;
-            }
-
-            .camera-button {
-                width: 100%; /* Botões ocupam a largura total */
-                min-width: unset; /* Remove o min-width para flexibilidade total */
-            }
-
-            .preview-container {
-                padding-top: 10px;
-            }
-
-            .preview-image {
-                max-width: 80px;
-                max-height: 80px;
-            }
         }
     </style>
 </head>
@@ -832,9 +802,7 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        contents: [{
-                            parts: contents.flatMap(c => c.inlineData ? [{ inlineData: c.inlineData }] : [{ text: c.text }])
-                        }]
+                        contents: contents.flatMap(c => c.inlineData ? [{ inlineData: c.inlineData }] : [{ text: c.text }])
                     })
                 });
 
