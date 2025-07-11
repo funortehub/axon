@@ -42,8 +42,8 @@
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
-            justify-content: space-between; /* Alinha o conteúdo restante à direita */
-            position: relative; /* Para posicionar a imagem fora do fluxo */
+            justify-content: space-between;
+            position: relative;
         }
 
         .app-title {
@@ -56,7 +56,6 @@
             display: flex;
             gap: 15px;
             font-size: 14px;
-            /* Adicionado para alinhar com o logo */
             margin-right: 20px;
         }
 
@@ -82,7 +81,7 @@
             flex: 1;
             padding: 20px;
             gap: 20px;
-            height: calc(100vh - 65px - 40px); /* Ajuste para o rodapé */
+            height: calc(100vh - 65px - 40px);
         }
 
         @media (max-width: 768px) {
@@ -99,7 +98,7 @@
             display: flex;
             flex-direction: column;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            position: relative; /* Para posicionar a logo interna */
+            position: relative;
         }
 
         .terminal-header {
@@ -287,33 +286,33 @@
 
         .terminal-logo-internal {
             position: absolute;
-            top: 15px; /* Afastamento do topo */
-            right: 15px; /* Afastamento da direita */
-            height: calc(105.3px * 1.8 * 0.7 * 1.2); /* Aumenta o tamanho em 20% */
+            top: 15px;
+            right: 15px;
+            height: calc(105.3px * 1.8 * 0.7 * 1.2);
             width: auto;
             opacity: 0.25;
-            z-index: 0; /* Garante que fique atrás do conteúdo do terminal */
+            z-index: 0;
         }
 
         /* Estilos para a câmera */
         .camera-container {
             display: flex;
             flex-direction: column;
-            flex: 1; /* Permite que o container da câmera ocupe o espaço disponível */
+            flex: 1;
             background-color: var(--terminal-bg);
-            border: 1px solid var(--border-color); /* Adicionado para manter o estilo de terminal */
-            border-radius: 8px; /* Adicionado para manter o estilo de terminal */
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
             position: relative;
-            z-index: 1; /* Garante que fique acima do logo */
-            padding: 15px; /* Adicionado padding para melhor espaçamento */
-            gap: 15px; /* Espaçamento entre os elementos da câmera */
-            overflow: hidden; /* Garante que o conteúdo não transborde */
+            z-index: 1;
+            padding: 15px;
+            gap: 15px;
+            overflow: hidden;
         }
 
         .camera-video-wrapper {
             position: relative;
             width: 100%;
-            padding-bottom: 75%; /* Proporção 4:3 para o vídeo */
+            padding-bottom: 75%;
             background-color: black;
             border: 1px solid var(--border-color);
             border-radius: 5px;
@@ -326,29 +325,29 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Garante que o vídeo preencha o espaço */
+            object-fit: cover;
         }
 
         .camera-controls {
             display: flex;
-            flex-wrap: wrap; /* Permite que os botões quebrem a linha */
-            gap: 10px; /* Espaçamento entre os botões */
-            justify-content: center; /* Centraliza os botões */
-            flex-shrink: 0; /* Impede que os controles encolham */
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            flex-shrink: 0;
         }
 
         .camera-button {
             background-color: var(--prompt-color);
             color: var(--bg-color);
             border: none;
-            padding: 10px 15px; /* Ajustado padding para botões */
+            padding: 10px 15px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 14px; /* Ajustado tamanho da fonte */
+            font-size: 14px;
             transition: background-color 0.3s ease;
-            flex-grow: 1; /* Permite que os botões cresçam para preencher o espaço */
-            min-width: 120px; /* Largura mínima para os botões */
-            font-family: 'Consolas', 'Courier New', monospace; /* Mantém a fonte do terminal */
+            flex-grow: 1;
+            min-width: 120px;
+            font-family: 'Consolas', 'Courier New', monospace;
         }
 
         .camera-button:hover {
@@ -361,27 +360,56 @@
         }
 
         .preview-container {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid; /* Alterado para grid */
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Colunas responsivas */
             gap: 10px;
             justify-content: center;
-            overflow-y: auto; /* Adicionado scroll para as prévias */
-            flex-grow: 1; /* Permite que o container de prévias ocupe o espaço restante */
-            min-height: 50px; /* Altura mínima para o container de prévias */
-            border: 1px dashed var(--border-color); /* Borda tracejada para indicar área de drop/previews */
+            overflow-y: auto;
+            flex-grow: 1;
+            min-height: 50px;
+            border: 1px dashed var(--border-color);
             padding: 10px;
             border-radius: 5px;
-            background-color: #0d1117; /* Fundo mais escuro para as prévias */
+            background-color: #0d1117;
+        }
+
+        .preview-item { /* Novo wrapper para imagem e botão de exclusão */
+            position: relative;
+            width: 100px; /* Tamanho fixo para a prévia */
+            height: 100px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
         }
 
         .preview-image {
-            max-width: 100px;
-            max-height: 100px;
-            width: auto;
-            height: auto;
-            border: 1px solid var(--border-color);
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-            border-radius: 3px;
+            display: block;
+        }
+
+        .delete-preview-button {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background-color: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: background-color 0.2s;
+        }
+
+        .delete-preview-button:hover {
+            background-color: rgba(255, 0, 0, 1);
         }
 
         .camera-switch-button {
@@ -395,12 +423,40 @@
             padding: 5px 10px;
             cursor: pointer;
             font-size: 12px;
-            z-index: 10; /* Garante que fique acima do vídeo */
+            z-index: 10;
             font-family: 'Consolas', 'Courier New', monospace;
         }
 
         .camera-switch-button:hover {
             background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        /* Estilos para os botões de alternância do monitor */
+        .monitor-toggle-buttons {
+            display: flex;
+            gap: 5px;
+            margin-left: auto; /* Empurra para a direita */
+        }
+
+        .monitor-toggle-button {
+            background-color: #30363d;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.3s ease;
+        }
+
+        .monitor-toggle-button:hover {
+            background-color: #444c56;
+        }
+
+        .monitor-toggle-button.active {
+            background-color: var(--highlight-color);
+            color: var(--bg-color);
+            border-color: var(--highlight-color);
         }
     </style>
 </head>
@@ -453,14 +509,23 @@
         <div class="terminal non-interactive-terminal">
             <div class="terminal-header">
                 <div class="terminal-title">Monitor</div>
+                <div class="monitor-toggle-buttons">
+                    <button id="toggle-anamnesis" class="monitor-toggle-button active">Anamnese</button>
+                    <button id="toggle-exams" class="monitor-toggle-button">Exames</button>
+                </div>
                 <div class="terminal-actions">
                     <div class="terminal-btn close-btn"></div>
                     <div class="terminal-btn minimize-btn"></div>
                     <div class="terminal-btn maximize-btn"></div>
                 </div>
             </div>
-            <div class="terminal-content" id="anamnesis-preview">
-                <div class="info">Aguardando início da anamnese...</div>
+            <div class="terminal-content" id="monitor-content-wrapper">
+                <div id="anamnesis-preview" class="monitor-view">
+                    <div class="info">Aguardando início da anamnese...</div>
+                </div>
+                <div id="exams-results-preview" class="monitor-view" style="display: none;">
+                    <div class="info">Nenhum exame analisado ainda.</div>
+                </div>
             </div>
             <div class="camera-container" id="camera-interface" style="display: none;">
                 <div class="terminal-header">
@@ -495,7 +560,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -515,6 +580,7 @@
         const commandInput = document.getElementById('command-input');
         const interactiveOutput = document.getElementById('interactive-output');
         const anamnesisPreview = document.getElementById('anamnesis-preview');
+        const examsResultsPreview = document.getElementById('exams-results-preview'); // Novo elemento para resultados de exames
         const apiStatus = document.getElementById('api-status');
         const micStatus = document.getElementById('mic-status');
         const initialMessagesContainer = document.getElementById('initial-messages');
@@ -532,6 +598,9 @@
         const cameraSwitchButton = document.getElementById('camera-switch-button');
         const cameraCloseBtn = document.getElementById('camera-close-btn');
 
+        // Monitor toggle buttons
+        const toggleAnamnesisButton = document.getElementById('toggle-anamnesis');
+        const toggleExamsButton = document.getElementById('toggle-exams');
 
         // Estado da aplicação
         let isListening = false;
@@ -545,12 +614,14 @@
             hf: "",
             hps: ""
         };
+        let examsResults = ""; // Armazena os resultados dos exames
         let lastAnamnesisInfo = "";
         let apiConnectionStatus = "Desconhecido";
         let unsubscribeSnapshot = null; // Para gerenciar a inscrição do Firestore
         let cameraStream = null; // Para gerenciar o stream da câmera
         let capturedImages = []; // Armazena os Data URLs das imagens capturadas/carregadas
         let currentCameraFacingMode = 'environment'; // 'user' para frontal, 'environment' para traseira
+        let currentMonitorView = 'anamnesis'; // 'anamnesis' ou 'exams'
 
         // Configurações da API Gemini
         const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI';
@@ -686,8 +757,8 @@
             }
         };
 
-        // Função para adicionar saída ao terminal de monitoramento (anamnese-preview)
-        const appendMonitorOutput = (text, type = "output", logToFirebase = true) => {
+        // Função para adicionar saída ao terminal de monitoramento (anamnese-preview ou exams-results-preview)
+        const appendMonitorOutput = (text, type = "output", targetElement, logToFirebase = true) => {
             const outputElement = document.createElement('div');
             
             if (type === "command") {
@@ -706,8 +777,8 @@
                 outputElement.innerHTML = `<span class="${type}">${text}</span>`;
             }
             
-            anamnesisPreview.appendChild(outputElement);
-            anamnesisPreview.scrollTop = anamnesisPreview.scrollHeight;
+            targetElement.appendChild(outputElement);
+            targetElement.scrollTop = targetElement.scrollHeight;
 
             if (logToFirebase && isLoggedIn && currentUser) {
                 logInteractionToFirebase(currentUser, text, type, 'monitor');
@@ -790,7 +861,34 @@
             anamnesisPreview.scrollTop = anamnesisPreview.scrollHeight;
 
             if (logToFirebase && isLoggedIn && currentUser) {
-                logInteractionToFirebase(currentUser, JSON.stringify(anamnesis), 'anamnesis_update', 'monitor');
+                // Salva o objeto anamnese completo no Firestore
+                saveAnamnesisToFirestore(currentUser, anamnesis);
+            }
+        };
+
+        // Função para atualizar a prévia dos resultados dos exames
+        const updateExamsResultsPreview = (logToFirebase = true) => {
+            examsResultsPreview.innerHTML = `<div class="section-title">RESULTADOS DOS EXAMES:</div>${examsResults || '<div class="info">Nenhum exame analisado ainda.</div>'}`;
+            examsResultsPreview.scrollTop = examsResultsPreview.scrollHeight;
+
+            if (logToFirebase && isLoggedIn && currentUser) {
+                saveExamsResultsToFirestore(currentUser, examsResults);
+            }
+        };
+
+        // Função para alternar a visualização do monitor
+        const toggleMonitorView = (view) => {
+            currentMonitorView = view;
+            if (view === 'anamnesis') {
+                anamnesisPreview.style.display = 'block';
+                examsResultsPreview.style.display = 'none';
+                toggleAnamnesisButton.classList.add('active');
+                toggleExamsButton.classList.remove('active');
+            } else {
+                anamnesisPreview.style.display = 'none';
+                examsResultsPreview.style.display = 'block';
+                toggleAnamnesisButton.classList.remove('active');
+                toggleExamsButton.classList.add('active');
             }
         };
 
@@ -938,7 +1036,7 @@
                     hps: updatedAnamnesis.hps || ""
                 };
                 
-                updateAnamnesisPreview();
+                updateAnamnesisPreview(); // Isso irá salvar no Firestore
                 appendOutput("Anamnese atualizada com sucesso.", "success");
             } catch (error) {
                 console.error("Erro ao processar resposta:", error);
@@ -1014,9 +1112,15 @@
 
         // Copiar conteúdo do terminal "Monitor" para área de transferência
         const copyMonitorContent = () => {
-            const monitorContent = anamnesisPreview.innerText;
-            if (monitorContent) {
-                navigator.clipboard.writeText(monitorContent)
+            let contentToCopy = "";
+            if (currentMonitorView === 'anamnesis') {
+                contentToCopy = anamnesisPreview.innerText;
+            } else {
+                contentToCopy = examsResultsPreview.innerText;
+            }
+            
+            if (contentToCopy) {
+                navigator.clipboard.writeText(contentToCopy)
                     .then(() => appendOutput("Conteúdo do Monitor copiado para a área de transferência.", "success"))
                     .catch(err => appendOutput(`Erro ao copiar: ${err}`, "error"));
             } else {
@@ -1176,39 +1280,55 @@
             }
         };
 
+        const saveAnamnesisToFirestore = async (username, anamnesisData) => {
+            try {
+                const docRef = doc(db, "sessions", username);
+                await setDoc(docRef, { anamnesis: anamnesisData, lastUpdated: new Date() }, { merge: true });
+                // console.log("Anamnese salva no Firestore.");
+            } catch (e) {
+                console.error("Erro ao salvar anamnese no Firestore: ", e);
+            }
+        };
+
+        const saveExamsResultsToFirestore = async (username, resultsData) => {
+            try {
+                const docRef = doc(db, "sessions", username);
+                await setDoc(docRef, { examsResults: resultsData, lastUpdated: new Date() }, { merge: true });
+                // console.log("Resultados de exames salvos no Firestore.");
+            } catch (e) {
+                console.error("Erro ao salvar resultados de exames no Firestore: ", e);
+            }
+        };
+
         const setupFirebaseListener = (username) => {
             if (unsubscribeSnapshot) {
                 unsubscribeSnapshot(); // Desinscreve de qualquer listener anterior
             }
 
-            const q = query(collection(db, "sessions", username, "interactions"), orderBy("timestamp"));
-            unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        const data = change.doc.data();
-                        // Evita duplicar a própria entrada
-                        // A lógica aqui pode precisar ser mais robusta para identificar a origem
-                        // Por simplicidade, vamos apenas adicionar ao monitor se não for do terminal interativo
-                        if (data.terminal === 'interactive') {
-                            // Se for uma interação do terminal interativo, apenas loga no console para evitar loop
-                            // console.log("Interação do terminal interativo recebida via Firebase:", data);
-                        } else if (data.terminal === 'monitor') {
-                            // Se for uma atualização de anamnese, atualiza o objeto anamnesis e o preview
-                            if (data.type === 'anamnesis_update') {
-                                try {
-                                    const updatedAnamnesis = JSON.parse(data.content);
-                                    anamnesis = updatedAnamnesis;
-                                    updateAnamnesisPreview(false); // Não logar novamente no Firebase
-                                } catch (e) {
-                                    console.error("Erro ao parsear anamnese do Firebase:", e);
-                                }
-                            } else {
-                                // Para outras interações do monitor, apenas adiciona ao monitor
-                                // appendMonitorOutput(data.content, data.type, false); // Não logar novamente no Firebase
-                            }
-                        }
+            const docRef = doc(db, "sessions", username);
+            unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    // Atualiza anamnese se houver dados e não for a mesma que já temos
+                    if (data.anamnesis && JSON.stringify(data.anamnesis) !== JSON.stringify(anamnesis)) {
+                        anamnesis = data.anamnesis;
+                        updateAnamnesisPreview(false); // Não logar novamente no Firebase
                     }
-                });
+                    // Atualiza resultados de exames se houver dados e não for o mesmo que já temos
+                    if (data.examsResults && data.examsResults !== examsResults) {
+                        examsResults = data.examsResults;
+                        updateExamsResultsPreview(false); // Não logar novamente no Firebase
+                    }
+                } else {
+                    // Documento não existe, inicializa com valores padrão
+                    anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+                    examsResults = "";
+                    updateAnamnesisPreview(false);
+                    updateExamsResultsPreview(false);
+                }
+            }, (error) => {
+                console.error("Erro ao ouvir o Firestore:", error);
+                appendOutput("Erro de conexão com o Firestore. As atualizações em tempo real podem estar desativadas.", "error");
             });
         };
 
@@ -1278,7 +1398,7 @@
                 cameraVideo.srcObject = stream;
                 cameraStream = stream;
                 cameraInterface.style.display = 'flex';
-                anamnesisPreview.style.display = 'none'; // Hide anamnesis preview
+                document.getElementById('monitor-content-wrapper').style.display = 'none'; // Hide monitor content
                 appendOutput("Câmera ativada. Capture ou carregue as fotos dos exames.", "info");
 
                 // Check if multiple cameras are available to show/hide switch button
@@ -1303,7 +1423,7 @@
                 cameraStream = null;
             }
             cameraInterface.style.display = 'none';
-            anamnesisPreview.style.display = 'block'; // Show anamnesis preview again
+            document.getElementById('monitor-content-wrapper').style.display = 'block'; // Show monitor content again
             previewContainer.innerHTML = ''; // Clear previews
             capturedImages = []; // Clear captured images
             sendExamsButton.classList.add('disabled');
@@ -1344,12 +1464,31 @@
         };
 
         const addPreview = (imageDataURL) => {
+            const previewItem = document.createElement('div');
+            previewItem.classList.add('preview-item');
+
             const img = document.createElement('img');
             img.src = imageDataURL;
             img.classList.add('preview-image');
-            previewContainer.appendChild(img);
+            previewItem.appendChild(img);
+
+            const deleteButton = document.createElement('button');
+            deleteButton.classList.add('delete-preview-button');
+            deleteButton.textContent = 'x';
+            deleteButton.onclick = () => removePreview(imageDataURL, previewItem);
+            previewItem.appendChild(deleteButton);
+
+            previewContainer.appendChild(previewItem);
             capturedImages.push(imageDataURL);
             sendExamsButton.classList.remove('disabled');
+        };
+
+        const removePreview = (imageDataURL, previewItemElement) => {
+            capturedImages = capturedImages.filter(url => url !== imageDataURL);
+            previewItemElement.remove();
+            if (capturedImages.length === 0) {
+                sendExamsButton.classList.add('disabled');
+            }
         };
 
         const uploadImageToImgur = async (imageDataURL) => {
@@ -1391,7 +1530,8 @@
             }
 
             appendOutput("Analisando exames com a I.A. (Isso pode levar alguns segundos)...", "info");
-            anamnesisPreview.innerHTML = '<div class="info">Analisando exames...</div>'; // Clear monitor and show loading
+            examsResultsPreview.innerHTML = '<div class="info">Analisando exames...</div>'; // Clear monitor and show loading
+            toggleMonitorView('exams'); // Switch to exams view
 
             try {
                 // Upload all captured images to Imgur first
@@ -1415,17 +1555,18 @@
 
                 const response = await callGeminiVisionAPI(capturedImages, prompt); // Pass base64 directly to Gemini Vision
 
-                anamnesisPreview.innerHTML = `<div class="section-title">RESULTADOS DOS EXAMES:</div>`;
-                response.split('\n').forEach(line => {
-                    if (line.trim()) {
-                        appendMonitorOutput(line.trim(), "output");
-                    }
-                });
+                examsResults = response.split('\n')
+                    .filter(line => line.trim() !== '')
+                    .map(line => `<div class="output">${line.trim()}</div>`)
+                    .join('');
+                
+                updateExamsResultsPreview(); // Isso irá salvar no Firestore
                 appendOutput("Análise de exames concluída.", "success");
                 stopCamera(); // Close camera interface after analysis
             } catch (error) {
                 appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
-                anamnesisPreview.innerHTML = '<div class="error">Erro ao analisar exames.</div>';
+                examsResults = '<div class="error">Erro ao analisar exames.</div>';
+                updateExamsResultsPreview();
             }
         };
 
@@ -1461,12 +1602,11 @@
                             <span class="info">Axon - Assistente Médico v1.0</span><br>
                             <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
                         `;
-                        // Iniciar anamnese imediatamente após login
-                        anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
-                        updateAnamnesisPreview();
+                        // Iniciar anamnese e exames com dados do Firestore após login
                         initialMessagesContainer.style.display = 'none';
                         appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
                         setupFirebaseListener(currentUser); // Inicia o listener do Firebase
+                        toggleMonitorView('anamnesis'); // Garante que a anamnese é a primeira vista
                     } else {
                         appendOutput("Usuário ou senha incorretos.", "error");
                     }
@@ -1486,7 +1626,9 @@
             
             if (cmd === '/exit') {
                 anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+                examsResults = "";
                 updateAnamnesisPreview();
+                updateExamsResultsPreview();
                 appendOutput("Sessão encerrada. Você precisará fazer login novamente.", "success");
                 if (isListening) stopListening();
                 stopCamera(); // Ensure camera is stopped on exit
@@ -1494,7 +1636,9 @@
             } 
             else if (cmd === '/clear') {
                 anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+                examsResults = "";
                 updateAnamnesisPreview();
+                updateExamsResultsPreview();
                 appendOutput("Terminal limpo.", "success");
                 if (isListening) stopListening();
                 stopCamera(); // Ensure camera is stopped on clear
@@ -1700,6 +1844,10 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         cancelCameraButton.addEventListener('click', stopCamera);
         cameraCloseBtn.addEventListener('click', stopCamera); // Close button for camera interface
         cameraSwitchButton.addEventListener('click', switchCamera); // New switch camera button
+
+        // Monitor Toggle Buttons Event Listeners
+        toggleAnamnesisButton.addEventListener('click', () => toggleMonitorView('anamnesis'));
+        toggleExamsButton.addEventListener('click', () => toggleMonitorView('exams'));
 
         if (isSpeechRecognitionSupported()) {
             initSpeechRecognition();
