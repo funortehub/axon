@@ -435,7 +435,8 @@
         .monitor-toggle-buttons {
             display: flex;
             gap: 5px;
-            margin-right: auto; /* Empurra para a esquerda */
+            margin-left: auto; /* Empurra para a direita */
+            margin-right: 10px; /* Adiciona um pequeno espaçamento à direita */
         }
 
         .monitor-toggle-button {
@@ -560,7 +561,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -1491,8 +1492,8 @@
             }
         };
 
-        const uploadImageToImgur = async (imageDataURL) => {
-            appendOutput("Enviando imagens aos servidores Axon...", "info");
+        const uploadImageToImgur = async (imageDataURL, index, total) => {
+            appendOutput(`Enviando imagens aos servidores Axon... (${index + 1}/${total} - ${Math.round(((index + 1) / total) * 100)}%)`, "info");
             try {
                 const base64Image = imageDataURL.split(',')[1]; // Remove "data:image/jpeg;base64,"
                 const formData = new FormData();
@@ -1514,7 +1515,7 @@
                 }
 
                 const data = await response.json();
-                appendOutput(`Imagem enviada para o Imgur: ${data.data.link}`, "success");
+                // Removed: appendOutput(`Imagem enviada para o Imgur: ${data.data.link}`, "success");
                 return data.data.link;
             } catch (error) {
                 appendOutput(`Falha ao enviar imagem para o Imgur: ${error.message}`, "error");
@@ -1529,17 +1530,20 @@
                 return;
             }
 
-            appendOutput("Axon medical está analisando suas imagens...", "info");
             examsResultsPreview.innerHTML = '<div class="info">Axon medical está analisando suas imagens...</div>'; // Clear monitor and show loading
             toggleMonitorView('exams'); // Switch to exams view
 
             try {
                 // Upload all captured images to Imgur first
                 const imgurLinks = [];
-                for (const imageDataURL of capturedImages) {
-                    const link = await uploadImageToImgur(imageDataURL);
+                for (let i = 0; i < capturedImages.length; i++) {
+                    const imageDataURL = capturedImages[i];
+                    const link = await uploadImageToImgur(imageDataURL, i, capturedImages.length);
                     imgurLinks.push(link);
                 }
+                appendOutput("Todas as imagens enviadas com sucesso.", "success");
+                appendOutput("Axon medical está analisando suas imagens...", "info");
+
 
                 // Now send the Imgur links to Gemini Vision API
                 const prompt = `Você é um assistente médico. Analise as imagens de exames laboratoriais ou de imagem fornecidas.
@@ -1629,6 +1633,10 @@
             }
             
             if (cmd === '/exit') {
+                if (currentUser) {
+                    await deleteDoc(doc(db, "sessions", currentUser));
+                    appendOutput("Dados da sessão apagados do Firebase.", "info");
+                }
                 anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                 examsResults = "";
                 updateAnamnesisPreview();
@@ -1639,6 +1647,10 @@
                 resetInteractiveTerminal(true);
             } 
             else if (cmd === '/clear') {
+                if (currentUser) {
+                    await deleteDoc(doc(db, "sessions", currentUser));
+                    appendOutput("Dados da sessão apagados do Firebase.", "info");
+                }
                 anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                 examsResults = "";
                 updateAnamnesisPreview();
