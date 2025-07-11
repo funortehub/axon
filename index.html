@@ -18,6 +18,7 @@
             --highlight-color: #1f6feb;
             --diagnosis-color: #a371f7;
             --conduct-color: #56d364;
+            --altered-color: #ffcc00; /* Nova cor para "Alterado" */
         }
 
         * {
@@ -380,6 +381,7 @@
             overflow: hidden;
             border: 1px solid var(--border-color);
             border-radius: 3px;
+            cursor: pointer; /* Adicionado cursor pointer */
         }
 
         .preview-image {
@@ -412,10 +414,16 @@
             background-color: rgba(255, 0, 0, 1);
         }
 
-        .camera-switch-button {
+        .camera-action-buttons { /* Novo container para botões de ação da câmera */
             position: absolute;
             top: 10px;
             right: 10px;
+            display: flex;
+            gap: 5px;
+            z-index: 10;
+        }
+
+        .camera-switch-button, .flashlight-button {
             background-color: rgba(0, 0, 0, 0.5);
             color: white;
             border: 1px solid var(--border-color);
@@ -423,12 +431,17 @@
             padding: 5px 10px;
             cursor: pointer;
             font-size: 12px;
-            z-index: 10;
             font-family: 'Consolas', 'Courier New', monospace;
+            transition: background-color 0.2s;
         }
 
-        .camera-switch-button:hover {
+        .camera-switch-button:hover, .flashlight-button:hover {
             background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        .flashlight-button.active {
+            background-color: var(--highlight-color);
+            color: var(--bg-color);
         }
 
         /* Estilos para os botões de alternância do monitor */
@@ -458,6 +471,61 @@
             background-color: var(--highlight-color);
             color: var(--bg-color);
             border-color: var(--highlight-color);
+        }
+
+        /* Estilos para o modal de imagem em tela cheia */
+        .fullscreen-modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 100; /* Sit on top */
+            padding-top: 60px; /* Location of the box */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            width: 80%;
+            max-width: 700px;
+        }
+
+        .modal-content, #caption {
+            animation-name: zoom;
+            animation-duration: 0.6s;
+        }
+
+        @keyframes zoom {
+            from {transform:scale(0)}
+            to {transform:scale(1)}
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .modal-close:hover,
+        .modal-close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Estilo para o texto "Alterado" */
+        .output .altered-text {
+            color: var(--altered-color);
+            font-weight: bold;
+            margin-left: 10px; /* Espaçamento à direita */
         }
     </style>
 </head>
@@ -538,7 +606,10 @@
                 <div class="terminal-content" style="padding: 10px;">
                     <div class="camera-video-wrapper">
                         <video id="camera-video" class="camera-video" autoplay playsinline></video>
-                        <button id="camera-switch-button" class="camera-switch-button">Trocar Câmera</button>
+                        <div class="camera-action-buttons">
+                            <button id="flashlight-button" class="flashlight-button" style="display:none;">Lanterna</button>
+                            <button id="camera-switch-button" class="camera-switch-button" style="display:none;">Trocar Câmera</button>
+                        </div>
                     </div>
                     <canvas id="camera-canvas" style="display:none;"></canvas>
                     <div class="camera-controls">
@@ -556,6 +627,12 @@
 
     <div class="footer">
         <span>AXON | Sistema médico inteligente desenvolvido por Ian Bastos</span>
+    </div>
+
+    <!-- The Modal for fullscreen image -->
+    <div id="fullscreen-modal" class="fullscreen-modal">
+        <span class="modal-close">&times;</span>
+        <img class="modal-content" id="modal-image">
     </div>
 
     <script type="module">
@@ -597,11 +674,17 @@
         const cancelCameraButton = document.getElementById('cancel-camera-button');
         const previewContainer = document.getElementById('preview-container');
         const cameraSwitchButton = document.getElementById('camera-switch-button');
+        const flashlightButton = document.getElementById('flashlight-button'); // Novo botão de lanterna
         const cameraCloseBtn = document.getElementById('camera-close-btn');
 
         // Monitor toggle buttons
         const toggleAnamnesisButton = document.getElementById('toggle-anamnesis');
         const toggleExamsButton = document.getElementById('toggle-exams');
+
+        // Fullscreen Modal elements
+        const fullscreenModal = document.getElementById('fullscreen-modal');
+        const modalImage = document.getElementById('modal-image');
+        const modalClose = document.getElementsByClassName('modal-close')[0];
 
         // Estado da aplicação
         let isListening = false;
@@ -623,6 +706,7 @@
         let capturedImages = []; // Armazena os Data URLs das imagens capturadas/carregadas
         let currentCameraFacingMode = 'environment'; // 'user' para frontal, 'environment' para traseira
         let currentMonitorView = 'anamnesis'; // 'anamnesis' ou 'exams'
+        let isFlashlightOn = false; // Estado da lanterna
 
         // Configurações da API Gemini
         const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI';
@@ -869,7 +953,21 @@
 
         // Função para atualizar a prévia dos resultados dos exames
         const updateExamsResultsPreview = (logToFirebase = true) => {
-            examsResultsPreview.innerHTML = `<div class="section-title">RESULTADOS DOS EXAMES:</div>${examsResults || '<div class="info">Nenhum exame analisado ainda.</div>'}`;
+            let formattedResults = '';
+            if (examsResults) {
+                formattedResults = examsResults.split('\n')
+                    .filter(line => line.trim() !== '')
+                    .map(line => {
+                        if (line.includes('(Alterado)') || line.includes('(Anormal)')) {
+                            const cleanLine = line.replace(/\(Alterado\)/g, '').replace(/\(Anormal\)/g, '').trim();
+                            return `<div class="output">${cleanLine} <span class="altered-text">(Alterado)</span></div>`;
+                        }
+                        return `<div class="output">${line.trim()}</div>`;
+                    })
+                    .join('');
+            }
+
+            examsResultsPreview.innerHTML = `<div class="section-title">RESULTADOS DOS EXAMES:</div>${formattedResults || '<div class="info">Nenhum exame analisado ainda.</div>'}`;
             examsResultsPreview.scrollTop = examsResultsPreview.scrollHeight;
 
             if (logToFirebase && isLoggedIn && currentUser) {
@@ -1124,6 +1222,8 @@
                 if (titleElement) {
                     titleElement.remove();
                 }
+                // Remove o texto "(Alterado)" e o espaçamento extra antes de copiar
+                Array.from(tempDiv.querySelectorAll('.altered-text')).forEach(span => span.remove());
                 contentToCopy = tempDiv.innerText;
             }
             
@@ -1418,6 +1518,14 @@
                     cameraSwitchButton.style.display = 'none';
                 }
 
+                // Check for flashlight capability
+                const track = stream.getVideoTracks()[0];
+                if (track && 'torch' in track.getCapabilities()) {
+                    flashlightButton.style.display = 'block';
+                } else {
+                    flashlightButton.style.display = 'none';
+                }
+
             } catch (err) {
                 appendOutput(`Erro ao acessar a câmera: ${err.message}. Verifique as permissões.`, "error");
                 console.error("Erro ao acessar a câmera:", err);
@@ -1426,6 +1534,10 @@
 
         const stopCamera = () => {
             if (cameraStream) {
+                // Turn off flashlight if it's on
+                if (isFlashlightOn) {
+                    toggleFlashlight();
+                }
                 cameraStream.getTracks().forEach(track => track.stop());
                 cameraVideo.srcObject = null;
                 cameraStream = null;
@@ -1435,12 +1547,38 @@
             previewContainer.innerHTML = ''; // Clear previews
             capturedImages = []; // Clear captured images
             sendExamsButton.classList.add('disabled');
+            flashlightButton.style.display = 'none'; // Hide flashlight button
+            cameraSwitchButton.style.display = 'none'; // Hide switch camera button
             appendOutput("Câmera desativada.", "info");
         };
 
         const switchCamera = async () => {
             currentCameraFacingMode = (currentCameraFacingMode === 'user') ? 'environment' : 'user';
             await startCamera(); // Restart camera with new facing mode
+        };
+
+        const toggleFlashlight = async () => {
+            if (!cameraStream) {
+                appendOutput("Câmera não está ativa para controlar a lanterna.", "error");
+                return;
+            }
+
+            const track = cameraStream.getVideoTracks()[0];
+            if (track && 'torch' in track.getCapabilities()) {
+                try {
+                    await track.applyConstraints({
+                        advanced: [{ torch: !isFlashlightOn }]
+                    });
+                    isFlashlightOn = !isFlashlightOn;
+                    flashlightButton.classList.toggle('active', isFlashlightOn);
+                    appendOutput(`Lanterna ${isFlashlightOn ? 'ativada' : 'desativada'}.`, "info");
+                } catch (err) {
+                    appendOutput(`Erro ao controlar a lanterna: ${err.message}`, "error");
+                    console.error("Flashlight error:", err);
+                }
+            } else {
+                appendOutput("Lanterna não suportada por esta câmera.", "info");
+            }
         };
 
         const capturePhoto = () => {
@@ -1478,12 +1616,16 @@
             const img = document.createElement('img');
             img.src = imageDataURL;
             img.classList.add('preview-image');
+            img.onclick = () => openFullscreenModal(imageDataURL); // Adiciona evento de clique para tela cheia
             previewItem.appendChild(img);
 
             const deleteButton = document.createElement('button');
             deleteButton.classList.add('delete-preview-button');
             deleteButton.textContent = 'x';
-            deleteButton.onclick = () => removePreview(imageDataURL, previewItem);
+            deleteButton.onclick = (e) => {
+                e.stopPropagation(); // Evita que o clique no botão de exclusão abra o modal
+                removePreview(imageDataURL, previewItem);
+            };
             previewItem.appendChild(deleteButton);
 
             previewContainer.appendChild(previewItem);
@@ -1496,6 +1638,22 @@
             previewItemElement.remove();
             if (capturedImages.length === 0) {
                 sendExamsButton.classList.add('disabled');
+            }
+        };
+
+        // Fullscreen Modal Functions
+        const openFullscreenModal = (imageDataURL) => {
+            modalImage.src = imageDataURL;
+            fullscreenModal.style.display = 'block';
+        };
+
+        modalClose.onclick = () => {
+            fullscreenModal.style.display = 'none';
+        };
+
+        fullscreenModal.onclick = (event) => {
+            if (event.target === fullscreenModal) {
+                fullscreenModal.style.display = 'none';
             }
         };
 
@@ -1570,10 +1728,7 @@
                 if (examsResults) {
                     examsResults += `<br><div class="section-title">NOVOS RESULTADOS:</div>`;
                 }
-                examsResults += response.split('\n')
-                    .filter(line => line.trim() !== '')
-                    .map(line => `<div class="output">${line.trim()}</div>`)
-                    .join('');
+                examsResults += response; // A formatação para (Alterado) será feita em updateExamsResultsPreview
                 
                 updateExamsResultsPreview(); // Isso irá salvar no Firestore
                 appendOutput("Análise de exames concluída.", "success");
@@ -1867,6 +2022,7 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         cancelCameraButton.addEventListener('click', stopCamera);
         cameraCloseBtn.addEventListener('click', stopCamera); // Close button for camera interface
         cameraSwitchButton.addEventListener('click', switchCamera); // New switch camera button
+        flashlightButton.addEventListener('click', toggleFlashlight); // New flashlight button
 
         // Monitor Toggle Buttons Event Listeners
         toggleAnamnesisButton.addEventListener('click', () => toggleMonitorView('anamnesis'));
