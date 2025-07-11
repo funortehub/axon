@@ -435,7 +435,7 @@
         .monitor-toggle-buttons {
             display: flex;
             gap: 5px;
-            margin-left: auto; /* Empurra para a direita */
+            margin-right: auto; /* Empurra para a esquerda */
         }
 
         .monitor-toggle-button {
@@ -1492,7 +1492,7 @@
         };
 
         const uploadImageToImgur = async (imageDataURL) => {
-            appendOutput("Enviando imagem para o Imgur...", "info");
+            appendOutput("Enviando imagens aos servidores Axon...", "info");
             try {
                 const base64Image = imageDataURL.split(',')[1]; // Remove "data:image/jpeg;base64,"
                 const formData = new FormData();
@@ -1529,8 +1529,8 @@
                 return;
             }
 
-            appendOutput("Analisando exames com a I.A. (Isso pode levar alguns segundos)...", "info");
-            examsResultsPreview.innerHTML = '<div class="info">Analisando exames...</div>'; // Clear monitor and show loading
+            appendOutput("Axon medical está analisando suas imagens...", "info");
+            examsResultsPreview.innerHTML = '<div class="info">Axon medical está analisando suas imagens...</div>'; // Clear monitor and show loading
             toggleMonitorView('exams'); // Switch to exams view
 
             try {
@@ -1555,7 +1555,11 @@
 
                 const response = await callGeminiVisionAPI(capturedImages, prompt); // Pass base64 directly to Gemini Vision
 
-                examsResults = response.split('\n')
+                // Append new results to existing ones
+                if (examsResults) {
+                    examsResults += `<br><div class="section-title">NOVOS RESULTADOS:</div>`;
+                }
+                examsResults += response.split('\n')
                     .filter(line => line.trim() !== '')
                     .map(line => `<div class="output">${line.trim()}</div>`)
                     .join('');
