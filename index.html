@@ -306,40 +306,30 @@
             border-top: 1px solid var(--border-color);
             position: relative;
             z-index: 1; /* Garante que fique acima do logo */
-            flex: 1; /* Permite que ocupe o espaço disponível */
-            overflow-y: auto; /* Adiciona scroll se o conteúdo for muito grande */
         }
 
         .camera-video {
             width: 100%;
-            max-width: 400px; /* Limita a largura do vídeo */
+            max-width: 400px;
             border: 1px solid var(--border-color);
             background-color: black;
-            aspect-ratio: 16/9; /* Mantém a proporção do vídeo */
-            object-fit: cover; /* Garante que o vídeo preencha o espaço */
         }
 
         .camera-controls {
             display: flex;
-            flex-wrap: wrap; /* Permite que os botões quebrem a linha */
-            justify-content: center;
-            gap: 10px; /* Espaçamento entre os botões */
+            gap: 15px;
             margin-top: 10px;
-            width: 100%; /* Ocupa a largura total do container */
         }
 
         .camera-button {
             background-color: var(--prompt-color);
             color: var(--bg-color);
             border: none;
-            padding: 10px 15px; /* Ajusta o padding para caber mais botões */
+            padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 14px; /* Ajusta o tamanho da fonte */
+            font-size: 16px;
             transition: background-color 0.3s ease;
-            flex-grow: 1; /* Permite que os botões cresçam para preencher o espaço */
-            min-width: 120px; /* Largura mínima para os botões */
-            text-align: center;
         }
 
         .camera-button:hover {
@@ -357,8 +347,6 @@
             gap: 10px;
             margin-top: 10px;
             justify-content: center;
-            width: 100%; /* Ocupa a largura total do container */
-            padding-bottom: 20px; /* Espaço extra para o scroll */
         }
 
         .preview-image {
@@ -802,7 +790,9 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        contents: contents.flatMap(c => c.inlineData ? [{ inlineData: c.inlineData }] : [{ text: c.text }])
+                        contents: [{
+                            parts: contents.flatMap(c => c.inlineData ? [{ inlineData: c.inlineData }] : [{ text: c.text }])
+                        }]
                     })
                 });
 
