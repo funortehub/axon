@@ -312,7 +312,7 @@
         .camera-video-wrapper {
             position: relative;
             width: 100%;
-            padding-bottom: 75%;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio for video */
             background-color: black;
             border: 1px solid var(--border-color);
             border-radius: 5px;
@@ -1117,7 +1117,14 @@
             if (currentMonitorView === 'anamnesis') {
                 contentToCopy = anamnesisPreview.innerText;
             } else {
-                contentToCopy = examsResultsPreview.innerText;
+                // Modificação aqui: remove o título "RESULTADOS DOS EXAMES:" antes de copiar
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = examsResultsPreview.innerHTML;
+                const titleElement = tempDiv.querySelector('.section-title');
+                if (titleElement) {
+                    titleElement.remove();
+                }
+                contentToCopy = tempDiv.innerText;
             }
             
             if (contentToCopy) {
