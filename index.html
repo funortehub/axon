@@ -301,20 +301,32 @@
             flex-direction: column;
             flex: 1; /* Permite que o container da câmera ocupe o espaço disponível */
             background-color: var(--terminal-bg);
-            border-top: 1px solid var(--border-color);
+            border: 1px solid var(--border-color); /* Adicionado para manter o estilo de terminal */
+            border-radius: 8px; /* Adicionado para manter o estilo de terminal */
             position: relative;
             z-index: 1; /* Garante que fique acima do logo */
             padding: 15px; /* Adicionado padding para melhor espaçamento */
             gap: 15px; /* Espaçamento entre os elementos da câmera */
+            overflow: hidden; /* Garante que o conteúdo não transborde */
+        }
+
+        .camera-video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 75%; /* Proporção 4:3 para o vídeo */
+            background-color: black;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            overflow: hidden;
         }
 
         .camera-video {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            max-width: 100%; /* Garante que o vídeo não transborde */
-            height: auto; /* Mantém a proporção */
-            border: 1px solid var(--border-color);
-            background-color: black;
-            flex-shrink: 0; /* Impede que o vídeo encolha */
+            height: 100%;
+            object-fit: cover; /* Garante que o vídeo preencha o espaço */
         }
 
         .camera-controls {
@@ -336,6 +348,7 @@
             transition: background-color 0.3s ease;
             flex-grow: 1; /* Permite que os botões cresçam para preencher o espaço */
             min-width: 120px; /* Largura mínima para os botões */
+            font-family: 'Consolas', 'Courier New', monospace; /* Mantém a fonte do terminal */
         }
 
         .camera-button:hover {
@@ -358,6 +371,7 @@
             border: 1px dashed var(--border-color); /* Borda tracejada para indicar área de drop/previews */
             padding: 10px;
             border-radius: 5px;
+            background-color: #0d1117; /* Fundo mais escuro para as prévias */
         }
 
         .preview-image {
@@ -368,6 +382,25 @@
             border: 1px solid var(--border-color);
             object-fit: cover;
             border-radius: 3px;
+        }
+
+        .camera-switch-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            z-index: 10; /* Garante que fique acima do vídeo */
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        .camera-switch-button:hover {
+            background-color: rgba(0, 0, 0, 0.7);
         }
     </style>
 </head>
@@ -430,16 +463,27 @@
                 <div class="info">Aguardando início da anamnese...</div>
             </div>
             <div class="camera-container" id="camera-interface" style="display: none;">
-                <video id="camera-video" class="camera-video" autoplay playsinline></video>
-                <canvas id="camera-canvas" style="display:none;"></canvas>
-                <div class="camera-controls">
-                    <button id="capture-button" class="camera-button">Capturar Foto</button>
-                    <input type="file" id="file-input" accept="image/*" style="display: none;">
-                    <button id="upload-button" class="camera-button">Carregar Arquivo</button>
-                    <button id="send-exams-button" class="camera-button disabled">Enviar Exames</button>
-                    <button id="cancel-camera-button" class="camera-button">Cancelar</button>
+                <div class="terminal-header">
+                    <div class="terminal-title">Câmera de Exames</div>
+                    <div class="terminal-actions">
+                        <div class="terminal-btn close-btn" id="camera-close-btn"></div>
+                    </div>
                 </div>
-                <div id="preview-container" class="preview-container"></div>
+                <div class="terminal-content" style="padding: 10px;">
+                    <div class="camera-video-wrapper">
+                        <video id="camera-video" class="camera-video" autoplay playsinline></video>
+                        <button id="camera-switch-button" class="camera-switch-button">Trocar Câmera</button>
+                    </div>
+                    <canvas id="camera-canvas" style="display:none;"></canvas>
+                    <div class="camera-controls">
+                        <button id="capture-button" class="camera-button">Capturar Foto</button>
+                        <input type="file" id="file-input" accept="image/*" style="display: none;">
+                        <button id="upload-button" class="camera-button">Carregar Arquivo</button>
+                        <button id="send-exams-button" class="camera-button disabled">Enviar Exames</button>
+                        <button id="cancel-camera-button" class="camera-button">Cancelar</button>
+                    </div>
+                    <div id="preview-container" class="preview-container"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -485,6 +529,9 @@
         const sendExamsButton = document.getElementById('send-exams-button');
         const cancelCameraButton = document.getElementById('cancel-camera-button');
         const previewContainer = document.getElementById('preview-container');
+        const cameraSwitchButton = document.getElementById('camera-switch-button');
+        const cameraCloseBtn = document.getElementById('camera-close-btn');
+
 
         // Estado da aplicação
         let isListening = false;
@@ -503,6 +550,7 @@
         let unsubscribeSnapshot = null; // Para gerenciar a inscrição do Firestore
         let cameraStream = null; // Para gerenciar o stream da câmera
         let capturedImages = []; // Armazena os Data URLs das imagens capturadas/carregadas
+        let currentCameraFacingMode = 'environment'; // 'user' para frontal, 'environment' para traseira
 
         // Configurações da API Gemini
         const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI';
@@ -1213,12 +1261,35 @@
         // Camera and Image Processing Functions
         const startCamera = async () => {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                // Stop any existing stream
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                }
+
+                // Prefer environment camera on mobile
+                const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+                const constraints = {
+                    video: {
+                        facingMode: isMobile ? 'environment' : currentCameraFacingMode
+                    }
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 cameraVideo.srcObject = stream;
                 cameraStream = stream;
                 cameraInterface.style.display = 'flex';
                 anamnesisPreview.style.display = 'none'; // Hide anamnesis preview
                 appendOutput("Câmera ativada. Capture ou carregue as fotos dos exames.", "info");
+
+                // Check if multiple cameras are available to show/hide switch button
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoInputDevices = devices.filter(device => device.kind === 'videoinput');
+                if (videoInputDevices.length > 1) {
+                    cameraSwitchButton.style.display = 'block';
+                } else {
+                    cameraSwitchButton.style.display = 'none';
+                }
+
             } catch (err) {
                 appendOutput(`Erro ao acessar a câmera: ${err.message}. Verifique as permissões.`, "error");
                 console.error("Erro ao acessar a câmera:", err);
@@ -1237,6 +1308,11 @@
             capturedImages = []; // Clear captured images
             sendExamsButton.classList.add('disabled');
             appendOutput("Câmera desativada.", "info");
+        };
+
+        const switchCamera = async () => {
+            currentCameraFacingMode = (currentCameraFacingMode === 'user') ? 'environment' : 'user';
+            await startCamera(); // Restart camera with new facing mode
         };
 
         const capturePhoto = () => {
@@ -1622,6 +1698,8 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         fileInput.addEventListener('change', handleFileUpload);
         sendExamsButton.addEventListener('click', analyzeExams);
         cancelCameraButton.addEventListener('click', stopCamera);
+        cameraCloseBtn.addEventListener('click', stopCamera); // Close button for camera interface
+        cameraSwitchButton.addEventListener('click', switchCamera); // New switch camera button
 
         if (isSpeechRecognitionSupported()) {
             initSpeechRecognition();
