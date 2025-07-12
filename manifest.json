@@ -1,21 +1,21 @@
 {
-  "name": "AXON Medical",
-  "short_name": "AXON",
-  "description": "Assistente Médico Inteligente",
-  "start_url": "/",
-  "display": "fullscreen",  // Alterado para fullscreen
-  "background_color": "#0d1117",
-  "theme_color": "#0d1117",
-  "icons": [
-    {
-      "src": "appicon.jpg",
-      "sizes": "192x192",
-      "type": "image/jpeg"
-    },
-    {
-      "src": "appicon.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg"
-    }
-  ]
+    "name": "Axon A.I",
+    "short_name": "Axon",
+    "description": "Assistente Médico Inteligente",
+    "start_url": "/",
+    "display": "fullscreen",
+    "background_color": "#0d1117",
+    "theme_color": "#0d1117",
+    "icons": [
+        {
+            "src": "/appicon.jpg",
+            "sizes": "192x192",
+            "type": "image/jpeg"
+        },
+        {
+            "src": "/appicon.jpg",
+            "sizes": "512x512",
+            "type": "image/jpeg"
+        }
+    ]
 }
