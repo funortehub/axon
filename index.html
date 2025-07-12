@@ -295,46 +295,42 @@
             z-index: 0;
         }
 
-        /* Estilos para o modal da câmera */
+        /* Estilos para o modal da câmera DENTRO DO MONITOR */
         .camera-modal {
             display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 100; /* Sit on top */
-            left: 0;
+            position: absolute; /* Positioned within the monitor terminal-content */
             top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
-            justify-content: center; /* Center content horizontally */
-            align-items: center; /* Center content vertically */
+            left: 0;
+            width: 100%; /* Full width of its parent */
+            height: 100%; /* Full height of its parent */
+            background-color: var(--terminal-bg); /* Background of the terminal */
+            z-index: 50; /* Above other monitor content */
+            flex-direction: column;
+            justify-content: flex-start; /* Align content to the top */
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-y: auto; /* Allow scrolling if content overflows */
         }
 
         .camera-container {
             display: flex;
             flex-direction: column;
-            background-color: var(--terminal-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            position: relative;
-            z-index: 1;
-            padding: 15px;
-            gap: 15px;
-            overflow: hidden;
-            width: 90%; /* Adjust width for responsiveness */
-            max-width: 400px; /* Max width for 9:16 aspect ratio */
-            height: auto; /* Height will be determined by aspect ratio */
-            max-height: 90vh; /* Limit height on smaller screens */
+            width: 100%;
+            height: 100%; /* Take full height of the modal */
+            gap: 10px;
+            overflow: hidden; /* Hide overflow for internal elements */
         }
 
         .camera-video-wrapper {
             position: relative;
             width: 100%;
-            padding-bottom: 177.77%; /* 9:16 aspect ratio (16/9 * 100) */
+            padding-bottom: 75%; /* 4:3 aspect ratio (3/4 * 100) - better for landscape/general use */
             background-color: black;
             border: 1px solid var(--border-color);
             border-radius: 5px;
             overflow: hidden;
+            flex-shrink: 0; /* Prevent shrinking */
         }
 
         .camera-video {
@@ -383,7 +379,7 @@
             gap: 10px;
             justify-content: center;
             overflow-y: auto;
-            flex-grow: 1;
+            flex-grow: 1; /* Allow it to grow and take available space */
             min-height: 50px;
             border: 1px dashed var(--border-color);
             padding: 10px;
@@ -605,12 +601,40 @@
                     <div class="terminal-btn maximize-btn"></div>
                 </div>
             </div>
-            <div class="terminal-content" id="monitor-content-wrapper">
+            <div class="terminal-content" id="monitor-content-wrapper" style="position: relative;">
                 <div id="anamnesis-preview" class="monitor-view">
                     <div class="info">Aguardando início da anamnese...</div>
                 </div>
                 <div id="exams-results-preview" class="monitor-view" style="display: none;">
                     <div class="info">Nenhum exame analisado ainda.</div>
+                </div>
+
+                <!-- New Camera Modal - Now inside the monitor terminal-content -->
+                <div id="camera-modal" class="camera-modal">
+                    <div class="camera-container">
+                        <div class="terminal-header" style="width: 100%; border-bottom: none; padding: 0 0 8px 0;">
+                            <div class="terminal-title">Câmera de Exames</div>
+                            <div class="terminal-actions">
+                                <div class="terminal-btn close-btn" id="camera-close-btn"></div>
+                            </div>
+                        </div>
+                        <div class="camera-video-wrapper">
+                            <video id="camera-video" class="camera-video" autoplay playsinline></video>
+                            <div class="camera-action-buttons">
+                                <button id="flashlight-button" class="flashlight-button" style="display:none;">Lanterna</button>
+                                <button id="camera-switch-button" class="camera-switch-button" style="display:none;">Trocar Câmera</button>
+                            </div>
+                        </div>
+                        <canvas id="camera-canvas" style="display:none;"></canvas>
+                        <div class="camera-controls">
+                            <button id="capture-button" class="camera-button">Capturar Foto</button>
+                            <input type="file" id="file-input" accept="image/*" style="display: none;">
+                            <button id="upload-button" class="camera-button">Carregar Arquivo</button>
+                            <button id="send-exams-button" class="camera-button disabled">Enviar Exames</button>
+                            <button id="cancel-camera-button" class="camera-button">Cancelar</button>
+                        </div>
+                        <div id="preview-container" class="preview-container"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -624,36 +648,6 @@
     <div id="fullscreen-modal" class="fullscreen-modal">
         <span class="modal-close">&times;</span>
         <img class="modal-content" id="modal-image">
-    </div>
-
-    <!-- New Camera Modal -->
-    <div id="camera-modal" class="camera-modal">
-        <div class="camera-container">
-            <div class="terminal-header">
-                <div class="terminal-title">Câmera de Exames</div>
-                <div class="terminal-actions">
-                    <div class="terminal-btn close-btn" id="camera-close-btn"></div>
-                </div>
-            </div>
-            <div class="terminal-content" style="padding: 10px;">
-                <div class="camera-video-wrapper">
-                    <video id="camera-video" class="camera-video" autoplay playsinline></video>
-                    <div class="camera-action-buttons">
-                        <button id="flashlight-button" class="flashlight-button" style="display:none;">Lanterna</button>
-                        <button id="camera-switch-button" class="camera-switch-button" style="display:none;">Trocar Câmera</button>
-                    </div>
-                </div>
-                <canvas id="camera-canvas" style="display:none;"></canvas>
-                <div class="camera-controls">
-                    <button id="capture-button" class="camera-button">Capturar Foto</button>
-                    <input type="file" id="file-input" accept="image/*" style="display: none;">
-                    <button id="upload-button" class="camera-button">Carregar Arquivo</button>
-                    <button id="send-exams-button" class="camera-button disabled">Enviar Exames</button>
-                    <button id="cancel-camera-button" class="camera-button">Cancelar</button>
-                </div>
-                <div id="preview-container" class="preview-container"></div>
-            </div>
-        </div>
     </div>
 
     <script type="module">
@@ -1002,13 +996,21 @@
             if (view === 'anamnesis') {
                 anamnesisPreview.style.display = 'block';
                 examsResultsPreview.style.display = 'none';
+                cameraModal.style.display = 'none'; // Hide camera if switching to anamnesis
                 toggleAnamnesisButton.classList.add('active');
                 toggleExamsButton.classList.remove('active');
-            } else {
+            } else if (view === 'exams') {
                 anamnesisPreview.style.display = 'none';
                 examsResultsPreview.style.display = 'block';
+                cameraModal.style.display = 'none'; // Hide camera if switching to exams results
                 toggleAnamnesisButton.classList.remove('active');
                 toggleExamsButton.classList.add('active');
+            } else if (view === 'camera') {
+                anamnesisPreview.style.display = 'none';
+                examsResultsPreview.style.display = 'none';
+                cameraModal.style.display = 'flex'; // Show camera
+                toggleAnamnesisButton.classList.remove('active');
+                toggleExamsButton.classList.remove('active'); // No button active when camera is open
             }
         };
 
@@ -1172,11 +1174,11 @@
 
         // Gerar hipóteses diagnósticas
         const generateDiagnosticHypotheses = async () => {
-            let fullPrompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}`;
+            let fullPrompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}, `;
             if (examsResults) {
-                fullPrompt += ` e nos seguintes resultados de exames: ${examsResults.replace(/<[^>]*>/g, '')}.`; // Remove HTML tags
+                fullPrompt += `e nos seguintes resultados de exames: ${examsResults}, `;
             }
-            fullPrompt += ` Liste as possíveis hipóteses diagnósticas em ordem de probabilidade. 
+            fullPrompt += `liste as possíveis hipóteses diagnósticas em ordem de probabilidade. 
             Formate cada hipótese como um item em uma lista. 
             Seja técnico, objetivo e extremamente resumido. 
             Retorne apenas a lista de hipóteses, sem introdução ou conclusão.`;
@@ -1198,11 +1200,11 @@
 
         // Gerar conduta médica
         const generateMedicalConduct = async () => {
-            let fullPrompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}`;
+            let fullPrompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}, `;
             if (examsResults) {
-                fullPrompt += ` e nos seguintes resultados de exames: ${examsResults.replace(/<[^>]*>/g, '')}.`; // Remove HTML tags
+                fullPrompt += `e nos seguintes resultados de exames: ${examsResults}, `;
             }
-            fullPrompt += ` Proponha uma conduta médica completa, dividida em tópicos:
+            fullPrompt += `proponha uma conduta médica completa, dividida em tópicos:
             1. Medicações disponíveis no SUS (com dose e posologia resumida)
             2. Exames complementares disponíveis no SUS
             3. Condutas não farmacológicas
@@ -1532,7 +1534,7 @@
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 cameraVideo.srcObject = stream;
                 cameraStream = stream;
-                cameraModal.style.display = 'flex'; // Show the camera modal
+                toggleMonitorView('camera'); // Show the camera modal within the monitor
                 appendOutput("Câmera ativada. Capture ou carregue as fotos dos exames.", "info");
 
                 // Check if multiple cameras are available to show/hide switch button
@@ -1568,7 +1570,7 @@
                 cameraVideo.srcObject = null;
                 cameraStream = null;
             }
-            cameraModal.style.display = 'none'; // Hide the camera modal
+            toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); // Revert to previous monitor view
             previewContainer.innerHTML = ''; // Clear previews
             capturedImages = []; // Clear captured images
             sendExamsButton.classList.add('disabled');
