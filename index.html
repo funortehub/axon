@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Axon - Medical</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
             --bg-color: #0d1117;
@@ -351,36 +352,46 @@
             object-fit: cover;
         }
 
+        /* Modificações para os botões de controle da câmera */
         .camera-controls {
+            position: absolute; /* Posiciona os botões sobre o vídeo */
+            bottom: 10px; /* Distância do fundo do vídeo */
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
             flex-wrap: wrap;
-            gap: 8px; /* Reduced gap */
+            gap: 10px; /* Espaçamento entre os botões */
             justify-content: center;
-            flex-shrink: 0;
-            padding: 0 10px 10px; /* Add padding to bottom and sides */
+            z-index: 2; /* Garante que fiquem acima do vídeo */
+            width: 90%; /* Largura para os botões */
         }
 
         .camera-button {
-            background-color: var(--prompt-color);
-            color: var(--bg-color);
-            border: none;
-            padding: 8px 12px; /* Reduced padding */
-            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.6); /* Fundo semi-transparente */
+            color: white;
+            border: 1px solid var(--border-color);
+            padding: 10px 15px; /* Aumentado o padding para ícones */
+            border-radius: 50%; /* Botões redondos */
             cursor: pointer;
-            font-size: 13px; /* Reduced font size */
-            transition: background-color 0.3s ease;
-            flex-grow: 1;
-            min-width: 100px; /* Reduced min-width */
-            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 18px; /* Tamanho do ícone */
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: flex; /* Para centralizar o ícone */
+            align-items: center;
+            justify-content: center;
+            width: 50px; /* Largura fixa para o círculo */
+            height: 50px; /* Altura fixa para o círculo */
+            flex-shrink: 0; /* Não encolher */
         }
 
         .camera-button:hover {
             background-color: var(--highlight-color);
+            transform: scale(1.05); /* Pequeno efeito de zoom */
         }
 
         .camera-button.disabled {
             background-color: #555;
             cursor: not-allowed;
+            opacity: 0.7;
         }
 
         .preview-container {
@@ -395,7 +406,7 @@
             padding: 8px; /* Reduced padding */
             border-radius: 5px;
             background-color: #0d1117;
-            margin: 0 10px; /* Add margin to sides */
+            margin: 0 10px 10px; /* Add margin to sides and bottom */
         }
 
         .preview-item { /* Novo wrapper para imagem e botão de exclusão */
@@ -633,18 +644,20 @@
                             <div class="camera-video-wrapper">
                                 <video id="camera-video" class="camera-video" autoplay playsinline></video>
                                 <div class="camera-action-buttons">
-                                    <button id="flashlight-button" class="flashlight-button" style="display:none;">Lanterna</button>
-                                    <button id="camera-switch-button" class="camera-switch-button" style="display:none;">Trocar Câmera</button>
+                                    <button id="flashlight-button" class="flashlight-button" style="display:none;"><i class="fas fa-lightbulb"></i> Lanterna</button>
+                                    <button id="camera-switch-button" class="camera-switch-button" style="display:none;"><i class="fas fa-sync-alt"></i> Trocar Câmera</button>
+                                </div>
+                                <!-- Botões de controle da câmera sobre o vídeo -->
+                                <div class="camera-controls">
+                                    <button id="capture-button" class="camera-button" title="Capturar Foto"><i class="fas fa-camera"></i></button>
+                                    <input type="file" id="file-input" accept="image/*" style="display: none;">
+                                    <button id="upload-button" class="camera-button" title="Carregar Arquivo"><i class="fas fa-upload"></i></button>
+                                    <button id="send-exams-button" class="camera-button disabled" title="Enviar Exames"><i class="fas fa-paper-plane"></i></button>
+                                    <button id="cancel-camera-button" class="camera-button" title="Cancelar"><i class="fas fa-times"></i></button>
                                 </div>
                             </div>
                             <canvas id="camera-canvas" style="display:none;"></canvas>
-                            <div class="camera-controls">
-                                <button id="capture-button" class="camera-button">Capturar Foto</button>
-                                <input type="file" id="file-input" accept="image/*" style="display: none;">
-                                <button id="upload-button" class="camera-button">Carregar Arquivo</button>
-                                <button id="send-exams-button" class="camera-button disabled">Enviar Exames</button>
-                                <button id="cancel-camera-button" class="camera-button">Cancelar</button>
-                            </div>
+                            
                             <div id="preview-container" class="preview-container"></div>
                         </div>
                     </div>
