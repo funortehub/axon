@@ -21,7 +21,7 @@
             --output-color: #c9d1d9;
             --error-color: #ff7b72;
             --success-color: #3fb950;
-            --border-color: #0d1117;
+            --border-color: #30363d;
             --highlight-color: #1f6feb;
             --diagnosis-color: #a371f7;
             --conduct-color: #56d364;
@@ -49,7 +49,7 @@
         }
 
         .header {
-            background-color: var(--terminal-bg);
+            background-color: var(--bg-color); /* Alterado para --bg-color */
             padding: 12px 20px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
@@ -289,7 +289,7 @@
         }
 
         .footer {
-            background-color: var(--terminal-bg);
+            background-color: var(--bg-color); /* Alterado para --bg-color */
             padding: 10px 20px;
             border-top: 1px solid var(--border-color);
             text-align: center;
@@ -2433,7 +2433,7 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         cameraSwitchButton.addEventListener('click', switchCamera); // New switch camera button
         flashlightButton.addEventListener('click', toggleFlashlight); // New flashlight button
 
-        // Album Modal Event Listeners (NOVOS)
+        // Album Modal Event Listeners (NOVAS)
         albumButton.addEventListener('click', openAlbumModal);
         albumModalClose.addEventListener('click', closeAlbumModal);
         albumModal.addEventListener('click', (event) => {
