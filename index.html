@@ -1172,14 +1172,17 @@
 
         // Gerar hipóteses diagnósticas
         const generateDiagnosticHypotheses = async () => {
-            const prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}, 
-            liste as possíveis hipóteses diagnósticas em ordem de probabilidade. 
+            let fullPrompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}`;
+            if (examsResults) {
+                fullPrompt += ` e nos seguintes resultados de exames: ${examsResults.replace(/<[^>]*>/g, '')}.`; // Remove HTML tags
+            }
+            fullPrompt += ` Liste as possíveis hipóteses diagnósticas em ordem de probabilidade. 
             Formate cada hipótese como um item em uma lista. 
             Seja técnico, objetivo e extremamente resumido. 
             Retorne apenas a lista de hipóteses, sem introdução ou conclusão.`;
             
             try {
-                const response = await callGeminiAPI(prompt);
+                const response = await callGeminiAPI(fullPrompt);
                 
                 const formattedDiagnosis = response.split('\n')
                     .map(item => item.trim())
@@ -1195,8 +1198,11 @@
 
         // Gerar conduta médica
         const generateMedicalConduct = async () => {
-            const prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}, 
-            proponha uma conduta médica completa, dividida em tópicos:
+            let fullPrompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}`;
+            if (examsResults) {
+                fullPrompt += ` e nos seguintes resultados de exames: ${examsResults.replace(/<[^>]*>/g, '')}.`; // Remove HTML tags
+            }
+            fullPrompt += ` Proponha uma conduta médica completa, dividida em tópicos:
             1. Medicações disponíveis no SUS (com dose e posologia resumida)
             2. Exames complementares disponíveis no SUS
             3. Condutas não farmacológicas
@@ -1206,7 +1212,7 @@
             Seja técnico, objetivo e extremamente resumido.`;
             
             try {
-                const response = await callGeminiAPI(prompt);
+                const response = await callGeminiAPI(fullPrompt);
                 
                 const formattedConduct = response
                     .replace(/Medicações:|Medicamentos:/gi, '<div class="conduct-title">MEDICAÇÕES (SUS):</div>')
