@@ -306,32 +306,45 @@
             height: 100%; /* Full height */
             overflow: auto; /* Enable scroll if needed */
             background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
-            justify-content: center;
+            display: flex;
             align-items: center;
+            justify-content: center;
         }
 
-        .camera-modal-content {
+        .camera-container {
+            display: flex;
+            flex-direction: column;
             background-color: var(--terminal-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            width: 90%;
-            max-width: 800px; /* Max width for the modal */
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
             position: relative;
+            z-index: 1;
             padding: 15px;
             gap: 15px;
+            overflow: hidden;
+            width: 90%; /* Ajuste para largura do modal */
+            max-width: 400px; /* Largura máxima para 9:16 */
+            height: auto; /* Altura automática */
+            max-height: 90vh; /* Altura máxima para caber na tela */
+            aspect-ratio: 9 / 16; /* Proporção 9:16 */
+        }
+
+        @media (min-width: 769px) {
+            .camera-container {
+                width: 400px; /* Largura fixa para desktop */
+                height: 711px; /* Altura para 9:16 (400 * 16/9) */
+            }
         }
 
         .camera-video-wrapper {
             position: relative;
             width: 100%;
-            padding-bottom: 56.25%; /* 16:9 aspect ratio for video */
+            padding-bottom: 177.77%; /* 9:16 aspect ratio (16 / 9 * 100%) */
             background-color: black;
             border: 1px solid var(--border-color);
             border-radius: 5px;
             overflow: hidden;
+            flex-shrink: 0; /* Não encolher */
         }
 
         .camera-video {
@@ -623,13 +636,13 @@
         <img class="modal-content" id="modal-image">
     </div>
 
-    <!-- Camera Modal -->
+    <!-- Camera Modal (Pop-up) -->
     <div id="camera-modal" class="camera-modal">
-        <div class="camera-modal-content">
+        <div class="camera-container" id="camera-interface">
             <div class="terminal-header">
                 <div class="terminal-title">Câmera de Exames</div>
                 <div class="terminal-actions">
-                    <div class="terminal-btn close-btn" id="camera-modal-close-btn"></div>
+                    <div class="terminal-btn close-btn" id="camera-close-btn"></div>
                 </div>
             </div>
             <div class="terminal-content" style="padding: 10px;">
@@ -681,9 +694,9 @@
         const micStatus = document.getElementById('mic-status');
         const initialMessagesContainer = document.getElementById('initial-messages');
 
-        // Camera elements (agora dentro do modal)
-        const cameraModal = document.getElementById('camera-modal');
-        const cameraModalCloseBtn = document.getElementById('camera-modal-close-btn');
+        // Camera elements
+        const cameraModal = document.getElementById('camera-modal'); // O novo modal da câmera
+        const cameraInterface = document.getElementById('camera-interface'); // A interface da câmera dentro do modal
         const cameraVideo = document.getElementById('camera-video');
         const cameraCanvas = document.getElementById('camera-canvas');
         const captureButton = document.getElementById('capture-button');
@@ -694,7 +707,7 @@
         const previewContainer = document.getElementById('preview-container');
         const cameraSwitchButton = document.getElementById('camera-switch-button');
         const flashlightButton = document.getElementById('flashlight-button'); // Novo botão de lanterna
-        
+        const cameraCloseBtn = document.getElementById('camera-close-btn');
 
         // Monitor toggle buttons
         const toggleAnamnesisButton = document.getElementById('toggle-anamnesis');
@@ -1524,7 +1537,8 @@
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 cameraVideo.srcObject = stream;
                 cameraStream = stream;
-                cameraModal.style.display = 'flex'; // Show the camera modal
+                cameraModal.style.display = 'flex'; // Exibe o modal da câmera
+                // document.getElementById('monitor-content-wrapper').style.display = 'none'; // Não precisa mais esconder o monitor principal
                 appendOutput("Câmera ativada. Capture ou carregue as fotos dos exames.", "info");
 
                 // Check if multiple cameras are available to show/hide switch button
@@ -1560,7 +1574,8 @@
                 cameraVideo.srcObject = null;
                 cameraStream = null;
             }
-            cameraModal.style.display = 'none'; // Hide the camera modal
+            cameraModal.style.display = 'none'; // Oculta o modal da câmera
+            // document.getElementById('monitor-content-wrapper').style.display = 'block'; // Não precisa mais mostrar o monitor principal
             previewContainer.innerHTML = ''; // Clear previews
             capturedImages = []; // Clear captured images
             sendExamsButton.classList.add('disabled');
@@ -2059,7 +2074,7 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         fileInput.addEventListener('change', handleFileUpload);
         sendExamsButton.addEventListener('click', analyzeExams);
         cancelCameraButton.addEventListener('click', stopCamera);
-        cameraModalCloseBtn.addEventListener('click', stopCamera); // Close button for camera modal
+        cameraCloseBtn.addEventListener('click', stopCamera); // Close button for camera interface
         cameraSwitchButton.addEventListener('click', switchCamera); // New switch camera button
         flashlightButton.addEventListener('click', toggleFlashlight); // New flashlight button
 
