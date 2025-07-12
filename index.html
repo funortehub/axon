@@ -394,61 +394,6 @@
             opacity: 0.7;
         }
 
-        .preview-container {
-            display: grid; /* Alterado para grid */
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* Colunas responsivas, tamanho reduzido */
-            gap: 8px; /* Reduced gap */
-            justify-content: center;
-            overflow-y: auto;
-            flex-grow: 1;
-            min-height: 40px; /* Reduced min-height */
-            border: 1px dashed var(--border-color);
-            padding: 8px; /* Reduced padding */
-            border-radius: 5px;
-            background-color: #0d1117;
-            margin: 0 10px 10px; /* Add margin to sides and bottom */
-        }
-
-        .preview-item { /* Novo wrapper para imagem e botão de exclusão */
-            position: relative;
-            width: 80px; /* Tamanho fixo para a prévia */
-            height: 80px; /* Tamanho fixo para a prévia */
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-            border-radius: 3px;
-            cursor: pointer; /* Adicionado cursor pointer */
-        }
-
-        .preview-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .delete-preview-button {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background-color: rgba(255, 0, 0, 0.7);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 18px; /* Reduced size */
-            height: 18px; /* Reduced size */
-            font-size: 10px; /* Reduced font size */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 10;
-            transition: background-color 0.2s;
-        }
-
-        .delete-preview-button:hover {
-            background-color: rgba(255, 0, 0, 1);
-        }
-
         .camera-action-buttons { /* Novo container para botões de ação da câmera */
             position: absolute;
             top: 10px;
@@ -477,6 +422,41 @@
         .flashlight-button.active {
             background-color: var(--highlight-color);
             color: var(--bg-color);
+        }
+
+        /* Estilos para o botão Álbum */
+        .album-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 11px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 10;
+        }
+
+        .album-button:hover {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        .album-count {
+            background-color: var(--highlight-color);
+            color: var(--bg-color);
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: bold;
+            min-width: 18px;
+            text-align: center;
         }
 
         /* Estilos para os botões de alternância do monitor */
@@ -563,48 +543,118 @@
             margin-left: 10px; /* Espaçamento à direita */
         }
 
-        /* Novo estilo para o botão de álbum */
-        .album-button {
-            position: absolute;
-            bottom: 10px; /* Ajuste conforme necessário para não sobrepor outros botões */
-            right: 10px;
-            background-color: rgba(0, 0, 0, 0.6);
-            color: white;
+        /* Novo modal para o álbum de imagens */
+        .album-modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 99; /* Below fullscreen modal, above camera modal */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.8); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .album-modal-content {
+            background-color: var(--terminal-bg);
+            margin: auto;
+            padding: 20px;
             border: 1px solid var(--border-color);
-            padding: 8px 12px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+
+        .album-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .album-modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--prompt-color);
+        }
+
+        .album-modal-close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .album-modal-close:hover,
+        .album-modal-close:focus {
+            color: white;
+        }
+
+        .album-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            overflow-y: auto;
+            padding-right: 5px; /* For scrollbar */
+        }
+
+        .album-item {
+            position: relative;
+            width: 100%;
+            padding-bottom: 100%; /* 1:1 Aspect Ratio */
+            overflow: hidden;
+            border: 1px solid var(--border-color);
             border-radius: 5px;
             cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            z-index: 2; /* Acima do vídeo */
+            transition: transform 0.2s ease;
         }
 
-        .album-button:hover {
-            background-color: var(--highlight-color);
-            transform: scale(1.05);
+        .album-item:hover {
+            transform: scale(1.03);
         }
 
-        /* Estilos para o modo álbum */
-        .camera-video-wrapper.album-mode .camera-video {
-            display: none; /* Oculta o vídeo quando no modo álbum */
-        }
-
-        .camera-video-wrapper.album-mode .camera-controls {
-            display: none; /* Oculta os controles da câmera quando no modo álbum */
-        }
-
-        .camera-video-wrapper.album-mode .preview-container {
+        .album-image {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: var(--terminal-bg);
+            object-fit: cover;
+            display: block;
+        }
+
+        .album-delete-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: rgba(255, 0, 0, 0.7);
+            color: white;
             border: none;
-            border-radius: 0;
-            padding: 10px;
-            display: grid; /* Garante que o grid esteja ativo */
-            align-content: start; /* Alinha o conteúdo ao topo */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: background-color 0.2s;
+        }
+
+        .album-delete-button:hover {
+            background-color: rgba(255, 0, 0, 1);
         }
     </style>
 </head>
@@ -685,12 +735,16 @@
                             </div>
                         </div>
                         <div class="terminal-content" style="padding: 10px;">
-                            <div class="camera-video-wrapper" id="camera-video-wrapper">
+                            <div class="camera-video-wrapper">
                                 <video id="camera-video" class="camera-video" autoplay playsinline></video>
                                 <div class="camera-action-buttons">
                                     <button id="flashlight-button" class="flashlight-button" style="display:none;"><i class="fas fa-lightbulb"></i> Lanterna</button>
                                     <button id="camera-switch-button" class="camera-switch-button" style="display:none;"><i class="fas fa-sync-alt"></i> Trocar Câmera</button>
                                 </div>
+                                <!-- Novo botão Álbum -->
+                                <button id="album-button" class="album-button" style="display:none;">
+                                    <i class="fas fa-images"></i> Álbum <span id="album-count" class="album-count">0</span>
+                                </button>
                                 <!-- Botões de controle da câmera sobre o vídeo -->
                                 <div class="camera-controls">
                                     <button id="capture-button" class="camera-button" title="Capturar Foto"><i class="fas fa-camera"></i></button>
@@ -699,11 +753,10 @@
                                     <button id="send-exams-button" class="camera-button disabled" title="Enviar Exames"><i class="fas fa-paper-plane"></i></button>
                                     <button id="cancel-camera-button" class="camera-button" title="Cancelar"><i class="fas fa-times"></i></button>
                                 </div>
-                                <button id="album-button" class="album-button" style="display:none;"><i class="fas fa-images"></i> Álbum</button>
                             </div>
                             <canvas id="camera-canvas" style="display:none;"></canvas>
                             
-                            <div id="preview-container" class="preview-container"></div>
+                            <!-- O preview-container foi removido daqui -->
                         </div>
                     </div>
                 </div>
@@ -719,6 +772,19 @@
     <div id="fullscreen-modal" class="fullscreen-modal">
         <span class="modal-close">&times;</span>
         <img class="modal-content" id="modal-image">
+    </div>
+
+    <!-- Novo Modal para o Álbum de Imagens -->
+    <div id="album-modal" class="album-modal">
+        <div class="album-modal-content">
+            <div class="album-modal-header">
+                <div class="album-modal-title">Álbum de Exames</div>
+                <span class="album-modal-close">&times;</span>
+            </div>
+            <div id="album-grid" class="album-grid">
+                <!-- Imagens serão carregadas aqui -->
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -758,12 +824,10 @@
         const uploadButton = document.getElementById('upload-button');
         const sendExamsButton = document.getElementById('send-exams-button');
         const cancelCameraButton = document.getElementById('cancel-camera-button');
-        const previewContainer = document.getElementById('preview-container');
+        // const previewContainer = document.getElementById('preview-container'); // REMOVIDO
         const cameraSwitchButton = document.getElementById('camera-switch-button');
         const flashlightButton = document.getElementById('flashlight-button'); // Novo botão de lanterna
         const cameraCloseBtn = document.getElementById('camera-close-btn');
-        const cameraVideoWrapper = document.getElementById('camera-video-wrapper'); // Adicionado para o modo álbum
-        const albumButton = document.getElementById('album-button'); // Novo botão de álbum
 
         // Monitor toggle buttons
         const toggleAnamnesisButton = document.getElementById('toggle-anamnesis');
@@ -773,6 +837,13 @@
         const fullscreenModal = document.getElementById('fullscreen-modal');
         const modalImage = document.getElementById('modal-image');
         const modalClose = document.getElementsByClassName('modal-close')[0];
+
+        // Album Modal elements (NOVOS)
+        const albumButton = document.getElementById('album-button');
+        const albumCount = document.getElementById('album-count');
+        const albumModal = document.getElementById('album-modal');
+        const albumModalClose = document.getElementsByClassName('album-modal-close')[0];
+        const albumGrid = document.getElementById('album-grid');
 
         // Estado da aplicação
         let isListening = false;
@@ -795,7 +866,6 @@
         let currentCameraFacingMode = 'environment'; // 'user' para frontal, 'environment' para traseira
         let currentMonitorView = 'anamnesis'; // 'anamnesis' ou 'exams'
         let isFlashlightOn = false; // Estado da lanterna
-        let isAlbumMode = false; // Estado do modo álbum
 
         // Configurações da API Gemini
         const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI';
@@ -1607,6 +1677,10 @@
                 toggleMonitorView('camera'); // Show the camera modal inside the monitor
                 appendOutput("Câmera ativada. Capture ou carregue as fotos dos exames.", "info");
 
+                // Show album button
+                albumButton.style.display = 'flex';
+                updateAlbumCount();
+
                 // Check if multiple cameras are available to show/hide switch button
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoInputDevices = devices.filter(device => device.kind === 'videoinput');
@@ -1622,13 +1696,6 @@
                     flashlightButton.style.display = 'block';
                 } else {
                     flashlightButton.style.display = 'none';
-                }
-
-                // Show album button if there are captured images
-                if (capturedImages.length > 0) {
-                    albumButton.style.display = 'block';
-                } else {
-                    albumButton.style.display = 'none';
                 }
 
             } catch (err) {
@@ -1648,14 +1715,12 @@
                 cameraStream = null;
             }
             cameraModal.style.display = 'none'; // Hide the camera modal
-            previewContainer.innerHTML = ''; // Clear previews
-            capturedImages = []; // Clear captured images
+            // previewContainer.innerHTML = ''; // REMOVIDO
+            // capturedImages = []; // REMOVIDO - imagens devem persistir para o álbum
             sendExamsButton.classList.add('disabled');
             flashlightButton.style.display = 'none'; // Hide flashlight button
             cameraSwitchButton.style.display = 'none'; // Hide switch camera button
             albumButton.style.display = 'none'; // Hide album button
-            isAlbumMode = false; // Reset album mode
-            cameraVideoWrapper.classList.remove('album-mode'); // Remove album mode class
             appendOutput("Câmera desativada.", "info");
             toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); // Return to previous view or anamnesis
         };
@@ -1701,7 +1766,7 @@
             context.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
             const imageDataURL = cameraCanvas.toDataURL('image/jpeg');
             
-            addPreview(imageDataURL);
+            addCapturedImage(imageDataURL);
         };
 
         const handleFileUpload = (event) => {
@@ -1709,7 +1774,7 @@
             if (file && file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    addPreview(e.target.result);
+                    addCapturedImage(e.target.result);
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -1717,42 +1782,65 @@
             }
         };
 
-        const addPreview = (imageDataURL) => {
-            const previewItem = document.createElement('div');
-            previewItem.classList.add('preview-item');
-
-            const img = document.createElement('img');
-            img.src = imageDataURL;
-            img.classList.add('preview-image');
-            img.onclick = () => openFullscreenModal(imageDataURL); // Adiciona evento de clique para tela cheia
-            previewItem.appendChild(img);
-
-            const deleteButton = document.createElement('button');
-            deleteButton.classList.add('delete-preview-button');
-            deleteButton.textContent = 'x';
-            deleteButton.onclick = (e) => {
-                e.stopPropagation(); // Evita que o clique no botão de exclusão abra o modal
-                removePreview(imageDataURL, previewItem);
-            };
-            previewItem.appendChild(deleteButton);
-
-            previewContainer.appendChild(previewItem);
+        const addCapturedImage = (imageDataURL) => {
             capturedImages.push(imageDataURL);
+            updateAlbumCount();
             sendExamsButton.classList.remove('disabled');
-            albumButton.style.display = 'block'; // Show album button when images are present
+            appendOutput("Imagem adicionada ao álbum.", "success");
         };
 
-        const removePreview = (imageDataURL, previewItemElement) => {
+        const removeCapturedImage = (imageDataURL) => {
             capturedImages = capturedImages.filter(url => url !== imageDataURL);
-            previewItemElement.remove();
+            updateAlbumCount();
             if (capturedImages.length === 0) {
                 sendExamsButton.classList.add('disabled');
-                albumButton.style.display = 'none'; // Hide album button if no images left
-                // If in album mode and no images, switch back to camera view
-                if (isAlbumMode) {
-                    toggleAlbumMode();
-                }
             }
+            renderAlbum(); // Re-render album after deletion
+        };
+
+        const updateAlbumCount = () => {
+            albumCount.textContent = capturedImages.length;
+            albumButton.style.display = capturedImages.length > 0 ? 'flex' : 'none';
+        };
+
+        // Album Modal Functions (NOVAS)
+        const openAlbumModal = () => {
+            renderAlbum();
+            albumModal.style.display = 'flex';
+        };
+
+        const closeAlbumModal = () => {
+            albumModal.style.display = 'none';
+        };
+
+        const renderAlbum = () => {
+            albumGrid.innerHTML = ''; // Clear current grid
+            if (capturedImages.length === 0) {
+                albumGrid.innerHTML = '<div class="info" style="grid-column: 1 / -1; text-align: center;">Nenhuma imagem no álbum ainda.</div>';
+                return;
+            }
+
+            capturedImages.forEach(imageDataURL => {
+                const albumItem = document.createElement('div');
+                albumItem.classList.add('album-item');
+
+                const img = document.createElement('img');
+                img.src = imageDataURL;
+                img.classList.add('album-image');
+                img.onclick = () => openFullscreenModal(imageDataURL);
+                albumItem.appendChild(img);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.classList.add('album-delete-button');
+                deleteButton.textContent = 'x';
+                deleteButton.onclick = (e) => {
+                    e.stopPropagation();
+                    removeCapturedImage(imageDataURL);
+                };
+                albumItem.appendChild(deleteButton);
+
+                albumGrid.appendChild(albumItem);
+            });
         };
 
         // Fullscreen Modal Functions
@@ -1790,20 +1878,6 @@
         fullscreenModal.onclick = (event) => {
             if (event.target === fullscreenModal) {
                 fullscreenModal.style.display = 'none';
-            }
-        };
-
-        // Toggle Album Mode
-        const toggleAlbumMode = () => {
-            isAlbumMode = !isAlbumMode;
-            if (isAlbumMode) {
-                cameraVideoWrapper.classList.add('album-mode');
-                albumButton.innerHTML = '<i class="fas fa-video"></i> Câmera'; // Change button text/icon
-                // Scroll to top of preview container when entering album mode
-                previewContainer.scrollTop = 0;
-            } else {
-                cameraVideoWrapper.classList.remove('album-mode');
-                albumButton.innerHTML = '<i class="fas fa-images"></i> Álbum'; // Change button text/icon
             }
         };
 
@@ -1951,6 +2025,7 @@
                 }
                 anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                 examsResults = "";
+                capturedImages = []; // Limpa imagens capturadas
                 updateAnamnesisPreview();
                 updateExamsResultsPreview();
                 appendOutput("Sessão encerrada. Você precisará fazer login novamente.", "success");
@@ -1965,6 +2040,7 @@
                 }
                 anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                 examsResults = "";
+                capturedImages = []; // Limpa imagens capturadas
                 updateAnamnesisPreview();
                 updateExamsResultsPreview();
                 appendOutput("Terminal limpo.", "success");
@@ -2173,7 +2249,15 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         cameraCloseBtn.addEventListener('click', stopCamera); // Close button for camera interface
         cameraSwitchButton.addEventListener('click', switchCamera); // New switch camera button
         flashlightButton.addEventListener('click', toggleFlashlight); // New flashlight button
-        albumButton.addEventListener('click', toggleAlbumMode); // New album button event listener
+
+        // Album Modal Event Listeners (NOVOS)
+        albumButton.addEventListener('click', openAlbumModal);
+        albumModalClose.addEventListener('click', closeAlbumModal);
+        albumModal.addEventListener('click', (event) => {
+            if (event.target === albumModal) {
+                closeAlbumModal();
+            }
+        });
 
         // Monitor Toggle Buttons Event Listeners
         toggleAnamnesisButton.addEventListener('click', () => toggleMonitorView('anamnesis'));
