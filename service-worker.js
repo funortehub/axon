@@ -1,14 +1,11 @@
-const CACHE_NAME = 'axon-ai-cache-v1';
+const CACHE_NAME = 'axon-ai-cache-v1.0.1'; // Incremente a versão para forçar a atualização do cache
 const urlsToCache = [
   '/',
-  '/index.html', // ou o nome do seu arquivo HTML principal, se for diferente
-  '/style.css', // se você tiver um arquivo CSS separado
-  '/script.js', // se você tiver um arquivo JS separado
-  '/appicon.png', // Adicione o novo ícone aqui
-  '/axon.png', // O logo interno do terminal
+  '/index.html', // Ou o nome do seu arquivo HTML principal, se for diferente
+  '/appicon.png', // Adicionado o novo ícone para pré-cache
+  '/axon.png',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css',
-  'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js',
-  'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'
+  // Adicione outros arquivos estáticos que seu aplicativo usa (CSS, JS, etc.)
 ];
 
 self.addEventListener('install', (event) => {
@@ -29,28 +26,9 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-        return fetch(event.request).then(
-          (response) => {
-            // Check if we received a valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // IMPORTANT: Clone the response. A response is a stream
-            // and can only be consumed once. We need the original to return
-            // and one for the cache.
-            const responseToCache = response.clone();
-
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          }
-        );
+        return fetch(event.request);
       })
-    );
+  );
 });
 
 self.addEventListener('activate', (event) => {
