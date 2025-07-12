@@ -505,24 +505,19 @@
                 min-width: 35px; /* Largura mínima para o botão */
             }
 
-            /* Media query para os status-item no header */
-            .status-bar .status-item span {
-                display: none; /* Esconde o texto */
+            /* Mobile specific styles for status bar */
+            .status-bar {
+                gap: 10px; /* Smaller gap */
+                margin-right: 0; /* No right margin */
             }
 
-            .status-bar .status-item {
-                padding: 5px 8px; /* Ajusta o padding para apenas o ícone */
-                font-size: 16px; /* Aumenta o tamanho do ícone */
-                width: auto; /* Largura automática */
-                min-width: 35px; /* Largura mínima para o botão */
-                border: 1px solid var(--border-color); /* Adiciona borda */
-                border-radius: 5px; /* Adiciona borda arredondada */
-                background-color: #30363d; /* Cor de fundo */
-                justify-content: center; /* Centraliza o conteúdo */
+            .status-item span {
+                font-size: 12px; /* Smaller font for text */
             }
 
-            .status-bar .status-item .status-indicator {
-                margin-right: 0; /* Remove margem à direita do indicador */
+            .status-item .status-indicator {
+                width: 8px; /* Smaller indicator */
+                height: 8px;
             }
         }
 
@@ -867,7 +862,7 @@
         const axonEyeResultsPreview = document.getElementById('axon-eye-results-preview'); // Novo elemento para resultados do Axon Eye
         const apiStatus = document.getElementById('api-status');
         const micStatus = document.getElementById('mic-status');
-        const cameraStatus = document.getElementById('camera-status'); // Novo elemento para status da câmera
+        const cameraStatus = document.getElementById('camera-status'); // New camera status indicator
         const initialMessagesContainer = document.getElementById('initial-messages');
 
         // Camera elements
@@ -902,6 +897,11 @@
         const albumModal = document.getElementById('album-modal');
         const albumModalClose = document.getElementsByClassName('album-modal-close')[0];
         const albumGrid = document.getElementById('album-grid');
+
+        // Mobile text elements
+        const statusTextApi = document.querySelector('.status-text-api');
+        const statusTextMic = document.querySelector('.status-text-mic');
+        const statusTextCam = document.querySelector('.status-text-cam');
 
         // Estado da aplicação
         let isListening = false;
@@ -2443,27 +2443,17 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
             appendOutput("Reconhecimento de voz não suportado neste navegador.", "error", false);
         }
 
-        // Update status bar text for mobile
-        const updateStatusBarText = () => {
-            const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-            const apiText = document.querySelector('.status-text-api');
-            const micText = document.querySelector('.status-text-mic');
-            const camText = document.querySelector('.status-text-cam');
-
-            if (isMobile) {
-                if (apiText) apiText.textContent = 'API';
-                if (micText) micText.textContent = 'Micro';
-                if (camText) camText.textContent = 'Cam';
-            } else {
-                if (apiText) apiText.textContent = 'API';
-                if (micText) micText.textContent = 'Microfone';
-                if (camText) camText.textContent = 'Câmera';
-            }
+        // Function to check if it's a mobile device
+        const isMobileDevice = () => {
+            return /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         };
 
-        // Initial call and listen for resize to adjust text
-        updateStatusBarText();
-        window.addEventListener('resize', updateStatusBarText);
+        // Apply mobile text abbreviations
+        if (isMobileDevice()) {
+            statusTextApi.textContent = 'API';
+            statusTextMic.textContent = 'Micro';
+            statusTextCam.textContent = 'Cam';
+        }
 
         setInterval(() => {
             apiStatus.style.backgroundColor = apiStatus.style.backgroundColor === 'var(--success-color)' ? 
