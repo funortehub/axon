@@ -295,19 +295,33 @@
             z-index: 0;
         }
 
-        /* Estilos para a câmera */
-        .camera-container {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
+        /* Estilos para o modal da câmera */
+        .camera-modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 100; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+
+        .camera-modal-content {
             background-color: var(--terminal-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
+            width: 90%;
+            max-width: 800px; /* Max width for the modal */
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
             position: relative;
-            z-index: 1;
             padding: 15px;
             gap: 15px;
-            overflow: hidden;
         }
 
         .camera-video-wrapper {
@@ -596,32 +610,6 @@
                     <div class="info">Nenhum exame analisado ainda.</div>
                 </div>
             </div>
-            <div class="camera-container" id="camera-interface" style="display: none;">
-                <div class="terminal-header">
-                    <div class="terminal-title">Câmera de Exames</div>
-                    <div class="terminal-actions">
-                        <div class="terminal-btn close-btn" id="camera-close-btn"></div>
-                    </div>
-                </div>
-                <div class="terminal-content" style="padding: 10px;">
-                    <div class="camera-video-wrapper">
-                        <video id="camera-video" class="camera-video" autoplay playsinline></video>
-                        <div class="camera-action-buttons">
-                            <button id="flashlight-button" class="flashlight-button" style="display:none;">Lanterna</button>
-                            <button id="camera-switch-button" class="camera-switch-button" style="display:none;">Trocar Câmera</button>
-                        </div>
-                    </div>
-                    <canvas id="camera-canvas" style="display:none;"></canvas>
-                    <div class="camera-controls">
-                        <button id="capture-button" class="camera-button">Capturar Foto</button>
-                        <input type="file" id="file-input" accept="image/*" style="display: none;">
-                        <button id="upload-button" class="camera-button">Carregar Arquivo</button>
-                        <button id="send-exams-button" class="camera-button disabled">Enviar Exames</button>
-                        <button id="cancel-camera-button" class="camera-button">Cancelar</button>
-                    </div>
-                    <div id="preview-container" class="preview-container"></div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -633,6 +621,36 @@
     <div id="fullscreen-modal" class="fullscreen-modal">
         <span class="modal-close">&times;</span>
         <img class="modal-content" id="modal-image">
+    </div>
+
+    <!-- Camera Modal -->
+    <div id="camera-modal" class="camera-modal">
+        <div class="camera-modal-content">
+            <div class="terminal-header">
+                <div class="terminal-title">Câmera de Exames</div>
+                <div class="terminal-actions">
+                    <div class="terminal-btn close-btn" id="camera-modal-close-btn"></div>
+                </div>
+            </div>
+            <div class="terminal-content" style="padding: 10px;">
+                <div class="camera-video-wrapper">
+                    <video id="camera-video" class="camera-video" autoplay playsinline></video>
+                    <div class="camera-action-buttons">
+                        <button id="flashlight-button" class="flashlight-button" style="display:none;">Lanterna</button>
+                        <button id="camera-switch-button" class="camera-switch-button" style="display:none;">Trocar Câmera</button>
+                    </div>
+                </div>
+                <canvas id="camera-canvas" style="display:none;"></canvas>
+                <div class="camera-controls">
+                    <button id="capture-button" class="camera-button">Capturar Foto</button>
+                    <input type="file" id="file-input" accept="image/*" style="display: none;">
+                    <button id="upload-button" class="camera-button">Carregar Arquivo</button>
+                    <button id="send-exams-button" class="camera-button disabled">Enviar Exames</button>
+                    <button id="cancel-camera-button" class="camera-button">Cancelar</button>
+                </div>
+                <div id="preview-container" class="preview-container"></div>
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -663,8 +681,9 @@
         const micStatus = document.getElementById('mic-status');
         const initialMessagesContainer = document.getElementById('initial-messages');
 
-        // Camera elements
-        const cameraInterface = document.getElementById('camera-interface');
+        // Camera elements (agora dentro do modal)
+        const cameraModal = document.getElementById('camera-modal');
+        const cameraModalCloseBtn = document.getElementById('camera-modal-close-btn');
         const cameraVideo = document.getElementById('camera-video');
         const cameraCanvas = document.getElementById('camera-canvas');
         const captureButton = document.getElementById('capture-button');
@@ -675,7 +694,7 @@
         const previewContainer = document.getElementById('preview-container');
         const cameraSwitchButton = document.getElementById('camera-switch-button');
         const flashlightButton = document.getElementById('flashlight-button'); // Novo botão de lanterna
-        const cameraCloseBtn = document.getElementById('camera-close-btn');
+        
 
         // Monitor toggle buttons
         const toggleAnamnesisButton = document.getElementById('toggle-anamnesis');
@@ -968,7 +987,7 @@
             }
 
             examsResultsPreview.innerHTML = `<div class="section-title">RESULTADOS DOS EXAMES:</div>${formattedResults || '<div class="info">Nenhum exame analisado ainda.</div>'}`;
-            examsResultsPreview.scrollTop = examsResultsResultsPreview.scrollHeight;
+            examsResultsPreview.scrollTop = examsResultsPreview.scrollHeight;
 
             if (logToFirebase && isLoggedIn && currentUser) {
                 saveExamsResultsToFirestore(currentUser, examsResults);
@@ -1505,8 +1524,7 @@
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 cameraVideo.srcObject = stream;
                 cameraStream = stream;
-                cameraInterface.style.display = 'flex';
-                document.getElementById('monitor-content-wrapper').style.display = 'none'; // Hide monitor content
+                cameraModal.style.display = 'flex'; // Show the camera modal
                 appendOutput("Câmera ativada. Capture ou carregue as fotos dos exames.", "info");
 
                 // Check if multiple cameras are available to show/hide switch button
@@ -1542,8 +1560,7 @@
                 cameraVideo.srcObject = null;
                 cameraStream = null;
             }
-            cameraInterface.style.display = 'none';
-            document.getElementById('monitor-content-wrapper').style.display = 'block'; // Show monitor content again
+            cameraModal.style.display = 'none'; // Hide the camera modal
             previewContainer.innerHTML = ''; // Clear previews
             capturedImages = []; // Clear captured images
             sendExamsButton.classList.add('disabled');
@@ -2042,7 +2059,7 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         fileInput.addEventListener('change', handleFileUpload);
         sendExamsButton.addEventListener('click', analyzeExams);
         cancelCameraButton.addEventListener('click', stopCamera);
-        cameraCloseBtn.addEventListener('click', stopCamera); // Close button for camera interface
+        cameraModalCloseBtn.addEventListener('click', stopCamera); // Close button for camera modal
         cameraSwitchButton.addEventListener('click', switchCamera); // New switch camera button
         flashlightButton.addEventListener('click', toggleFlashlight); // New flashlight button
 
