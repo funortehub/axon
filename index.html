@@ -968,7 +968,7 @@
             }
 
             examsResultsPreview.innerHTML = `<div class="section-title">RESULTADOS DOS EXAMES:</div>${formattedResults || '<div class="info">Nenhum exame analisado ainda.</div>'}`;
-            examsResultsPreview.scrollTop = examsResultsResultsPreview.scrollHeight;
+            examsResultsPreview.scrollTop = examsResultsPreview.scrollHeight;
 
             if (logToFirebase && isLoggedIn && currentUser) {
                 saveExamsResultsToFirestore(currentUser, examsResults);
