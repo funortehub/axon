@@ -562,6 +562,50 @@
             font-weight: bold;
             margin-left: 10px; /* Espaçamento à direita */
         }
+
+        /* Novo estilo para o botão de álbum */
+        .album-button {
+            position: absolute;
+            bottom: 10px; /* Ajuste conforme necessário para não sobrepor outros botões */
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            z-index: 2; /* Acima do vídeo */
+        }
+
+        .album-button:hover {
+            background-color: var(--highlight-color);
+            transform: scale(1.05);
+        }
+
+        /* Estilos para o modo álbum */
+        .camera-video-wrapper.album-mode .camera-video {
+            display: none; /* Oculta o vídeo quando no modo álbum */
+        }
+
+        .camera-video-wrapper.album-mode .camera-controls {
+            display: none; /* Oculta os controles da câmera quando no modo álbum */
+        }
+
+        .camera-video-wrapper.album-mode .preview-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--terminal-bg);
+            border: none;
+            border-radius: 0;
+            padding: 10px;
+            display: grid; /* Garante que o grid esteja ativo */
+            align-content: start; /* Alinha o conteúdo ao topo */
+        }
     </style>
 </head>
 <body>
@@ -641,7 +685,7 @@
                             </div>
                         </div>
                         <div class="terminal-content" style="padding: 10px;">
-                            <div class="camera-video-wrapper">
+                            <div class="camera-video-wrapper" id="camera-video-wrapper">
                                 <video id="camera-video" class="camera-video" autoplay playsinline></video>
                                 <div class="camera-action-buttons">
                                     <button id="flashlight-button" class="flashlight-button" style="display:none;"><i class="fas fa-lightbulb"></i> Lanterna</button>
@@ -655,6 +699,7 @@
                                     <button id="send-exams-button" class="camera-button disabled" title="Enviar Exames"><i class="fas fa-paper-plane"></i></button>
                                     <button id="cancel-camera-button" class="camera-button" title="Cancelar"><i class="fas fa-times"></i></button>
                                 </div>
+                                <button id="album-button" class="album-button" style="display:none;"><i class="fas fa-images"></i> Álbum</button>
                             </div>
                             <canvas id="camera-canvas" style="display:none;"></canvas>
                             
@@ -717,6 +762,8 @@
         const cameraSwitchButton = document.getElementById('camera-switch-button');
         const flashlightButton = document.getElementById('flashlight-button'); // Novo botão de lanterna
         const cameraCloseBtn = document.getElementById('camera-close-btn');
+        const cameraVideoWrapper = document.getElementById('camera-video-wrapper'); // Adicionado para o modo álbum
+        const albumButton = document.getElementById('album-button'); // Novo botão de álbum
 
         // Monitor toggle buttons
         const toggleAnamnesisButton = document.getElementById('toggle-anamnesis');
@@ -748,6 +795,7 @@
         let currentCameraFacingMode = 'environment'; // 'user' para frontal, 'environment' para traseira
         let currentMonitorView = 'anamnesis'; // 'anamnesis' ou 'exams'
         let isFlashlightOn = false; // Estado da lanterna
+        let isAlbumMode = false; // Estado do modo álbum
 
         // Configurações da API Gemini
         const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI';
@@ -1576,6 +1624,13 @@
                     flashlightButton.style.display = 'none';
                 }
 
+                // Show album button if there are captured images
+                if (capturedImages.length > 0) {
+                    albumButton.style.display = 'block';
+                } else {
+                    albumButton.style.display = 'none';
+                }
+
             } catch (err) {
                 appendOutput(`Erro ao acessar a câmera: ${err.message}. Verifique as permissões.`, "error");
                 console.error("Erro ao acessar a câmera:", err);
@@ -1598,6 +1653,9 @@
             sendExamsButton.classList.add('disabled');
             flashlightButton.style.display = 'none'; // Hide flashlight button
             cameraSwitchButton.style.display = 'none'; // Hide switch camera button
+            albumButton.style.display = 'none'; // Hide album button
+            isAlbumMode = false; // Reset album mode
+            cameraVideoWrapper.classList.remove('album-mode'); // Remove album mode class
             appendOutput("Câmera desativada.", "info");
             toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); // Return to previous view or anamnesis
         };
@@ -1681,6 +1739,7 @@
             previewContainer.appendChild(previewItem);
             capturedImages.push(imageDataURL);
             sendExamsButton.classList.remove('disabled');
+            albumButton.style.display = 'block'; // Show album button when images are present
         };
 
         const removePreview = (imageDataURL, previewItemElement) => {
@@ -1688,6 +1747,11 @@
             previewItemElement.remove();
             if (capturedImages.length === 0) {
                 sendExamsButton.classList.add('disabled');
+                albumButton.style.display = 'none'; // Hide album button if no images left
+                // If in album mode and no images, switch back to camera view
+                if (isAlbumMode) {
+                    toggleAlbumMode();
+                }
             }
         };
 
@@ -1726,6 +1790,20 @@
         fullscreenModal.onclick = (event) => {
             if (event.target === fullscreenModal) {
                 fullscreenModal.style.display = 'none';
+            }
+        };
+
+        // Toggle Album Mode
+        const toggleAlbumMode = () => {
+            isAlbumMode = !isAlbumMode;
+            if (isAlbumMode) {
+                cameraVideoWrapper.classList.add('album-mode');
+                albumButton.innerHTML = '<i class="fas fa-video"></i> Câmera'; // Change button text/icon
+                // Scroll to top of preview container when entering album mode
+                previewContainer.scrollTop = 0;
+            } else {
+                cameraVideoWrapper.classList.remove('album-mode');
+                albumButton.innerHTML = '<i class="fas fa-images"></i> Álbum'; // Change button text/icon
             }
         };
 
@@ -2095,6 +2173,7 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         cameraCloseBtn.addEventListener('click', stopCamera); // Close button for camera interface
         cameraSwitchButton.addEventListener('click', switchCamera); // New switch camera button
         flashlightButton.addEventListener('click', toggleFlashlight); // New flashlight button
+        albumButton.addEventListener('click', toggleAlbumMode); // New album button event listener
 
         // Monitor Toggle Buttons Event Listeners
         toggleAnamnesisButton.addEventListener('click', () => toggleMonitorView('anamnesis'));
