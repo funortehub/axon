@@ -156,6 +156,7 @@
         .non-interactive-terminal {
             flex: 1;
             min-width: 300px;
+            position: relative; /* Adicionado para posicionamento do modal da câmera */
         }
 
         .input-line {
@@ -295,33 +296,34 @@
             z-index: 0;
         }
 
-        /* Estilos para o modal da câmera */
+        /* Estilos para o modal da câmera DENTRO DO TERMINAL */
         .camera-modal {
             display: none; /* Hidden by default */
-            position: absolute; /* Changed to absolute to be inside terminal */
+            position: absolute; /* Alterado para absolute */
             top: 0;
             left: 0;
             width: 100%; /* Full width of parent terminal */
             height: 100%; /* Full height of parent terminal */
-            background-color: var(--terminal-bg); /* Match terminal background */
+            background-color: var(--terminal-bg); /* Background of the terminal */
             z-index: 10; /* Sit on top of other terminal content */
-            flex-direction: column; /* Changed to column */
+            flex-direction: column; /* Changed to column for better layout */
             justify-content: flex-start; /* Align content to start */
             align-items: center; /* Center content horizontally */
-            padding: 10px; /* Add padding */
-            box-sizing: border-box; /* Include padding in width/height */
+            padding: 0; /* Remove padding as it's now part of terminal content */
+            border-radius: 8px; /* Inherit parent border-radius */
+            overflow: hidden; /* Hide overflow */
         }
 
         .camera-container {
             display: flex;
             flex-direction: column;
-            background-color: var(--terminal-bg); /* Match terminal background */
+            background-color: var(--terminal-bg); /* Keep terminal background */
             border: none; /* Remove border as it's inside terminal */
             border-radius: 0; /* Remove border-radius */
             position: relative;
             z-index: 1;
             padding: 0; /* Remove padding */
-            gap: 10px; /* Reduce gap */
+            gap: 10px; /* Reduced gap */
             overflow: hidden;
             width: 100%; /* Take full width of parent */
             height: 100%; /* Take full height of parent */
@@ -332,7 +334,7 @@
         .camera-video-wrapper {
             position: relative;
             width: 100%;
-            padding-bottom: 75%; /* 4:3 aspect ratio (3/4 * 100) - Smaller for terminal */
+            padding-bottom: 75%; /* Adjusted for 4:3 aspect ratio, better for general use */
             background-color: black;
             border: 1px solid var(--border-color);
             border-radius: 5px;
@@ -355,7 +357,7 @@
             gap: 8px; /* Reduced gap */
             justify-content: center;
             flex-shrink: 0;
-            padding-top: 5px; /* Add some padding */
+            padding: 0 10px 10px; /* Add padding to bottom and sides */
         }
 
         .camera-button {
@@ -382,8 +384,8 @@
         }
 
         .preview-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* Smaller previews */
+            display: grid; /* Alterado para grid */
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* Colunas responsivas, tamanho reduzido */
             gap: 8px; /* Reduced gap */
             justify-content: center;
             overflow-y: auto;
@@ -393,16 +395,17 @@
             padding: 8px; /* Reduced padding */
             border-radius: 5px;
             background-color: #0d1117;
+            margin: 0 10px; /* Add margin to sides */
         }
 
-        .preview-item {
+        .preview-item { /* Novo wrapper para imagem e botão de exclusão */
             position: relative;
-            width: 80px; /* Smaller fixed size for preview */
-            height: 80px;
+            width: 80px; /* Tamanho fixo para a prévia */
+            height: 80px; /* Tamanho fixo para a prévia */
             overflow: hidden;
             border: 1px solid var(--border-color);
             border-radius: 3px;
-            cursor: pointer;
+            cursor: pointer; /* Adicionado cursor pointer */
         }
 
         .preview-image {
@@ -420,9 +423,9 @@
             color: white;
             border: none;
             border-radius: 50%;
-            width: 18px; /* Smaller button */
-            height: 18px;
-            font-size: 10px; /* Smaller font */
+            width: 18px; /* Reduced size */
+            height: 18px; /* Reduced size */
+            font-size: 10px; /* Reduced font size */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -435,10 +438,10 @@
             background-color: rgba(255, 0, 0, 1);
         }
 
-        .camera-action-buttons {
+        .camera-action-buttons { /* Novo container para botões de ação da câmera */
             position: absolute;
-            top: 5px; /* Adjusted position */
-            right: 5px; /* Adjusted position */
+            top: 10px;
+            right: 10px;
             display: flex;
             gap: 5px;
             z-index: 10;
@@ -620,13 +623,13 @@
                 <!-- New Camera Modal - Moved inside non-interactive-terminal -->
                 <div id="camera-modal" class="camera-modal">
                     <div class="camera-container">
-                        <div class="terminal-header" style="padding: 8px 12px; background-color: #161b22; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                        <div class="terminal-header">
                             <div class="terminal-title">Câmera de Exames</div>
                             <div class="terminal-actions">
                                 <div class="terminal-btn close-btn" id="camera-close-btn"></div>
                             </div>
                         </div>
-                        <div class="terminal-content" style="padding: 10px; flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                        <div class="terminal-content" style="padding: 10px;">
                             <div class="camera-video-wrapper">
                                 <video id="camera-video" class="camera-video" autoplay playsinline></video>
                                 <div class="camera-action-buttons">
@@ -1009,20 +1012,18 @@
                 cameraModal.style.display = 'none'; // Hide camera if switching to anamnesis
                 toggleAnamnesisButton.classList.add('active');
                 toggleExamsButton.classList.remove('active');
-                stopCamera(); // Ensure camera is stopped
             } else if (view === 'exams') {
                 anamnesisPreview.style.display = 'none';
                 examsResultsPreview.style.display = 'block';
-                cameraModal.style.display = 'none'; // Hide camera initially if switching to exams results
+                cameraModal.style.display = 'none'; // Hide camera if switching to exams results
                 toggleAnamnesisButton.classList.remove('active');
                 toggleExamsButton.classList.add('active');
-                stopCamera(); // Ensure camera is stopped
-            } else if (view === 'camera') { // New view for camera
+            } else if (view === 'camera') {
                 anamnesisPreview.style.display = 'none';
                 examsResultsPreview.style.display = 'none';
-                cameraModal.style.display = 'flex'; // Show camera modal
+                cameraModal.style.display = 'flex'; // Show camera
                 toggleAnamnesisButton.classList.remove('active');
-                toggleExamsButton.classList.remove('active'); // No active toggle for camera view
+                toggleExamsButton.classList.remove('active'); // No button active for camera view
             }
         };
 
@@ -1186,11 +1187,9 @@
 
         // Gerar hipóteses diagnósticas
         const generateDiagnosticHypotheses = async () => {
-            let prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}`;
-            if (examsResults) {
-                prompt += ` e nos seguintes resultados de exames: ${examsResults.replace(/<[^>]*>/g, '')}`; // Remove HTML tags
-            }
-            prompt += `, liste as possíveis hipóteses diagnósticas em ordem de probabilidade. 
+            const prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}.
+            E nos seguintes resultados de exames (se houver): ${examsResults || "Nenhum resultado de exame disponível."}.
+            Liste as possíveis hipóteses diagnósticas em ordem de probabilidade. 
             Formate cada hipótese como um item em uma lista. 
             Seja técnico, objetivo e extremamente resumido. 
             Retorne apenas a lista de hipóteses, sem introdução ou conclusão.`;
@@ -1212,11 +1211,9 @@
 
         // Gerar conduta médica
         const generateMedicalConduct = async () => {
-            let prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}`;
-            if (examsResults) {
-                prompt += ` e nos seguintes resultados de exames: ${examsResults.replace(/<[^>]*>/g, '')}`; // Remove HTML tags
-            }
-            prompt += `, proponha uma conduta médica completa, dividida em tópicos:
+            const prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}.
+            E nos seguintes resultados de exames (se houver): ${examsResults || "Nenhum resultado de exame disponível."}.
+            Proponha uma conduta médica completa, dividida em tópicos:
             1. Medicações disponíveis no SUS (com dose e posologia resumida)
             2. Exames complementares disponíveis no SUS
             3. Condutas não farmacológicas
@@ -1546,7 +1543,7 @@
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 cameraVideo.srcObject = stream;
                 cameraStream = stream;
-                toggleMonitorView('camera'); // Show the camera modal inside monitor
+                toggleMonitorView('camera'); // Show the camera modal inside the monitor
                 appendOutput("Câmera ativada. Capture ou carregue as fotos dos exames.", "info");
 
                 // Check if multiple cameras are available to show/hide switch button
@@ -1569,7 +1566,6 @@
             } catch (err) {
                 appendOutput(`Erro ao acessar a câmera: ${err.message}. Verifique as permissões.`, "error");
                 console.error("Erro ao acessar a câmera:", err);
-                toggleMonitorView('anamnesis'); // Fallback to anamnesis view if camera fails
             }
         };
 
@@ -1590,7 +1586,7 @@
             flashlightButton.style.display = 'none'; // Hide flashlight button
             cameraSwitchButton.style.display = 'none'; // Hide switch camera button
             appendOutput("Câmera desativada.", "info");
-            toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); // Revert to previous monitor view or anamnesis
+            toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); // Return to previous view or anamnesis
         };
 
         const switchCamera = async () => {
@@ -1763,22 +1759,17 @@
 
             try {
                 // Upload all captured images to Imgur first
-                // NOTE: Gemini Vision API can directly accept base64 images, so Imgur upload is not strictly necessary for Gemini.
-                // However, if you want to store images externally or use their URLs for other purposes, keep this step.
-                // For this implementation, we will pass base64 directly to Gemini Vision API as it's more efficient.
-                // The Imgur upload part is kept as a placeholder if external storage is desired.
-                
-                // const imgurLinks = [];
-                // for (let i = 0; i < capturedImages.length; i++) {
-                //     const imageDataURL = capturedImages[i];
-                //     const link = await uploadImageToImgur(imageDataURL, i, capturedImages.length);
-                //     imgurLinks.push(link);
-                // }
-                // appendOutput("Todas as imagens enviadas com sucesso.", "success");
+                const imgurLinks = [];
+                for (let i = 0; i < capturedImages.length; i++) {
+                    const imageDataURL = capturedImages[i];
+                    const link = await uploadImageToImgur(imageDataURL, i, capturedImages.length);
+                    imgurLinks.push(link);
+                }
+                appendOutput("Todas as imagens enviadas com sucesso.", "success");
                 appendOutput("Axon medical está analisando suas imagens...", "info");
 
 
-                // Now send the base64 images to Gemini Vision API
+                // Now send the Imgur links to Gemini Vision API
                 const prompt = `Você é um assistente médico. Analise as imagens de exames laboratoriais ou de imagem fornecidas.
                 Para cada exame, retorne os resultados de forma resumida e objetiva em formato de tópicos, sem símbolos como asterisco ou traços.
                 Se houver alguma alteração ou resultado fora do normal, adicione "(Alterado)" ou "(Anormal)" na frente do item.
