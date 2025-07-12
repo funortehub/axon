@@ -306,9 +306,8 @@
             height: 100%; /* Full height */
             overflow: auto; /* Enable scroll if needed */
             background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            justify-content: center; /* Center content horizontally */
+            align-items: center; /* Center content vertically */
         }
 
         .camera-container {
@@ -322,29 +321,20 @@
             padding: 15px;
             gap: 15px;
             overflow: hidden;
-            width: 90%; /* Ajuste para largura do modal */
-            max-width: 400px; /* Largura máxima para 9:16 */
-            height: auto; /* Altura automática */
-            max-height: 90vh; /* Altura máxima para caber na tela */
-            aspect-ratio: 9 / 16; /* Proporção 9:16 */
-        }
-
-        @media (min-width: 769px) {
-            .camera-container {
-                width: 400px; /* Largura fixa para desktop */
-                height: 711px; /* Altura para 9:16 (400 * 16/9) */
-            }
+            width: 90%; /* Adjust width for responsiveness */
+            max-width: 400px; /* Max width for 9:16 aspect ratio */
+            height: auto; /* Height will be determined by aspect ratio */
+            max-height: 90vh; /* Limit height on smaller screens */
         }
 
         .camera-video-wrapper {
             position: relative;
             width: 100%;
-            padding-bottom: 177.77%; /* 9:16 aspect ratio (16 / 9 * 100%) */
+            padding-bottom: 177.77%; /* 9:16 aspect ratio (16/9 * 100) */
             background-color: black;
             border: 1px solid var(--border-color);
             border-radius: 5px;
             overflow: hidden;
-            flex-shrink: 0; /* Não encolher */
         }
 
         .camera-video {
@@ -636,9 +626,9 @@
         <img class="modal-content" id="modal-image">
     </div>
 
-    <!-- Camera Modal (Pop-up) -->
+    <!-- New Camera Modal -->
     <div id="camera-modal" class="camera-modal">
-        <div class="camera-container" id="camera-interface">
+        <div class="camera-container">
             <div class="terminal-header">
                 <div class="terminal-title">Câmera de Exames</div>
                 <div class="terminal-actions">
@@ -695,8 +685,7 @@
         const initialMessagesContainer = document.getElementById('initial-messages');
 
         // Camera elements
-        const cameraModal = document.getElementById('camera-modal'); // O novo modal da câmera
-        const cameraInterface = document.getElementById('camera-interface'); // A interface da câmera dentro do modal
+        const cameraModal = document.getElementById('camera-modal'); // New camera modal
         const cameraVideo = document.getElementById('camera-video');
         const cameraCanvas = document.getElementById('camera-canvas');
         const captureButton = document.getElementById('capture-button');
@@ -1537,8 +1526,7 @@
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 cameraVideo.srcObject = stream;
                 cameraStream = stream;
-                cameraModal.style.display = 'flex'; // Exibe o modal da câmera
-                // document.getElementById('monitor-content-wrapper').style.display = 'none'; // Não precisa mais esconder o monitor principal
+                cameraModal.style.display = 'flex'; // Show the camera modal
                 appendOutput("Câmera ativada. Capture ou carregue as fotos dos exames.", "info");
 
                 // Check if multiple cameras are available to show/hide switch button
@@ -1574,8 +1562,7 @@
                 cameraVideo.srcObject = null;
                 cameraStream = null;
             }
-            cameraModal.style.display = 'none'; // Oculta o modal da câmera
-            // document.getElementById('monitor-content-wrapper').style.display = 'block'; // Não precisa mais mostrar o monitor principal
+            cameraModal.style.display = 'none'; // Hide the camera modal
             previewContainer.innerHTML = ''; // Clear previews
             capturedImages = []; // Clear captured images
             sendExamsButton.classList.add('disabled');
