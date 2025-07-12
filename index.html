@@ -476,6 +476,10 @@
             cursor: pointer;
             font-size: 12px;
             transition: background-color 0.3s ease;
+            display: flex; /* Para alinhar ícone e texto */
+            align-items: center;
+            justify-content: center;
+            gap: 5px; /* Espaçamento entre ícone e texto */
         }
 
         .monitor-toggle-button:hover {
@@ -486,6 +490,20 @@
             background-color: var(--highlight-color);
             color: var(--bg-color);
             border-color: var(--highlight-color);
+        }
+
+        /* Media query para dispositivos móveis */
+        @media (max-width: 768px) {
+            .monitor-toggle-button span {
+                display: none; /* Esconde o texto */
+            }
+
+            .monitor-toggle-button {
+                padding: 5px 8px; /* Ajusta o padding para apenas o ícone */
+                font-size: 16px; /* Aumenta o tamanho do ícone */
+                width: auto; /* Largura automática */
+                min-width: 35px; /* Largura mínima para o botão */
+            }
         }
 
         /* Estilos para o modal de imagem em tela cheia */
@@ -708,9 +726,15 @@
             <div class="terminal-header">
                 <div class="terminal-title">Monitor</div>
                 <div class="monitor-toggle-buttons">
-                    <button id="toggle-anamnesis" class="monitor-toggle-button active">Anamnese</button>
-                    <button id="toggle-exams" class="monitor-toggle-button">Exames</button>
-                    <button id="toggle-axon-eye" class="monitor-toggle-button">Axon Eye</button>
+                    <button id="toggle-anamnesis" class="monitor-toggle-button active">
+                        <i class="fas fa-notes-medical"></i><span>Anamnese</span>
+                    </button>
+                    <button id="toggle-exams" class="monitor-toggle-button">
+                        <i class="fas fa-file-medical-alt"></i><span>Exames</span>
+                    </button>
+                    <button id="toggle-axon-eye" class="monitor-toggle-button">
+                        <i class="fas fa-eye"></i><span>Axon Eye</span>
+                    </button>
                 </div>
                 <div class="terminal-actions">
                     <div class="terminal-btn close-btn"></div>
