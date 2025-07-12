@@ -505,19 +505,25 @@
                 min-width: 35px; /* Largura mínima para o botão */
             }
 
-            /* Media query para o status bar */
+            /* Media query para os status-item no header */
             .status-bar .status-item span {
                 display: none; /* Esconde o texto */
             }
 
             .status-bar .status-item {
-                font-size: 12px; /* Ajusta o tamanho da fonte */
-                gap: 3px; /* Reduz o espaçamento */
+                padding: 5px 8px; /* Ajusta o padding para apenas o ícone */
+                font-size: 16px; /* Aumenta o tamanho do ícone */
+                width: auto; /* Largura automática */
+                min-width: 35px; /* Largura mínima para o botão */
+                border: 1px solid var(--border-color); /* Adiciona borda */
+                border-radius: 5px; /* Adiciona borda arredondada */
+                background-color: #30363d; /* Cor de fundo */
+                justify-content: center; /* Centraliza o conteúdo */
             }
 
-            .status-bar .status-item:nth-child(1) span::after { content: "API"; }
-            .status-bar .status-item:nth-child(2) span::after { content: "Micro"; }
-            .status-bar .status-item:nth-child(3) span::after { content: "Cam"; }
+            .status-bar .status-item .status-indicator {
+                margin-right: 0; /* Remove margem à direita do indicador */
+            }
         }
 
         /* Estilos para o modal de imagem em tela cheia */
@@ -696,15 +702,15 @@
         <div class="status-bar">
             <div class="status-item">
                 <div class="status-indicator" id="api-status"></div>
-                <span>API</span>
+                <span class="status-text-api">API</span>
             </div>
             <div class="status-item">
                 <div class="status-indicator status-off" id="mic-status"></div>
-                <span>Microfone</span>
+                <span class="status-text-mic">Microfone</span>
             </div>
             <div class="status-item">
                 <div class="status-indicator status-off" id="camera-status"></div>
-                <span>Câmera</span>
+                <span class="status-text-cam">Câmera</span>
             </div>
         </div>
     </div>
@@ -861,7 +867,7 @@
         const axonEyeResultsPreview = document.getElementById('axon-eye-results-preview'); // Novo elemento para resultados do Axon Eye
         const apiStatus = document.getElementById('api-status');
         const micStatus = document.getElementById('mic-status');
-        const cameraStatus = document.getElementById('camera-status'); // Adicionado status da câmera
+        const cameraStatus = document.getElementById('camera-status'); // Novo elemento para status da câmera
         const initialMessagesContainer = document.getElementById('initial-messages');
 
         // Camera elements
@@ -913,7 +919,6 @@
         let axonEyeResults = ""; // Armazena os resultados do Axon Eye
         let lastAnamnesisInfo = "";
         let apiConnectionStatus = "Desconhecido";
-        let cameraConnectionStatus = "Desconhecido"; // Adicionado status da câmera
         let unsubscribeSnapshot = null; // Para gerenciar a inscrição do Firestore
         let cameraStream = null; // Para gerenciar o stream da câmera
         let capturedImages = []; // Armazena os Data URLs das imagens capturadas/carregadas
@@ -1547,21 +1552,6 @@
             }
         };
 
-        // Função para verificar o status da câmera
-        const checkCameraStatus = async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately
-                cameraConnectionStatus = "Conectada";
-                cameraStatus.classList.remove('status-off');
-                return true;
-            } catch (error) {
-                cameraConnectionStatus = `Offline (${error.message})`;
-                cameraStatus.classList.add('status-off');
-                return false;
-            }
-        };
-
         // Verificar e escolher o melhor engine ao iniciar
         const initializeAIModel = async () => {
             appendOutput("Verificando motores disponíveis...", "info", false);
@@ -1640,9 +1630,6 @@
             } else if (!foundWorkingVisionModel) {
                 appendOutput("Nenhum motor de IA para visão está respondendo. Funcionalidades de análise de imagem podem estar limitadas.", "error", false);
             }
-            
-            // Check camera status on load
-            await checkCameraStatus();
         };
 
         // Firebase Functions
@@ -1799,9 +1786,8 @@
                 cameraVideo.srcObject = stream;
                 cameraStream = stream;
                 toggleMonitorView('camera'); // Show the camera modal inside the monitor
+                cameraStatus.classList.remove('status-off'); // Set camera status to ON
                 appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}. Capture ou carregue as fotos.`, "info");
-                cameraStatus.classList.remove('status-off'); // Update camera status indicator
-                cameraConnectionStatus = "Conectada";
 
                 // Show album button
                 albumButton.style.display = 'flex';
@@ -1827,8 +1813,7 @@
             } catch (err) {
                 appendOutput(`Erro ao acessar a câmera: ${err.message}. Verifique as permissões.`, "error");
                 console.error("Erro ao acessar a câmera:", err);
-                cameraStatus.classList.add('status-off'); // Update camera status indicator
-                cameraConnectionStatus = `Offline (${err.message})`;
+                cameraStatus.classList.add('status-off'); // Set camera status to OFF on error
             }
         };
 
@@ -1843,6 +1828,7 @@
                 cameraStream = null;
             }
             cameraModal.style.display = 'none'; // Hide the camera modal
+            cameraStatus.classList.add('status-off'); // Set camera status to OFF
             // previewContainer.innerHTML = ''; // REMOVIDO
             // capturedImages = []; // REMOVIDO - imagens devem persistir para o álbum
             sendExamsButton.classList.add('disabled');
@@ -1851,8 +1837,6 @@
             cameraSwitchButton.style.display = 'none'; // Hide switch camera button
             albumButton.style.display = 'none'; // Hide album button
             appendOutput("Câmera desativada.", "info");
-            cameraStatus.classList.add('status-off'); // Update camera status indicator
-            cameraConnectionStatus = "Desconectada";
             toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); // Return to previous view or anamnesis
         };
 
@@ -2458,6 +2442,28 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         } else {
             appendOutput("Reconhecimento de voz não suportado neste navegador.", "error", false);
         }
+
+        // Update status bar text for mobile
+        const updateStatusBarText = () => {
+            const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+            const apiText = document.querySelector('.status-text-api');
+            const micText = document.querySelector('.status-text-mic');
+            const camText = document.querySelector('.status-text-cam');
+
+            if (isMobile) {
+                if (apiText) apiText.textContent = 'API';
+                if (micText) micText.textContent = 'Micro';
+                if (camText) camText.textContent = 'Cam';
+            } else {
+                if (apiText) apiText.textContent = 'API';
+                if (micText) micText.textContent = 'Microfone';
+                if (camText) camText.textContent = 'Câmera';
+            }
+        };
+
+        // Initial call and listen for resize to adjust text
+        updateStatusBarText();
+        window.addEventListener('resize', updateStatusBarText);
 
         setInterval(() => {
             apiStatus.style.backgroundColor = apiStatus.style.backgroundColor === 'var(--success-color)' ? 
