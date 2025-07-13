@@ -26,7 +26,6 @@
             --diagnosis-color: #a371f7;
             --conduct-color: #56d364;
             --altered-color: #ffcc00; /* Nova cor para "Alterado" */
-            --impression-color: #ff0000; /* Nova cor para Impressão Diagnóstica */
         }
 
         * {
@@ -256,22 +255,6 @@
             position: absolute;
             left: 0;
             color: var(--diagnosis-color);
-        }
-
-        .impression-title { /* Novo estilo para o título da impressão diagnóstica */
-            font-weight: bold;
-            margin-top: 15px;
-            margin-bottom: 5px;
-            color: var(--impression-color);
-            border-bottom: 1px solid rgba(255, 0, 0, 0.3);
-            padding-bottom: 3px;
-        }
-
-        .impression-paragraph { /* Novo estilo para o parágrafo da impressão diagnóstica */
-            color: var(--output-color);
-            margin-bottom: 10px;
-            padding-left: 10px;
-            line-height: 1.6;
         }
         
         .conduct-section {
@@ -717,7 +700,17 @@
             background-color: rgba(255, 0, 0, 1);
         }
 
-        .axon-eye-image-display { /* Novo estilo para a imagem no Axon Eye */
+        /* Novo estilo para títulos de análise do Axon Eye */
+        .axon-eye-title {
+            color: var(--error-color); /* Vermelho */
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid rgba(255, 123, 114, 0.3); /* Linha sutil */
+            padding-bottom: 3px;
+        }
+
+        .axon-eye-image-preview {
             max-width: 100%;
             height: auto;
             margin-top: 15px;
@@ -1232,21 +1225,39 @@
         // Função para atualizar a prévia dos resultados do Axon Eye
         const updateAxonEyeResultsPreview = (logToFirebase = true) => {
             let formattedResults = '';
-            if (axonEyeResults) {
-                formattedResults = axonEyeResults.split('\n')
-                    .filter(line => line.trim() !== '')
-                    .map(line => `<div class="output">${line.trim()}</div>`)
-                    .join('');
-            }
+            let imageHtml = '';
 
-            // Adiciona a imagem capturada abaixo do texto da análise
-            let imageDisplayHtml = '';
+            // Adiciona a imagem enviada, se houver
             if (capturedImages.length > 0) {
-                // Exibe a última imagem capturada para a análise do Axon Eye
-                imageDisplayHtml = `<img src="${capturedImages[capturedImages.length - 1]}" class="axon-eye-image-display" alt="Imagem Analisada">`;
+                // Exibe apenas a primeira imagem para simplificar, ou pode iterar sobre todas
+                imageHtml = `<img src="${capturedImages[0]}" class="axon-eye-image-preview" alt="Imagem Analisada">`;
             }
 
-            axonEyeResultsPreview.innerHTML = `<div class="section-title">ANÁLISE AXON EYE:</div>${formattedResults || '<div class="info">Nenhuma análise visual feita ainda.</div>'}${imageDisplayHtml}`;
+            if (axonEyeResults) {
+                // Regex para encontrar os títulos específicos
+                const impressionRegex = /(Impressão Diagnóstica|Interpretação Clínica|Diagnósticos Diferenciais):\s*(.*)/i;
+                let match = axonEyeResults.match(impressionRegex);
+
+                if (match) {
+                    const title = match[1];
+                    const content = match[2].trim();
+                    const preText = axonEyeResults.substring(0, match.index).trim();
+                    const postText = axonEyeResults.substring(match.index + match[0].length).trim();
+
+                    formattedResults += `<div class="output">${preText.split('\n').map(line => line.trim()).filter(line => line).join('<br>')}</div>`;
+                    formattedResults += `<div class="axon-eye-title">${title}</div>`;
+                    formattedResults += `<div class="output">${content}</div>`;
+                    formattedResults += `<div class="output">${postText.split('\n').map(line => line.trim()).filter(line => line).join('<br>')}</div>`;
+
+                } else {
+                    formattedResults = axonEyeResults.split('\n')
+                        .filter(line => line.trim() !== '')
+                        .map(line => `<div class="output">${line.trim()}</div>`)
+                        .join('');
+                }
+            }
+
+            axonEyeResultsPreview.innerHTML = `<div class="section-title">ANÁLISE AXON EYE:</div>${formattedResults || '<div class="info">Nenhuma análise visual feita ainda.</div>'}${imageHtml}`;
             axonEyeResultsPreview.scrollTop = axonEyeResultsPreview.scrollHeight;
 
             if (logToFirebase && isLoggedIn && currentUser) {
@@ -1444,42 +1455,20 @@
             const prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}.
             E nos seguintes resultados de exames (se houver): ${examsResults || "Nenhum resultado de exame disponível."}.
             Liste as possíveis hipóteses diagnósticas em ordem de probabilidade. 
-            Em seguida, forneça uma "Impressão Diagnóstica" que seja um resumo conciso e objetivo da sua principal conclusão diagnóstica, em um parágrafo separado.
             Formate cada hipótese como um item em uma lista. 
             Seja técnico, objetivo e extremamente resumido. 
-            Retorne apenas a lista de hipóteses e a impressão diagnóstica, sem introdução ou conclusão.
-            Exemplo de formato:
-            - Hipótese 1
-            - Hipótese 2
-            Impressão Diagnóstica: [Seu parágrafo conciso aqui].`;
+            Retorne apenas a lista de hipóteses, sem introdução ou conclusão.`;
             
             try {
                 const response = await callGeminiAPI(prompt);
                 
-                let formattedDiagnosis = '';
-                let impressionDiagnostic = '';
-
-                const lines = response.split('\n').map(line => line.trim()).filter(line => line);
-                const impressionIndex = lines.findIndex(line => line.startsWith('Impressão Diagnóstica:'));
-
-                if (impressionIndex !== -1) {
-                    impressionDiagnostic = lines[impressionIndex].replace('Impressão Diagnóstica:', '').trim();
-                    const diagnosisLines = lines.slice(0, impressionIndex);
-                    formattedDiagnosis = diagnosisLines
-                        .map(item => `<div class="diagnosis-item">${item.replace(/^- /, '')}</div>`)
-                        .join('');
-                } else {
-                    formattedDiagnosis = lines
-                        .map(item => `<div class="diagnosis-item">${item.replace(/^- /, '')}</div>`)
-                        .join('');
-                }
-
-                let outputHtml = `<div class="conduct-title">HIPÓTESES DIAGNÓSTICAS:</div>${formattedDiagnosis}`;
-                if (impressionDiagnostic) {
-                    outputHtml += `<div class="impression-title">Impressão Diagnóstica:</div><div class="impression-paragraph">${impressionDiagnostic}</div>`;
-                }
+                const formattedDiagnosis = response.split('\n')
+                    .map(item => item.trim())
+                    .filter(item => item)
+                    .map(item => `<div class="diagnosis-item">${item}</div>`)
+                    .join('');
                 
-                appendOutput(outputHtml, "output");
+                appendOutput(`<div class="conduct-title">HIPÓTESES DIAGNÓSTICAS:</div>${formattedDiagnosis}`, "output");
             } catch (error) {
                 appendOutput(`Erro ao gerar hipóteses diagnósticas: ${error.message}`, "error");
             }
@@ -1546,8 +1535,8 @@
                 if (titleElement) {
                     titleElement.remove();
                 }
-                // Remove a imagem antes de copiar o texto
-                const imageElement = tempDiv.querySelector('.axon-eye-image-display');
+                // Remove a imagem antes de copiar
+                const imageElement = tempDiv.querySelector('.axon-eye-image-preview');
                 if (imageElement) {
                     imageElement.remove();
                 }
@@ -2172,9 +2161,11 @@
 
                 // Now send the Imgur links to Gemini Vision API
                 const prompt = `Você é um assistente médico. Analise as imagens fornecidas e forneça uma opinião clínica detalhada.
+                Não inclua a data da análise em sua resposta.
                 Se a imagem for de um exame (como ECG, raio-X, tomografia, etc.), descreva os achados relevantes e o que eles podem indicar.
                 Se a imagem for de uma lesão cutânea, descreva a lesão (cor, forma, tamanho, bordas, localização) e sugira possíveis diagnósticos diferenciais.
                 Se for uma imagem de um sintoma (ex: inchaço, vermelhidão), descreva o sintoma e suas possíveis causas.
+                Ao final da sua análise, inclua uma seção com o título "Impressão Diagnóstica:" ou "Interpretação Clínica:" ou "Diagnósticos Diferenciais:" (escolha o mais apropriado para o contexto da imagem), seguida de um parágrafo conciso com sua conclusão ou as principais hipóteses.
                 Seja o mais descritivo e clinicamente relevante possível.
                 Retorne a análise de forma clara e concisa, como um relatório ou parecer.`;
 
