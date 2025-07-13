@@ -941,19 +941,28 @@
         const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI';
         let currentGeminiAPIKey = defaultGeminiAPIKey;
 
-        // Mapeamento de modelos de IA
+        // Mapeamento de modelos de IA (ADICIONADO NOVO MODELO DE GERAÇÃO DE IMAGEM)
         const apiModels = [
             { id: 1, name: 'gemini-2.0-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, vision: false },
             { id: 2, name: 'gemma-3n-e4b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3n-e4b-it:generateContent?key=${key}`, vision: false },
             { id: 3, name: 'gemma-3-12b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-12b-it:generateContent?key=${key}`, vision: false },
             { id: 4, name: 'gemma-3-27b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${key}`, vision: false },
             { id: 5, name: 'learnlm-2.0-flash-experimental', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/learnlm-2.0-flash-experimental:generateContent?key=${key}`, vision: false },
-            { id: 6, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: true } // Modelo com capacidade de visão
+            { id: 6, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: true }, // Modelo com capacidade de visão
+            { id: 7, name: 'gemini-2.0-flash-preview-image-generation', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${key}`, vision: false, imageGeneration: true } // Novo modelo para geração de imagens
         ];
         let currentAIModel = apiModels[0].name; // Modelo padrão para texto
         let currentVisionAIModel = apiModels.find(m => m.vision)?.name || 'gemini-2.5-flash'; // Modelo padrão para visão
 
-        const getGeminiAPIUrl = (isVision = false) => {
+        const getGeminiAPIUrl = (isVision = false, isImageGeneration = false) => {
+            if (isImageGeneration) {
+                const model = apiModels.find(m => m.imageGeneration);
+                if (model) {
+                    return model.urlBuilder(currentGeminiAPIKey);
+                }
+                return apiModels.find(m => m.imageGeneration)?.urlBuilder(currentGeminiAPIKey) || apiModels[0].urlBuilder(currentGeminiAPIKey);
+            }
+
             const modelName = isVision ? currentVisionAIModel : currentAIModel;
             const model = apiModels.find(m => m.name === modelName);
             if (model) {
@@ -1335,6 +1344,63 @@
             }
         };
 
+        // NOVA FUNÇÃO PARA GERAR IMAGEM EDITADA COM DESTAQUES
+        const callGeminiImageGenerationAPI = async (imageDataURL, prompt, retryCount = 0) => {
+            const maxRetries = 3;
+            try {
+                const base64Image = imageDataURL.split(',')[1]; // Remove prefixo
+                const contents = [
+                    {
+                        inlineData: {
+                            mimeType: 'image/jpeg',
+                            data: base64Image
+                        }
+                    },
+                    { 
+                        text: prompt 
+                    }
+                ];
+
+                const response = await fetch(getGeminiAPIUrl(false, true), { // true para geração de imagem
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: contents
+                        }],
+                        generationConfig: {
+                            response_mime_type: "image/png" // Especifica formato PNG
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro na API de geração de imagem: ${response.status}`);
+                }
+
+                const data = await response.json();
+                // Procura pela parte de imagem na resposta
+                const imagePart = data.candidates[0].content.parts.find(part => part.inlineData);
+                if (imagePart) {
+                    const imageBase64 = imagePart.inlineData.data;
+                    return `data:image/png;base64,${imageBase64}`;
+                } else {
+                    throw new Error("A resposta da API não contém uma imagem.");
+                }
+            } catch (error) {
+                console.error("Erro na chamada da API de geração de imagem:", error);
+                if (retryCount < maxRetries) {
+                    const delay = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000; // 1-3 seconds
+                    appendOutput(`Erro na API de geração de imagem. Tentando novamente em ${delay / 1000} segundos (${retryCount + 1}/${maxRetries})...`, "error");
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return callGeminiImageGenerationAPI(imageDataURL, prompt, retryCount + 1);
+                } else {
+                    throw error;
+                }
+            }
+        };
 
         // CORREÇÃO PRINCIPAL: Função para acumular informações na anamnese
         const processAnamnesisInfo = async (info, retryCount = 0) => {
@@ -1567,6 +1633,7 @@
             appendOutput("Verificando motores disponíveis...", "info", false);
             let foundWorkingTextModel = false;
             let foundWorkingVisionModel = false;
+            let foundWorkingImageGenerationModel = false;
 
             // Prioritize gemini-2.0-flash for text
             const geminiFlashText = apiModels.find(m => m.name === 'gemini-2.0-flash' && !m.vision);
@@ -1596,10 +1663,23 @@
                 }
             }
 
+            // Test image generation model
+            const geminiImageGen = apiModels.find(m => m.imageGeneration);
+            if (geminiImageGen) {
+                appendOutput(`Testando ${geminiImageGen.name} (geração de imagem)...`, "info", false);
+                const isWorking = await checkApiStatus(geminiImageGen.name);
+                if (isWorking) {
+                    appendOutput(`Motor de geração de imagem disponível: ${geminiImageGen.name} (funcionando).`, "success", false);
+                    foundWorkingImageGenerationModel = true;
+                } else {
+                    appendOutput(`${geminiImageGen.name} (geração de imagem) não está respondendo.`, "error", false);
+                }
+            }
+
             // Fallback for text models
             if (!foundWorkingTextModel) {
                 for (const model of apiModels) {
-                    if (!model.vision && model.name !== 'gemini-2.0-flash') {
+                    if (!model.vision && !model.imageGeneration && model.name !== 'gemini-2.0-flash') {
                         appendOutput(`Testando ${model.name} (texto)...`, "info", false);
                         const isWorking = await checkApiStatus(model.name);
                         if (isWorking) {
@@ -1632,13 +1712,15 @@
                 }
             }
 
-            if (!foundWorkingTextModel && !foundWorkingVisionModel) {
+            if (!foundWorkingTextModel && !foundWorkingVisionModel && !foundWorkingImageGenerationModel) {
                 appendOutput("Nenhum motor de IA disponível está respondendo. As funcionalidades podem estar limitadas.", "error", false);
                 apiStatus.classList.add('status-off');
             } else if (!foundWorkingTextModel) {
                 appendOutput("Nenhum motor de IA para texto está respondendo. Funcionalidades de texto podem estar limitadas.", "error", false);
             } else if (!foundWorkingVisionModel) {
                 appendOutput("Nenhum motor de IA para visão está respondendo. Funcionalidades de análise de imagem podem estar limitadas.", "error", false);
+            } else if (!foundWorkingImageGenerationModel) {
+                appendOutput("Nenhum motor de IA para geração de imagens está respondendo. A funcionalidade de edição de imagens estará desativada.", "error", false);
             }
         };
 
@@ -2127,6 +2209,31 @@
                 }
                 axonEyeResults += response;
                 
+                // NOVA PARTE: GERAR IMAGEM EDITADA COM DESTAQUES
+                try {
+                    // Usa apenas a primeira imagem para gerar a edição
+                    const firstImage = capturedImages[0];
+                    const editPrompt = `Edite esta imagem para destacar visualmente as áreas relevantes mencionadas na análise anterior. 
+                                        Por exemplo, se houver um nódulo, circule-o com uma cor contrastante. 
+                                        Se houver uma área de inflamação, destaque-a com um contorno. 
+                                        Adicione setas ou marcadores se necessário para indicar achados importantes.`;
+
+                    appendOutput("Gerando imagem editada com destaques...", "info");
+                    const editedImageDataURL = await callGeminiImageGenerationAPI(firstImage, editPrompt);
+                    
+                    // Adiciona a imagem editada ao álbum
+                    capturedImages.push(editedImageDataURL);
+                    updateAlbumCount();
+                    
+                    // Atualiza os resultados do Axon Eye para incluir a imagem editada
+                    axonEyeResults += `<br><div class="section-title">IMAGEM EDITADA DESTACANDO ACHADOS:</div>
+                                       <img src="${editedImageDataURL}" alt="Imagem editada destacando achados" style="max-width:100%; border: 1px solid var(--border-color); border-radius:5px; margin-top:10px;">`;
+                    
+                    appendOutput("Imagem editada gerada com sucesso.", "success");
+                } catch (imageGenError) {
+                    appendOutput(`Não foi possível gerar a imagem editada: ${imageGenError.message}`, "error");
+                }
+
                 updateAxonEyeResultsPreview(); // Isso irá salvar no Firestore
                 appendOutput("Análise Axon Eye concluída.", "success");
                 stopCamera(); // Close camera interface after analysis
@@ -2331,6 +2438,8 @@
                             if (selectedModel.vision) {
                                 currentVisionAIModel = selectedModel.name;
                                 appendOutput(`Motor da API de visão alterado para: ${currentVisionAIModel}`, "success");
+                            } else if (selectedModel.imageGeneration) {
+                                appendOutput(`Motor da API de geração de imagem: ${selectedModel.name}`, "success");
                             } else {
                                 currentAIModel = selectedModel.name;
                                 appendOutput(`Motor da API de texto alterado para: ${currentAIModel}`, "success");
@@ -2358,6 +2467,8 @@
                     appendOutput(`Motor da IA de texto atual: ${currentAIModel}`, "info");
                     appendOutput(`API Utilizada (Visão): ${getGeminiAPIUrl(true)}`, "info");
                     appendOutput(`Motor da IA de visão atual: ${currentVisionAIModel}`, "info");
+                    appendOutput(`API Utilizada (Geração de Imagem): ${getGeminiAPIUrl(false, true)}`, "info");
+                    appendOutput(`Motor da IA de geração de imagem: gemini-2.0-flash-preview-image-generation`, "info");
                     appendOutput(`API Imgur: https://api.imgur.com/3/image (Client ID: ${IMGUR_CLIENT_ID})`, "info");
                     appendOutput(`Status de Conexão: ${apiConnectionStatus}`, apiConnectionStatus.includes("Conectado") ? "success" : "error");
                 } else {
@@ -2388,7 +2499,7 @@
     <li class="help-item"><span class="command">/copy</span> - Copiar conteúdo do terminal Monitor</li>
     <li class="help-item"><span class="command">/ia [pergunta]</span> - Fazer pergunta livre à I.A</li>
     <li class="help-item"><span class="command">/exames</span> - Abrir câmera para fotografar/carregar exames e enviar à I.A para análise de resultados</li>
-    <li class="help-item"><span class="command">/see</span> - Abrir câmera para fotografar/carregar imagens e enviar à I.A para opinião clínica</li>
+    <li class="help-item"><span class="command">/see</span> - Abrir câmera para fotografar/carregar imagens e enviar à I.A para opinião clínica e geração de imagem editada</li>
     <li class="help-item"><span class="command">/exit</span> - Encerrar sessão</li>
     <li class="help-item"><span class="command">/clear</span> - Limpar terminal e reiniciar anamnese</li>
     <li class="help-item"><span class="command">/api [senha_admin]</span> - Mostrar API utilizada e status de conexão</li>
