@@ -1129,6 +1129,8 @@
             if (requireLogin) {
                 isLoggedIn = false;
                 currentUser = null;
+                localStorage.removeItem('axon_username'); // Limpa o username do localStorage
+                localStorage.removeItem('axon_logged_in'); // Limpa a flag de login
                 if (unsubscribeSnapshot) {
                     unsubscribeSnapshot(); // Desinscreve do listener do Firestore
                     unsubscribeSnapshot = null;
@@ -1819,12 +1821,46 @@
             }
         };
 
+        // Função para lidar com o login bem-sucedido
+        const handleSuccessfulLogin = (username) => {
+            isLoggedIn = true;
+            currentUser = username;
+            localStorage.setItem('axon_username', username); // Salva o username
+            localStorage.setItem('axon_logged_in', 'true'); // Salva a flag de login
+            appendOutput("Login bem-sucedido. Digite /help para ver os comandos disponíveis.", "success");
+            initialMessagesContainer.innerHTML = `
+                <pre class="info">
+ █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
+██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
+███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
+██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
+██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                </pre>
+                <span class="info">Axon - Assistente Médico v1.0</span><br>
+                <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
+            `;
+            initialMessagesContainer.style.display = 'none';
+            appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
+            setupFirebaseListener(currentUser);
+            toggleMonitorView('anamnesis');
+        };
+
         // Camera and Image Processing Functions
         const startCamera = async (mode) => {
             cameraMode = mode;
             cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
             sendExamsButton.style.display = mode === 'exams' ? 'block' : 'none';
             sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'block' : 'none';
+
+            // Limpar análises anteriores no terminal interativo ao abrir a câmera
+            if (mode === 'exams') {
+                examsResults = "";
+                updateExamsResultsPreview();
+            } else if (mode === 'axon-eye') {
+                axonEyeResults = "";
+                updateAxonEyeResultsPreview();
+            }
 
             try {
                 // Stop any existing stream
@@ -1887,8 +1923,6 @@
             }
             cameraModal.style.display = 'none'; // Hide the camera modal
             cameraStatus.classList.add('status-off'); // Set camera status to OFF
-            // previewContainer.innerHTML = ''; // REMOVIDO
-            // capturedImages = []; // REMOVIDO - imagens devem persistir para o álbum
             sendExamsButton.classList.add('disabled');
             sendAxonEyeButton.classList.add('disabled'); // Disable Axon Eye button too
             flashlightButton.style.display = 'none'; // Hide flashlight button
@@ -2131,6 +2165,8 @@
                 
                 updateExamsResultsPreview(); // Isso irá salvar no Firestore
                 appendOutput("Análise de exames concluída.", "success");
+                capturedImages = []; // Limpa as imagens do álbum após o envio
+                updateAlbumCount(); // Atualiza a contagem do álbum
                 stopCamera(); // Close camera interface after analysis
             } catch (error) {
                 appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
@@ -2179,6 +2215,8 @@
                 
                 updateAxonEyeResultsPreview(); // Isso irá salvar no Firestore
                 appendOutput("Análise Axon Eye concluída.", "success");
+                capturedImages = []; // Limpa as imagens do álbum após o envio
+                updateAlbumCount(); // Atualiza a contagem do álbum
                 stopCamera(); // Close camera interface after analysis
             } catch (error) {
                 appendOutput(`Erro ao analisar com Axon Eye: ${error.message}`, "error");
@@ -2204,26 +2242,7 @@
                     const password = parts[2];
 
                     if (await authenticateUser(username, password)) {
-                        isLoggedIn = true;
-                        currentUser = username;
-                        appendOutput("Login bem-sucedido. Digite /help para ver os comandos disponíveis.", "success");
-                        initialMessagesContainer.innerHTML = `
-                            <pre class="info">
- █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
-██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
-███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
-██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
-██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
-╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-                            </pre>
-                            <span class="info">Axon - Assistente Médico v1.0</span><br>
-                            <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
-                        `;
-                        // Iniciar anamnese e exames com dados do Firestore após login
-                        initialMessagesContainer.style.display = 'none';
-                        appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
-                        setupFirebaseListener(currentUser); // Inicia o listener do Firebase
-                        toggleMonitorView('anamnesis'); // Garante que a anamnese é a primeira vista
+                        handleSuccessfulLogin(username);
                     } else {
                         appendOutput("Usuário ou senha incorretos.", "error");
                     }
@@ -2520,7 +2539,19 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
                 'var(--error-color)' : 'var(--success-color)';
         }, 3000);
 
-        window.onload = initializeAIModel;
+        window.onload = async () => {
+            await initializeAIModel();
+            const storedUsername = localStorage.getItem('axon_username');
+            const storedLoggedIn = localStorage.getItem('axon_logged_in');
+
+            if (storedUsername && storedLoggedIn === 'true') {
+                // Tenta logar automaticamente com o usuário salvo
+                // Como não salvamos a senha, assumimos que se o username está lá e a flag é true,
+                // o usuário já foi autenticado e pode continuar a sessão.
+                // Em um ambiente de produção, você usaria tokens de sessão ou algo mais seguro.
+                handleSuccessfulLogin(storedUsername);
+            }
+        };
 
         // PWA: Register Service Worker
         if ('serviceWorker' in navigator) {
