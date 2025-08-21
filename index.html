@@ -787,6 +787,9 @@
                 <div id="axon-eye-results-preview" class="monitor-view" style="display: none;">
                     <div class="info">Nenhuma análise visual feita ainda.</div>
                 </div>
+                <div id="camera-active-message" class="monitor-view" style="display: none;">
+                    <div class="info">Câmera ativa em outro dispositivo.</div>
+                </div>
 
                 <div id="camera-modal" class="camera-modal">
                     <div class="camera-container">
@@ -868,6 +871,7 @@
         const micStatus = document.getElementById('mic-status');
         const cameraStatus = document.getElementById('camera-status');
         const initialMessagesContainer = document.getElementById('initial-messages');
+        const cameraActiveMessage = document.getElementById('camera-active-message');
 
         const cameraModal = document.getElementById('camera-modal');
         const cameraModalTitle = document.getElementById('camera-modal-title');
@@ -916,7 +920,7 @@
         let currentCameraFacingMode = 'environment';
         let currentMonitorView = 'anamnesis';
         let isFlashlightOn = false;
-        let cameraMode = 'exams';
+        let cameraMode = 'exams'; // 'exams' or 'axon-eye'
 
         const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI';
         let currentGeminiAPIKey = defaultGeminiAPIKey;
@@ -969,11 +973,12 @@
                 isListening = true;
                 micStatus.classList.remove('status-off');
                 appendOutput("Microfone ativado. Gravando consulta...", "success");
-                updateFirestoreMonitorState({ isListening: true });
+                updateFirestoreStatus({ micActive: true, monitorView: 'anamnesis' });
             };
 
             recognition.onresult = (event) => {
                 const transcript = event.results[event.results.length - 1][0].transcript;
+                
                 if (transcript.trim()) {
                     appendOutput(`[Voz] ${transcript}`, "info");
                     processAnamnesisInfo(transcript);
@@ -1013,11 +1018,12 @@
             isListening = false;
             micStatus.classList.add('status-off');
             appendOutput("Microfone desativado.", "info");
-            updateFirestoreMonitorState({ isListening: false });
+            updateFirestoreStatus({ micActive: false });
         };
 
         const appendOutput = (text, type = "output", logToFirebase = true) => {
             const outputElement = document.createElement('div');
+            
             if (type === "command") {
                 outputElement.innerHTML = `<span class="prompt">></span> <span class="command">${text}</span>`;
             } else if (type === "error") {
@@ -1029,7 +1035,8 @@
             } else if (type === "receituario") {
                 outputElement.classList.add('receituario-item');
                 outputElement.textContent = text;
-            } else {
+            }
+            else {
                 outputElement.innerHTML = `<span class="${type}">${text}</span>`;
             }
             
@@ -1044,6 +1051,7 @@
 
         const appendMonitorOutput = (text, type = "output", targetElement, logToFirebase = true) => {
             const outputElement = document.createElement('div');
+            
             if (type === "command") {
                 outputElement.innerHTML = `<span class="prompt">></span> <span class="command">${text}</span>`;
             } else if (type === "error") {
@@ -1055,7 +1063,8 @@
             } else if (type === "receituario") {
                 outputElement.classList.add('receituario-item');
                 outputElement.textContent = text;
-            } else {
+            }
+            else {
                 outputElement.innerHTML = `<span class="${type}">${text}</span>`;
             }
             
@@ -1078,7 +1087,8 @@
             if (requireLogin) {
                 isLoggedIn = false;
                 currentUser = null;
-                localStorage.removeItem('axon_user'); // Clear persistent login
+                localStorage.removeItem('axon_user');
+                localStorage.removeItem('axon_logged_in');
                 if (unsubscribeSnapshot) {
                     unsubscribeSnapshot();
                     unsubscribeSnapshot = null;
@@ -1110,28 +1120,34 @@
                 `;
             }
             interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
-            commandInput.focus(); // Ensure input is focused after reset
         };
 
         const updateAnamnesisPreview = (logToFirebase = true) => {
-            let previewHTML = `
+            let previewHTML = '';
+            
+            previewHTML = `
                 <div class="anamnesis-content">
                     <div class="section-title">Queixa Principal (QP):</div>
                     <div>${anamnesis.qp || "Ainda não informado."}</div>
                     <br>
+                    
                     <div class="section-title">História da Moléstia Atual (HMA):</div>
                     <div>${anamnesis.hma || "Ainda não informado."}</div>
                     <br>
+                    
                     <div class="section-title">História Patológica (HP):</div>
                     <div>${anamnesis.hp || "Ainda não informado."}</div>
                     <br>
+                    
                     <div class="section-title">História Familiar (HF):</div>
                     <div>${anamnesis.hf || "Ainda não informado."}</div>
                     <br>
+                    
                     <div class="section-title">História Psicossocial (HPS):</div>
                     <div>${anamnesis.hps || "Ainda não informado."}</div>
                 </div>
             `;
+            
             anamnesisPreview.innerHTML = previewHTML;
             anamnesisPreview.scrollTop = anamnesisPreview.scrollHeight;
 
@@ -1202,12 +1218,15 @@
             }
         };
 
-        const toggleMonitorView = (view, updateFirestore = true) => {
+        const toggleMonitorView = (view, fromFirestore = false) => {
+            if (currentMonitorView === view && !fromFirestore) return; // Avoid unnecessary toggles
+
             currentMonitorView = view;
             anamnesisPreview.style.display = 'none';
             examsResultsPreview.style.display = 'none';
             axonEyeResultsPreview.style.display = 'none';
             cameraModal.style.display = 'none';
+            cameraActiveMessage.style.display = 'none';
 
             toggleAnamnesisButton.classList.remove('active');
             toggleExamsButton.classList.remove('active');
@@ -1223,11 +1242,15 @@
                 axonEyeResultsPreview.style.display = 'block';
                 toggleAxonEyeButton.classList.add('active');
             } else if (view === 'camera') {
-                cameraModal.style.display = 'flex';
+                if (isMobileDevice()) {
+                    cameraModal.style.display = 'flex';
+                } else {
+                    cameraActiveMessage.style.display = 'block';
+                    appendOutput("Câmera ativa em outro dispositivo. Acompanhe a análise no monitor.", "info");
+                }
             }
-
-            if (updateFirestore && isLoggedIn && currentUser) {
-                updateFirestoreMonitorState({ currentMonitorView: view });
+            if (!fromFirestore && isLoggedIn && currentUser) {
+                updateFirestoreStatus({ monitorView: view });
             }
         };
 
@@ -1247,6 +1270,7 @@
                 const data = await response.json();
                 const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Não foi possível obter uma resposta.";
                 const cleanText = rawText.replace(/\*\*/g, '');
+                
                 return cleanText;
             } catch (error) {
                 console.error("Erro na chamada da API:", error);
@@ -1282,6 +1306,7 @@
                 const data = await response.json();
                 const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Não foi possível obter uma resposta da análise de imagem.";
                 const cleanText = rawText.replace(/\*\*/g, '');
+                
                 return cleanText;
             } catch (error) {
                 console.error("Erro na chamada da API de Visão:", error);
@@ -1302,13 +1327,16 @@
 
             const prompt = `Você é um assistente médico. Sua tarefa é organizar as informações fornecidas nas seções adequadas da anamnese.
             A nova informação recebida é: "${info}".
+
             É crucial que você **distinga as falas do médico das falas do paciente**. As falas do médico (perguntas, saudações, explicações que não são informações do paciente) **NÃO DEVEM SER ADICIONADAS À ANAMNESE**. Apenas as informações relevantes fornecidas pelo paciente devem ser incluídas.
+
             As informações existentes na anamnese são:
             - QP (Queixa Principal): "${anamnesis.qp || "Nenhuma"}"
             - HMA (História da Moléstia Atual): "${anamnesis.hma || "Nenhuma"}"
             - HP (História Patológica): "${anamnesis.hp || "Nenhuma"}"
             - HF (História Familiar): "${anamnesis.hf || "Nenhuma"}"
             - HPS (História Psicossocial): "${anamnesis.hps || "Nenhuma"}"
+
             Instruções para atualização:
             1. Analise a "nova informação recebida" e determine a seção MAIS RELEVANTE (QP, HMA, HP, HF, HPS) para ela.
             2. **IGNORE completamente qualquer fala que pareça ser do médico (perguntas, introduções, etc.)**. Concentre-se apenas nas respostas e informações fornecidas pelo paciente.
@@ -1317,6 +1345,7 @@
             5. Mantenha as informações das OUTRAS seções INALTERADAS, a menos que a nova informação as afete diretamente.
             6. Seja objetivo, conciso e use terminologia médica apropriada.
             7. Formate a resposta EXCLUSIVAMENTE como um objeto JSON, contendo TODAS as chaves da anamnese (qp, hma, hp, hf, hps), mesmo que algumas permaneçam vazias ou inalteradas.
+
             Exemplo de resposta esperada (apenas o JSON):
             {
               "qp": "Dor de cabeça pulsátil há 3 dias, com piora progressiva.",
@@ -1328,6 +1357,7 @@
 
             try {
                 const response = await callGeminiAPI(prompt);
+                
                 const jsonStart = response.indexOf('{');
                 const jsonEnd = response.lastIndexOf('}') + 1;
                 const jsonString = response.substring(jsonStart, jsonEnd);
@@ -1365,6 +1395,7 @@
             
             try {
                 const response = await callGeminiAPI(prompt);
+                
                 const formattedDiagnosis = response.split('\n')
                     .map(item => item.trim())
                     .filter(item => item)
@@ -1391,6 +1422,7 @@
             
             try {
                 const response = await callGeminiAPI(prompt);
+                
                 const formattedConduct = response
                     .replace(/Medicações:|Medicamentos:/gi, '<div class="conduct-title">MEDICAÇÕES (SUS):</div>')
                     .replace(/Exames complementares|Exames:/gi, '<div class="conduct-title">EXAMES COMPLEMENTARES (SUS):</div>')
@@ -1575,7 +1607,10 @@
         const logInteractionToFirebase = async (username, content, type, terminal) => {
             try {
                 await addDoc(collection(db, "sessions", username, "interactions"), {
-                    content: content, type: type, terminal: terminal, timestamp: new Date()
+                    content: content,
+                    type: type,
+                    terminal: terminal,
+                    timestamp: new Date()
                 });
             } catch (e) {
                 console.error("Erro ao registrar interação no Firebase: ", e);
@@ -1609,14 +1644,13 @@
             }
         };
 
-        const updateFirestoreMonitorState = async (stateUpdates) => {
-            if (isLoggedIn && currentUser) {
-                try {
-                    const docRef = doc(db, "sessions", currentUser);
-                    await updateDoc(docRef, stateUpdates);
-                } catch (e) {
-                    console.error("Erro ao atualizar estado do monitor no Firestore:", e);
-                }
+        const updateFirestoreStatus = async (statusUpdates) => {
+            if (!isLoggedIn || !currentUser) return;
+            try {
+                const docRef = doc(db, "sessions", currentUser);
+                await updateDoc(docRef, statusUpdates);
+            } catch (e) {
+                console.error("Erro ao atualizar status no Firestore: ", e);
             }
         };
 
@@ -1641,18 +1675,28 @@
                         axonEyeResults = data.axonEyeResults;
                         updateAxonEyeResultsPreview(false);
                     }
-                    // Sync monitor view
-                    if (data.currentMonitorView && data.currentMonitorView !== currentMonitorView) {
-                        toggleMonitorView(data.currentMonitorView, false); // Don't update Firestore again
+                    // Sincronização de status
+                    if (data.monitorView && data.monitorView !== currentMonitorView) {
+                        toggleMonitorView(data.monitorView, true);
                     }
-                    // Sync listening state
-                    if (typeof data.isListening !== 'undefined' && data.isListening !== isListening) {
-                        if (data.isListening) {
-                            if (!isListening) toggleListening();
-                        } else {
-                            if (isListening) stopListening();
+                    if (data.cameraActive !== undefined) {
+                        if (data.cameraActive && !isMobileDevice()) { // Only show message on desktop
+                            toggleMonitorView('camera', true);
+                        } else if (!data.cameraActive && !isMobileDevice() && currentMonitorView === 'camera') {
+                            toggleMonitorView('anamnesis', true); // Go back to anamnesis if camera deactivated
                         }
                     }
+                    if (data.micActive !== undefined) {
+                        if (data.micActive && !isListening) {
+                            // If mic is active on another device, just update status, don't start local mic
+                            micStatus.classList.remove('status-off');
+                            toggleMonitorView('anamnesis', true);
+                        } else if (!data.micActive && isListening) {
+                            // If mic is deactivated on another device, stop local mic
+                            stopListening();
+                        }
+                    }
+
                 } else {
                     anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                     examsResults = "";
@@ -1719,54 +1763,53 @@
             sendExamsButton.style.display = mode === 'exams' ? 'block' : 'none';
             sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'block' : 'none';
 
-            // Clear previous analyses when opening camera for new analysis
-            if (mode === 'exams') {
-                examsResults = "";
-                updateExamsResultsPreview();
-            } else if (mode === 'axon-eye') {
-                axonEyeResults = "";
-                updateAxonEyeResultsPreview();
-            }
+            if (isMobileDevice()) {
+                try {
+                    if (cameraStream) {
+                        cameraStream.getTracks().forEach(track => track.stop());
+                    }
 
-            try {
-                if (cameraStream) {
-                    cameraStream.getTracks().forEach(track => track.stop());
+                    const constraints = {
+                        video: { facingMode: currentCameraFacingMode }
+                    };
+
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    cameraVideo.srcObject = stream;
+                    cameraStream = stream;
+                    toggleMonitorView('camera');
+                    cameraStatus.classList.remove('status-off');
+                    appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}. Capture ou carregue as fotos.`, "info");
+                    updateFirestoreStatus({ cameraActive: true, cameraMode: mode, monitorView: 'camera' });
+
+                    albumButton.style.display = 'flex';
+                    updateAlbumCount();
+
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const videoInputDevices = devices.filter(device => device.kind === 'videoinput');
+                    if (videoInputDevices.length > 1) {
+                        cameraSwitchButton.style.display = 'block';
+                    } else {
+                        cameraSwitchButton.style.display = 'none';
+                    }
+
+                    const track = stream.getVideoTracks()[0];
+                    if (track && 'torch' in track.getCapabilities()) {
+                        flashlightButton.style.display = 'block';
+                    } else {
+                        flashlightButton.style.display = 'none';
+                    }
+
+                } catch (err) {
+                    appendOutput(`Erro ao acessar a câmera: ${err.message}. Verifique as permissões.`, "error");
+                    console.error("Erro ao acessar a câmera:", err);
+                    cameraStatus.classList.add('status-off');
+                    updateFirestoreStatus({ cameraActive: false });
                 }
-
-                const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-                const constraints = {
-                    video: { facingMode: isMobile ? 'environment' : currentCameraFacingMode }
-                };
-
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                cameraVideo.srcObject = stream;
-                cameraStream = stream;
-                toggleMonitorView('camera');
-                cameraStatus.classList.remove('status-off');
-                appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}. Capture ou carregue as fotos.`, "info");
-
-                albumButton.style.display = 'flex';
-                updateAlbumCount();
-
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoInputDevices = devices.filter(device => device.kind === 'videoinput');
-                if (videoInputDevices.length > 1) {
-                    cameraSwitchButton.style.display = 'block';
-                } else {
-                    cameraSwitchButton.style.display = 'none';
-                }
-
-                const track = stream.getVideoTracks()[0];
-                if (track && 'torch' in track.getCapabilities()) {
-                    flashlightButton.style.display = 'block';
-                } else {
-                    flashlightButton.style.display = 'none';
-                }
-
-            } catch (err) {
-                appendOutput(`Erro ao acessar a câmera: ${err.message}. Verifique as permissões.`, "error");
-                console.error("Erro ao acessar a câmera:", err);
-                cameraStatus.classList.add('status-off');
+            } else {
+                // Desktop: just update Firestore and monitor view
+                toggleMonitorView(mode === 'exams' ? 'exams' : 'axon-eye');
+                appendOutput(`Câmera ativada em outro dispositivo para ${mode === 'exams' ? 'exames' : 'análise visual'}.`, "info");
+                updateFirestoreStatus({ cameraActive: true, cameraMode: mode, monitorView: mode === 'exams' ? 'exams' : 'axon-eye' });
             }
         };
 
@@ -1787,6 +1830,7 @@
             cameraSwitchButton.style.display = 'none';
             albumButton.style.display = 'none';
             appendOutput("Câmera desativada.", "info");
+            updateFirestoreStatus({ cameraActive: false });
             toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView);
         };
 
@@ -1804,7 +1848,9 @@
             const track = cameraStream.getVideoTracks()[0];
             if (track && 'torch' in track.getCapabilities()) {
                 try {
-                    await track.applyConstraints({ advanced: [{ torch: !isFlashlightOn }] });
+                    await track.applyConstraints({
+                        advanced: [{ torch: !isFlashlightOn }]
+                    });
                     isFlashlightOn = !isFlashlightOn;
                     flashlightButton.classList.toggle('active', isFlashlightOn);
                     appendOutput(`Lanterna ${isFlashlightOn ? 'ativada' : 'desativada'}.`, "info");
@@ -1998,9 +2044,11 @@
                 (Alterado) Hemoglobina Glicada: 7.2%
                 Raio-X de Tórax: Sem alterações significativas
                 (Anormal) Tomografia de Crânio: Lesão expansiva em lobo frontal esquerdo.
+                
                 Retorne apenas a lista de resultados, sem introdução ou conclusão.`;
 
                 const response = await callGeminiVisionAPI(capturedImages, prompt);
+
                 examsResults = response;
                 
                 updateExamsResultsPreview();
@@ -2044,6 +2092,7 @@
                 Retorne a análise de forma clara e concisa, como um relatório ou parecer.`;
 
                 const response = await callGeminiVisionAPI(capturedImages, prompt);
+
                 axonEyeResults = response;
                 
                 updateAxonEyeResultsPreview();
@@ -2062,7 +2111,6 @@
             if (!command.trim()) return;
             
             appendOutput(command, "command");
-            commandInput.value = ''; // Clear input immediately
 
             const cmd = command.trim().toLowerCase();
             const isCommand = cmd.startsWith('/');
@@ -2076,7 +2124,8 @@
                     if (await authenticateUser(username, password)) {
                         isLoggedIn = true;
                         currentUser = username;
-                        localStorage.setItem('axon_user', JSON.stringify({ username: username, password: password })); // Save login
+                        localStorage.setItem('axon_user', username);
+                        localStorage.setItem('axon_logged_in', 'true');
                         appendOutput("Login bem-sucedido. Digite /help para ver os comandos disponíveis.", "success");
                         initialMessagesContainer.innerHTML = `
                             <pre class="info">
@@ -2100,13 +2149,13 @@
                 } else {
                     appendOutput("Você precisa fazer login para usar o terminal. Digite /login [usuário] [senha]", "error");
                 }
-                commandInput.focus();
+                commandInput.value = '';
                 return;
             }
 
             if (isCommand && !validCommands.some(vc => cmd.startsWith(vc.split(' ')[0]))) {
                 appendOutput(`Comando '${command}' não existe. Digite /help para ver os comandos disponíveis.`, "error");
-                commandInput.focus();
+                commandInput.value = '';
                 return;
             }
             
@@ -2150,7 +2199,6 @@
                     return;
                 }
                 toggleListening();
-                toggleMonitorView('anamnesis'); // Sync monitor view
             } 
             else if (cmd === '/hear off') {
                 if (!isListening) {
@@ -2186,9 +2234,11 @@
                 
                 try {
                     const response = await callGeminiAPI(iaPrompt);
+
                     if (question.toLowerCase().includes('medicação') || question.toLowerCase().includes('medicamento') || 
                         question.toLowerCase().includes('remédio') || question.toLowerCase().includes('posologia') ||
                         question.toLowerCase().includes('dose')) {
+                        
                         const formattedResponse = formatMedicationForReceituario(response);
                         appendOutput(formattedResponse, "receituario");
                     } else {
@@ -2234,11 +2284,13 @@
 
                 if (adminPassword === 'admin123') {
                     let selectedModel = null;
+
                     if (engineIdentifier) {
                         const id = parseInt(engineIdentifier);
                         if (!isNaN(id)) {
                             selectedModel = apiModels.find(m => m.id === id);
                         }
+                        
                         if (!selectedModel) {
                             selectedModel = apiModels.find(m => m.name.toLowerCase() === engineIdentifier.toLowerCase());
                         }
@@ -2288,12 +2340,14 @@
                 await registerUser(adminPassword, username, password);
             }
             else if (cmd === '/exames') {
+                examsResults = ""; // Clear previous exam results
+                updateExamsResultsPreview();
                 startCamera('exams');
-                toggleMonitorView('exams'); // Sync monitor view
             }
             else if (cmd === '/see') {
+                axonEyeResults = ""; // Clear previous Axon Eye results
+                updateAxonEyeResultsPreview();
                 startCamera('axon-eye');
-                toggleMonitorView('axon-eye'); // Sync monitor view
             }
             else if (cmd === '/help') {
                 const availableEnginesList = apiModels.map(m => `${m.id}. ${m.name}`).join(' | ');
@@ -2324,7 +2378,7 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
                 await processAnamnesisInfo(command);
             }
             
-            commandInput.focus(); // Re-focus input after command processing
+            commandInput.value = '';
         };
 
         commandInput.addEventListener('keydown', (e) => {
@@ -2334,8 +2388,7 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         });
 
         document.addEventListener('keydown', (e) => {
-            // Only focus if a key that typically inputs text is pressed, or navigation keys
-            if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete' || e.key === ' ' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete' || e.key === ' ') {
                 commandInput.focus();
             }
         });
@@ -2362,12 +2415,6 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         toggleExamsButton.addEventListener('click', () => toggleMonitorView('exams'));
         toggleAxonEyeButton.addEventListener('click', () => toggleMonitorView('axon-eye'));
 
-        if (isSpeechRecognitionSupported()) {
-            initSpeechRecognition();
-        } else {
-            appendOutput("Reconhecimento de voz não suportado neste navegador.", "error", false);
-        }
-
         const isMobileDevice = () => {
             return /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         };
@@ -2383,41 +2430,43 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
                 'var(--error-color)' : 'var(--success-color)';
         }, 3000);
 
-        const restoreLogin = async () => {
+        const autoLogin = async () => {
             const savedUser = localStorage.getItem('axon_user');
-            if (savedUser) {
-                const { username, password } = JSON.parse(savedUser);
-                if (await authenticateUser(username, password)) {
-                    isLoggedIn = true;
-                    currentUser = username;
-                    initialMessagesContainer.innerHTML = `
-                        <pre class="info">
+            const loggedInFlag = localStorage.getItem('axon_logged_in');
+
+            if (savedUser && loggedInFlag === 'true') {
+                // We don't save password, so we can't re-authenticate directly.
+                // Instead, we assume the user is still logged in and set the state.
+                // For a real app, you'd use tokens or more robust session management.
+                isLoggedIn = true;
+                currentUser = savedUser;
+                initialMessagesContainer.innerHTML = `
+                    <pre class="info">
  █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
 ██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
 ███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
 ██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
 ██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
 ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-                        </pre>
-                        <span class="info">Axon - Assistente Médico v1.0</span><br>
-                        <span class="info">Login recuperado para o usuário: <span class="command">${username}</span>.</span><br>
-                        <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
-                    `;
-                    initialMessagesContainer.style.display = 'none';
-                    appendOutput(`Login recuperado para o usuário: ${username}.`, "success", false);
-                    setupFirebaseListener(currentUser);
-                    toggleMonitorView('anamnesis'); // Default view after login
-                } else {
-                    localStorage.removeItem('axon_user'); // Clear invalid saved login
-                    appendOutput("Login salvo inválido ou expirado. Por favor, faça login novamente..", "error", false);
-                }
+                    </pre>
+                    <span class="info">Axon - Assistente Médico v1.0</span><br>
+                    <span class="info">Login recuperado para o usuário: ${currentUser}. Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
+                `;
+                initialMessagesContainer.style.display = 'none';
+                appendOutput(`Login recuperado para o usuário: ${currentUser}.`, "success");
+                setupFirebaseListener(currentUser);
+                toggleMonitorView('anamnesis');
             }
         };
 
         window.onload = async () => {
             await initializeAIModel();
-            await restoreLogin();
-            commandInput.focus(); // Ensure input is focused on load
+            if (isSpeechRecognitionSupported()) {
+                initSpeechRecognition();
+            } else {
+                appendOutput("Reconhecimento de voz não suportado neste navegador.", "error", false);
+            }
+            await autoLogin();
         };
 
         if ('serviceWorker' in navigator) {
