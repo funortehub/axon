@@ -1,4 +1,4 @@
-const CACHE_NAME = 'axon-ai-cache-v1.0.3'; // Incremente a versão para forçar a atualização do cache
+const CACHE_NAME = 'axon-ai-cache-v1.0.7'; // Incremente a versão para forçar a atualização do cache
 const urlsToCache = [
   '/',
   '/index.html', // Ou o nome do seu arquivo HTML principal, se for diferente
