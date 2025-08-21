@@ -1013,6 +1013,7 @@
                 isListening = true;
                 micStatus.classList.remove('status-off');
                 appendOutput("Microfone ativado. Gravando consulta...", "success");
+                updateFirestoreMonitorView('anamnesis'); // Sincroniza a aba do monitor
             };
 
             recognition.onresult = (event) => {
@@ -1129,7 +1130,8 @@
             if (requireLogin) {
                 isLoggedIn = false;
                 currentUser = null;
-                localStorage.removeItem('axon_username'); // Limpa o username salvo
+                localStorage.removeItem('axon_user'); // Limpa o login salvo
+                localStorage.removeItem('axon_pass');
                 if (unsubscribeSnapshot) {
                     unsubscribeSnapshot(); // Desinscreve do listener do Firestore
                     unsubscribeSnapshot = null;
@@ -1735,6 +1737,17 @@
             }
         };
 
+        const updateFirestoreMonitorView = async (view) => {
+            if (isLoggedIn && currentUser) {
+                try {
+                    const docRef = doc(db, "sessions", currentUser);
+                    await updateDoc(docRef, { currentMonitorView: view });
+                } catch (e) {
+                    console.error("Erro ao atualizar view do monitor no Firestore:", e);
+                }
+            }
+        };
+
         const setupFirebaseListener = (username) => {
             if (unsubscribeSnapshot) {
                 unsubscribeSnapshot(); // Desinscreve de qualquer listener anterior
@@ -1758,6 +1771,10 @@
                     if (data.axonEyeResults && data.axonEyeResults !== axonEyeResults) {
                         axonEyeResults = data.axonEyeResults;
                         updateAxonEyeResultsPreview(false); // Não logar novamente no Firebase
+                    }
+                    // Sincroniza a view do monitor
+                    if (data.currentMonitorView && data.currentMonitorView !== currentMonitorView) {
+                        toggleMonitorView(data.currentMonitorView);
                     }
                 } else {
                     // Documento não existe, inicializa com valores padrão
@@ -1822,19 +1839,19 @@
 
         // Camera and Image Processing Functions
         const startCamera = async (mode) => {
-            // Limpa as análises anteriores ao abrir a câmera para um novo exame/análise
-            if (mode === 'exams') {
-                examsResults = "";
-                updateExamsResultsPreview(false);
-            } else if (mode === 'axon-eye') {
-                axonEyeResults = "";
-                updateAxonEyeResultsPreview(false);
-            }
-
             cameraMode = mode;
             cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
             sendExamsButton.style.display = mode === 'exams' ? 'block' : 'none';
             sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'block' : 'none';
+
+            // Limpa análises anteriores ao abrir a câmera para nova análise
+            if (mode === 'exams') {
+                examsResults = "";
+                updateExamsResultsPreview();
+            } else if (mode === 'axon-eye') {
+                axonEyeResults = "";
+                updateAxonEyeResultsPreview();
+            }
 
             try {
                 // Stop any existing stream
@@ -1856,6 +1873,7 @@
                 toggleMonitorView('camera'); // Show the camera modal inside the monitor
                 cameraStatus.classList.remove('status-off'); // Set camera status to ON
                 appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}. Capture ou carregue as fotos.`, "info");
+                updateFirestoreMonitorView(mode === 'exams' ? 'exams' : 'axon-eye'); // Sincroniza a aba do monitor
 
                 // Show album button
                 albumButton.style.display = 'flex';
@@ -2106,6 +2124,7 @@
 
             examsResultsPreview.innerHTML = '<div class="info">Axon medical está analisando suas imagens...</div>'; // Clear monitor and show loading
             toggleMonitorView('exams'); // Switch to exams view
+            updateFirestoreMonitorView('exams'); // Sincroniza a aba do monitor
 
             try {
                 // Upload all captured images to Imgur first
@@ -2141,9 +2160,9 @@
                 
                 updateExamsResultsPreview(); // Isso irá salvar no Firestore
                 appendOutput("Análise de exames concluída.", "success");
-                capturedImages = []; // Limpa as imagens após o envio
-                updateAlbumCount(); // Atualiza o contador do álbum
                 stopCamera(); // Close camera interface after analysis
+                capturedImages = []; // Limpa as imagens do álbum após o envio
+                updateAlbumCount(); // Atualiza a contagem do álbum
             } catch (error) {
                 appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
                 examsResults = '<div class="error">Erro ao analisar exames.</div>';
@@ -2159,6 +2178,7 @@
 
             axonEyeResultsPreview.innerHTML = '<div class="info">Axon Eye está analisando suas imagens...</div>'; // Clear monitor and show loading
             toggleMonitorView('axon-eye'); // Switch to Axon Eye view
+            updateFirestoreMonitorView('axon-eye'); // Sincroniza a aba do monitor
 
             try {
                 // Upload all captured images to Imgur first
@@ -2191,9 +2211,9 @@
                 
                 updateAxonEyeResultsPreview(); // Isso irá salvar no Firestore
                 appendOutput("Análise Axon Eye concluída.", "success");
-                capturedImages = []; // Limpa as imagens após o envio
-                updateAlbumCount(); // Atualiza o contador do álbum
                 stopCamera(); // Close camera interface after analysis
+                capturedImages = []; // Limpa as imagens do álbum após o envio
+                updateAlbumCount(); // Atualiza a contagem do álbum
             } catch (error) {
                 appendOutput(`Erro ao analisar com Axon Eye: ${error.message}`, "error");
                 axonEyeResults = '<div class="error">Erro ao analisar com Axon Eye.</div>';
@@ -2220,7 +2240,8 @@
                     if (await authenticateUser(username, password)) {
                         isLoggedIn = true;
                         currentUser = username;
-                        localStorage.setItem('axon_username', username); // Salva o username no local storage
+                        localStorage.setItem('axon_user', username); // Salva o login
+                        localStorage.setItem('axon_pass', password);
                         appendOutput("Login bem-sucedido. Digite /help para ver os comandos disponíveis.", "success");
                         initialMessagesContainer.innerHTML = `
                             <pre class="info">
@@ -2482,12 +2503,11 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         });
 
         // Correção para o teclado em dispositivos móveis
-        document.addEventListener('click', (e) => {
-            // Se o clique não for no input, mas o input estiver visível, foca nele
-            if (e.target !== commandInput && commandInput.offsetParent !== null) {
-                commandInput.focus();
-            }
-        });
+        // Remove o listener global de keydown para focar o input
+        // Em vez disso, o input já tem autofocus e o usuário pode tocar nele.
+        // Se o problema persistir, pode ser necessário um script mais complexo
+        // para forçar o foco em touch events, mas geralmente o autofocus e
+        // o touch-action: manipulation já ajudam.
 
         // Camera Event Listeners
         captureButton.addEventListener('click', capturePhoto);
@@ -2537,40 +2557,43 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
                 'var(--error-color)' : 'var(--success-color)';
         }, 3000);
 
-        // Função para tentar recuperar o login ao carregar a página
-        const restoreLogin = async () => {
-            const savedUsername = localStorage.getItem('axon_username');
-            if (savedUsername) {
-                // Para fins de demonstração, assumimos que se o username está salvo, o login é válido.
-                // Em uma aplicação real, você faria uma verificação mais robusta com um token de sessão.
-                isLoggedIn = true;
-                currentUser = savedUsername;
-                appendOutput(`Login recuperado para o usuário: ${currentUser}.`, "success");
-                initialMessagesContainer.innerHTML = `
-                    <pre class="info">
+        // Função para tentar login automático ao carregar a página
+        const attemptAutoLogin = async () => {
+            const savedUser = localStorage.getItem('axon_user');
+            const savedPass = localStorage.getItem('axon_pass');
+
+            if (savedUser && savedPass) {
+                appendOutput("Tentando recuperar sessão...", "info", false);
+                if (await authenticateUser(savedUser, savedPass)) {
+                    isLoggedIn = true;
+                    currentUser = savedUser;
+                    appendOutput("Sessão recuperada com sucesso! Bem-vindo de volta.", "success");
+                    initialMessagesContainer.innerHTML = `
+                        <pre class="info">
  █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
 ██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
 ███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
 ██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
 ██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
 ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-                    </pre>
-                    <span class="info">Axon - Assistente Médico v1.0</span><br>
-                    <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
-                `;
-                initialMessagesContainer.style.display = 'none';
-                appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
-                setupFirebaseListener(currentUser);
-                toggleMonitorView('anamnesis');
-            } else {
-                // Se não houver login salvo, exibe a mensagem inicial
-                resetInteractiveTerminal(true); // Garante que a tela de login é exibida
+                        </pre>
+                        <span class="info">Axon - Assistente Médico v1.0</span><br>
+                        <span class="info">Sessão recuperada. Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
+                    `;
+                    initialMessagesContainer.style.display = 'none';
+                    setupFirebaseListener(currentUser);
+                    toggleMonitorView('anamnesis');
+                } else {
+                    appendOutput("Falha ao recuperar sessão. Por favor, faça login novamente.", "error", false);
+                    localStorage.removeItem('axon_user');
+                    localStorage.removeItem('axon_pass');
+                }
             }
         };
 
         window.onload = async () => {
             await initializeAIModel();
-            await restoreLogin(); // Tenta restaurar o login ao carregar a página
+            await attemptAutoLogin();
         };
 
         // PWA: Register Service Worker
