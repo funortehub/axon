@@ -305,6 +305,7 @@
             z-index: 0;
         }
 
+        /* Estilos para o modal da câmera DENTRO DO TERMINAL */
         .camera-modal {
             display: none;
             position: absolute;
@@ -359,6 +360,7 @@
             object-fit: cover;
         }
 
+        /* Modificações para os botões de controle da câmera */
         .camera-controls {
             position: absolute;
             bottom: 10px;
@@ -430,6 +432,7 @@
             color: var(--bg-color);
         }
 
+        /* Estilos para o botão Álbum */
         .album-button {
             position: absolute;
             top: 10px;
@@ -464,6 +467,7 @@
             text-align: center;
         }
 
+        /* Estilos para os botões de alternância do monitor */
         .monitor-toggle-buttons {
             display: flex;
             gap: 5px;
@@ -496,6 +500,7 @@
             border-color: var(--highlight-color);
         }
 
+        /* Media query para dispositivos móveis */
         @media (max-width: 768px) {
             .monitor-toggle-button span {
                 display: none;
@@ -523,6 +528,7 @@
             }
         }
 
+        /* Estilos para o modal de imagem em tela cheia */
         .fullscreen-modal {
             display: none;
             position: fixed;
@@ -570,12 +576,14 @@
             cursor: pointer;
         }
 
+        /* Estilo para o texto "Alterado" */
         .output .altered-text {
             color: var(--altered-color);
             font-weight: bold;
             margin-left: 10px;
         }
 
+        /* Novo modal para o álbum de imagens */
         .album-modal {
             display: none;
             position: fixed;
@@ -689,6 +697,7 @@
             background-color: rgba(255, 0, 0, 1);
         }
 
+        /* Novo estilo para títulos de análise do Axon Eye */
         .axon-eye-title {
             color: var(--error-color);
             font-weight: bold;
@@ -788,6 +797,7 @@
                     <div class="info">Nenhuma análise visual feita ainda.</div>
                 </div>
 
+                <!-- New Camera Modal - Moved inside non-interactive-terminal -->
                 <div id="camera-modal" class="camera-modal">
                     <div class="camera-container">
                         <div class="terminal-header">
@@ -803,9 +813,11 @@
                                     <button id="flashlight-button" class="flashlight-button" style="display:none;"><i class="fas fa-lightbulb"></i> Lanterna</button>
                                     <button id="camera-switch-button" class="camera-switch-button" style="display:none;"><i class="fas fa-sync-alt"></i> Trocar Câmera</button>
                                 </div>
+                                <!-- Novo botão Álbum -->
                                 <button id="album-button" class="album-button" style="display:none;">
                                     <i class="fas fa-images"></i> Álbum <span id="album-count" class="album-count">0</span>
                                 </button>
+                                <!-- Botões de controle da câmera sobre o vídeo -->
                                 <div class="camera-controls">
                                     <button id="capture-button" class="camera-button" title="Capturar Foto"><i class="fas fa-camera"></i></button>
                                     <input type="file" id="file-input" accept="image/*" style="display: none;">
@@ -827,11 +839,13 @@
         <span>AXON | Sistema médico inteligente desenvolvido por Ian Bastos</span>
     </div>
 
+    <!-- The Modal for fullscreen image -->
     <div id="fullscreen-modal" class="fullscreen-modal">
         <span class="modal-close">&times;</span>
         <img class="modal-content" id="modal-image">
     </div>
 
+    <!-- Novo Modal para o Álbum de Imagens -->
     <div id="album-modal" class="album-modal">
         <div class="album-modal-content">
             <div class="album-modal-header">
@@ -839,6 +853,7 @@
                 <span class="album-modal-close">&times;</span>
             </div>
             <div id="album-grid" class="album-grid">
+                <!-- Imagens serão carregadas aqui -->
             </div>
         </div>
     </div>
@@ -916,7 +931,8 @@
         let currentCameraFacingMode = 'environment';
         let currentMonitorView = 'anamnesis';
         let isFlashlightOn = false;
-        let cameraMode = 'exams';
+        let cameraMode = 'exams'; // 'exams' or 'axon-eye'
+        let isMobileDeviceFlag = false; // Flag para identificar dispositivo móvel
 
         const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI';
         let currentGeminiAPIKey = defaultGeminiAPIKey;
@@ -968,11 +984,15 @@
                 isListening = true;
                 micStatus.classList.remove('status-off');
                 appendOutput("Microfone ativado. Gravando consulta...", "success");
-                updateMonitorViewInFirestore('anamnesis'); // Sincroniza para anamnese ao ativar microfone
+                // Sincronizar estado do monitor para anamnese
+                if (isLoggedIn && currentUser) {
+                    updateSessionState(currentUser, { monitorView: 'anamnesis' });
+                }
             };
 
             recognition.onresult = (event) => {
                 const transcript = event.results[event.results.length - 1][0].transcript;
+                
                 if (transcript.trim()) {
                     appendOutput(`[Voz] ${transcript}`, "info");
                     processAnamnesisInfo(transcript);
@@ -1016,6 +1036,7 @@
 
         const appendOutput = (text, type = "output", logToFirebase = true) => {
             const outputElement = document.createElement('div');
+            
             if (type === "command") {
                 outputElement.innerHTML = `<span class="prompt">></span> <span class="command">${text}</span>`;
             } else if (type === "error") {
@@ -1027,15 +1048,44 @@
             } else if (type === "receituario") {
                 outputElement.classList.add('receituario-item');
                 outputElement.textContent = text;
-            } else {
+            }
+            else {
                 outputElement.innerHTML = `<span class="${type}">${text}</span>`;
             }
+            
             const inputLine = interactiveOutput.querySelector('.input-line');
             interactiveOutput.insertBefore(outputElement, inputLine);
             interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
 
             if (logToFirebase && isLoggedIn && currentUser) {
                 logInteractionToFirebase(currentUser, text, type, 'interactive');
+            }
+        };
+
+        const appendMonitorOutput = (text, type = "output", targetElement, logToFirebase = true) => {
+            const outputElement = document.createElement('div');
+            
+            if (type === "command") {
+                outputElement.innerHTML = `<span class="prompt">></span> <span class="command">${text}</span>`;
+            } else if (type === "error") {
+                outputElement.innerHTML = `<span class="error">${text}</span>`;
+            } else if (type === "success") {
+                outputElement.innerHTML = `<span class="success">${text}</span>`;
+            } else if (type === "info") {
+                outputElement.innerHTML = `<span class="info">${text}</span>`;
+            } else if (type === "receituario") {
+                outputElement.classList.add('receituario-item');
+                outputElement.textContent = text;
+            }
+            else {
+                outputElement.innerHTML = `<span class="${type}">${text}</span>`;
+            }
+            
+            targetElement.appendChild(outputElement);
+            targetElement.scrollTop = targetElement.scrollHeight;
+
+            if (logToFirebase && isLoggedIn && currentUser) {
+                logInteractionToFirebase(currentUser, text, type, 'monitor');
             }
         };
 
@@ -1050,8 +1100,7 @@
             if (requireLogin) {
                 isLoggedIn = false;
                 currentUser = null;
-                localStorage.removeItem('axon_username');
-                localStorage.removeItem('axon_logged_in');
+                localStorage.removeItem('axon_logged_in_user'); // Limpa o login local
                 if (unsubscribeSnapshot) {
                     unsubscribeSnapshot();
                     unsubscribeSnapshot = null;
@@ -1091,19 +1140,24 @@
                     <div class="section-title">Queixa Principal (QP):</div>
                     <div>${anamnesis.qp || "Ainda não informado."}</div>
                     <br>
+                    
                     <div class="section-title">História da Moléstia Atual (HMA):</div>
                     <div>${anamnesis.hma || "Ainda não informado."}</div>
                     <br>
+                    
                     <div class="section-title">História Patológica (HP):</div>
                     <div>${anamnesis.hp || "Ainda não informado."}</div>
                     <br>
+                    
                     <div class="section-title">História Familiar (HF):</div>
                     <div>${anamnesis.hf || "Ainda não informado."}</div>
                     <br>
+                    
                     <div class="section-title">História Psicossocial (HPS):</div>
                     <div>${anamnesis.hps || "Ainda não informado."}</div>
                 </div>
             `;
+            
             anamnesisPreview.innerHTML = previewHTML;
             anamnesisPreview.scrollTop = anamnesisPreview.scrollHeight;
 
@@ -1204,8 +1258,16 @@
             try {
                 const response = await fetch(getGeminiAPIUrl(false), {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: prompt
+                            }]
+                        }]
+                    })
                 });
 
                 if (!response.ok) {
@@ -1215,6 +1277,7 @@
                 const data = await response.json();
                 const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Não foi possível obter uma resposta.";
                 const cleanText = rawText.replace(/\*\*/g, '');
+                
                 return cleanText;
             } catch (error) {
                 console.error("Erro na chamada da API:", error);
@@ -1233,14 +1296,23 @@
             const maxRetries = 3;
             try {
                 const contents = imageUrls.map(url => ({
-                    inlineData: { mimeType: 'image/jpeg', data: url.split(',')[1] }
+                    inlineData: {
+                        mimeType: 'image/jpeg',
+                        data: url.split(',')[1]
+                    }
                 }));
                 contents.push({ text: prompt });
 
                 const response = await fetch(getGeminiAPIUrl(true), {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: contents.flatMap(c => c.inlineData ? [{ inlineData: c.inlineData }] : [{ text: c.text }]) }] })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: contents.flatMap(c => c.inlineData ? [{ inlineData: c.inlineData }] : [{ text: c.text }])
+                        }]
+                    })
                 });
 
                 if (!response.ok) {
@@ -1250,6 +1322,7 @@
                 const data = await response.json();
                 const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Não foi possível obter uma resposta da análise de imagem.";
                 const cleanText = rawText.replace(/\*\*/g, '');
+                
                 return cleanText;
             } catch (error) {
                 console.error("Erro na chamada da API de Visão:", error);
@@ -1270,13 +1343,16 @@
 
             const prompt = `Você é um assistente médico. Sua tarefa é organizar as informações fornecidas nas seções adequadas da anamnese.
             A nova informação recebida é: "${info}".
+
             É crucial que você **distinga as falas do médico das falas do paciente**. As falas do médico (perguntas, saudações, explicações que não são informações do paciente) **NÃO DEVEM SER ADICIONADAS À ANAMNESE**. Apenas as informações relevantes fornecidas pelo paciente devem ser incluídas.
+
             As informações existentes na anamnese são:
             - QP (Queixa Principal): "${anamnesis.qp || "Nenhuma"}"
             - HMA (História da Moléstia Atual): "${anamnesis.hma || "Nenhuma"}"
             - HP (História Patológica): "${anamnesis.hp || "Nenhuma"}"
             - HF (História Familiar): "${anamnesis.hf || "Nenhuma"}"
             - HPS (História Psicossocial): "${anamnesis.hps || "Nenhuma"}"
+
             Instruções para atualização:
             1. Analise a "nova informação recebida" e determine a seção MAIS RELEVANTE (QP, HMA, HP, HF, HPS) para ela.
             2. **IGNORE completamente qualquer fala que pareça ser do médico (perguntas, introduções, etc.)**. Concentre-se apenas nas respostas e informações fornecidas pelo paciente.
@@ -1285,6 +1361,7 @@
             5. Mantenha as informações das OUTRAS seções INALTERADAS, a menos que a nova informação as afete diretamente.
             6. Seja objetivo, conciso e use terminologia médica apropriada.
             7. Formate a resposta EXCLUSIVAMENTE como um objeto JSON, contendo TODAS as chaves da anamnese (qp, hma, hp, hf, hps), mesmo que algumas permaneçam vazias ou inalteradas.
+
             Exemplo de resposta esperada (apenas o JSON):
             {
               "qp": "Dor de cabeça pulsátil há 3 dias, com piora progressiva.",
@@ -1296,6 +1373,7 @@
 
             try {
                 const response = await callGeminiAPI(prompt);
+                
                 const jsonStart = response.indexOf('{');
                 const jsonEnd = response.lastIndexOf('}') + 1;
                 const jsonString = response.substring(jsonStart, jsonEnd);
@@ -1333,6 +1411,7 @@
             
             try {
                 const response = await callGeminiAPI(prompt);
+                
                 const formattedDiagnosis = response.split('\n')
                     .map(item => item.trim())
                     .filter(item => item)
@@ -1353,11 +1432,13 @@
             2. Exames complementares disponíveis no SUS
             3. Condutas não farmacológicas
             4. Recomendações ao paciente
+            
             Formate cada tópico com um título e cada item dentro do tópico separado por uma linha em branco. 
             Seja técnico, objetivo e extremamente resumido.`;
             
             try {
                 const response = await callGeminiAPI(prompt);
+                
                 const formattedConduct = response
                     .replace(/Medicações:|Medicamentos:/gi, '<div class="conduct-title">MEDICAÇÕES (SUS):</div>')
                     .replace(/Exames complementares|Exames:/gi, '<div class="conduct-title">EXAMES COMPLEMENTARES (SUS):</div>')
@@ -1443,8 +1524,16 @@
                 const testUrl = model.urlBuilder(currentGeminiAPIKey);
                 const response = await fetch(testUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: "ping"
+                            }]
+                        }]
+                    }),
                     signal: AbortSignal.timeout(5000)
                 });
 
@@ -1542,7 +1631,10 @@
         const logInteractionToFirebase = async (username, content, type, terminal) => {
             try {
                 await addDoc(collection(db, "sessions", username, "interactions"), {
-                    content: content, type: type, terminal: terminal, timestamp: new Date()
+                    content: content,
+                    type: type,
+                    terminal: terminal,
+                    timestamp: new Date()
                 });
             } catch (e) {
                 console.error("Erro ao registrar interação no Firebase: ", e);
@@ -1576,14 +1668,15 @@
             }
         };
 
-        const updateMonitorViewInFirestore = async (view) => {
-            if (isLoggedIn && currentUser) {
-                try {
-                    const docRef = doc(db, "sessions", currentUser);
-                    await updateDoc(docRef, { activeMonitorView: view });
-                } catch (e) {
-                    console.error("Erro ao atualizar activeMonitorView no Firestore: ", e);
-                }
+        const updateSessionState = async (username, stateUpdates) => {
+            try {
+                const docRef = doc(db, "sessions", username);
+                await updateDoc(docRef, {
+                    ...stateUpdates,
+                    lastActivity: new Date()
+                });
+            } catch (e) {
+                console.error("Erro ao atualizar estado da sessão no Firestore: ", e);
             }
         };
 
@@ -1596,6 +1689,7 @@
             unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+                    
                     if (data.anamnesis && JSON.stringify(data.anamnesis) !== JSON.stringify(anamnesis)) {
                         anamnesis = data.anamnesis;
                         updateAnamnesisPreview(false);
@@ -1608,20 +1702,27 @@
                         axonEyeResults = data.axonEyeResults;
                         updateAxonEyeResultsPreview(false);
                     }
-                    // Sincronização da aba do monitor
-                    if (data.activeMonitorView && data.activeMonitorView !== currentMonitorView) {
-                        if (isMobileDevice() && (data.activeMonitorView === 'exams' || data.activeMonitorView === 'axon-eye')) {
-                            // Em dispositivos móveis, se a câmera foi aberta em outro lugar, apenas exibe o texto
-                            toggleMonitorView(data.activeMonitorView);
-                            stopCamera(); // Garante que a câmera não abre no celular se foi ativada no desktop
-                        } else if (!isMobileDevice() && (data.activeMonitorView === 'exams' || data.activeMonitorView === 'axon-eye')) {
-                            // Em desktop, se a câmera foi aberta em outro lugar (celular), apenas exibe o texto
-                            toggleMonitorView(data.activeMonitorView);
-                            stopCamera(); // Garante que a câmera não abre no desktop se foi ativada no celular
-                        } else {
-                            toggleMonitorView(data.activeMonitorView);
-                        }
+
+                    // Sincronização de estado do monitor e câmera
+                    if (data.monitorView && data.monitorView !== currentMonitorView) {
+                        toggleMonitorView(data.monitorView);
                     }
+                    if (data.showCamera && data.showCamera === true && !isMobileDeviceFlag) { // Só mostra câmera no computador se o comando veio de outro lugar
+                        // Se o comando veio de um dispositivo móvel, não abre a câmera no computador
+                        // Apenas garante que a aba correta esteja aberta
+                        if (data.cameraOrigin === 'mobile' && !isMobileDeviceFlag) {
+                            // Não faz nada com a câmera, apenas garante que a aba do monitor esteja correta
+                            // A câmera só abre se o comando for local
+                        } else if (data.cameraOrigin === 'desktop' && isMobileDeviceFlag) {
+                            // Não faz nada com a câmera no mobile, apenas garante que a aba do monitor esteja correta
+                        } else { // Comando local ou estado inconsistente, abre a câmera
+                             // A câmera só deve abrir se o comando foi digitado no dispositivo atual
+                             // Esta lógica será tratada no processCommand e startCamera
+                        }
+                    } else if (data.showCamera === false && cameraModal.style.display === 'flex') {
+                        stopCamera(); // Fecha a câmera se o estado remoto indicar para fechar
+                    }
+
                 } else {
                     anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                     examsResults = "";
@@ -1662,7 +1763,7 @@
             }
         };
 
-        const authenticateUser = async (username, password) => {
+        const authenticateUser = async (username, password = null) => {
             if (username === 'ian' && password === 'ian123') {
                 return true;
             }
@@ -1671,85 +1772,79 @@
                 const userRef = doc(db, "users", username);
                 const docSnap = await getDoc(userRef);
 
-                if (docSnap.exists() && docSnap.data().password === password) {
-                    return true;
-                } else {
-                    return false;
+                if (docSnap.exists()) {
+                    if (password === null || docSnap.data().password === password) { // Se a senha for null, é tentativa de login automático
+                        return true;
+                    }
                 }
+                return false;
             } catch (e) {
                 console.error("Erro ao autenticar usuário:", e);
                 return false;
             }
         };
 
-        const isMobileDevice = () => {
-            return /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        };
-
-        const startCamera = async (mode) => {
+        const startCamera = async (mode, fromLocalCommand = true) => {
             cameraMode = mode;
             cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
             sendExamsButton.style.display = mode === 'exams' ? 'block' : 'none';
             sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'block' : 'none';
 
-            if (isMobileDevice()) {
-                // Em dispositivos móveis, sempre abre a câmera
+            if (fromLocalCommand) {
+                // Se o comando veio do dispositivo atual, abre a câmera e atualiza o Firebase
                 try {
                     if (cameraStream) {
                         cameraStream.getTracks().forEach(track => track.stop());
                     }
-                    const constraints = { video: { facingMode: currentCameraFacingMode } };
+
+                    const constraints = {
+                        video: {
+                            facingMode: isMobileDeviceFlag ? 'environment' : currentCameraFacingMode
+                        }
+                    };
+
                     const stream = await navigator.mediaDevices.getUserMedia(constraints);
                     cameraVideo.srcObject = stream;
                     cameraStream = stream;
                     toggleMonitorView('camera');
                     cameraStatus.classList.remove('status-off');
                     appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}. Capture ou carregue as fotos.`, "info");
+
                     albumButton.style.display = 'flex';
                     updateAlbumCount();
 
                     const devices = await navigator.mediaDevices.enumerateDevices();
                     const videoInputDevices = devices.filter(device => device.kind === 'videoinput');
-                    cameraSwitchButton.style.display = videoInputDevices.length > 1 ? 'block' : 'none';
+                    if (videoInputDevices.length > 1) {
+                        cameraSwitchButton.style.display = 'block';
+                    } else {
+                        cameraSwitchButton.style.display = 'none';
+                    }
 
                     const track = stream.getVideoTracks()[0];
-                    flashlightButton.style.display = (track && 'torch' in track.getCapabilities()) ? 'block' : 'none';
+                    if (track && 'torch' in track.getCapabilities()) {
+                        flashlightButton.style.display = 'block';
+                    } else {
+                        flashlightButton.style.display = 'none';
+                    }
 
-                    updateMonitorViewInFirestore(mode); // Sincroniza a aba ativa para outros dispositivos
+                    // Atualiza o estado da sessão no Firebase
+                    updateSessionState(currentUser, {
+                        monitorView: mode === 'exams' ? 'exams' : 'axon-eye',
+                        showCamera: true,
+                        cameraOrigin: isMobileDeviceFlag ? 'mobile' : 'desktop'
+                    });
+
                 } catch (err) {
                     appendOutput(`Erro ao acessar a câmera: ${err.message}. Verifique as permissões.`, "error");
                     console.error("Erro ao acessar a câmera:", err);
                     cameraStatus.classList.add('status-off');
+                    updateSessionState(currentUser, { showCamera: false }); // Garante que o estado da câmera seja false no Firebase
                 }
             } else {
-                // Em desktop, abre a câmera localmente e sincroniza a aba para outros dispositivos
-                try {
-                    if (cameraStream) {
-                        cameraStream.getTracks().forEach(track => track.stop());
-                    }
-                    const constraints = { video: true };
-                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    cameraVideo.srcObject = stream;
-                    cameraStream = stream;
-                    toggleMonitorView('camera');
-                    cameraStatus.classList.remove('status-off');
-                    appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}. Capture ou carregue as fotos.`, "info");
-                    albumButton.style.display = 'flex';
-                    updateAlbumCount();
-
-                    const devices = await navigator.mediaDevices.enumerateDevices();
-                    const videoInputDevices = devices.filter(device => device.kind === 'videoinput');
-                    cameraSwitchButton.style.display = videoInputDevices.length > 1 ? 'block' : 'none';
-
-                    const track = stream.getVideoTracks()[0];
-                    flashlightButton.style.display = (track && 'torch' in track.getCapabilities()) ? 'block' : 'none';
-
-                    updateMonitorViewInFirestore(mode); // Sincroniza a aba ativa para outros dispositivos
-                } catch (err) {
-                    appendOutput(`Erro ao acessar a câmera: ${err.message}. Verifique as permissões.`, "error");
-                    console.error("Erro ao acessar a câmera:", err);
-                    cameraStatus.classList.add('status-off');
-                }
+                // Se o comando veio de outro dispositivo, apenas muda a aba do monitor
+                toggleMonitorView(mode === 'exams' ? 'exams' : 'axon-eye');
+                appendOutput(`Comando de câmera recebido de outro dispositivo. Exibindo resultados em ${mode === 'exams' ? 'Exames' : 'Axon Eye'}.`, "info");
             }
         };
 
@@ -1770,7 +1865,10 @@
             cameraSwitchButton.style.display = 'none';
             albumButton.style.display = 'none';
             appendOutput("Câmera desativada.", "info");
-            // Não altera a view do monitor aqui, pois a sincronização do Firestore já fará isso
+            toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView);
+            if (isLoggedIn && currentUser) {
+                updateSessionState(currentUser, { showCamera: false }); // Atualiza o estado da sessão no Firebase
+            }
         };
 
         const switchCamera = async () => {
@@ -1787,7 +1885,9 @@
             const track = cameraStream.getVideoTracks()[0];
             if (track && 'torch' in track.getCapabilities()) {
                 try {
-                    await track.applyConstraints({ advanced: [{ torch: !isFlashlightOn }] });
+                    await track.applyConstraints({
+                        advanced: [{ torch: !isFlashlightOn }]
+                    });
                     isFlashlightOn = !isFlashlightOn;
                     flashlightButton.classList.toggle('active', isFlashlightOn);
                     appendOutput(`Lanterna ${isFlashlightOn ? 'ativada' : 'desativada'}.`, "info");
@@ -1846,14 +1946,6 @@
             renderAlbum();
         };
 
-        const clearCapturedImages = () => {
-            capturedImages = [];
-            updateAlbumCount();
-            sendExamsButton.classList.add('disabled');
-            sendAxonEyeButton.classList.add('disabled');
-            renderAlbum();
-        };
-
         const updateAlbumCount = () => {
             albumCount.textContent = capturedImages.length;
             albumButton.style.display = capturedImages.length > 0 ? 'flex' : 'none';
@@ -1902,7 +1994,7 @@
             modalImage.src = imageDataURL;
             fullscreenModal.style.display = 'block';
 
-            if (isMobileDevice()) {
+            if (isMobileDeviceFlag) {
                 modalImage.style.width = '100%';
                 modalImage.style.height = 'auto';
                 modalImage.style.maxHeight = '100vh';
@@ -1943,7 +2035,9 @@
 
                 const response = await fetch('https://api.imgur.com/3/image', {
                     method: 'POST',
-                    headers: { 'Authorization': `Client-ID ${IMGUR_CLIENT_ID}` },
+                    headers: {
+                        'Authorization': `Client-ID ${IMGUR_CLIENT_ID}`
+                    },
                     body: formData
                 });
 
@@ -1971,7 +2065,6 @@
             updateExamsResultsPreview(); // Atualiza a visualização para mostrar que está vazio/carregando
             examsResultsPreview.innerHTML = '<div class="info">Axon medical está analisando suas imagens...</div>';
             toggleMonitorView('exams');
-            updateMonitorViewInFirestore('exams'); // Sincroniza a aba ativa
 
             try {
                 const imgurLinks = [];
@@ -1991,6 +2084,7 @@
                 (Alterado) Hemoglobina Glicada: 7.2%
                 Raio-X de Tórax: Sem alterações significativas
                 (Anormal) Tomografia de Crânio: Lesão expansiva em lobo frontal esquerdo.
+                
                 Retorne apenas a lista de resultados, sem introdução ou conclusão.`;
 
                 const response = await callGeminiVisionAPI(capturedImages, prompt);
@@ -2002,7 +2096,8 @@
                 
                 updateExamsResultsPreview();
                 appendOutput("Análise de exames concluída.", "success");
-                clearCapturedImages(); // Limpa as imagens do álbum após a análise
+                capturedImages = []; // Limpa as imagens do álbum após o envio
+                updateAlbumCount(); // Atualiza a contagem do álbum
                 stopCamera();
             } catch (error) {
                 appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
@@ -2021,7 +2116,6 @@
             updateAxonEyeResultsPreview(); // Atualiza a visualização para mostrar que está vazio/carregando
             axonEyeResultsPreview.innerHTML = '<div class="info">Axon Eye está analisando suas imagens...</div>';
             toggleMonitorView('axon-eye');
-            updateMonitorViewInFirestore('axon-eye'); // Sincroniza a aba ativa
 
             try {
                 const imgurLinks = [];
@@ -2051,7 +2145,8 @@
                 
                 updateAxonEyeResultsPreview();
                 appendOutput("Análise Axon Eye concluída.", "success");
-                clearCapturedImages(); // Limpa as imagens do álbum após a análise
+                capturedImages = []; // Limpa as imagens do álbum após o envio
+                updateAlbumCount(); // Atualiza a contagem do álbum
                 stopCamera();
             } catch (error) {
                 appendOutput(`Erro ao analisar com Axon Eye: ${error.message}`, "error");
@@ -2077,8 +2172,7 @@
                     if (await authenticateUser(username, password)) {
                         isLoggedIn = true;
                         currentUser = username;
-                        localStorage.setItem('axon_username', username);
-                        localStorage.setItem('axon_logged_in', 'true');
+                        localStorage.setItem('axon_logged_in_user', username); // Salva o login localmente
                         appendOutput("Login bem-sucedido. Digite /help para ver os comandos disponíveis.", "success");
                         initialMessagesContainer.innerHTML = `
                             <pre class="info">
@@ -2152,7 +2246,9 @@
                     return;
                 }
                 toggleListening();
-                updateMonitorViewInFirestore('anamnesis'); // Sincroniza a aba ativa
+                if (isLoggedIn && currentUser) {
+                    updateSessionState(currentUser, { monitorView: 'anamnesis' });
+                }
             } 
             else if (cmd === '/hear off') {
                 if (!isListening) {
@@ -2294,10 +2390,10 @@
                 await registerUser(adminPassword, username, password);
             }
             else if (cmd === '/exames') {
-                startCamera('exams');
+                startCamera('exams', true); // true indica que o comando veio localmente
             }
             else if (cmd === '/see') {
-                startCamera('axon-eye');
+                startCamera('axon-eye', true); // true indica que o comando veio localmente
             }
             else if (cmd === '/help') {
                 const availableEnginesList = apiModels.map(m => `${m.id}. ${m.name}`).join(' | ');
@@ -2361,29 +2457,26 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
             }
         });
 
-        toggleAnamnesisButton.addEventListener('click', () => {
-            toggleMonitorView('anamnesis');
-            updateMonitorViewInFirestore('anamnesis');
-        });
-        toggleExamsButton.addEventListener('click', () => {
-            toggleMonitorView('exams');
-            updateMonitorViewInFirestore('exams');
-        });
-        toggleAxonEyeButton.addEventListener('click', () => {
-            toggleMonitorView('axon-eye');
-            updateMonitorViewInFirestore('axon-eye');
-        });
+        toggleAnamnesisButton.addEventListener('click', () => toggleMonitorView('anamnesis'));
+        toggleExamsButton.addEventListener('click', () => toggleMonitorView('exams'));
+        toggleAxonEyeButton.addEventListener('click', () => toggleMonitorView('axon-eye'));
+
+        const isMobileDevice = () => {
+            return /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        };
+
+        isMobileDeviceFlag = isMobileDevice(); // Define a flag globalmente
+
+        if (isMobileDeviceFlag) {
+            statusTextApi.textContent = 'API';
+            statusTextMic.textContent = 'Micro';
+            statusTextCam.textContent = 'Cam';
+        }
 
         if (isSpeechRecognitionSupported()) {
             initSpeechRecognition();
         } else {
             appendOutput("Reconhecimento de voz não suportado neste navegador.", "error", false);
-        }
-
-        if (isMobileDevice()) {
-            statusTextApi.textContent = 'API';
-            statusTextMic.textContent = 'Micro';
-            statusTextCam.textContent = 'Cam';
         }
 
         setInterval(() => {
@@ -2393,20 +2486,32 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
 
         window.onload = async () => {
             await initializeAIModel();
-            const storedUsername = localStorage.getItem('axon_username');
-            const storedLoggedIn = localStorage.getItem('axon_logged_in');
-
-            if (storedUsername && storedLoggedIn === 'true') {
-                // Assume que a senha não é armazenada localmente por segurança,
-                // então o login automático é mais uma "recuperação de sessão"
-                // baseada no username, e o Firestore manterá os dados da sessão.
-                isLoggedIn = true;
-                currentUser = storedUsername;
-                initialMessagesContainer.style.display = 'none';
-                appendOutput(`Login recuperado para o usuário: ${currentUser}.`, "success");
-                appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
-                setupFirebaseListener(currentUser);
-                toggleMonitorView('anamnesis');
+            const storedUser = localStorage.getItem('axon_logged_in_user');
+            if (storedUser) {
+                if (await authenticateUser(storedUser)) {
+                    isLoggedIn = true;
+                    currentUser = storedUser;
+                    appendOutput(`Login recuperado para o usuário: ${currentUser}.`, "success");
+                    initialMessagesContainer.innerHTML = `
+                        <pre class="info">
+ █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
+██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
+███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
+██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
+██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                        </pre>
+                        <span class="info">Axon - Assistente Médico v1.0</span><br>
+                        <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
+                    `;
+                    initialMessagesContainer.style.display = 'none';
+                    appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
+                    setupFirebaseListener(currentUser);
+                    toggleMonitorView('anamnesis');
+                } else {
+                    appendOutput("Login automático falhou. Por favor, faça login novamente.", "error");
+                    localStorage.removeItem('axon_logged_in_user');
+                }
             }
         };
 
