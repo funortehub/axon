@@ -947,13 +947,14 @@
         let lastAnamnesisInfo = "";
         let apiConnectionStatus = "Desconhecido";
         let unsubscribeSnapshot = null; // Para gerenciar a inscrição do Firestore
-        let unsubscribeMonitorViewSnapshot = null; // Para gerenciar a inscrição da view do monitor
         let cameraStream = null; // Para gerenciar o stream da câmera
         let capturedImages = []; // Armazena os Data URLs das imagens capturadas/carregadas
         let currentCameraFacingMode = 'environment'; // 'user' para frontal, 'environment' para traseira
         let currentMonitorView = 'anamnesis'; // 'anamnesis', 'exams' ou 'axon-eye'
         let isFlashlightOn = false; // Estado da lanterna
         let cameraMode = 'exams'; // 'exams' or 'axon-eye'
+        let isMobileDevice = /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        let localCommandOrigin = false; // Flag para indicar se o comando veio do dispositivo local
 
         // Configurações da API Gemini
         const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI';
@@ -1129,16 +1130,12 @@
             if (requireLogin) {
                 isLoggedIn = false;
                 currentUser = null;
+                localStorage.removeItem('axon_username'); // Limpa o login salvo
+                localStorage.removeItem('axon_is_logged_in');
                 if (unsubscribeSnapshot) {
                     unsubscribeSnapshot(); // Desinscreve do listener do Firestore
                     unsubscribeSnapshot = null;
                 }
-                if (unsubscribeMonitorViewSnapshot) {
-                    unsubscribeMonitorViewSnapshot(); // Desinscreve do listener da view do monitor
-                    unsubscribeMonitorViewSnapshot = null;
-                }
-                localStorage.removeItem('axon_username'); // Limpa o login salvo
-                localStorage.removeItem('axon_password'); // Limpa a senha salva
                 initialMessagesContainer.innerHTML = `
                     <pre class="info">
  █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
@@ -1272,16 +1269,12 @@
         };
 
         // Função para alternar a visualização do monitor
-        const toggleMonitorView = async (view, fromFirebase = false) => {
+        const toggleMonitorView = (view, showCamera = false) => {
             currentMonitorView = view;
             anamnesisPreview.style.display = 'none';
             examsResultsPreview.style.display = 'none';
             axonEyeResultsPreview.style.display = 'none';
-            
-            // Esconder a câmera se não for a view de câmera E o dispositivo não for móvel
-            if (view !== 'camera' || !isMobileDevice()) {
-                cameraModal.style.display = 'none'; 
-            }
+            cameraModal.style.display = 'none'; // Hide camera by default
 
             toggleAnamnesisButton.classList.remove('active');
             toggleExamsButton.classList.remove('active');
@@ -1296,13 +1289,10 @@
             } else if (view === 'axon-eye') {
                 axonEyeResultsPreview.style.display = 'block';
                 toggleAxonEyeButton.classList.add('active');
-            } else if (view === 'camera' && isMobileDevice()) { // Só mostra a modal da câmera em dispositivos móveis
-                cameraModal.style.display = 'flex'; 
             }
 
-            // Salvar a view atual no Firestore se a mudança não veio do Firebase
-            if (!fromFirebase && isLoggedIn && currentUser) {
-                await setDoc(doc(db, "sessions", currentUser), { currentMonitorView: view }, { merge: true });
+            if (showCamera) {
+                cameraModal.style.display = 'flex'; // Show camera if explicitly requested
             }
         };
 
@@ -1748,12 +1738,23 @@
             }
         };
 
+        const updateMonitorStateInFirestore = async (username, view, showCamera, commandOrigin) => {
+            try {
+                const docRef = doc(db, "sessions", username);
+                await setDoc(docRef, { 
+                    monitorView: view, 
+                    showCamera: showCamera,
+                    commandOrigin: commandOrigin, // 'mobile' or 'desktop'
+                    timestamp: new Date()
+                }, { merge: true });
+            } catch (e) {
+                console.error("Erro ao atualizar estado do monitor no Firestore: ", e);
+            }
+        };
+
         const setupFirebaseListener = (username) => {
             if (unsubscribeSnapshot) {
                 unsubscribeSnapshot(); // Desinscreve de qualquer listener anterior
-            }
-            if (unsubscribeMonitorViewSnapshot) {
-                unsubscribeMonitorViewSnapshot(); // Desinscreve do listener da view do monitor
             }
 
             const docRef = doc(db, "sessions", username);
@@ -1775,6 +1776,37 @@
                         axonEyeResults = data.axonEyeResults;
                         updateAxonEyeResultsPreview(false); // Não logar novamente no Firebase
                     }
+
+                    // Sincronização do estado do monitor e câmera
+                    if (data.monitorView && data.commandOrigin) {
+                        const remoteCommandOrigin = data.commandOrigin;
+                        const remoteMonitorView = data.monitorView;
+                        const remoteShowCamera = data.showCamera;
+
+                        // Se o comando veio de outro dispositivo
+                        if (!localCommandOrigin) {
+                            if (remoteMonitorView === 'exams' || remoteMonitorView === 'axon-eye') {
+                                if (isMobileDevice && remoteCommandOrigin === 'desktop') {
+                                    // Mobile: Esconde a câmera, mostra o texto
+                                    stopCamera(); // Garante que a câmera está parada
+                                    toggleMonitorView(remoteMonitorView, false);
+                                } else if (!isMobileDevice && remoteCommandOrigin === 'mobile') {
+                                    // Desktop: Esconde a câmera, mostra o texto
+                                    stopCamera(); // Garante que a câmera está parada
+                                    toggleMonitorView(remoteMonitorView, false);
+                                } else {
+                                    // Mesmo tipo de dispositivo ou comando local, mostra a câmera se showCamera for true
+                                    toggleMonitorView(remoteMonitorView, remoteShowCamera);
+                                }
+                            } else if (remoteMonitorView === 'anamnesis') {
+                                stopCamera(); // Garante que a câmera está parada
+                                toggleMonitorView('anamnesis', false);
+                            }
+                        }
+                        // Resetar a flag localCommandOrigin após processar a atualização
+                        localCommandOrigin = false;
+                    }
+
                 } else {
                     // Documento não existe, inicializa com valores padrão
                     anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
@@ -1785,20 +1817,8 @@
                     updateAxonEyeResultsPreview(false);
                 }
             }, (error) => {
-                console.error("Erro ao ouvir o Firestore (dados da sessão):", error);
+                console.error("Erro ao ouvir o Firestore:", error);
                 appendOutput("Erro de conexão com o Firestore. As atualizações em tempo real podem estar desativadas.", "error");
-            });
-
-            // Listener para a view do monitor
-            unsubscribeMonitorViewSnapshot = onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data.currentMonitorView && data.currentMonitorView !== currentMonitorView) {
-                        toggleMonitorView(data.currentMonitorView, true); // true para indicar que veio do Firebase
-                    }
-                }
-            }, (error) => {
-                console.error("Erro ao ouvir o Firestore (view do monitor):", error);
             });
         };
 
@@ -1848,45 +1868,38 @@
             }
         };
 
-        const performLogin = async (username, password, isAutoLogin = false) => {
-            if (await authenticateUser(username, password)) {
-                isLoggedIn = true;
-                currentUser = username;
-                localStorage.setItem('axon_username', username); // Salva o username
-                localStorage.setItem('axon_password', password); // Salva a senha (considerar criptografia em produção)
-
-                if (isAutoLogin) {
-                    appendOutput("Login recuperado com sucesso. Digite /help para ver os comandos disponíveis.", "success");
-                } else {
-                    appendOutput("Login bem-sucedido. Digite /help para ver os comandos disponíveis.", "success");
-                }
-                
-                initialMessagesContainer.innerHTML = `
-                    <pre class="info">
+        const loginUser = async (username) => {
+            isLoggedIn = true;
+            currentUser = username;
+            localStorage.setItem('axon_username', username);
+            localStorage.setItem('axon_is_logged_in', 'true');
+            appendOutput("Login bem-sucedido. Digite /help para ver os comandos disponíveis.", "success");
+            initialMessagesContainer.innerHTML = `
+                <pre class="info">
  █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
 ██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
 ███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
 ██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
 ██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
 ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-                    </pre>
-                    <span class="info">Axon - Assistente Médico v1.0</span><br>
-                    <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
-                `;
-                initialMessagesContainer.style.display = 'none';
-                appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
-                setupFirebaseListener(currentUser); // Inicia o listener do Firebase
-                toggleMonitorView('anamnesis'); // Garante que a anamnese é a primeira vista
-            } else {
-                if (!isAutoLogin) { // Só mostra erro se não for auto-login
-                    appendOutput("Usuário ou senha incorretos.", "error");
-                }
-            }
+                </pre>
+                <span class="info">Axon - Assistente Médico v1.0</span><br>
+                <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
+            `;
+            initialMessagesContainer.style.display = 'none';
+            appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
+            setupFirebaseListener(currentUser);
+            toggleMonitorView('anamnesis');
         };
 
         // Camera and Image Processing Functions
         const startCamera = async (mode) => {
-            // Limpa análises anteriores ao iniciar nova captura
+            cameraMode = mode;
+            cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
+            sendExamsButton.style.display = mode === 'exams' ? 'block' : 'none';
+            sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'block' : 'none';
+
+            // Limpa análises anteriores ao abrir a câmera
             if (mode === 'exams') {
                 examsResults = "";
                 updateExamsResultsPreview(false);
@@ -1895,30 +1908,26 @@
                 updateAxonEyeResultsPreview(false);
             }
 
-            cameraMode = mode;
-            cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
-            sendExamsButton.style.display = mode === 'exams' ? 'block' : 'none';
-            sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'block' : 'none';
+            // Determina se a câmera deve ser mostrada localmente
+            const showCameraLocally = (isMobileDevice && localCommandOrigin) || (!isMobileDevice && localCommandOrigin);
 
-            // Se for dispositivo móvel, abre a câmera. Se não, apenas muda a aba do monitor.
-            if (isMobileDevice()) {
+            if (showCameraLocally) {
                 try {
                     // Stop any existing stream
                     if (cameraStream) {
                         cameraStream.getTracks().forEach(track => track.stop());
                     }
 
-                    // Prefer environment camera on mobile
                     const constraints = {
                         video: {
-                            facingMode: 'environment' // Sempre tenta a câmera traseira primeiro em mobile
+                            facingMode: isMobileDevice ? 'environment' : currentCameraFacingMode
                         }
                     };
 
                     const stream = await navigator.mediaDevices.getUserMedia(constraints);
                     cameraVideo.srcObject = stream;
                     cameraStream = stream;
-                    toggleMonitorView('camera'); // Show the camera modal inside the monitor
+                    toggleMonitorView(mode, true); // Show the camera modal inside the monitor
                     cameraStatus.classList.remove('status-off'); // Set camera status to ON
                     appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}. Capture ou carregue as fotos.`, "info");
 
@@ -1949,15 +1958,13 @@
                     cameraStatus.classList.add('status-off'); // Set camera status to OFF on error
                 }
             } else {
-                // Em desktop, apenas muda a aba do monitor
-                if (mode === 'exams') {
-                    toggleMonitorView('exams');
-                    appendOutput("Aguardando imagens do dispositivo móvel para análise de exames.", "info");
-                } else if (mode === 'axon-eye') {
-                    toggleMonitorView('axon-eye');
-                    appendOutput("Aguardando imagens do dispositivo móvel para análise visual.", "info");
-                }
+                // Se não for para mostrar a câmera localmente, apenas alterna a view do monitor
+                toggleMonitorView(mode, false);
+                appendOutput(`Comando de câmera recebido. Monitor alternado para ${mode === 'exams' ? 'Exames' : 'Axon Eye'}.`, "info");
             }
+
+            // Atualiza o estado do monitor no Firestore para sincronização
+            updateMonitorStateInFirestore(currentUser, mode, showCameraLocally, isMobileDevice ? 'mobile' : 'desktop');
         };
 
         const stopCamera = () => {
@@ -2107,8 +2114,7 @@
             fullscreenModal.style.display = 'block';
 
             // For mobile devices, make the image fill the screen more aggressively
-            const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-            if (isMobile) {
+            if (isMobileDevice) {
                 modalImage.style.width = '100%';
                 modalImage.style.height = 'auto';
                 modalImage.style.maxHeight = '100vh';
@@ -2178,7 +2184,7 @@
             }
 
             examsResultsPreview.innerHTML = '<div class="info">Axon medical está analisando suas imagens...</div>'; // Clear monitor and show loading
-            toggleMonitorView('exams'); // Switch to exams view
+            toggleMonitorView('exams', false); // Switch to exams view, hide camera
 
             try {
                 // Upload all captured images to Imgur first
@@ -2210,13 +2216,13 @@
                 if (examsResults) {
                     examsResults += `<br><div class="section-title">NOVOS RESULTADOS:</div>`;
                 }
-                examsResults += response; // A formatação para (Alterado) será feita em updateExamsResultsPreview
+                examsResults = response; // A formatação para (Alterado) será feita em updateExamsResultsPreview
                 
                 updateExamsResultsPreview(); // Isso irá salvar no Firestore
                 appendOutput("Análise de exames concluída.", "success");
                 stopCamera(); // Close camera interface after analysis
                 capturedImages = []; // Limpa as imagens do álbum após o envio
-                updateAlbumCount(); // Atualiza o contador do álbum
+                updateAlbumCount();
             } catch (error) {
                 appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
                 examsResults = '<div class="error">Erro ao analisar exames.</div>';
@@ -2231,7 +2237,7 @@
             }
 
             axonEyeResultsPreview.innerHTML = '<div class="info">Axon Eye está analisando suas imagens...</div>'; // Clear monitor and show loading
-            toggleMonitorView('axon-eye'); // Switch to Axon Eye view
+            toggleMonitorView('axon-eye', false); // Switch to Axon Eye view, hide camera
 
             try {
                 // Upload all captured images to Imgur first
@@ -2260,13 +2266,13 @@
                 if (axonEyeResults) {
                     axonEyeResults += `<br><div class="section-title">NOVA ANÁLISE:</div>`;
                 }
-                axonEyeResults += response;
+                axonEyeResults = response;
                 
                 updateAxonEyeResultsPreview(); // Isso irá salvar no Firestore
                 appendOutput("Análise Axon Eye concluída.", "success");
                 stopCamera(); // Close camera interface after analysis
                 capturedImages = []; // Limpa as imagens do álbum após o envio
-                updateAlbumCount(); // Atualiza o contador do álbum
+                updateAlbumCount();
             } catch (error) {
                 appendOutput(`Erro ao analisar com Axon Eye: ${error.message}`, "error");
                 axonEyeResults = '<div class="error">Erro ao analisar com Axon Eye.</div>';
@@ -2289,7 +2295,12 @@
                     const parts = command.split(' ');
                     const username = parts[1];
                     const password = parts[2];
-                    await performLogin(username, password);
+
+                    if (await authenticateUser(username, password)) {
+                        await loginUser(username);
+                    } else {
+                        appendOutput("Usuário ou senha incorretos.", "error");
+                    }
                 } else {
                     appendOutput("Você precisa fazer login para usar o terminal. Digite /login [usuário] [senha]", "error");
                 }
@@ -2343,8 +2354,9 @@
                     appendOutput("O microfone já está ativo.", "info");
                     return;
                 }
+                localCommandOrigin = true;
+                await updateMonitorStateInFirestore(currentUser, 'anamnesis', false, isMobileDevice ? 'mobile' : 'desktop');
                 toggleListening();
-                toggleMonitorView('anamnesis'); // Sincroniza a aba para anamnese
             } 
             else if (cmd === '/hear off') {
                 if (!isListening) {
@@ -2486,12 +2498,12 @@
                 await registerUser(adminPassword, username, password);
             }
             else if (cmd === '/exames') {
+                localCommandOrigin = true;
                 startCamera('exams');
-                toggleMonitorView('exams'); // Sincroniza a aba para exames
             }
             else if (cmd === '/see') {
+                localCommandOrigin = true;
                 startCamera('axon-eye');
-                toggleMonitorView('axon-eye'); // Sincroniza a aba para axon-eye
             }
             else if (cmd === '/help') {
                 const availableEnginesList = apiModels.map(m => `${m.id}. ${m.name}`).join(' | ');
@@ -2569,13 +2581,8 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
             appendOutput("Reconhecimento de voz não suportado neste navegador.", "error", false);
         }
 
-        // Function to check if it's a mobile device
-        const isMobileDevice = () => {
-            return /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        };
-
         // Apply mobile text abbreviations
-        if (isMobileDevice()) {
+        if (isMobileDevice) {
             statusTextApi.textContent = 'API';
             statusTextMic.textContent = 'Micro';
             statusTextCam.textContent = 'Cam';
@@ -2589,9 +2596,11 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         window.onload = async () => {
             await initializeAIModel();
             const savedUsername = localStorage.getItem('axon_username');
-            const savedPassword = localStorage.getItem('axon_password');
-            if (savedUsername && savedPassword) {
-                await performLogin(savedUsername, savedPassword, true); // Tenta auto-login
+            const savedLoggedIn = localStorage.getItem('axon_is_logged_in');
+
+            if (savedUsername && savedLoggedIn === 'true') {
+                await loginUser(savedUsername);
+                appendOutput(`Login recuperado para o usuário: ${savedUsername}. Não é necessário fazer login novamente.`, "success");
             }
         };
 
