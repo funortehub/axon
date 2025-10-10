@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -717,39 +718,6 @@
             border: 1px solid var(--border-color);
             border-radius: 5px;
         }
-
-        /* Estilos para a imagem editada com highlights */
-        .axon-eye-edited-image {
-            max-width: 100%;
-            height: auto;
-            margin-top: 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-        }
-
-        .legend-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-            padding: 10px;
-            background-color: rgba(255, 255, 255, 0.05);
-            border-radius: 5px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 12px;
-        }
-
-        .legend-color {
-            width: 15px;
-            height: 15px;
-            border-radius: 3px;
-            border: 1px solid var(--border-color);
-        }
     </style>
 </head>
 <body>
@@ -977,8 +945,6 @@
         };
         let examsResults = ""; // Armazena os resultados dos exames
         let axonEyeResults = ""; // Armazena os resultados do Axon Eye
-        let axonEyeEditedImage = ""; // Armazena a imagem editada com highlights
-        let axonEyeLegend = []; // Armazena a legenda dos highlights
         let lastAnamnesisInfo = "";
         let apiConnectionStatus = "Desconhecido";
         let unsubscribeSnapshot = null; // Para gerenciar a inscrição do Firestore
@@ -1002,21 +968,13 @@
             { id: 3, name: 'gemma-3-12b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-12b-it:generateContent?key=${key}`, vision: false },
             { id: 4, name: 'gemma-3-27b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${key}`, vision: false },
             { id: 5, name: 'learnlm-2.0-flash-experimental', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/learnlm-2.0-flash-experimental:generateContent?key=${key}`, vision: false },
-            { id: 6, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: true }, // Modelo com capacidade de visão
-            { id: 7, name: 'gemini-2.5-flash-image-preview', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${key}`, vision: true, imageGeneration: true } // Novo modelo para geração de imagens
+            { id: 6, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: true } // Modelo com capacidade de visão
         ];
         let currentAIModel = apiModels[0].name; // Modelo padrão para texto
         let currentVisionAIModel = apiModels.find(m => m.vision)?.name || 'gemini-2.5-flash'; // Modelo padrão para visão
-        let currentImageGenerationModel = apiModels.find(m => m.imageGeneration)?.name || 'gemini-2.5-flash-image-preview'; // Modelo para geração de imagens
 
-        const getGeminiAPIUrl = (isVision = false, isImageGeneration = false) => {
-            let modelName;
-            if (isImageGeneration) {
-                modelName = currentImageGenerationModel;
-            } else {
-                modelName = isVision ? currentVisionAIModel : currentAIModel;
-            }
-            
+        const getGeminiAPIUrl = (isVision = false) => {
+            const modelName = isVision ? currentVisionAIModel : currentAIModel;
             const model = apiModels.find(m => m.name === modelName);
             if (model) {
                 return model.urlBuilder(currentGeminiAPIKey);
@@ -1275,31 +1233,10 @@
         const updateAxonEyeResultsPreview = (logToFirebase = true) => {
             let formattedResults = '';
             let imageHtml = '';
-            let legendHtml = '';
 
-            // Adiciona a imagem editada com highlights, se houver
-            if (axonEyeEditedImage && currentMonitorView === 'axon-eye') {
-                imageHtml = `<img src="${axonEyeEditedImage}" class="axon-eye-edited-image" alt="Imagem Analisada com Highlights">`;
-                
-                // Adiciona a legenda se houver dados
-                if (axonEyeLegend.length > 0) {
-                    const legendItems = axonEyeLegend.map(item => `
-                        <div class="legend-item">
-                            <div class="legend-color" style="background-color: ${item.color};"></div>
-                            <span>${item.label}</span>
-                        </div>
-                    `).join('');
-                    
-                    legendHtml = `
-                        <div class="section-title">LEGENDA DOS ACHADOS:</div>
-                        <div class="legend-container">
-                            ${legendItems}
-                        </div>
-                    `;
-                }
-            }
-            // Se não houver imagem editada, mostra a imagem original
-            else if (capturedImages.length > 0 && currentMonitorView === 'axon-eye') {
+            // Adiciona a imagem enviada, se houver
+            if (capturedImages.length > 0 && currentMonitorView === 'axon-eye') { // Só mostra a imagem se a aba Axon Eye estiver ativa
+                // Exibe apenas a primeira imagem para simplificar, ou pode iterar sobre todas
                 imageHtml = `<img src="${capturedImages[0]}" class="axon-eye-image-preview" alt="Imagem Analisada">`;
             }
 
@@ -1327,16 +1264,11 @@
                 }
             }
 
-            axonEyeResultsPreview.innerHTML = `
-                <div class="section-title">ANÁLISE AXON EYE:</div>
-                ${imageHtml}
-                ${formattedResults || '<div class="info">Nenhuma análise visual feita ainda.</div>'}
-                ${legendHtml}
-            `;
+            axonEyeResultsPreview.innerHTML = `<div class="section-title">ANÁLISE AXON EYE:</div>${formattedResults || '<div class="info">Nenhuma análise visual feita ainda.</div>'}${imageHtml}`;
             axonEyeResultsPreview.scrollTop = axonEyeResultsPreview.scrollHeight;
 
             if (logToFirebase && isLoggedIn && currentUser) {
-                saveAxonEyeResultsToFirestore(currentUser, axonEyeResults, axonEyeEditedImage, axonEyeLegend);
+                saveAxonEyeResultsToFirestore(currentUser, axonEyeResults);
             }
         };
 
@@ -1462,72 +1394,6 @@
             }
         };
 
-        // Nova função para gerar imagem editada com highlights
-        const callGeminiImageGenerationAPI = async (imageUrl, analysisText, retryCount = 0) => {
-            const maxRetries = 3;
-            try {
-                const prompt = `Com base na análise médica fornecida, crie uma versão editada da imagem original destacando os achados mencionados.
-                
-ANÁLISE MÉDICA:
-${analysisText}
-
-INSTRUÇÕES:
-1. Adicione highlights coloridos (círculos, setas, retângulos) para destacar cada achado mencionado na análise
-2. Use cores diferentes para cada tipo de achado (vermelho para urgências, amarelo para achados importantes, azul para achados secundários)
-3. Mantenha a imagem original como base
-4. Adicione uma legenda na parte inferior explicando o significado de cada cor
-5. A imagem resultante deve ser realista e manter a qualidade original
-
-Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
-
-                const contents = [{
-                    parts: [
-                        {
-                            inlineData: {
-                                mimeType: 'image/jpeg',
-                                data: imageUrl.split(',')[1]
-                            }
-                        },
-                        { text: prompt }
-                    ]
-                }];
-
-                const response = await fetch(getGeminiAPIUrl(false, true), { // true para indicar que é um modelo de geração de imagem
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        contents: contents
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Erro na API de Geração de Imagem: ${response.status}`);
-                }
-
-                const data = await response.json();
-                
-                // Extrair a imagem gerada da resposta
-                const imagePart = data.candidates?.[0]?.content?.parts?.find(part => part.inlineData);
-                if (imagePart && imagePart.inlineData) {
-                    const mimeType = imagePart.inlineData.mimeType || 'image/jpeg';
-                    return `data:${mimeType};base64,${imagePart.inlineData.data}`;
-                } else {
-                    throw new Error("Nenhuma imagem foi retornada pela API");
-                }
-            } catch (error) {
-                console.error("Erro na chamada da API de Geração de Imagem:", error);
-                if (retryCount < maxRetries) {
-                    const delay = Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000; // 2-5 seconds
-                    appendOutput(`Erro na geração de imagem. Tentando novamente em ${delay / 1000} segundos (${retryCount + 1}/${maxRetries})...`, "error");
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    return callGeminiImageGenerationAPI(imageUrl, analysisText, retryCount + 1);
-                } else {
-                    throw error; // Re-throw after max retries
-                }
-            }
-        };
 
         // CORREÇÃO PRINCIPAL: Função para acumular informações na anamnese
         const processAnamnesisInfo = async (info, retryCount = 0) => {
@@ -1765,7 +1631,6 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
             appendOutput("Verificando motores disponíveis...", "info", false);
             let foundWorkingTextModel = false;
             let foundWorkingVisionModel = false;
-            let foundWorkingImageModel = false;
 
             // Prioritize gemini-2.0-flash for text
             const geminiFlashText = apiModels.find(m => m.name === 'gemini-2.0-flash' && !m.vision);
@@ -1795,24 +1660,10 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
                 }
             }
 
-            // Prioritize gemini-2.5-flash-image-preview for image generation
-            const geminiFlashImage = apiModels.find(m => m.name === 'gemini-2.5-flash-image-preview' && m.imageGeneration);
-            if (geminiFlashImage) {
-                appendOutput(`Testando ${geminiFlashImage.name} (geração de imagem)...`, "info", false);
-                const isWorking = await checkApiStatus(geminiFlashImage.name);
-                if (isWorking) {
-                    currentImageGenerationModel = geminiFlashImage.name;
-                    appendOutput(`Motor de geração de imagem selecionado: ${currentImageGenerationModel} (funcionando).`, "success", false);
-                    foundWorkingImageModel = true;
-                } else {
-                    appendOutput(`${geminiFlashImage.name} (imagem) não está respondendo.`, "error", false);
-                }
-            }
-
             // Fallback for text models
             if (!foundWorkingTextModel) {
                 for (const model of apiModels) {
-                    if (!model.vision && !model.imageGeneration && model.name !== 'gemini-2.0-flash') {
+                    if (!model.vision && model.name !== 'gemini-2.0-flash') {
                         appendOutput(`Testando ${model.name} (texto)...`, "info", false);
                         const isWorking = await checkApiStatus(model.name);
                         if (isWorking) {
@@ -1830,7 +1681,7 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
             // Fallback for vision models (if gemini-2.5-flash failed or not found)
             if (!foundWorkingVisionModel) {
                 for (const model of apiModels) {
-                    if (model.vision && !model.imageGeneration && model.name !== 'gemini-2.5-flash') {
+                    if (model.vision && model.name !== 'gemini-2.5-flash') { // Check for other vision models if any
                         appendOutput(`Testando ${model.name} (visão)...`, "info", false);
                         const isWorking = await checkApiStatus(model.name);
                         if (isWorking) {
@@ -1845,33 +1696,13 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
                 }
             }
 
-            // Fallback for image generation models (if gemini-2.5-flash-image-preview failed or not found)
-            if (!foundWorkingImageModel) {
-                for (const model of apiModels) {
-                    if (model.imageGeneration && model.name !== 'gemini-2.5-flash-image-preview') {
-                        appendOutput(`Testando ${model.name} (geração de imagem)...`, "info", false);
-                        const isWorking = await checkApiStatus(model.name);
-                        if (isWorking) {
-                            currentImageGenerationModel = model.name;
-                            appendOutput(`Motor de geração de imagem selecionado: ${currentImageGenerationModel} (funcionando).`, "success", false);
-                            foundWorkingImageModel = true;
-                            break;
-                        } else {
-                            appendOutput(`${model.name} (imagem) não está respondendo.`, "error", false);
-                        }
-                    }
-                }
-            }
-
-            if (!foundWorkingTextModel && !foundWorkingVisionModel && !foundWorkingImageModel) {
+            if (!foundWorkingTextModel && !foundWorkingVisionModel) {
                 appendOutput("Nenhum motor de IA disponível está respondendo. As funcionalidades podem estar limitadas.", "error", false);
                 apiStatus.classList.add('status-off');
             } else if (!foundWorkingTextModel) {
                 appendOutput("Nenhum motor de IA para texto está respondendo. Funcionalidades de texto podem estar limitadas.", "error", false);
             } else if (!foundWorkingVisionModel) {
                 appendOutput("Nenhum motor de IA para visão está respondendo. Funcionalidades de análise de imagem podem estar limitadas.", "error", false);
-            } else if (!foundWorkingImageModel) {
-                appendOutput("Nenhum motor de IA para geração de imagem está respondendo. Funcionalidades de edição de imagem podem estar limitadas.", "error", false);
             }
         };
 
@@ -1909,15 +1740,10 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
             }
         };
 
-        const saveAxonEyeResultsToFirestore = async (username, resultsData, editedImageData, legendData) => {
+        const saveAxonEyeResultsToFirestore = async (username, resultsData) => {
             try {
                 const docRef = doc(db, "sessions", username);
-                await setDoc(docRef, { 
-                    axonEyeResults: resultsData, 
-                    axonEyeEditedImage: editedImageData,
-                    axonEyeLegend: legendData,
-                    lastUpdated: new Date() 
-                }, { merge: true });
+                await setDoc(docRef, { axonEyeResults: resultsData, lastUpdated: new Date() }, { merge: true });
                 // console.log("Resultados do Axon Eye salvos no Firestore.");
             } catch (e) {
                 console.error("Erro ao salvar resultados do Axon Eye no Firestore: ", e);
@@ -1957,8 +1783,6 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
                     // Atualiza resultados do Axon Eye se houver dados e não for o mesmo que já temos
                     if (data.axonEyeResults && data.axonEyeResults !== axonEyeResults) {
                         axonEyeResults = data.axonEyeResults;
-                        axonEyeEditedImage = data.axonEyeEditedImage || "";
-                        axonEyeLegend = data.axonEyeLegend || [];
                         updateAxonEyeResultsPreview(false); // Não logar novamente no Firebase
                     }
                     // Sincroniza o estado do monitor
@@ -1981,8 +1805,6 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
                     anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                     examsResults = "";
                     axonEyeResults = "";
-                    axonEyeEditedImage = "";
-                    axonEyeLegend = [];
                     updateAnamnesisPreview(false);
                     updateExamsResultsPreview(false);
                     updateAxonEyeResultsPreview(false);
@@ -2373,8 +2195,6 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
 
             // Limpa análises anteriores no terminal interativo
             axonEyeResults = "";
-            axonEyeEditedImage = "";
-            axonEyeLegend = [];
             updateAxonEyeResultsPreview(); // Atualiza o monitor para mostrar "Nenhuma análise visual feita ainda."
             appendOutput("Limpando análises Axon Eye anteriores...", "info");
 
@@ -2408,26 +2228,7 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
                 if (axonEyeResults) {
                     axonEyeResults += `<br><div class="section-title">NOVA ANÁLISE:</div>`;
                 }
-                axonEyeResults = response;
-                
-                // Agora gera a imagem editada com highlights
-                appendOutput("Gerando imagem com highlights dos achados...", "info");
-                try {
-                    const editedImage = await callGeminiImageGenerationAPI(capturedImages[0], response);
-                    axonEyeEditedImage = editedImage;
-                    
-                    // Cria uma legenda padrão baseada na análise
-                    axonEyeLegend = [
-                        { color: '#ff0000', label: 'Achados Críticos/Urgentes' },
-                        { color: '#ffff00', label: 'Achados Importantes' },
-                        { color: '#0000ff', label: 'Achados Secundários' }
-                    ];
-                    
-                    appendOutput("Imagem editada com highlights gerada com sucesso.", "success");
-                } catch (imageError) {
-                    appendOutput(`Erro ao gerar imagem editada: ${imageError.message}. Mostrando apenas análise textual.`, "error");
-                    // Continua com a análise textual mesmo se a geração de imagem falhar
-                }
+                axonEyeResults += response;
                 
                 updateAxonEyeResultsPreview(); // Isso irá salvar no Firestore
                 appendOutput("Análise Axon Eye concluída.", "success");
@@ -2437,8 +2238,6 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
             } catch (error) {
                 appendOutput(`Erro ao analisar com Axon Eye: ${error.message}`, "error");
                 axonEyeResults = '<div class="error">Erro ao analisar com Axon Eye.</div>';
-                axonEyeEditedImage = "";
-                axonEyeLegend = [];
                 updateAxonEyeResultsPreview();
             }
         };
@@ -2506,8 +2305,6 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
                 anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                 examsResults = "";
                 axonEyeResults = ""; // Clear Axon Eye results
-                axonEyeEditedImage = ""; // Clear edited image
-                axonEyeLegend = []; // Clear legend
                 capturedImages = []; // Limpa imagens capturadas
                 updateAnamnesisPreview();
                 updateExamsResultsPreview();
@@ -2525,8 +2322,6 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
                 anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                 examsResults = "";
                 axonEyeResults = ""; // Clear Axon Eye results
-                axonEyeEditedImage = ""; // Clear edited image
-                axonEyeLegend = []; // Clear legend
                 capturedImages = []; // Limpa imagens capturadas
                 updateAnamnesisPreview();
                 updateExamsResultsPreview();
@@ -2643,10 +2438,7 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
                         }
 
                         if (selectedModel) {
-                            if (selectedModel.imageGeneration) {
-                                currentImageGenerationModel = selectedModel.name;
-                                appendOutput(`Motor da API de geração de imagem alterado para: ${currentImageGenerationModel}`, "success");
-                            } else if (selectedModel.vision) {
+                            if (selectedModel.vision) {
                                 currentVisionAIModel = selectedModel.name;
                                 appendOutput(`Motor da API de visão alterado para: ${currentVisionAIModel}`, "success");
                             } else {
@@ -2676,8 +2468,6 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
                     appendOutput(`Motor da IA de texto atual: ${currentAIModel}`, "info");
                     appendOutput(`API Utilizada (Visão): ${getGeminiAPIUrl(true)}`, "info");
                     appendOutput(`Motor da IA de visão atual: ${currentVisionAIModel}`, "info");
-                    appendOutput(`API Utilizada (Geração de Imagem): ${getGeminiAPIUrl(false, true)}`, "info");
-                    appendOutput(`Motor da IA de geração de imagem atual: ${currentImageGenerationModel}`, "info");
                     appendOutput(`API Imgur: https://api.imgur.com/3/image (Client ID: ${IMGUR_CLIENT_ID})`, "info");
                     appendOutput(`Status de Conexão: ${apiConnectionStatus}`, apiConnectionStatus.includes("Conectado") ? "success" : "error");
                 } else {
@@ -2708,8 +2498,6 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
             else if (cmd === '/see') {
                 // Limpa análises anteriores no terminal interativo
                 axonEyeResults = "";
-                axonEyeEditedImage = "";
-                axonEyeLegend = [];
                 updateAxonEyeResultsPreview(); // Atualiza o monitor para mostrar "Nenhuma análise visual feita ainda."
                 appendOutput("Limpando análises Axon Eye anteriores...", "info");
 
@@ -2732,7 +2520,7 @@ Retorne APENAS a imagem editada em base64, sem nenhum texto adicional.`;
     <li class="help-item"><span class="command">/copy</span> - Copiar conteúdo do terminal Monitor</li>
     <li class="help-item"><span class="command">/ia [pergunta]</span> - Fazer pergunta livre à I.A</li>
     <li class="help-item"><span class="command">/exames</span> - Abrir câmera para fotografar/carregar exames e enviar à I.A para análise de resultados</li>
-    <li class="help-item"><span class="command">/see</span> - Abrir câmera para fotografar/carregar imagens e enviar à I.A para opinião clínica COM IMAGEM EDITADA E HIGHLIGHTS</li>
+    <li class="help-item"><span class="command">/see</span> - Abrir câmera para fotografar/carregar imagens e enviar à I.A para opinião clínica</li>
     <li class="help-item"><span class="command">/exit</span> - Encerrar sessão</li>
     <li class="help-item"><span class="command">/clear</span> - Limpar terminal e reiniciar anamnese</li>
     <li class="help-item"><span class="command">/api [senha_admin]</span> - Mostrar API utilizada e status de conexão</li>
@@ -2786,80 +2574,74 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
             }
         });
 
-        // Monitor toggle buttons
-        toggleAnamnesisButton.addEventListener('click', () => {
-            toggleMonitorView('anamnesis');
-            updateMonitorStateInFirestore(currentUser, { activeView: 'anamnesis' });
-        });
-        toggleExamsButton.addEventListener('click', () => {
-            toggleMonitorView('exams');
-            updateMonitorStateInFirestore(currentUser, { activeView: 'exams' });
-        });
-        toggleAxonEyeButton.addEventListener('click', () => {
-            toggleMonitorView('axon-eye');
-            updateMonitorStateInFirestore(currentUser, { activeView: 'axon-eye' });
-        });
+        // Monitor Toggle Buttons Event Listeners
+        toggleAnamnesisButton.addEventListener('click', () => toggleMonitorView('anamnesis'));
+        toggleExamsButton.addEventListener('click', () => toggleMonitorView('exams'));
+        toggleAxonEyeButton.addEventListener('click', () => toggleMonitorView('axon-eye')); // New Axon Eye toggle button
 
-        // Mobile-specific adjustments
-        if (isMobile) {
-            // Hide text labels in status bar on mobile
-            statusTextApi.style.display = 'none';
-            statusTextMic.style.display = 'none';
-            statusTextCam.style.display = 'none';
-
-            // Adjust status bar layout for mobile
-            const statusBar = document.querySelector('.status-bar');
-            statusBar.style.gap = '10px';
-            statusBar.style.marginRight = '0';
-
-            // Adjust header layout for mobile
-            const header = document.querySelector('.header');
-            header.style.padding = '10px 15px';
-
-            // Adjust container layout for mobile
-            const container = document.querySelector('.container');
-            container.style.padding = '10px';
-            container.style.gap = '10px';
-
-            // Adjust terminal content padding for mobile
-            const terminalContents = document.querySelectorAll('.terminal-content');
-            terminalContents.forEach(content => {
-                content.style.padding = '10px';
-            });
-
-            // Adjust camera controls for mobile
-            const cameraControls = document.querySelector('.camera-controls');
-            if (cameraControls) {
-                cameraControls.style.width = '95%';
-                cameraControls.style.bottom = '15px';
-            }
+        if (isSpeechRecognitionSupported()) {
+            initSpeechRecognition();
+        } else {
+            appendOutput("Reconhecimento de voz não suportado neste navegador.", "error", false);
         }
 
-        // Inicialização
-        const init = async () => {
-            // Check if user is already logged in
-            const savedUser = localStorage.getItem('axon_logged_in_user');
-            if (savedUser) {
+        // Apply mobile text abbreviations
+        if (isMobile) {
+            statusTextApi.textContent = 'API';
+            statusTextMic.textContent = 'Micro';
+            statusTextCam.textContent = 'Cam';
+        }
+
+        setInterval(() => {
+            apiStatus.style.backgroundColor = apiStatus.style.backgroundColor === 'var(--success-color)' ? 
+                'var(--error-color)' : 'var(--success-color)';
+        }, 3000);
+
+        // Função para restaurar o login ao carregar a página
+        const restoreLogin = async () => {
+            const storedUser = localStorage.getItem('axon_logged_in_user');
+            if (storedUser) {
+                // Assumimos que se o usuário está armazenado localmente, ele já foi autenticado.
+                // Para maior segurança, uma reautenticação silenciosa ou token de sessão poderia ser implementado.
                 isLoggedIn = true;
-                currentUser = savedUser;
+                currentUser = storedUser;
+                appendOutput(`Login recuperado para o usuário '${currentUser}'.`, "success");
+                initialMessagesContainer.innerHTML = `
+                    <pre class="info">
+ █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
+██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
+███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
+██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
+██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                    </pre>
+                    <span class="info">Axon - Assistente Médico v1.0</span><br>
+                    <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
+                `;
                 initialMessagesContainer.style.display = 'none';
-                appendOutput("Sessão restaurada. Digite /help para ver os comandos disponíveis.", "success");
+                appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
                 setupFirebaseListener(currentUser); // Inicia o listener do Firebase
                 toggleMonitorView('anamnesis'); // Garante que a anamnese é a primeira vista
             }
-
-            await initializeAIModel(); // Test available engines on startup
-            commandInput.focus(); // Focus the input field on startup
-
-            // Initialize speech recognition if supported
-            if (isSpeechRecognitionSupported()) {
-                initSpeechRecognition();
-            } else {
-                appendOutput("Reconhecimento de voz não suportado neste navegador. Use o teclado para inserir informações.", "info");
-            }
         };
 
-        init();
+        window.onload = async () => {
+            await initializeAIModel();
+            await restoreLogin(); // Tenta restaurar o login ao carregar
+        };
+
+        // PWA: Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registrado com sucesso:', registration);
+                    })
+                    .catch(error => {
+                        console.error('Falha no registro do Service Worker:', error);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
