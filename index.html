@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -990,7 +989,7 @@
         // Comandos válidos
         const validCommands = [
             '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
-            '/ia', '/help', '/login', '/clear', '/api', '/api-set', '/api-restore', '/api-engine', '/register', '/exames', '/see'
+            '/ia', '/help', '/login', '/clear', '/api', '/api-set', '/api-restore', '/api-engine', '/register', '/exames', '/see', '/ask'
         ];
 
         // Verificar suporte a reconhecimento de voz
@@ -2242,6 +2241,44 @@
             }
         };
 
+        // Função para processar o comando /ask
+        const processAskCommand = async (question) => {
+            if (!question.trim()) {
+                appendOutput("Por favor, faça uma pergunta após o comando /ask", "error");
+                return;
+            }
+
+            appendOutput("Processando sua pergunta com base na anamnese e exames...", "info");
+
+            // Construir o contexto completo
+            const context = `
+Com base nas seguintes informações do paciente:
+
+ANAMNESE:
+- Queixa Principal: ${anamnesis.qp || "Não informado"}
+- História da Moléstia Atual: ${anamnesis.hma || "Não informado"}
+- História Patológica: ${anamnesis.hp || "Não informado"}
+- História Familiar: ${anamnesis.hf || "Não informado"}
+- História Psicossocial: ${anamnesis.hps || "Não informado"}
+
+RESULTADOS DE EXAMES:
+${examsResults || "Nenhum resultado de exame disponível."}
+
+RESULTADOS DA ANÁLISE VISUAL (AXON EYE):
+${axonEyeResults || "Nenhuma análise visual disponível."}
+
+Pergunta: ${question}
+
+Responda de forma resumida e objetiva, focando especificamente na pergunta feita.`;
+
+            try {
+                const response = await callGeminiAPI(context);
+                appendOutput(response, "output");
+            } catch (error) {
+                appendOutput(`Erro ao processar a pergunta: ${error.message}`, "error");
+            }
+        };
+
         // Processar comandos
         const processCommand = async (command) => {
             if (!command.trim()) return;
@@ -2390,6 +2427,10 @@
                     appendOutput(`Erro ao consultar a IA: ${error.message}. Verifique sua conexão ou a chave da API.`, "error");
                 }
             } 
+            else if (cmd.startsWith('/ask')) {
+                const question = command.substring(4).trim();
+                await processAskCommand(question);
+            }
             else if (cmd.startsWith('/api-set')) {
                 const parts = command.split(' ');
                 const adminPassword = parts[1];
@@ -2519,6 +2560,7 @@
     <li class="help-item"><span class="command">/cd</span> - Gerar conduta médica (tratamentos SUS)</li>
     <li class="help-item"><span class="command">/copy</span> - Copiar conteúdo do terminal Monitor</li>
     <li class="help-item"><span class="command">/ia [pergunta]</span> - Fazer pergunta livre à I.A</li>
+    <li class="help-item"><span class="command">/ask [pergunta]</span> - Fazer pergunta à I.A com base na anamnese e exames</li>
     <li class="help-item"><span class="command">/exames</span> - Abrir câmera para fotografar/carregar exames e enviar à I.A para análise de resultados</li>
     <li class="help-item"><span class="command">/see</span> - Abrir câmera para fotografar/carregar imagens e enviar à I.A para opinião clínica</li>
     <li class="help-item"><span class="command">/exit</span> - Encerrar sessão</li>
