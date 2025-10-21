@@ -12,6 +12,7 @@
     <link rel="apple-touch-icon" href="https://i.imgur.com/ZsfZEh2.png"> <!-- MODIFICADO AQUI: Caminho do ícone -->
     <meta name="theme-color" content="#0d1117">
     <style>
+        /* Todos os estilos CSS anteriores permanecem exatamente iguais */
         :root {
             --bg-color: #0d1117;
             --terminal-bg: #0a0e14;
@@ -986,7 +987,7 @@
         const IMGUR_CLIENT_ID = '4ae8b96c539d446';
         const IMGUR_ACCESS_TOKEN = '898e039bb7db651c7b94f4d104a60aae3f5c6ff0'; // Note: This is an access token, not a client secret. For client-side, usually only client ID is needed for anonymous uploads. If this is a user-specific token, it should be handled securely.
 
-        // Comandos válidos
+        // Comandos válidos - ADICIONADO /ask
         const validCommands = [
             '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
             '/ia', '/help', '/login', '/clear', '/api', '/api-set', '/api-restore', '/api-engine', '/register', '/exames', '/see', '/ask'
@@ -1465,10 +1466,11 @@
             }
         };
 
-        // Gerar hipóteses diagnósticas
+        // Gerar hipóteses diagnósticas - MODIFICADO para incluir exames e axon eye
         const generateDiagnosticHypotheses = async () => {
             const prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}.
             E nos seguintes resultados de exames (se houver): ${examsResults || "Nenhum resultado de exame disponível."}.
+            E na seguinte análise visual do Axon Eye (se houver): ${axonEyeResults || "Nenhuma análise visual disponível."}.
             Liste as possíveis hipóteses diagnósticas em ordem de probabilidade. 
             Formate cada hipótese como um item em uma lista. 
             Seja técnico, objetivo e extremamente resumido. 
@@ -1489,10 +1491,11 @@
             }
         };
 
-        // Gerar conduta médica
+        // Gerar conduta médica - MODIFICADO para incluir exames e axon eye
         const generateMedicalConduct = async () => {
             const prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}.
             E nos seguintes resultados de exames (se houver): ${examsResults || "Nenhum resultado de exame disponível."}.
+            E na seguinte análise visual do Axon Eye (se houver): ${axonEyeResults || "Nenhuma análise visual disponível."}.
             Proponha uma conduta médica completa, dividida em tópicos:
             1. Medicações disponíveis no SUS (com dose e posologia resumida)
             2. Exames complementares disponíveis no SUS
@@ -1524,6 +1527,36 @@
                 appendOutput(formattedConduct, "output");
             } catch (error) {
                 appendOutput(`Erro ao gerar conduta médica: ${error.message}`, "error");
+            }
+        };
+
+        // NOVA FUNÇÃO: Fazer pergunta baseada no contexto completo
+        const askQuestionBasedOnContext = async (question) => {
+            const prompt = `Você é um assistente médico. Responda à pergunta do médico de forma resumida e objetiva, considerando TODO o contexto disponível:
+
+            ANAMNESE DO PACIENTE:
+            ${JSON.stringify(anamnesis, null, 2)}
+
+            RESULTADOS DE EXAMES:
+            ${examsResults || "Nenhum resultado de exame disponível."}
+
+            ANÁLISE VISUAL (AXON EYE):
+            ${axonEyeResults || "Nenhuma análise visual disponível."}
+
+            PERGUNTA DO MÉDICO: "${question}"
+
+            Instruções:
+            - Baseie sua resposta APENAS nas informações fornecidas acima
+            - Seja objetivo, técnico e conciso
+            - Se não houver informações suficientes para responder, indique isso claramente
+            - Não invente informações que não estejam no contexto fornecido
+            - Formate a resposta de forma clara e direta`;
+
+            try {
+                const response = await callGeminiAPI(prompt);
+                appendOutput(`Pergunta: ${question}\nResposta: ${response}`, "output");
+            } catch (error) {
+                appendOutput(`Erro ao processar pergunta: ${error.message}`, "error");
             }
         };
 
@@ -2241,44 +2274,6 @@
             }
         };
 
-        // Função para processar o comando /ask
-        const processAskCommand = async (question) => {
-            if (!question.trim()) {
-                appendOutput("Por favor, faça uma pergunta após o comando /ask", "error");
-                return;
-            }
-
-            appendOutput("Processando sua pergunta com base na anamnese e exames...", "info");
-
-            // Construir o contexto completo
-            const context = `
-Com base nas seguintes informações do paciente:
-
-ANAMNESE:
-- Queixa Principal: ${anamnesis.qp || "Não informado"}
-- História da Moléstia Atual: ${anamnesis.hma || "Não informado"}
-- História Patológica: ${anamnesis.hp || "Não informado"}
-- História Familiar: ${anamnesis.hf || "Não informado"}
-- História Psicossocial: ${anamnesis.hps || "Não informado"}
-
-RESULTADOS DE EXAMES:
-${examsResults || "Nenhum resultado de exame disponível."}
-
-RESULTADOS DA ANÁLISE VISUAL (AXON EYE):
-${axonEyeResults || "Nenhuma análise visual disponível."}
-
-Pergunta: ${question}
-
-Responda de forma resumida e objetiva, focando especificamente na pergunta feita.`;
-
-            try {
-                const response = await callGeminiAPI(context);
-                appendOutput(response, "output");
-            } catch (error) {
-                appendOutput(`Erro ao processar a pergunta: ${error.message}`, "error");
-            }
-        };
-
         // Processar comandos
         const processCommand = async (command) => {
             if (!command.trim()) return;
@@ -2429,7 +2424,13 @@ Responda de forma resumida e objetiva, focando especificamente na pergunta feita
             } 
             else if (cmd.startsWith('/ask')) {
                 const question = command.substring(4).trim();
-                await processAskCommand(question);
+                if (!question) {
+                    appendOutput("Por favor, faça uma pergunta após o comando /ask", "error");
+                    return;
+                }
+                
+                appendOutput("Processando sua pergunta com base no contexto completo...", "info");
+                await askQuestionBasedOnContext(question);
             }
             else if (cmd.startsWith('/api-set')) {
                 const parts = command.split(' ');
@@ -2560,7 +2561,7 @@ Responda de forma resumida e objetiva, focando especificamente na pergunta feita
     <li class="help-item"><span class="command">/cd</span> - Gerar conduta médica (tratamentos SUS)</li>
     <li class="help-item"><span class="command">/copy</span> - Copiar conteúdo do terminal Monitor</li>
     <li class="help-item"><span class="command">/ia [pergunta]</span> - Fazer pergunta livre à I.A</li>
-    <li class="help-item"><span class="command">/ask [pergunta]</span> - Fazer pergunta à I.A com base na anamnese e exames</li>
+    <li class="help-item"><span class="command">/ask [pergunta]</span> - Fazer pergunta baseada na anamnese, exames e análises visuais</li>
     <li class="help-item"><span class="command">/exames</span> - Abrir câmera para fotografar/carregar exames e enviar à I.A para análise de resultados</li>
     <li class="help-item"><span class="command">/see</span> - Abrir câmera para fotografar/carregar imagens e enviar à I.A para opinião clínica</li>
     <li class="help-item"><span class="command">/exit</span> - Encerrar sessão</li>
