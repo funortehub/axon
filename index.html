@@ -9,10 +9,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Axon A.I">
-    <link rel="apple-touch-icon" href="https://i.imgur.com/ZsfZEh2.png"> <!-- MODIFICADO AQUI: Caminho do ícone -->
+    <link rel="apple-touch-icon" href="https://i.imgur.com/ZsfZEh2.png">
     <meta name="theme-color" content="#0d1117">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* Todos os estilos CSS anteriores permanecem exatamente iguais */
         :root {
             --bg-color: #0d1117;
             --terminal-bg: #0a0e14;
@@ -26,7 +26,7 @@
             --highlight-color: #1f6feb;
             --diagnosis-color: #a371f7;
             --conduct-color: #56d364;
-            --altered-color: #ffcc00; /* Nova cor para "Alterado" */
+            --altered-color: #ffcc00;
         }
 
         * {
@@ -34,8 +34,7 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Consolas', 'Courier New', monospace;
-            /* Desabilita o zoom em todos os elementos */
-            touch-action: manipulation; 
+            touch-action: manipulation;
         }
 
         body {
@@ -45,12 +44,11 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            /* Desabilita o zoom no body */
             touch-action: manipulation;
         }
 
         .header {
-            background-color: var(--bg-color); /* Alterado para --bg-color */
+            background-color: var(--bg-color);
             padding: 12px 20px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
@@ -168,7 +166,7 @@
         .non-interactive-terminal {
             flex: 1;
             min-width: 300px;
-            position: relative; /* Adicionado para posicionamento do modal da câmera */
+            position: relative;
         }
 
         .input-line {
@@ -290,7 +288,7 @@
         }
 
         .footer {
-            background-color: var(--bg-color); /* Alterado para --bg-color */
+            background-color: var(--bg-color);
             padding: 10px 20px;
             border-top: 1px solid var(--border-color);
             text-align: center;
@@ -308,50 +306,49 @@
             z-index: 0;
         }
 
-        /* Estilos para o modal da câmera DENTRO DO TERMINAL */
         .camera-modal {
-            display: none; /* Hidden by default */
-            position: absolute; /* Alterado para absolute */
+            display: none;
+            position: absolute;
             top: 0;
             left: 0;
-            width: 100%; /* Full width of parent terminal */
-            height: 100%; /* Full height of parent terminal */
-            background-color: var(--terminal-bg); /* Background of the terminal */
-            z-index: 10; /* Sit on top of other terminal content */
-            flex-direction: column; /* Changed to column for better layout */
-            justify-content: flex-start; /* Align content to start */
-            align-items: center; /* Center content horizontally */
-            padding: 0; /* Remove padding as it's now part of terminal content */
-            border-radius: 8px; /* Inherit parent border-radius */
-            overflow: hidden; /* Hide overflow */
+            width: 100%;
+            height: 100%;
+            background-color: var(--terminal-bg);
+            z-index: 10;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 0;
+            border-radius: 8px;
+            overflow: hidden;
         }
 
         .camera-container {
             display: flex;
             flex-direction: column;
-            background-color: var(--terminal-bg); /* Keep terminal background */
-            border: none; /* Remove border as it's inside terminal */
-            border-radius: 0; /* Remove border-radius */
+            background-color: var(--terminal-bg);
+            border: none;
+            border-radius: 0;
             position: relative;
             z-index: 1;
-            padding: 0; /* Remove padding */
-            gap: 10px; /* Reduced gap */
+            padding: 0;
+            gap: 10px;
             overflow: hidden;
-            width: 100%; /* Take full width of parent */
-            height: 100%; /* Take full height of parent */
-            max-width: none; /* Remove max-width constraint */
-            max-height: none; /* Remove max-height constraint */
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            max-height: none;
         }
 
         .camera-video-wrapper {
             position: relative;
             width: 100%;
-            padding-bottom: 75%; /* Adjusted for 4:3 aspect ratio, better for general use */
+            padding-bottom: 75%;
             background-color: black;
             border: 1px solid var(--border-color);
             border-radius: 5px;
             overflow: hidden;
-            flex-shrink: 0; /* Prevent shrinking */
+            flex-shrink: 0;
         }
 
         .camera-video {
@@ -363,40 +360,39 @@
             object-fit: cover;
         }
 
-        /* Modificações para os botões de controle da câmera */
         .camera-controls {
-            position: absolute; /* Posiciona os botões sobre o vídeo */
-            bottom: 10px; /* Distância do fundo do vídeo */
+            position: absolute;
+            bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             flex-wrap: wrap;
-            gap: 10px; /* Espaçamento entre os botões */
+            gap: 10px;
             justify-content: center;
-            z-index: 2; /* Garante que fiquem acima do vídeo */
-            width: 90%; /* Largura para os botões */
+            z-index: 2;
+            width: 90%;
         }
 
         .camera-button {
-            background-color: rgba(0, 0, 0, 0.6); /* Fundo semi-transparente */
+            background-color: rgba(0, 0, 0, 0.6);
             color: white;
             border: 1px solid var(--border-color);
-            padding: 10px 15px; /* Aumentado o padding para ícones */
-            border-radius: 50%; /* Botões redondos */
+            padding: 10px 15px;
+            border-radius: 50%;
             cursor: pointer;
-            font-size: 18px; /* Tamanho do ícone */
+            font-size: 18px;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            display: flex; /* Para centralizar o ícone */
+            display: flex;
             align-items: center;
             justify-content: center;
-            width: 50px; /* Largura fixa para o círculo */
-            height: 50px; /* Altura fixa para o círculo */
-            flex-shrink: 0; /* Não encolher */
+            width: 50px;
+            height: 50px;
+            flex-shrink: 0;
         }
 
         .camera-button:hover {
             background-color: var(--highlight-color);
-            transform: scale(1.05); /* Pequeno efeito de zoom */
+            transform: scale(1.05);
         }
 
         .camera-button.disabled {
@@ -405,7 +401,7 @@
             opacity: 0.7;
         }
 
-        .camera-action-buttons { /* Novo container para botões de ação da câmera */
+        .camera-action-buttons {
             position: absolute;
             top: 10px;
             right: 10px;
@@ -419,9 +415,9 @@
             color: white;
             border: 1px solid var(--border-color);
             border-radius: 5px;
-            padding: 4px 8px; /* Reduced padding */
+            padding: 4px 8px;
             cursor: pointer;
-            font-size: 11px; /* Reduced font size */
+            font-size: 11px;
             font-family: 'Consolas', 'Courier New', monospace;
             transition: background-color 0.2s;
         }
@@ -435,7 +431,6 @@
             color: var(--bg-color);
         }
 
-        /* Estilos para o botão Álbum */
         .album-button {
             position: absolute;
             top: 10px;
@@ -470,12 +465,11 @@
             text-align: center;
         }
 
-        /* Estilos para os botões de alternância do monitor */
         .monitor-toggle-buttons {
             display: flex;
             gap: 5px;
-            margin-left: auto; /* Empurra para a direita */
-            margin-right: 10px; /* Adiciona um pequeno espaçamento à direita */
+            margin-left: auto;
+            margin-right: 10px;
         }
 
         .monitor-toggle-button {
@@ -487,10 +481,10 @@
             cursor: pointer;
             font-size: 12px;
             transition: background-color 0.3s ease;
-            display: flex; /* Para alinhar ícone e texto */
+            display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px; /* Espaçamento entre ícone e texto */
+            gap: 5px;
         }
 
         .monitor-toggle-button:hover {
@@ -503,47 +497,44 @@
             border-color: var(--highlight-color);
         }
 
-        /* Media query para dispositivos móveis */
         @media (max-width: 768px) {
             .monitor-toggle-button span {
-                display: none; /* Esconde o texto */
+                display: none;
             }
 
             .monitor-toggle-button {
-                padding: 5px 8px; /* Ajusta o padding para apenas o ícone */
-                font-size: 16px; /* Aumenta o tamanho do ícone */
-                width: auto; /* Largura automática */
-                min-width: 35px; /* Largura mínima para o botão */
+                padding: 5px 8px;
+                font-size: 16px;
+                width: auto;
+                min-width: 35px;
             }
 
-            /* Mobile specific styles for status bar */
             .status-bar {
-                gap: 10px; /* Smaller gap */
-                margin-right: 0; /* No right margin */
+                gap: 10px;
+                margin-right: 0;
             }
 
             .status-item span {
-                font-size: 12px; /* Smaller font for text */
+                font-size: 12px;
             }
 
             .status-item .status-indicator {
-                width: 8px; /* Smaller indicator */
+                width: 8px;
                 height: 8px;
             }
         }
 
-        /* Estilos para o modal de imagem em tela cheia */
         .fullscreen-modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 100; /* Sit on top */
-            padding-top: 60px; /* Location of the box */
+            display: none;
+            position: fixed;
+            z-index: 100;
+            padding-top: 60px;
             left: 0;
             top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.9);
         }
 
         .modal-content {
@@ -580,24 +571,22 @@
             cursor: pointer;
         }
 
-        /* Estilo para o texto "Alterado" */
         .output .altered-text {
             color: var(--altered-color);
             font-weight: bold;
-            margin-left: 10px; /* Espaçamento à direita */
+            margin-left: 10px;
         }
 
-        /* Novo modal para o álbum de imagens */
         .album-modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 99; /* Below fullscreen modal, above camera modal */
+            display: none;
+            position: fixed;
+            z-index: 99;
             left: 0;
             top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0,0,0,0.8); /* Black w/ opacity */
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
             justify-content: center;
             align-items: center;
         }
@@ -650,13 +639,13 @@
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             gap: 15px;
             overflow-y: auto;
-            padding-right: 5px; /* For scrollbar */
+            padding-right: 5px;
         }
 
         .album-item {
             position: relative;
             width: 100%;
-            padding-bottom: 100%; /* 1:1 Aspect Ratio */
+            padding-bottom: 100%;
             overflow: hidden;
             border: 1px solid var(--border-color);
             border-radius: 5px;
@@ -701,13 +690,12 @@
             background-color: rgba(255, 0, 0, 1);
         }
 
-        /* Novo estilo para títulos de análise do Axon Eye */
         .axon-eye-title {
-            color: var(--error-color); /* Vermelho */
+            color: var(--error-color);
             font-weight: bold;
             margin-top: 10px;
             margin-bottom: 5px;
-            border-bottom: 1px solid rgba(255, 123, 114, 0.3); /* Linha sutil */
+            border-bottom: 1px solid rgba(255, 123, 114, 0.3);
             padding-bottom: 3px;
         }
 
@@ -717,6 +705,10 @@
             margin-top: 15px;
             border: 1px solid var(--border-color);
             border-radius: 5px;
+        }
+
+        .uppercase-text {
+            text-transform: uppercase;
         }
     </style>
 </head>
@@ -750,7 +742,7 @@
                 </div>
             </div>
             <div class="terminal-content" id="interactive-output">
-                <img src="axon.png" alt="Axon Logo Terminal" class="terminal-logo-internal"> <!-- MODIFICADO AQUI: Caminho do logo interno -->
+                <img src="axon.png" alt="Axon Logo Terminal" class="terminal-logo-internal">
                 <div id="initial-messages" style="position: relative; z-index: 1;">
                     <pre class="info">
  █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
@@ -791,17 +783,16 @@
                 </div>
             </div>
             <div class="terminal-content" id="monitor-content-wrapper">
-                <div id="anamnesis-preview" class="monitor-view">
-                    <div class="info">Aguardando início da anamnese...</div>
+                <div id="anamnesis-preview" class="monitor-view uppercase-text">
+                    <div class="info">AGUARDANDO INÍCIO DA ANAMNESE...</div>
                 </div>
-                <div id="exams-results-preview" class="monitor-view" style="display: none;">
-                    <div class="info">Nenhum exame analisado ainda.</div>
+                <div id="exams-results-preview" class="monitor-view uppercase-text" style="display: none;">
+                    <div class="info">NENHUM EXAME ANALISADO AINDA.</div>
                 </div>
-                <div id="axon-eye-results-preview" class="monitor-view" style="display: none;">
-                    <div class="info">Nenhuma análise visual feita ainda.</div>
+                <div id="axon-eye-results-preview" class="monitor-view uppercase-text" style="display: none;">
+                    <div class="info">NENHUMA ANÁLISE VISUAL FEITA AINDA.</div>
                 </div>
 
-                <!-- New Camera Modal - Moved inside non-interactive-terminal -->
                 <div id="camera-modal" class="camera-modal">
                     <div class="camera-container">
                         <div class="terminal-header">
@@ -817,14 +808,12 @@
                                     <button id="flashlight-button" class="flashlight-button" style="display:none;"><i class="fas fa-lightbulb"></i> Lanterna</button>
                                     <button id="camera-switch-button" class="camera-switch-button" style="display:none;"><i class="fas fa-sync-alt"></i> Trocar Câmera</button>
                                 </div>
-                                <!-- Novo botão Álbum -->
                                 <button id="album-button" class="album-button" style="display:none;">
                                     <i class="fas fa-images"></i> Álbum <span id="album-count" class="album-count">0</span>
                                 </button>
-                                <!-- Botões de controle da câmera sobre o vídeo -->
                                 <div class="camera-controls">
                                     <button id="capture-button" class="camera-button" title="Capturar Foto"><i class="fas fa-camera"></i></button>
-                                    <input type="file" id="file-input" accept="image/*" style="display: none;">
+                                    <input type="file" id="file-input" accept="image/*" multiple style="display: none;">
                                     <button id="upload-button" class="camera-button" title="Carregar Arquivo"><i class="fas fa-upload"></i></button>
                                     <button id="send-exams-button" class="camera-button disabled" title="Enviar Exames"><i class="fas fa-paper-plane"></i></button>
                                     <button id="send-axon-eye-button" class="camera-button disabled" title="Analisar com Axon Eye" style="display:none;"><i class="fas fa-eye"></i></button>
@@ -832,8 +821,6 @@
                                 </div>
                             </div>
                             <canvas id="camera-canvas" style="display:none;"></canvas>
-                            
-                            <!-- O preview-container foi removido daqui -->
                         </div>
                     </div>
                 </div>
@@ -845,13 +832,11 @@
         <span>AXON | Sistema médico inteligente desenvolvido por Ian Bastos</span>
     </div>
 
-    <!-- The Modal for fullscreen image -->
     <div id="fullscreen-modal" class="fullscreen-modal">
         <span class="modal-close">&times;</span>
         <img class="modal-content" id="modal-image">
     </div>
 
-    <!-- Novo Modal para o Álbum de Imagens -->
     <div id="album-modal" class="album-modal">
         <div class="album-modal-content">
             <div class="album-modal-header">
@@ -859,17 +844,14 @@
                 <span class="album-modal-close">&times;</span>
             </div>
             <div id="album-grid" class="album-grid">
-                <!-- Imagens serão carregadas aqui -->
             </div>
         </div>
     </div>
 
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA4bis9CVQkl1eJDfezsvUKTx1X_kFVT4M",
             authDomain: "axon-91d0b.firebaseapp.com",
@@ -879,7 +861,6 @@
             appId: "1:701115983749:web:9a57928b678918ffbb86ec"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
@@ -887,39 +868,39 @@
         const commandInput = document.getElementById('command-input');
         const interactiveOutput = document.getElementById('interactive-output');
         const anamnesisPreview = document.getElementById('anamnesis-preview');
-        const examsResultsPreview = document.getElementById('exams-results-preview'); // Novo elemento para resultados de exames
-        const axonEyeResultsPreview = document.getElementById('axon-eye-results-preview'); // Novo elemento para resultados do Axon Eye
+        const examsResultsPreview = document.getElementById('exams-results-preview');
+        const axonEyeResultsPreview = document.getElementById('axon-eye-results-preview');
         const apiStatus = document.getElementById('api-status');
         const micStatus = document.getElementById('mic-status');
-        const cameraStatus = document.getElementById('camera-status'); // New camera status indicator
+        const cameraStatus = document.getElementById('camera-status');
         const initialMessagesContainer = document.getElementById('initial-messages');
 
         // Camera elements
-        const cameraModal = document.getElementById('camera-modal'); // New camera modal
-        const cameraModalTitle = document.getElementById('camera-modal-title'); // Title for camera modal
+        const cameraModal = document.getElementById('camera-modal');
+        const cameraModalTitle = document.getElementById('camera-modal-title');
         const cameraVideo = document.getElementById('camera-video');
         const cameraCanvas = document.getElementById('camera-canvas');
         const captureButton = document.getElementById('capture-button');
         const fileInput = document.getElementById('file-input');
         const uploadButton = document.getElementById('upload-button');
         const sendExamsButton = document.getElementById('send-exams-button');
-        const sendAxonEyeButton = document.getElementById('send-axon-eye-button'); // New Axon Eye button
+        const sendAxonEyeButton = document.getElementById('send-axon-eye-button');
         const cancelCameraButton = document.getElementById('cancel-camera-button');
         const cameraSwitchButton = document.getElementById('camera-switch-button');
-        const flashlightButton = document.getElementById('flashlight-button'); // Novo botão de lanterna
+        const flashlightButton = document.getElementById('flashlight-button');
         const cameraCloseBtn = document.getElementById('camera-close-btn');
 
         // Monitor toggle buttons
         const toggleAnamnesisButton = document.getElementById('toggle-anamnesis');
         const toggleExamsButton = document.getElementById('toggle-exams');
-        const toggleAxonEyeButton = document.getElementById('toggle-axon-eye'); // New Axon Eye toggle button
+        const toggleAxonEyeButton = document.getElementById('toggle-axon-eye');
 
         // Fullscreen Modal elements
         const fullscreenModal = document.getElementById('fullscreen-modal');
         const modalImage = document.getElementById('modal-image');
         const modalClose = document.getElementsByClassName('modal-close')[0];
 
-        // Album Modal elements (NOVOS)
+        // Album Modal elements
         const albumButton = document.getElementById('album-button');
         const albumCount = document.getElementById('album-count');
         const albumModal = document.getElementById('album-modal');
@@ -934,7 +915,7 @@
         // Estado da aplicação
         let isListening = false;
         let isLoggedIn = false;
-        let currentUser = null; // Armazena o usuário logado
+        let currentUser = null;
         let recognition = null;
         let anamnesis = {
             qp: "",
@@ -943,17 +924,17 @@
             hf: "",
             hps: ""
         };
-        let examsResults = ""; // Armazena os resultados dos exames
-        let axonEyeResults = ""; // Armazena os resultados do Axon Eye
+        let examsResults = "";
+        let axonEyeResults = "";
         let lastAnamnesisInfo = "";
         let apiConnectionStatus = "Desconhecido";
-        let unsubscribeSnapshot = null; // Para gerenciar a inscrição do Firestore
-        let cameraStream = null; // Para gerenciar o stream da câmera
-        let capturedImages = []; // Armazena os Data URLs das imagens capturadas/carregadas
-        let currentCameraFacingMode = 'environment'; // 'user' para frontal, 'environment' para traseira
-        let currentMonitorView = 'anamnesis'; // 'anamnesis', 'exams' ou 'axon-eye'
-        let isFlashlightOn = false; // Estado da lanterna
-        let cameraMode = 'exams'; // 'exams' or 'axon-eye'
+        let unsubscribeSnapshot = null;
+        let cameraStream = null;
+        let capturedImages = [];
+        let currentCameraFacingMode = 'environment';
+        let currentMonitorView = 'anamnesis';
+        let isFlashlightOn = false;
+        let cameraMode = 'exams';
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isMobile = isMobileDevice();
 
@@ -968,10 +949,10 @@
             { id: 3, name: 'gemma-3-12b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-12b-it:generateContent?key=${key}`, vision: false },
             { id: 4, name: 'gemma-3-27b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${key}`, vision: false },
             { id: 5, name: 'learnlm-2.0-flash-experimental', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/learnlm-2.0-flash-experimental:generateContent?key=${key}`, vision: false },
-            { id: 6, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: true } // Modelo com capacidade de visão
+            { id: 6, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: true }
         ];
-        let currentAIModel = apiModels[0].name; // Modelo padrão para texto
-        let currentVisionAIModel = apiModels.find(m => m.vision)?.name || 'gemini-2.5-flash'; // Modelo padrão para visão
+        let currentAIModel = apiModels[0].name;
+        let currentVisionAIModel = apiModels.find(m => m.vision)?.name || 'gemini-2.5-flash';
 
         const getGeminiAPIUrl = (isVision = false) => {
             const modelName = isVision ? currentVisionAIModel : currentAIModel;
@@ -979,18 +960,17 @@
             if (model) {
                 return model.urlBuilder(currentGeminiAPIKey);
             }
-            // Fallback para o primeiro modelo de texto ou visão se o selecionado não for encontrado
             return isVision ? apiModels.find(m => m.vision)?.urlBuilder(currentGeminiAPIKey) || apiModels[0].urlBuilder(currentGeminiAPIKey) : apiModels[0].urlBuilder(currentGeminiAPIKey);
         };
 
         // Imgur API
         const IMGUR_CLIENT_ID = '4ae8b96c539d446';
-        const IMGUR_ACCESS_TOKEN = '898e039bb7db651c7b94f4d104a60aae3f5c6ff0'; // Note: This is an access token, not a client secret. For client-side, usually only client ID is needed for anonymous uploads. If this is a user-specific token, it should be handled securely.
+        const IMGUR_ACCESS_TOKEN = '898e039bb7db651c7b94f4d104a60aae3f5c6ff0';
 
-        // Comandos válidos - ADICIONADO /ask
+        // Comandos válidos - ADICIONADO /ask e /delete e /pdf
         const validCommands = [
             '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
-            '/ia', '/help', '/login', '/clear', '/api', '/api-set', '/api-restore', '/api-engine', '/register', '/exames', '/see', '/ask'
+            '/ia', '/help', '/login', '/clear', '/api', '/api-set', '/api-restore', '/api-engine', '/register', '/exames', '/see', '/ask', '/delete', '/pdf'
         ];
 
         // Verificar suporte a reconhecimento de voz
@@ -1015,7 +995,6 @@
                 isListening = true;
                 micStatus.classList.remove('status-off');
                 appendOutput("Microfone ativado. Gravando consulta...", "success");
-                // Sincronizar aba Anamnese quando o microfone é ativado
                 if (isLoggedIn && currentUser) {
                     updateMonitorStateInFirestore(currentUser, { activeView: 'anamnesis' });
                 }
@@ -1095,7 +1074,7 @@
             }
         };
 
-        // Função para adicionar saída ao terminal de monitoramento (anamnese-preview ou exams-results-preview)
+        // Função para adicionar saída ao terminal de monitoramento
         const appendMonitorOutput = (text, type = "output", targetElement, logToFirebase = true) => {
             const outputElement = document.createElement('div');
             
@@ -1135,9 +1114,9 @@
             if (requireLogin) {
                 isLoggedIn = false;
                 currentUser = null;
-                localStorage.removeItem('axon_logged_in_user'); // Limpa o login local
+                localStorage.removeItem('axon_logged_in_user');
                 if (unsubscribeSnapshot) {
-                    unsubscribeSnapshot(); // Desinscreve do listener do Firestore
+                    unsubscribeSnapshot();
                     unsubscribeSnapshot = null;
                 }
                 initialMessagesContainer.innerHTML = `
@@ -1169,30 +1148,30 @@
             interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
         };
 
-        // Função para atualizar a prévia da anamnese
+        // Função para atualizar a prévia da anamnese EM CAIXA ALTA
         const updateAnamnesisPreview = (logToFirebase = true) => {
             let previewHTML = '';
             
             previewHTML = `
                 <div class="anamnesis-content">
-                    <div class="section-title">Queixa Principal (QP):</div>
-                    <div>${anamnesis.qp || "Ainda não informado."}</div>
+                    <div class="section-title">QUEIXA PRINCIPAL (QP):</div>
+                    <div>${(anamnesis.qp || "AINDA NÃO INFORMADO.").toUpperCase()}</div>
                     <br>
                     
-                    <div class="section-title">História da Moléstia Atual (HMA):</div>
-                    <div>${anamnesis.hma || "Ainda não informado."}</div>
+                    <div class="section-title">HISTÓRIA DA MOLÉSTIA ATUAL (HMA):</div>
+                    <div>${(anamnesis.hma || "AINDA NÃO INFORMADO.").toUpperCase()}</div>
                     <br>
                     
-                    <div class="section-title">História Patológica (HP):</div>
-                    <div>${anamnesis.hp || "Ainda não informado."}</div>
+                    <div class="section-title">HISTÓRIA PATOLÓGICA (HP):</div>
+                    <div>${(anamnesis.hp || "AINDA NÃO INFORMADO.").toUpperCase()}</div>
                     <br>
                     
-                    <div class="section-title">História Familiar (HF):</div>
-                    <div>${anamnesis.hf || "Ainda não informado."}</div>
+                    <div class="section-title">HISTÓRIA FAMILIAR (HF):</div>
+                    <div>${(anamnesis.hf || "AINDA NÃO INFORMADO.").toUpperCase()}</div>
                     <br>
                     
-                    <div class="section-title">História Psicossocial (HPS):</div>
-                    <div>${anamnesis.hps || "Ainda não informado."}</div>
+                    <div class="section-title">HISTÓRIA PSICOSSOCIAL (HPS):</div>
+                    <div>${(anamnesis.hps || "AINDA NÃO INFORMADO.").toUpperCase()}</div>
                 </div>
             `;
             
@@ -1200,12 +1179,11 @@
             anamnesisPreview.scrollTop = anamnesisPreview.scrollHeight;
 
             if (logToFirebase && isLoggedIn && currentUser) {
-                // Salva o objeto anamnese completo no Firestore
                 saveAnamnesisToFirestore(currentUser, anamnesis);
             }
         };
 
-        // Função para atualizar a prévia dos resultados dos exames
+        // Função para atualizar a prévia dos resultados dos exames EM CAIXA ALTA
         const updateExamsResultsPreview = (logToFirebase = true) => {
             let formattedResults = '';
             if (examsResults) {
@@ -1214,14 +1192,14 @@
                     .map(line => {
                         if (line.includes('(Alterado)') || line.includes('(Anormal)')) {
                             const cleanLine = line.replace(/\(Alterado\)/g, '').replace(/\(Anormal\)/g, '').trim();
-                            return `<div class="output">${cleanLine} <span class="altered-text">(Alterado)</span></div>`;
+                            return `<div class="output">${cleanLine.toUpperCase()} <span class="altered-text">(ALTERADO)</span></div>`;
                         }
-                        return `<div class="output">${line.trim()}</div>`;
+                        return `<div class="output">${line.trim().toUpperCase()}</div>`;
                     })
                     .join('');
             }
 
-            examsResultsPreview.innerHTML = `<div class="section-title">RESULTADOS DOS EXAMES:</div>${formattedResults || '<div class="info">Nenhum exame analisado ainda.</div>'}`;
+            examsResultsPreview.innerHTML = `<div class="section-title">RESULTADOS DOS EXAMES:</div>${formattedResults || '<div class="info">NENHUM EXAME ANALISADO AINDA.</div>'}`;
             examsResultsPreview.scrollTop = examsResultsPreview.scrollHeight;
 
             if (logToFirebase && isLoggedIn && currentUser) {
@@ -1229,27 +1207,26 @@
             }
         };
 
-        // Função para atualizar a prévia dos resultados do Axon Eye
+        // Função para atualizar a prévia dos resultados do Axon Eye EM CAIXA ALTA
         const updateAxonEyeResultsPreview = (logToFirebase = true) => {
             let formattedResults = '';
             let imageHtml = '';
 
-            // Adiciona a imagem enviada, se houver
-            if (capturedImages.length > 0 && currentMonitorView === 'axon-eye') { // Só mostra a imagem se a aba Axon Eye estiver ativa
-                // Exibe apenas a primeira imagem para simplificar, ou pode iterar sobre todas
-                imageHtml = `<img src="${capturedImages[0]}" class="axon-eye-image-preview" alt="Imagem Analisada">`;
+            if (capturedImages.length > 0 && currentMonitorView === 'axon-eye') {
+                imageHtml = `<img src="${capturedImages[0]}" class="axon-eye-image-preview" alt="IMAGEM ANALISADA">`;
             }
 
             if (axonEyeResults) {
-                // Regex para encontrar os títulos específicos
-                const impressionRegex = /(Impressão Diagnóstica|Interpretação Clínica|Diagnósticos Diferenciais):\s*(.*)/i;
-                let match = axonEyeResults.match(impressionRegex);
+                let upperResults = axonEyeResults.toUpperCase();
+
+                const impressionRegex = /(IMPRESSÃO DIAGNÓSTICA|INTERPRETAÇÃO CLÍNICA|DIAGNÓSTICOS DIFERENCIAIS):\s*(.*)/i;
+                let match = upperResults.match(impressionRegex);
 
                 if (match) {
                     const title = match[1];
                     const content = match[2].trim();
-                    const preText = axonEyeResults.substring(0, match.index).trim();
-                    const postText = axonEyeResults.substring(match.index + match[0].length).trim();
+                    const preText = upperResults.substring(0, match.index).trim();
+                    const postText = upperResults.substring(match.index + match[0].length).trim();
 
                     formattedResults += `<div class="output">${preText.split('\n').map(line => line.trim()).filter(line => line).join('<br>')}</div>`;
                     formattedResults += `<div class="axon-eye-title">${title}</div>`;
@@ -1257,14 +1234,14 @@
                     formattedResults += `<div class="output">${postText.split('\n').map(line => line.trim()).filter(line => line).join('<br>')}</div>`;
 
                 } else {
-                    formattedResults = axonEyeResults.split('\n')
+                    formattedResults = upperResults.split('\n')
                         .filter(line => line.trim() !== '')
                         .map(line => `<div class="output">${line.trim()}</div>`)
                         .join('');
                 }
             }
 
-            axonEyeResultsPreview.innerHTML = `<div class="section-title">ANÁLISE AXON EYE:</div>${formattedResults || '<div class="info">Nenhuma análise visual feita ainda.</div>'}${imageHtml}`;
+            axonEyeResultsPreview.innerHTML = `<div class="section-title">ANÁLISE AXON EYE:</div>${formattedResults || '<div class="info">NENHUMA ANÁLISE VISUAL FEITA AINDA.</div>'}${imageHtml}`;
             axonEyeResultsPreview.scrollTop = axonEyeResultsPreview.scrollHeight;
 
             if (logToFirebase && isLoggedIn && currentUser) {
@@ -1279,12 +1256,11 @@
             examsResultsPreview.style.display = 'none';
             axonEyeResultsPreview.style.display = 'none';
             
-            // Controla a exibição do modal da câmera
-            if (view === 'camera' && !fromRemote) { // Abre a câmera localmente se não for um comando remoto
+            if (view === 'camera' && !fromRemote) {
                 cameraModal.style.display = 'flex';
             } else {
                 cameraModal.style.display = 'none';
-                stopCameraStreamOnly(); // Garante que o stream da câmera é parado se o modal for fechado
+                stopCameraStreamOnly();
             }
 
             toggleAnamnesisButton.classList.remove('active');
@@ -1302,7 +1278,6 @@
                 toggleAxonEyeButton.classList.add('active');
             }
             
-            // Atualiza o estado do monitor no Firestore, a menos que seja uma atualização remota
             if (!fromRemote && isLoggedIn && currentUser) {
                 updateMonitorStateInFirestore(currentUser, { activeView: view });
             }
@@ -1312,7 +1287,7 @@
         const callGeminiAPI = async (prompt, retryCount = 0) => {
             const maxRetries = 3;
             try {
-                const response = await fetch(getGeminiAPIUrl(false), { // false para indicar que é um modelo de texto
+                const response = await fetch(getGeminiAPIUrl(false), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1338,12 +1313,12 @@
             } catch (error) {
                 console.error("Erro na chamada da API:", error);
                 if (retryCount < maxRetries) {
-                    const delay = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000; // 1-3 seconds
+                    const delay = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;
                     appendOutput(`Erro na API de texto. Tentando novamente em ${delay / 1000} segundos (${retryCount + 1}/${maxRetries})...`, "error");
                     await new Promise(resolve => setTimeout(resolve, delay));
                     return callGeminiAPI(prompt, retryCount + 1);
                 } else {
-                    throw error; // Re-throw after max retries
+                    throw error;
                 }
             }
         };
@@ -1354,13 +1329,13 @@
             try {
                 const contents = imageUrls.map(url => ({
                     inlineData: {
-                        mimeType: 'image/jpeg', // Assumindo JPEG, pode ser ajustado se necessário
-                        data: url.split(',')[1] // Remove "data:image/jpeg;base64,"
+                        mimeType: 'image/jpeg',
+                        data: url.split(',')[1]
                     }
                 }));
                 contents.push({ text: prompt });
 
-                const response = await fetch(getGeminiAPIUrl(true), { // true para indicar que é um modelo de visão
+                const response = await fetch(getGeminiAPIUrl(true), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1384,23 +1359,21 @@
             } catch (error) {
                 console.error("Erro na chamada da API de Visão:", error);
                 if (retryCount < maxRetries) {
-                    const delay = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000; // 1-3 seconds
+                    const delay = Math.floor(Math.random() * (3000 - 1000 + 1)) + 1000;
                     appendOutput(`Erro na API de visão. Tentando novamente em ${delay / 1000} segundos (${retryCount + 1}/${maxRetries})...`, "error");
                     await new Promise(resolve => setTimeout(resolve, delay));
                     return callGeminiVisionAPI(imageUrls, prompt, retryCount + 1);
                 } else {
-                    throw error; // Re-throw after max retries
+                    throw error;
                 }
             }
         };
-
 
         // CORREÇÃO PRINCIPAL: Função para acumular informações na anamnese
         const processAnamnesisInfo = async (info, retryCount = 0) => {
             lastAnamnesisInfo = info;
             const maxRetries = 3;
 
-            // Construir prompt para acumular informações
             const prompt = `Você é um assistente médico. Sua tarefa é organizar as informações fornecidas nas seções adequadas da anamnese.
             A nova informação recebida é: "${info}".
 
@@ -1434,16 +1407,11 @@
             try {
                 const response = await callGeminiAPI(prompt);
                 
-                // Extrair o JSON da resposta
                 const jsonStart = response.indexOf('{');
                 const jsonEnd = response.lastIndexOf('}') + 1;
                 const jsonString = response.substring(jsonStart, jsonEnd);
                 const updatedAnamnesis = JSON.parse(jsonString);
                 
-                // Atualizar todas as seções com base na resposta da IA
-                // A IA é responsável por decidir o que vai em cada campo.
-                // Se a IA retornar um campo vazio, ele será atualizado para vazio.
-                // Isso garante que a IA tem controle total sobre o conteúdo de cada seção.
                 anamnesis = {
                     qp: updatedAnamnesis.qp || "",
                     hma: updatedAnamnesis.hma || "",
@@ -1452,7 +1420,7 @@
                     hps: updatedAnamnesis.hps || ""
                 };
                 
-                updateAnamnesisPreview(); // Isso irá salvar no Firestore
+                updateAnamnesisPreview();
                 appendOutput("Anamnese atualizada com sucesso.", "success");
             } catch (error) {
                 console.error("Erro ao processar resposta:", error);
@@ -1466,7 +1434,7 @@
             }
         };
 
-        // Gerar hipóteses diagnósticas - MODIFICADO para incluir exames e axon eye
+        // Gerar hipóteses diagnósticas
         const generateDiagnosticHypotheses = async () => {
             const prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}.
             E nos seguintes resultados de exames (se houver): ${examsResults || "Nenhum resultado de exame disponível."}.
@@ -1491,7 +1459,7 @@
             }
         };
 
-        // Gerar conduta médica - MODIFICADO para incluir exames e axon eye
+        // Gerar conduta médica
         const generateMedicalConduct = async () => {
             const prompt = `Com base EXCLUSIVAMENTE na seguinte anamnese: ${JSON.stringify(anamnesis)}.
             E nos seguintes resultados de exames (se houver): ${examsResults || "Nenhum resultado de exame disponível."}.
@@ -1532,7 +1500,7 @@
 
         // NOVA FUNÇÃO: Fazer pergunta baseada no contexto completo
         const askQuestionBasedOnContext = async (question) => {
-            const prompt = `Você é um assistente médico. Responda à pergunta do médico de forma resumida e objetiva, considerando TODO o contexto disponível:
+            const prompt = `Vocé é um assistente médico. Responda à pergunta do médico de forma resumida e objetiva, considerando TODO o contexto disponível:
 
             ANAMNESE DO PACIENTE:
             ${JSON.stringify(anamnesis, null, 2)}
@@ -1566,14 +1534,12 @@
             if (currentMonitorView === 'anamnesis') {
                 contentToCopy = anamnesisPreview.innerText;
             } else if (currentMonitorView === 'exams') {
-                // Modificação aqui: remove o título "RESULTADOS DOS EXAMES:" antes de copiar
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = examsResultsPreview.innerHTML;
                 const titleElement = tempDiv.querySelector('.section-title');
                 if (titleElement) {
                     titleElement.remove();
                 }
-                // Remove o texto "(Alterado)" e o espaçamento extra antes de copiar
                 Array.from(tempDiv.querySelectorAll('.altered-text')).forEach(span => span.remove());
                 contentToCopy = tempDiv.innerText;
             } else if (currentMonitorView === 'axon-eye') {
@@ -1583,7 +1549,6 @@
                 if (titleElement) {
                     titleElement.remove();
                 }
-                // Remove a imagem antes de copiar
                 const imageElement = tempDiv.querySelector('.axon-eye-image-preview');
                 if (imageElement) {
                     imageElement.remove();
@@ -1664,7 +1629,6 @@
             let foundWorkingTextModel = false;
             let foundWorkingVisionModel = false;
 
-            // Prioritize gemini-2.0-flash for text
             const geminiFlashText = apiModels.find(m => m.name === 'gemini-2.0-flash' && !m.vision);
             if (geminiFlashText) {
                 appendOutput(`Testando ${geminiFlashText.name} (texto)...`, "info", false);
@@ -1678,7 +1642,6 @@
                 }
             }
 
-            // Prioritize gemini-2.5-flash for vision
             const geminiFlashVision = apiModels.find(m => m.name === 'gemini-2.5-flash' && m.vision);
             if (geminiFlashVision) {
                 appendOutput(`Testando ${geminiFlashVision.name} (visão)...`, "info", false);
@@ -1692,7 +1655,6 @@
                 }
             }
 
-            // Fallback for text models
             if (!foundWorkingTextModel) {
                 for (const model of apiModels) {
                     if (!model.vision && model.name !== 'gemini-2.0-flash') {
@@ -1710,10 +1672,9 @@
                 }
             }
 
-            // Fallback for vision models (if gemini-2.5-flash failed or not found)
             if (!foundWorkingVisionModel) {
                 for (const model of apiModels) {
-                    if (model.vision && model.name !== 'gemini-2.5-flash') { // Check for other vision models if any
+                    if (model.vision && model.name !== 'gemini-2.5-flash') {
                         appendOutput(`Testando ${model.name} (visão)...`, "info", false);
                         const isWorking = await checkApiStatus(model.name);
                         if (isWorking) {
@@ -1756,7 +1717,6 @@
             try {
                 const docRef = doc(db, "sessions", username);
                 await setDoc(docRef, { anamnesis: anamnesisData, lastUpdated: new Date() }, { merge: true });
-                // console.log("Anamnese salva no Firestore.");
             } catch (e) {
                 console.error("Erro ao salvar anamnese no Firestore: ", e);
             }
@@ -1766,7 +1726,6 @@
             try {
                 const docRef = doc(db, "sessions", username);
                 await setDoc(docRef, { examsResults: resultsData, lastUpdated: new Date() }, { merge: true });
-                // console.log("Resultados de exames salvos no Firestore.");
             } catch (e) {
                 console.error("Erro ao salvar resultados de exames no Firestore: ", e);
             }
@@ -1776,7 +1735,6 @@
             try {
                 const docRef = doc(db, "sessions", username);
                 await setDoc(docRef, { axonEyeResults: resultsData, lastUpdated: new Date() }, { merge: true });
-                // console.log("Resultados do Axon Eye salvos no Firestore.");
             } catch (e) {
                 console.error("Erro ao salvar resultados do Axon Eye no Firestore: ", e);
             }
@@ -1787,7 +1745,6 @@
             try {
                 const docRef = doc(db, "sessions", username);
                 await setDoc(docRef, { monitorState: { ...state, lastUpdated: new Date() } }, { merge: true });
-                // console.log("Estado do monitor salvo no Firestore.");
             } catch (e) {
                 console.error("Erro ao salvar estado do monitor no Firestore: ", e);
             }
@@ -1795,45 +1752,36 @@
 
         const setupFirebaseListener = (username) => {
             if (unsubscribeSnapshot) {
-                unsubscribeSnapshot(); // Desinscreve de qualquer listener anterior
+                unsubscribeSnapshot();
             }
 
             const docRef = doc(db, "sessions", username);
             unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    // Atualiza anamnese se houver dados e não for a mesma que já temos
                     if (data.anamnesis && JSON.stringify(data.anamnesis) !== JSON.stringify(anamnesis)) {
                         anamnesis = data.anamnesis;
-                        updateAnamnesisPreview(false); // Não logar novamente no Firebase
+                        updateAnamnesisPreview(false);
                     }
-                    // Atualiza resultados de exames se houver dados e não for o mesmo que já temos
                     if (data.examsResults && data.examsResults !== examsResults) {
                         examsResults = data.examsResults;
-                        updateExamsResultsPreview(false); // Não logar novamente no Firebase
+                        updateExamsResultsPreview(false);
                     }
-                    // Atualiza resultados do Axon Eye se houver dados e não for o mesmo que já temos
                     if (data.axonEyeResults && data.axonEyeResults !== axonEyeResults) {
                         axonEyeResults = data.axonEyeResults;
-                        updateAxonEyeResultsPreview(false); // Não logar novamente no Firebase
+                        updateAxonEyeResultsPreview(false);
                     }
-                    // Sincroniza o estado do monitor
                     if (data.monitorState && data.monitorState.activeView !== currentMonitorView) {
-                        // Se o comando de câmera veio de outro dispositivo (e este não é um dispositivo móvel)
                         if ((data.monitorState.activeView === 'camera-exams' || data.monitorState.activeView === 'camera-axon-eye') && !isMobile) {
-                            toggleMonitorView(data.monitorState.activeView === 'camera-exams' ? 'exams' : 'axon-eye', true); // Ativa a aba de texto correspondente
+                            toggleMonitorView(data.monitorState.activeView === 'camera-exams' ? 'exams' : 'axon-eye', true);
                         } 
-                        // Se o comando de câmera veio de outro dispositivo (e este é um dispositivo móvel)
                         else if ((data.monitorState.activeView === 'camera-exams' || data.monitorState.activeView === 'camera-axon-eye') && isMobile) {
-                            // Não faz nada, a câmera só abre no dispositivo que iniciou o comando
                         }
-                        // Para outros comandos (anamnese, exames, axon-eye)
                         else {
                             toggleMonitorView(data.monitorState.activeView, true);
                         }
                     }
                 } else {
-                    // Documento não existe, inicializa com valores padrão
                     anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                     examsResults = "";
                     axonEyeResults = "";
@@ -1873,9 +1821,36 @@
             }
         };
 
+        // NOVA FUNÇÃO: Deletar usuário
+        const deleteUser = async (adminPassword, username) => {
+            if (adminPassword !== 'admin123') {
+                appendOutput("Senha de administrador incorreta.", "error");
+                return;
+            }
+            if (!username) {
+                appendOutput("Uso: /delete [senha_admin] [usuário]", "error");
+                return;
+            }
+
+            try {
+                const userRef = doc(db, "users", username);
+                const docSnap = await getDoc(userRef);
+
+                if (docSnap.exists()) {
+                    await deleteDoc(userRef);
+                    appendOutput(`Usuário '${username}' deletado com sucesso.`, "success");
+                } else {
+                    appendOutput(`Usuário '${username}' não existe.`, "error");
+                }
+            } catch (e) {
+                appendOutput(`Erro ao deletar usuário: ${e.message}`, "error");
+                console.error("Erro ao deletar usuário:", e);
+            }
+        };
+
         const authenticateUser = async (username, password) => {
             if (username === 'ian' && password === 'ian123') {
-                return true; // Exceção para o usuário "ian"
+                return true;
             }
 
             try {
@@ -1901,12 +1876,10 @@
             sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'block' : 'none';
 
             try {
-                // Stop any existing stream
                 if (cameraStream) {
                     cameraStream.getTracks().forEach(track => track.stop());
                 }
 
-                // Prefer environment camera on mobile
                 const constraints = {
                     video: {
                         facingMode: isMobile ? 'environment' : currentCameraFacingMode
@@ -1916,15 +1889,13 @@
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 cameraVideo.srcObject = stream;
                 cameraStream = stream;
-                toggleMonitorView('camera'); // Show the camera modal inside the monitor
-                cameraStatus.classList.remove('status-off'); // Set camera status to ON
+                toggleMonitorView('camera');
+                cameraStatus.classList.remove('status-off');
                 appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}. Capture ou carregue as fotos.`, "info");
 
-                // Show album button
                 albumButton.style.display = 'flex';
                 updateAlbumCount();
 
-                // Check if multiple cameras are available to show/hide switch button
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoInputDevices = devices.filter(device => device.kind === 'videoinput');
                 if (videoInputDevices.length > 1) {
@@ -1933,7 +1904,6 @@
                     cameraSwitchButton.style.display = 'none';
                 }
 
-                // Check for flashlight capability
                 const track = stream.getVideoTracks()[0];
                 if (track && 'torch' in track.getCapabilities()) {
                     flashlightButton.style.display = 'block';
@@ -1944,7 +1914,7 @@
             } catch (err) {
                 appendOutput(`Erro ao acessar a câmera: ${err.message}. Verifique as permissões.`, "error");
                 console.error("Erro ao acessar a câmera:", err);
-                cameraStatus.classList.add('status-off'); // Set camera status to OFF on error
+                cameraStatus.classList.add('status-off');
             }
         };
 
@@ -1965,16 +1935,16 @@
 
         const stopCamera = () => {
             stopCameraStreamOnly();
-            cameraModal.style.display = 'none'; // Hide the camera modal
+            cameraModal.style.display = 'none';
             sendExamsButton.classList.add('disabled');
-            sendAxonEyeButton.classList.add('disabled'); // Disable Axon Eye button too
+            sendAxonEyeButton.classList.add('disabled');
             appendOutput("Câmera desativada.", "info");
-            toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); // Return to previous view or anamnesis
+            toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView);
         };
 
         const switchCamera = async () => {
             currentCameraFacingMode = (currentCameraFacingMode === 'user') ? 'environment' : 'user';
-            await startCamera(cameraMode); // Restart camera with new facing mode
+            await startCamera(cameraMode);
         };
 
         const toggleFlashlight = async () => {
@@ -2016,16 +1986,29 @@
             addCapturedImage(imageDataURL);
         };
 
+        // MODIFICADO: Agora aceita múltiplos arquivos
         const handleFileUpload = (event) => {
-            const file = event.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    addCapturedImage(e.target.result);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                appendOutput("Por favor, selecione um arquivo de imagem válido.", "error");
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            let processedCount = 0;
+            const totalFiles = files.length;
+
+            for (let i = 0; i < totalFiles; i++) {
+                const file = files[i];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        addCapturedImage(e.target.result);
+                        processedCount++;
+                        if (processedCount === totalFiles) {
+                            appendOutput(`${totalFiles} imagem(ns) adicionada(s) ao álbum.`, "success");
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    appendOutput("Um ou mais arquivos não são imagens válidas.", "error");
+                }
             }
         };
 
@@ -2033,8 +2016,7 @@
             capturedImages.push(imageDataURL);
             updateAlbumCount();
             sendExamsButton.classList.remove('disabled');
-            sendAxonEyeButton.classList.remove('disabled'); // Enable Axon Eye button too
-            appendOutput("Imagem adicionada ao álbum.", "success");
+            sendAxonEyeButton.classList.remove('disabled');
         };
 
         const removeCapturedImage = (imageDataURL) => {
@@ -2044,7 +2026,7 @@
                 sendExamsButton.classList.add('disabled');
                 sendAxonEyeButton.classList.add('disabled');
             }
-            renderAlbum(); // Re-render album after deletion
+            renderAlbum();
         };
 
         const updateAlbumCount = () => {
@@ -2052,7 +2034,7 @@
             albumButton.style.display = capturedImages.length > 0 ? 'flex' : 'none';
         };
 
-        // Album Modal Functions (NOVAS)
+        // Album Modal Functions
         const openAlbumModal = () => {
             renderAlbum();
             albumModal.style.display = 'flex';
@@ -2063,9 +2045,9 @@
         };
 
         const renderAlbum = () => {
-            albumGrid.innerHTML = ''; // Clear current grid
+            albumGrid.innerHTML = '';
             if (capturedImages.length === 0) {
-                albumGrid.innerHTML = '<div class="info" style="grid-column: 1 / -1; text-align: center;">Nenhuma imagem no álbum ainda.</div>';
+                albumGrid.innerHTML = '<div class="info" style="grid-column: 1 / -1; text-align: center;">NENHUMA IMAGEM NO ÁLBUM AINDA.</div>';
                 return;
             }
 
@@ -2097,7 +2079,6 @@
             modalImage.src = imageDataURL;
             fullscreenModal.style.display = 'block';
 
-            // For mobile devices, make the image fill the screen more aggressively
             if (isMobile) {
                 modalImage.style.width = '100%';
                 modalImage.style.height = 'auto';
@@ -2130,9 +2111,9 @@
         };
 
         const uploadImageToImgur = async (imageDataURL, index, total) => {
-            appendOutput(`Enviando imagens aos servidores Axon... (${index + 1}/${total} - ${Math.round(((index + 1) / total) * 100)}%)`, "info");
+            appendOutput(`ENVIANDO IMAGENS AOS SERVIDORES AXON... (${index + 1}/${total} - ${Math.round(((index + 1) / total) * 100)}%)`, "info");
             try {
-                const base64Image = imageDataURL.split(',')[1]; // Remove "data:image/jpeg;base64,"
+                const base64Image = imageDataURL.split(',')[1];
                 const formData = new FormData();
                 formData.append('image', base64Image);
                 formData.append('type', 'base64');
@@ -2141,7 +2122,6 @@
                     method: 'POST',
                     headers: {
                         'Authorization': `Client-ID ${IMGUR_CLIENT_ID}`
-                        // 'Authorization': `Bearer ${IMGUR_ACCESS_TOKEN}` // Use if authenticated upload is needed
                     },
                     body: formData
                 });
@@ -2152,10 +2132,9 @@
                 }
 
                 const data = await response.json();
-                // Removed: appendOutput(`Imagem enviada para o Imgur: ${data.data.link}`, "success");
                 return data.data.link;
             } catch (error) {
-                appendOutput(`Falha ao enviar imagem para o Imgur: ${error.message}`, "error");
+                appendOutput(`FALHA AO ENVIAR IMAGEM PARA O IMGUR: ${error.message}`, "error");
                 console.error("Imgur upload error:", error);
                 throw error;
             }
@@ -2163,31 +2142,27 @@
 
         const analyzeExams = async () => {
             if (capturedImages.length === 0) {
-                appendOutput("Nenhuma imagem de exame para analisar.", "info");
+                appendOutput("NENHUMA IMAGEM DE EXAME PARA ANALISAR.", "info");
                 return;
             }
 
-            // Limpa análises anteriores no terminal interativo
             examsResults = ""; 
-            updateExamsResultsPreview(); // Atualiza o monitor para mostrar "Nenhum exame analisado ainda."
-            appendOutput("Limpando análises de exames anteriores...", "info");
+            updateExamsResultsPreview();
+            appendOutput("LIMPANDO ANÁLISES DE EXAMES ANTERIORES...", "info");
 
-            examsResultsPreview.innerHTML = '<div class="info">Axon medical está analisando suas imagens...</div>'; // Clear monitor and show loading
-            toggleMonitorView('exams'); // Switch to exams view
+            examsResultsPreview.innerHTML = '<div class="info">AXON MEDICAL ESTÁ ANALISANDO SUAS IMAGENS...</div>';
+            toggleMonitorView('exams');
 
             try {
-                // Upload all captured images to Imgur first
                 const imgurLinks = [];
                 for (let i = 0; i < capturedImages.length; i++) {
                     const imageDataURL = capturedImages[i];
                     const link = await uploadImageToImgur(imageDataURL, i, capturedImages.length);
                     imgurLinks.push(link);
                 }
-                appendOutput("Todas as imagens enviadas com sucesso.", "success");
-                appendOutput("Axon medical está analisando suas imagens...", "info");
+                appendOutput("TODAS AS IMAGENS ENVIADAS COM SUCESSO.", "success");
+                appendOutput("AXON MEDICAL ESTÁ ANALISANDO SUAS IMAGENS...", "info");
 
-
-                // Now send the Imgur links to Gemini Vision API
                 const prompt = `Você é um assistente médico. Analise as imagens de exames laboratoriais ou de imagem fornecidas.
                 Para cada exame, retorne os resultados de forma resumida e objetiva em formato de tópicos, sem símbolos como asterisco ou traços.
                 Se houver alguma alteração ou resultado fora do normal, adicione "(Alterado)" ou "(Anormal)" na frente do item.
@@ -2199,52 +2174,48 @@
                 
                 Retorne apenas a lista de resultados, sem introdução ou conclusão.`;
 
-                const response = await callGeminiVisionAPI(capturedImages, prompt); // Pass base64 directly to Gemini Vision
+                const response = await callGeminiVisionAPI(capturedImages, prompt);
 
-                // Append new results to existing ones
                 if (examsResults) {
                     examsResults += `<br><div class="section-title">NOVOS RESULTADOS:</div>`;
                 }
-                examsResults += response; // A formatação para (Alterado) será feita em updateExamsResultsPreview
+                examsResults += response;
                 
-                updateExamsResultsPreview(); // Isso irá salvar no Firestore
-                appendOutput("Análise de exames concluída.", "success");
-                stopCamera(); // Close camera interface after analysis
-                capturedImages = []; // Limpa o álbum após o envio
+                updateExamsResultsPreview();
+                appendOutput("ANÁLISE DE EXAMES CONCLUÍDA.", "success");
+                stopCamera();
+                capturedImages = [];
                 updateAlbumCount();
             } catch (error) {
-                appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
-                examsResults = '<div class="error">Erro ao analisar exames.</div>';
+                appendOutput(`ERRO AO ANALISAR EXAMES: ${error.message}`, "error");
+                examsResults = '<div class="error">ERRO AO ANALISAR EXAMES.</div>';
                 updateExamsResultsPreview();
             }
         };
 
         const analyzeAxonEye = async () => {
             if (capturedImages.length === 0) {
-                appendOutput("Nenhuma imagem para análise visual.", "info");
+                appendOutput("NENHUMA IMAGEM PARA ANÁLISE VISUAL.", "info");
                 return;
             }
 
-            // Limpa análises anteriores no terminal interativo
             axonEyeResults = "";
-            updateAxonEyeResultsPreview(); // Atualiza o monitor para mostrar "Nenhuma análise visual feita ainda."
-            appendOutput("Limpando análises Axon Eye anteriores...", "info");
+            updateAxonEyeResultsPreview();
+            appendOutput("LIMPANDO ANÁLISES AXON EYE ANTERIORES...", "info");
 
-            axonEyeResultsPreview.innerHTML = '<div class="info">Axon Eye está analisando suas imagens...</div>'; // Clear monitor and show loading
-            toggleMonitorView('axon-eye'); // Switch to Axon Eye view
+            axonEyeResultsPreview.innerHTML = '<div class="info">AXON EYE ESTÁ ANALISANDO SUAS IMAGENS...</div>';
+            toggleMonitorView('axon-eye');
 
             try {
-                // Upload all captured images to Imgur first
                 const imgurLinks = [];
                 for (let i = 0; i < capturedImages.length; i++) {
                     const imageDataURL = capturedImages[i];
                     const link = await uploadImageToImgur(imageDataURL, i, capturedImages.length);
                     imgurLinks.push(link);
                 }
-                appendOutput("Todas as imagens enviadas com sucesso.", "success");
-                appendOutput("Axon Eye está analisando suas imagens...", "info");
+                appendOutput("TODAS AS IMAGENS ENVIADAS COM SUCESSO.", "success");
+                appendOutput("AXON EYE ESTÁ ANALISANDO SUAS IMAGENS...", "info");
 
-                // Now send the Imgur links to Gemini Vision API
                 const prompt = `Você é um assistente médico. Analise as imagens fornecidas e forneça uma opinião clínica detalhada.
                 Não inclua a data da análise em sua resposta.
                 Se a imagem for de um exame (como ECG, raio-X, tomografia, etc.), descreva os achados relevantes e o que eles podem indicar.
@@ -2254,31 +2225,105 @@
                 Seja o mais descritivo e clinicamente relevante possível.
                 Retorne a análise de forma clara e concisa, como um relatório ou parecer.`;
 
-                const response = await callGeminiVisionAPI(capturedImages, prompt); // Pass base64 directly to Gemini Vision
+                const response = await callGeminiVisionAPI(capturedImages, prompt);
 
-                // Append new results to existing ones
                 if (axonEyeResults) {
                     axonEyeResults += `<br><div class="section-title">NOVA ANÁLISE:</div>`;
                 }
                 axonEyeResults += response;
                 
-                updateAxonEyeResultsPreview(); // Isso irá salvar no Firestore
-                appendOutput("Análise Axon Eye concluída.", "success");
-                stopCamera(); // Close camera interface after analysis
-                capturedImages = []; // Limpa o álbum após o envio
+                updateAxonEyeResultsPreview();
+                appendOutput("ANÁLISE AXON EYE CONCLUÍDA.", "success");
+                stopCamera();
+                capturedImages = [];
                 updateAlbumCount();
             } catch (error) {
-                appendOutput(`Erro ao analisar com Axon Eye: ${error.message}`, "error");
-                axonEyeResults = '<div class="error">Erro ao analisar com Axon Eye.</div>';
+                appendOutput(`ERRO AO ANALISAR COM AXON EYE: ${error.message}`, "error");
+                axonEyeResults = '<div class="error">ERRO AO ANALISAR COM AXON EYE.</div>';
                 updateAxonEyeResultsPreview();
             }
+        };
+
+        // NOVA FUNÇÃO: Gerar PDF
+        const generatePdf = (patientName) => {
+            if (typeof jsPDF === 'undefined') {
+                appendOutput("ERRO: BIBLIOTECA JSPDF NÃO CARREGADA.", "error");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Adicionar logo e título
+            doc.setFontSize(20);
+            doc.text("AXON A.I", 105, 15, { align: 'center' });
+            doc.setFontSize(16);
+            doc.text(`RELATÓRIO MÉDICO - ${patientName.toUpperCase()}`, 105, 25, { align: 'center' });
+
+            let y = 35;
+
+            // Seção de Anamnese
+            doc.setFontSize(14);
+            doc.text("ANAMNESE", 10, y);
+            y += 10;
+
+            const anamnesisText = anamnesisPreview.innerText || "NENHUMA INFORMAÇÃO DE ANAMNESE.";
+            const anamnesisLines = doc.splitTextToSize(anamnesisText, 180);
+            doc.setFontSize(10);
+            doc.text(anamnesisLines, 10, y);
+            y += anamnesisLines.length * 5 + 10;
+
+            // Seção de Resultados de Exames
+            doc.setFontSize(14);
+            doc.text("RESULTADOS DOS EXAMES", 10, y);
+            y += 10;
+
+            const examsText = examsResultsPreview.innerText || "NENHUM RESULTADO DE EXAMES.";
+            const examsLines = doc.splitTextToSize(examsText, 180);
+            doc.setFontSize(10);
+            doc.text(examsLines, 10, y);
+            y += examsLines.length * 5 + 10;
+
+            // Seção de Imagens
+            if (capturedImages.length > 0) {
+                doc.setFontSize(14);
+                doc.text("IMAGENS", 10, y);
+                y += 10;
+
+                let imageCount = 1;
+                for (const imageDataURL of capturedImages) {
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 20;
+                    }
+
+                    try {
+                        doc.addImage(imageDataURL, 'JPEG', 10, y, 180, 100);
+                        y += 110;
+                        doc.text(`IMAGEM ${imageCount}`, 10, y);
+                        y += 10;
+                        imageCount++;
+                    } catch (error) {
+                        console.error("Erro ao adicionar imagem ao PDF:", error);
+                        doc.text(`ERRO AO ADICIONAR IMAGEM ${imageCount}`, 10, y);
+                        y += 10;
+                        imageCount++;
+                    }
+                }
+            } else {
+                doc.setFontSize(10);
+                doc.text("NENHUMA IMAGEM REGISTRADA.", 10, y);
+            }
+
+            // Salvar o PDF
+            doc.save(`RELATORIO_${patientName.replace(/\s/g, '_')}.PDF`);
         };
 
         // Processar comandos
         const processCommand = async (command) => {
             if (!command.trim()) return;
             
-            appendOutput(command, "command"); // Loga o comando no terminal interativo
+            appendOutput(command, "command");
 
             const cmd = command.trim().toLowerCase();
             const isCommand = cmd.startsWith('/');
@@ -2293,8 +2338,8 @@
                     if (await authenticateUser(username, password)) {
                         isLoggedIn = true;
                         currentUser = username;
-                        localStorage.setItem('axon_logged_in_user', username); // Salva o login localmente
-                        appendOutput("Login bem-sucedido. Digite /help para ver os comandos disponíveis.", "success");
+                        localStorage.setItem('axon_logged_in_user', username);
+                        appendOutput("LOGIN BEM-SUCEDIDO. DIGITE /HELP PARA VER OS COMANDOS DISPONÍVEIS.", "success");
                         initialMessagesContainer.innerHTML = `
                             <pre class="info">
  █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
@@ -2307,16 +2352,15 @@
                             <span class="info">Axon - Assistente Médico v1.0</span><br>
                             <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
                         `;
-                        // Iniciar anamnese e exames com dados do Firestore após login
                         initialMessagesContainer.style.display = 'none';
-                        appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
-                        setupFirebaseListener(currentUser); // Inicia o listener do Firebase
-                        toggleMonitorView('anamnesis'); // Garante que a anamnese é a primeira vista
+                        appendOutput("SESSÃO PRONTA PARA ANAMNESE. INFORME OS DADOS DO PACIENTE.", "success");
+                        setupFirebaseListener(currentUser);
+                        toggleMonitorView('anamnesis');
                     } else {
-                        appendOutput("Usuário ou senha incorretos.", "error");
+                        appendOutput("USUÁRIO OU SENHA INCORRETOS.", "error");
                     }
                 } else {
-                    appendOutput("Você precisa fazer login para usar o terminal. Digite /login [usuário] [senha]", "error");
+                    appendOutput("VOCÊ PRECISA FAZER LOGIN PARA USAR O TERMINAL. DIGITE /LOGIN [USUÁRIO] [SENHA]", "error");
                 }
                 commandInput.value = '';
                 return;
@@ -2324,7 +2368,7 @@
 
             // Verificar se é um comando válido
             if (isCommand && !validCommands.some(vc => cmd.startsWith(vc.split(' ')[0]))) {
-                appendOutput(`Comando '${command}' não existe. Digite /help para ver os comandos disponíveis.`, "error");
+                appendOutput(`COMANDO '${command}' NÃO EXISTE. DIGITE /HELP PARA VER OS COMANDOS DISPONÍVEIS.`, "error");
                 commandInput.value = '';
                 return;
             }
@@ -2332,74 +2376,73 @@
             if (cmd === '/exit') {
                 if (currentUser) {
                     await deleteDoc(doc(db, "sessions", currentUser));
-                    appendOutput("Dados da sessão apagados do Firebase.", "info");
+                    appendOutput("DADOS DA SESSÃO APAGADOS DO FIREBASE.", "info");
                 }
                 anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                 examsResults = "";
-                axonEyeResults = ""; // Clear Axon Eye results
-                capturedImages = []; // Limpa imagens capturadas
+                axonEyeResults = "";
+                capturedImages = [];
                 updateAnamnesisPreview();
                 updateExamsResultsPreview();
-                updateAxonEyeResultsPreview(); // Update Axon Eye preview
-                appendOutput("Sessão encerrada. Você precisará fazer login novamente.", "success");
+                updateAxonEyeResultsPreview();
+                appendOutput("SESSÃO ENCERRADA. VOCÊ PRECISARÁ FAZER LOGIN NOVAMENTE.", "success");
                 if (isListening) stopListening();
-                stopCamera(); // Ensure camera is stopped on exit
+                stopCamera();
                 resetInteractiveTerminal(true);
             } 
             else if (cmd === '/clear') {
                 if (currentUser) {
                     await deleteDoc(doc(db, "sessions", currentUser));
-                    appendOutput("Dados da sessão apagados do Firebase.", "info");
+                    appendOutput("DADOS DA SESSÃO APAGADOS DO FIREBASE.", "info");
                 }
                 anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                 examsResults = "";
-                axonEyeResults = ""; // Clear Axon Eye results
-                capturedImages = []; // Limpa imagens capturadas
+                axonEyeResults = "";
+                capturedImages = [];
                 updateAnamnesisPreview();
                 updateExamsResultsPreview();
-                updateAxonEyeResultsPreview(); // Update Axon Eye preview
-                appendOutput("Terminal limpo.", "success");
+                updateAxonEyeResultsPreview();
+                appendOutput("TERMINAL LIMPO.", "success");
                 if (isListening) stopListening();
-                stopCamera(); // Ensure camera is stopped on clear
+                stopCamera();
                 resetInteractiveTerminal(false);
             }
             else if (cmd === '/hear on') {
                 if (isListening) {
-                    appendOutput("O microfone já está ativo.", "info");
+                    appendOutput("O MICROFONE JÁ ESTÁ ATIVO.", "info");
                     return;
                 }
                 toggleListening();
-                // Sincronizar aba Anamnese
                 if (isLoggedIn && currentUser) {
                     updateMonitorStateInFirestore(currentUser, { activeView: 'anamnesis' });
                 }
             } 
             else if (cmd === '/hear off') {
                 if (!isListening) {
-                    appendOutput("O microfone já está desativado.", "info");
+                    appendOutput("O MICROFONE JÁ ESTÁ DESATIVADO.", "info");
                     return;
                 }
                 stopListening();
             } 
             else if (cmd === '/hd') {
-                appendOutput("Gerando hipóteses diagnósticas...", "info");
+                appendOutput("GERANDO HIPÓTESES DIAGNÓSTICAS...", "info");
                 await generateDiagnosticHypotheses();
             } 
             else if (cmd === '/cd') {
-                appendOutput("Gerando conduta médica (tratamentos SUS)...", "info");
+                appendOutput("GERANDO CONDUTA MÉDICA (TRATAMENTOS SUS)...", "info");
                 await generateMedicalConduct();
             } 
             else if (cmd === '/copy') {
-                copyMonitorContent(); // Changed to copy monitor content
+                copyMonitorContent();
             } 
             else if (cmd.startsWith('/ia')) {
                 const question = command.substring(3).trim();
                 if (!question) {
-                    appendOutput("Por favor, faça uma pergunta após o comando /ia", "error");
+                    appendOutput("POR FAVOR, FAÇA UMA PERGUNTA APÓS O COMANDO /IA", "error");
                     return;
                 }
                 
-                appendOutput("Processando sua pergunta...", "info");
+                appendOutput("PROCESSANDO SUA PERGUNTA...", "info");
                 
                 const iaPrompt = `Responda de forma objetiva e breve à seguinte pergunta médica: "${question}". 
                                   Se a pergunta for sobre um medicamento, forneça as informações essenciais (nome, dose, quantidade, posologia, tempo de uso, observações) 
@@ -2419,17 +2462,17 @@
                         appendOutput(response, "output");
                     }
                 } catch (error) {
-                    appendOutput(`Erro ao consultar a IA: ${error.message}. Verifique sua conexão ou a chave da API.`, "error");
+                    appendOutput(`ERRO AO CONSULTAR A IA: ${error.message}. VERIFIQUE SUA CONEXÃO OU A CHAVE DA API.`, "error");
                 }
             } 
             else if (cmd.startsWith('/ask')) {
                 const question = command.substring(4).trim();
                 if (!question) {
-                    appendOutput("Por favor, faça uma pergunta após o comando /ask", "error");
+                    appendOutput("POR FAVOR, FAÇA UMA PERGUNTA APÓS O COMANDO /ASK", "error");
                     return;
                 }
                 
-                appendOutput("Processando sua pergunta com base no contexto completo...", "info");
+                appendOutput("PROCESSANDO SUA PERGUNTA COM BASE NO CONTEXTO COMPLETO...", "info");
                 await askQuestionBasedOnContext(question);
             }
             else if (cmd.startsWith('/api-set')) {
@@ -2440,13 +2483,13 @@
                 if (adminPassword === 'admin123') {
                     if (newApiKey) {
                         currentGeminiAPIKey = newApiKey;
-                        appendOutput(`Chave da API definida para: ${newApiKey.substring(0, 5)}...`, "success");
+                        appendOutput(`CHAVE DA API DEFINIDA PARA: ${newApiKey.substring(0, 5)}...`, "success");
                         await checkApiStatus();
                     } else {
-                        appendOutput("Uso: /api-set [senha_admin] [nova_chave_api]", "error");
+                        appendOutput("USO: /API-SET [SENHA_ADMIN] [NOVA_CHAVE_API]", "error");
                     }
                 } else {
-                    appendOutput("Senha de administrador incorreta para o comando /api-set.", "error");
+                    appendOutput("SENHA DE ADMINISTRADOR INCORRETA PARA O COMANDO /API-SET.", "error");
                 }
             }
             else if (cmd.startsWith('/api-restore')) {
@@ -2455,10 +2498,10 @@
 
                 if (adminPassword === 'admin123') {
                     currentGeminiAPIKey = defaultGeminiAPIKey;
-                    appendOutput("Chave da API restaurada para a padrão.", "success");
+                    appendOutput("CHAVE DA API RESTAURADA PARA A PADRÃO.", "success");
                     await checkApiStatus();
                 } else {
-                    appendOutput("Senha de administrador incorreta para o comando /api-restore.", "error");
+                    appendOutput("SENHA DE ADMINISTRADOR INCORRETA PARA O COMANDO /API-RESTORE.", "error");
                 }
             }
             else if (cmd.startsWith('/api-engine')) {
@@ -2482,22 +2525,22 @@
                         if (selectedModel) {
                             if (selectedModel.vision) {
                                 currentVisionAIModel = selectedModel.name;
-                                appendOutput(`Motor da API de visão alterado para: ${currentVisionAIModel}`, "success");
+                                appendOutput(`MOTOR DA API DE VISÃO ALTERADO PARA: ${currentVisionAIModel}`, "success");
                             } else {
                                 currentAIModel = selectedModel.name;
-                                appendOutput(`Motor da API de texto alterado para: ${currentAIModel}`, "success");
+                                appendOutput(`MOTOR DA API DE TEXTO ALTERADO PARA: ${currentAIModel}`, "success");
                             }
                             await checkApiStatus(selectedModel.name);
                         } else {
                             const availableEngines = apiModels.map(m => `${m.id}. ${m.name}`).join(', ');
-                            appendOutput(`Motor '${engineIdentifier}' não reconhecido. Motores disponíveis: ${availableEngines}.`, "error");
+                            appendOutput(`MOTOR '${engineIdentifier}' NÃO RECONHECIDO. MOTORES DISPONÍVEIS: ${availableEngines}.`, "error");
                         }
                     } else {
                         const availableEngines = apiModels.map(m => `${m.id}. ${m.name}`).join(', ');
-                        appendOutput(`Uso: /api-engine [senha_admin] [nome_do_motor_ou_numero]. Motores disponíveis: ${availableEngines}.`, "info");
+                        appendOutput(`USO: /API-ENGINE [SENHA_ADMIN] [NOME_DO_MOTOR_OU_NUMERO]. MOTORES DISPONÍVEIS: ${availableEngines}.`, "info");
                     }
                 } else {
-                    appendOutput("Senha de administrador incorreta para o comando /api-engine.", "error");
+                    appendOutput("SENHA DE ADMINISTRADOR INCORRETA PARA O COMANDO /API-ENGINE.", "error");
                 }
             }
             else if (cmd.startsWith('/api')) {
@@ -2506,14 +2549,14 @@
 
                 if (adminPassword === 'admin123') {
                     await checkApiStatus();
-                    appendOutput(`API Utilizada (Texto): ${getGeminiAPIUrl(false)}`, "info");
-                    appendOutput(`Motor da IA de texto atual: ${currentAIModel}`, "info");
-                    appendOutput(`API Utilizada (Visão): ${getGeminiAPIUrl(true)}`, "info");
-                    appendOutput(`Motor da IA de visão atual: ${currentVisionAIModel}`, "info");
-                    appendOutput(`API Imgur: https://api.imgur.com/3/image (Client ID: ${IMGUR_CLIENT_ID})`, "info");
-                    appendOutput(`Status de Conexão: ${apiConnectionStatus}`, apiConnectionStatus.includes("Conectado") ? "success" : "error");
+                    appendOutput(`API UTILIZADA (TEXTO): ${getGeminiAPIUrl(false)}`, "info");
+                    appendOutput(`MOTOR DA IA DE TEXTO ATUAL: ${currentAIModel}`, "info");
+                    appendOutput(`API UTILIZADA (VISÃO): ${getGeminiAPIUrl(true)}`, "info");
+                    appendOutput(`MOTOR DA IA DE VISÃO ATUAL: ${currentVisionAIModel}`, "info");
+                    appendOutput(`API IMGUR: HTTPS://API.IMGUR.COM/3/IMAGE (CLIENT ID: ${IMGUR_CLIENT_ID})`, "info");
+                    appendOutput(`STATUS DE CONEXÃO: ${apiConnectionStatus}`, apiConnectionStatus.includes("Conectado") ? "success" : "error");
                 } else {
-                    appendOutput("Senha de administrador incorreta para o comando /api.", "error");
+                    appendOutput("SENHA DE ADMINISTRADOR INCORRETA PARA O COMANDO /API.", "error");
                 }
             }
             else if (cmd.startsWith('/register')) {
@@ -2523,61 +2566,79 @@
                 const password = parts[3];
                 await registerUser(adminPassword, username, password);
             }
+            // NOVO COMANDO: Deletar usuário
+            else if (cmd.startsWith('/delete')) {
+                const parts = command.split(' ');
+                const adminPassword = parts[1];
+                const username = parts[2];
+                await deleteUser(adminPassword, username);
+            }
             else if (cmd === '/exames') {
-                // Limpa análises anteriores no terminal interativo
                 examsResults = ""; 
-                updateExamsResultsPreview(); // Atualiza o monitor para mostrar "Nenhum exame analisado ainda."
-                appendOutput("Limpando análises de exames anteriores...", "info");
+                updateExamsResultsPreview();
+                appendOutput("LIMPANDO ANÁLISES DE EXAMES ANTERIORES...", "info");
 
                 if (isMobile) {
                     startCamera('exams');
-                    updateMonitorStateInFirestore(currentUser, { activeView: 'camera-exams' }); // Sinaliza que a câmera está ativa no mobile
+                    updateMonitorStateInFirestore(currentUser, { activeView: 'camera-exams' });
                 } else {
-                    startCamera('exams'); // Abre a câmera no desktop
-                    updateMonitorStateInFirestore(currentUser, { activeView: 'camera-exams' }); // Sinaliza que a câmera está ativa no desktop
+                    startCamera('exams');
+                    updateMonitorStateInFirestore(currentUser, { activeView: 'camera-exams' });
                 }
             }
             else if (cmd === '/see') {
-                // Limpa análises anteriores no terminal interativo
                 axonEyeResults = "";
-                updateAxonEyeResultsPreview(); // Atualiza o monitor para mostrar "Nenhuma análise visual feita ainda."
-                appendOutput("Limpando análises Axon Eye anteriores...", "info");
+                updateAxonEyeResultsPreview();
+                appendOutput("LIMPANDO ANÁLISES AXON EYE ANTERIORES...", "info");
 
                 if (isMobile) {
                     startCamera('axon-eye');
-                    updateMonitorStateInFirestore(currentUser, { activeView: 'camera-axon-eye' }); // Sinaliza que a câmera está ativa no mobile
+                    updateMonitorStateInFirestore(currentUser, { activeView: 'camera-axon-eye' });
                 } else {
-                    startCamera('axon-eye'); // Abre a câmera no desktop
-                    updateMonitorStateInFirestore(currentUser, { activeView: 'camera-axon-eye' }); // Sinaliza que a câmera está ativa no desktop
+                    startCamera('axon-eye');
+                    updateMonitorStateInFirestore(currentUser, { activeView: 'camera-axon-eye' });
                 }
+            }
+            // NOVO COMANDO: Gerar PDF
+            else if (cmd.startsWith('/pdf')) {
+                const patientName = command.substring(4).trim();
+                if (!patientName) {
+                    appendOutput("USO: /PDF [NOME DO PACIENTE]", "error");
+                    return;
+                }
+                appendOutput(`GERANDO PDF PARA O PACIENTE: ${patientName.toUpperCase()}...`, "info");
+                generatePdf(patientName);
+                appendOutput("PDF GERADO COM SUCESSO.", "success");
             }
             else if (cmd === '/help') {
                 const availableEnginesList = apiModels.map(m => `${m.id}. ${m.name}`).join(' | ');
                 appendOutput(`
 <ul class="help-list">
-    <li class="help-item"><span class="command">/hear on</span> - Ativar reconhecimento de voz</li>
-    <li class="help-item"><span class="command">/hear off</span> - Desativar reconhecimento de voz</li>
-    <li class="help-item"><span class="command">/hd</span> - Gerar hipóteses diagnósticas</li>
-    <li class="help-item"><span class="command">/cd</span> - Gerar conduta médica (tratamentos SUS)</li>
-    <li class="help-item"><span class="command">/copy</span> - Copiar conteúdo do terminal Monitor</li>
-    <li class="help-item"><span class="command">/ia [pergunta]</span> - Fazer pergunta livre à I.A</li>
-    <li class="help-item"><span class="command">/ask [pergunta]</span> - Fazer pergunta baseada na anamnese, exames e análises visuais</li>
-    <li class="help-item"><span class="command">/exames</span> - Abrir câmera para fotografar/carregar exames e enviar à I.A para análise de resultados</li>
-    <li class="help-item"><span class="command">/see</span> - Abrir câmera para fotografar/carregar imagens e enviar à I.A para opinião clínica</li>
-    <li class="help-item"><span class="command">/exit</span> - Encerrar sessão</li>
-    <li class="help-item"><span class="command">/clear</span> - Limpar terminal e reiniciar anamnese</li>
-    <li class="help-item"><span class="command">/api [senha_admin]</span> - Mostrar API utilizada e status de conexão</li>
-    <li class="help-item"><span class="command">/api-set [senha_admin] [nova_chave]</span> - Definir uma nova chave de API</li>
-    <li class="help-item"><span class="command">/api-restore [senha_admin]</span> - Restaurar a chave de API padrão</li>
-    <li class="help-item"><span class="command">/api-engine [senha_admin] [${availableEnginesList}]</span> - Trocar o motor da IA</li>
-    <li class="help-item"><span class="command">/register [senha_admin] [usuário] [senha]</span> - Registrar um novo usuário</li>
-    <li class="help-item"><span class="command">/help</span> - Mostrar esta ajuda</li>
+    <li class="help-item"><span class="command">/hear on</span> - ATIVAR RECONHECIMENTO DE VOZ</li>
+    <li class="help-item"><span class="command">/hear off</span> - DESATIVAR RECONHECIMENTO DE VOZ</li>
+    <li class="help-item"><span class="command">/hd</span> - GERAR HIPÓTESES DIAGNÓSTICAS</li>
+    <li class="help-item"><span class="command">/cd</span> - GERAR CONDUTA MÉDICA (TRATAMENTOS SUS)</li>
+    <li class="help-item"><span class="command">/copy</span> - COPIAR CONTEÚDO DO TERMINAL MONITOR</li>
+    <li class="help-item"><span class="command">/ia [pergunta]</span> - FAZER PERGUNTA LIVRE À I.A</li>
+    <li class="help-item"><span class="command">/ask [pergunta]</span> - FAZER PERGUNTA BASEADA NA ANAMNESE, EXAMES E ANÁLISES VISUAIS</li>
+    <li class="help-item"><span class="command">/exames</span> - ABRIR CÂMERA PARA FOTOGRAFAR/CARREGAR EXAMES E ENVIAR À I.A PARA ANÁLISE DE RESULTADOS</li>
+    <li class="help-item"><span class="command">/see</span> - ABRIR CÂMERA PARA FOTOGRAFAR/CARREGAR IMAGENS E ENVIAR À I.A PARA OPINIÃO CLÍNICA</li>
+    <li class="help-item"><span class="command">/pdf [nome do paciente]</span> - GERAR PDF COM ANAMNESE, EXAMES E IMAGENS</li>
+    <li class="help-item"><span class="command">/exit</span> - ENCERRAR SESSÃO</li>
+    <li class="help-item"><span class="command">/clear</span> - LIMPAR TERMINAL E REINICIAR ANAMNESE</li>
+    <li class="help-item"><span class="command">/api [senha_admin]</span> - MOSTRAR API UTILIZADA E STATUS DE CONEXÃO</li>
+    <li class="help-item"><span class="command">/api-set [senha_admin] [nova_chave]</span> - DEFINIR UMA NOVA CHAVE DE API</li>
+    <li class="help-item"><span class="command">/api-restore [senha_admin]</span> - RESTAURAR A CHAVE DE API PADRÃO</li>
+    <li class="help-item"><span class="command">/api-engine [senha_admin] [${availableEnginesList}]</span> - TROCAR O MOTOR DA IA</li>
+    <li class="help-item"><span class="command">/register [senha_admin] [usuário] [senha]</span> - REGISTRAR UM NOVO USUÁRIO</li>
+    <li class="help-item"><span class="command">/delete [senha_admin] [usuário]</span> - DELETAR UM USUÁRIO</li>
+    <li class="help-item"><span class="command">/help</span> - MOSTRAR ESTA AJUDA</li>
 </ul>
-Para inserir informações na anamnese, basta digitar normalmente após fazer login
+PARA INSERIR INFORMAÇÕES NA ANAMNESE, BASTA DIGITAR NORMALMENTE APÓS FAZER LOGIN
                 `, "info");
             } 
             else {
-                appendOutput("Processando informações...", "info");
+                appendOutput("PROCESSANDO INFORMAÇÕES...", "info");
                 await processAnamnesisInfo(command);
             }
             
@@ -2602,13 +2663,13 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         uploadButton.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileUpload);
         sendExamsButton.addEventListener('click', analyzeExams);
-        sendAxonEyeButton.addEventListener('click', analyzeAxonEye); // New Axon Eye button listener
+        sendAxonEyeButton.addEventListener('click', analyzeAxonEye);
         cancelCameraButton.addEventListener('click', stopCamera);
-        cameraCloseBtn.addEventListener('click', stopCamera); // Close button for camera interface
-        cameraSwitchButton.addEventListener('click', switchCamera); // New switch camera button
-        flashlightButton.addEventListener('click', toggleFlashlight); // New flashlight button
+        cameraCloseBtn.addEventListener('click', stopCamera);
+        cameraSwitchButton.addEventListener('click', switchCamera);
+        flashlightButton.addEventListener('click', toggleFlashlight);
 
-        // Album Modal Event Listeners (NOVAS)
+        // Album Modal Event Listeners
         albumButton.addEventListener('click', openAlbumModal);
         albumModalClose.addEventListener('click', closeAlbumModal);
         albumModal.addEventListener('click', (event) => {
@@ -2620,12 +2681,12 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         // Monitor Toggle Buttons Event Listeners
         toggleAnamnesisButton.addEventListener('click', () => toggleMonitorView('anamnesis'));
         toggleExamsButton.addEventListener('click', () => toggleMonitorView('exams'));
-        toggleAxonEyeButton.addEventListener('click', () => toggleMonitorView('axon-eye')); // New Axon Eye toggle button
+        toggleAxonEyeButton.addEventListener('click', () => toggleMonitorView('axon-eye'));
 
         if (isSpeechRecognitionSupported()) {
             initSpeechRecognition();
         } else {
-            appendOutput("Reconhecimento de voz não suportado neste navegador.", "error", false);
+            appendOutput("RECONHECIMENTO DE VOZ NÃO SUPORTADO NESTE NAVEGADOR.", "error", false);
         }
 
         // Apply mobile text abbreviations
@@ -2644,11 +2705,9 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
         const restoreLogin = async () => {
             const storedUser = localStorage.getItem('axon_logged_in_user');
             if (storedUser) {
-                // Assumimos que se o usuário está armazenado localmente, ele já foi autenticado.
-                // Para maior segurança, uma reautenticação silenciosa ou token de sessão poderia ser implementado.
                 isLoggedIn = true;
                 currentUser = storedUser;
-                appendOutput(`Login recuperado para o usuário '${currentUser}'.`, "success");
+                appendOutput(`LOGIN RECUPERADO PARA O USUÁRIO '${currentUser}'.`, "success");
                 initialMessagesContainer.innerHTML = `
                     <pre class="info">
  █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
@@ -2662,15 +2721,15 @@ Para inserir informações na anamnese, basta digitar normalmente após fazer lo
                     <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
                 `;
                 initialMessagesContainer.style.display = 'none';
-                appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
-                setupFirebaseListener(currentUser); // Inicia o listener do Firebase
-                toggleMonitorView('anamnesis'); // Garante que a anamnese é a primeira vista
+                appendOutput("SESSÃO PRONTA PARA ANAMNESE. INFORME OS DADOS DO PACIENTE.", "success");
+                setupFirebaseListener(currentUser);
+                toggleMonitorView('anamnesis');
             }
         };
 
         window.onload = async () => {
             await initializeAIModel();
-            await restoreLogin(); // Tenta restaurar o login ao carregar
+            await restoreLogin();
         };
 
         // PWA: Register Service Worker
