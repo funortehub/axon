@@ -742,7 +742,7 @@
             border: 1px solid var(--border-color);
             border-radius: 8px;
             width: 90%;
-            max-width: 800px;
+            max-width: 600px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
             position: relative;
             display: flex;
@@ -793,52 +793,10 @@
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.2s;
-            position: relative;
         }
 
         .patient-item:hover {
             background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .patient-actions {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            gap: 5px;
-        }
-
-        .patient-action-btn {
-            background-color: #30363d;
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 11px;
-            transition: background-color 0.2s;
-        }
-
-        .patient-action-btn:hover {
-            background-color: #444c56;
-        }
-
-        .patient-action-btn.delete {
-            background-color: #da3633;
-            color: white;
-        }
-
-        .patient-action-btn.delete:hover {
-            background-color: #f85149;
-        }
-
-        .patient-action-btn.pdf {
-            background-color: #1f6feb;
-            color: white;
-        }
-
-        .patient-action-btn.pdf:hover {
-            background-color: #388bfd;
         }
 
         .patient-details-modal {
@@ -940,41 +898,6 @@
             height: 100%;
             object-fit: cover;
             display: block;
-        }
-
-        .patient-navigation {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding: 10px;
-            background-color: rgba(255, 255, 255, 0.05);
-            border-radius: 5px;
-        }
-
-        .patient-nav-btn {
-            background-color: #30363d;
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: background-color 0.2s;
-        }
-
-        .patient-nav-btn:hover:not(:disabled) {
-            background-color: #444c56;
-        }
-
-        .patient-nav-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .patient-nav-info {
-            font-size: 14px;
-            color: var(--text-color);
         }
     </style>
 </head>
@@ -1132,15 +1055,6 @@
                 <div class="patient-details-title" id="patient-details-title">Detalhes do Paciente</div>
                 <span class="patient-details-close">&times;</span>
             </div>
-            <div class="patient-navigation">
-                <button id="prev-anamnesis" class="patient-nav-btn" disabled>
-                    <i class="fas fa-chevron-left"></i> Anterior
-                </button>
-                <div id="patient-nav-info" class="patient-nav-info">Anamnese 1 de 1</div>
-                <button id="next-anamnesis" class="patient-nav-btn" disabled>
-                    Próxima <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
             <div id="patient-details-body" class="patient-details-body">
             </div>
         </div>
@@ -1216,9 +1130,6 @@
         const patientDetailsTitle = document.getElementById('patient-details-title');
         const patientDetailsBody = document.getElementById('patient-details-body');
         const patientDetailsClose = document.getElementsByClassName('patient-details-close')[0];
-        const prevAnamnesisBtn = document.getElementById('prev-anamnesis');
-        const nextAnamnesisBtn = document.getElementById('next-anamnesis');
-        const patientNavInfo = document.getElementById('patient-nav-info');
 
         // Mobile text elements
         const statusTextApi = document.querySelector('.status-text-api');
@@ -1248,12 +1159,6 @@
         let currentMonitorView = 'anamnesis';
         let isFlashlightOn = false;
         let cameraMode = 'exams';
-        
-        // NOVAS VARIÁVEIS PARA PACIENTES
-        let currentPatient = null;
-        let currentAnamnesisIndex = 0;
-        let currentPatientAnamneses = [];
-
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isMobile = isMobileDevice();
 
@@ -2156,15 +2061,6 @@
                 if (docSnap.exists()) {
                     await deleteDoc(userRef);
                     appendOutput(`Usuário '${username}' deletado com sucesso.`, "success");
-                    
-                    // Se o usuário deletado é o mesmo que está logado, fazer logout
-                    if (currentUser === username) {
-                        isLoggedIn = false;
-                        currentUser = null;
-                        localStorage.removeItem('axon_logged_in_user');
-                        resetInteractiveTerminal(true);
-                        appendOutput("Sua sessão foi encerrada porque seu usuário foi deletado.", "info");
-                    }
                 } else {
                     appendOutput(`Usuário '${username}' não existe.`, "error");
                 }
@@ -2175,7 +2071,10 @@
         };
 
         const authenticateUser = async (username, password) => {
-            // Verificar primeiro se o usuário existe no Firestore
+            if (username === 'ian' && password === 'ian123') {
+                return true;
+            }
+
             try {
                 const userRef = doc(db, "users", username);
                 const docSnap = await getDoc(userRef);
@@ -2568,53 +2467,24 @@
         };
 
         // NOVAS FUNÇÕES: Sistema de Save/Load de Pacientes
-        const savePatient = async (patientName, birthDate) => {
+        const savePatient = async (patientName) => {
             if (!isLoggedIn) {
                 appendOutput("Você precisa estar logado para salvar pacientes.", "error");
                 return;
             }
 
-            // Validar data de nascimento
-            const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-            if (!dateRegex.test(birthDate)) {
-                appendOutput("Formato de data inválido. Use DD/MM/AAAA.", "error");
-                return;
-            }
-
             try {
-                const patientId = `${currentUser}_${patientName}_${birthDate.replace(/\//g, '')}`;
-                const patientRef = doc(db, "patients", patientId);
-                const docSnap = await getDoc(patientRef);
-
-                const newAnamnesis = {
-                    anamnesis: { ...anamnesis },
+                const patientRef = doc(db, "patients", `${currentUser}_${patientName}`);
+                await setDoc(patientRef, {
+                    patientName: patientName,
+                    anamnesis: anamnesis,
                     examsResults: examsResults,
                     axonEyeResults: axonEyeResults,
-                    capturedImages: [...capturedImages],
+                    capturedImages: capturedImages,
+                    savedBy: currentUser,
                     savedAt: new Date()
-                };
-
-                if (docSnap.exists()) {
-                    // Paciente existe, adicionar nova anamnese
-                    const patientData = docSnap.data();
-                    const updatedAnamneses = [...patientData.anamneses, newAnamnesis];
-                    await updateDoc(patientRef, {
-                        anamneses: updatedAnamneses,
-                        lastUpdated: new Date()
-                    });
-                    appendOutput(`Nova anamnese adicionada ao paciente '${patientName}'. Total: ${updatedAnamneses.length}`, "success");
-                } else {
-                    // Criar novo paciente
-                    await setDoc(patientRef, {
-                        patientName: patientName,
-                        birthDate: birthDate,
-                        anamneses: [newAnamnesis],
-                        savedBy: currentUser,
-                        savedAt: new Date(),
-                        lastUpdated: new Date()
-                    });
-                    appendOutput(`Paciente '${patientName}' salvo com sucesso.`, "success");
-                }
+                });
+                appendOutput(`Paciente '${patientName}' salvo com sucesso.`, "success");
             } catch (e) {
                 appendOutput(`Erro ao salvar paciente: ${e.message}`, "error");
                 console.error("Erro ao salvar paciente:", e);
@@ -2648,46 +2518,10 @@
                         patientElement.classList.add('patient-item');
                         patientElement.innerHTML = `
                             <div><strong>${patient.patientName}</strong></div>
-                            <div style="font-size: 12px; color: #888;">Data de Nascimento: ${patient.birthDate}</div>
-                            <div style="font-size: 12px; color: #888;">Anamneses: ${patient.anamneses?.length || 0}</div>
                             <div style="font-size: 12px; color: #888;">Salvo em: ${new Date(patient.savedAt?.toDate()).toLocaleString()}</div>
-                            <div class="patient-actions">
-                                <button class="patient-action-btn pdf" data-patient-id="${patient.id}" data-patient-name="${patient.patientName}">
-                                    <i class="fas fa-file-pdf"></i> PDF
-                                </button>
-                                <button class="patient-action-btn delete" data-patient-id="${patient.id}" data-patient-name="${patient.patientName}">
-                                    <i class="fas fa-trash"></i> Excluir
-                                </button>
-                            </div>
                         `;
-                        
-                        // Adicionar evento de clique para abrir detalhes
-                        patientElement.addEventListener('click', (e) => {
-                            if (!e.target.closest('.patient-actions')) {
-                                showPatientDetails(patient);
-                            }
-                        });
-                        
+                        patientElement.onclick = () => showPatientDetails(patient);
                         patientList.appendChild(patientElement);
-                    });
-
-                    // Adicionar eventos para os botões de ação
-                    document.querySelectorAll('.patient-action-btn.delete').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const patientId = btn.getAttribute('data-patient-id');
-                            const patientName = btn.getAttribute('data-patient-name');
-                            deletePatient(patientId, patientName);
-                        });
-                    });
-
-                    document.querySelectorAll('.patient-action-btn.pdf').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const patientId = btn.getAttribute('data-patient-id');
-                            const patientName = btn.getAttribute('data-patient-name');
-                            generatePatientPDF(patientId, patientName);
-                        });
                     });
                 }
 
@@ -2701,15 +2535,63 @@
 
         const showPatientDetails = async (patient) => {
             try {
-                currentPatient = patient;
-                currentPatientAnamneses = patient.anamneses || [];
-                currentAnamnesisIndex = currentPatientAnamneses.length - 1; // Começar pela anamnese mais recente
+                patientDetailsTitle.textContent = `Paciente: ${patient.patientName}`;
                 
-                patientDetailsTitle.textContent = `Paciente: ${patient.patientName} (${patient.birthDate})`;
+                let detailsHTML = '';
                 
-                updatePatientNavigation();
-                displayCurrentAnamnesis();
+                // Seção Anamnese
+                detailsHTML += `
+                    <div class="patient-details-section">
+                        <div class="patient-details-section-title">ANAMNESE</div>
+                        <div>
+                            <strong>Queixa Principal (QP):</strong> ${patient.anamnesis?.qp || "Não informado"}<br>
+                            <strong>História da Moléstia Atual (HMA):</strong> ${patient.anamnesis?.hma || "Não informado"}<br>
+                            <strong>História Patológica (HP):</strong> ${patient.anamnesis?.hp || "Não informado"}<br>
+                            <strong>História Familiar (HF):</strong> ${patient.anamnesis?.hf || "Não informado"}<br>
+                            <strong>História Psicossocial (HPS):</strong> ${patient.anamnesis?.hps || "Não informado"}
+                        </div>
+                    </div>
+                `;
                 
+                // Seção Resultados de Exames
+                detailsHTML += `
+                    <div class="patient-details-section">
+                        <div class="patient-details-section-title">RESULTADOS DOS EXAMES</div>
+                        <div>${patient.examsResults || "Nenhum exame analisado."}</div>
+                    </div>
+                `;
+                
+                // Seção Análise Visual
+                detailsHTML += `
+                    <div class="patient-details-section">
+                        <div class="patient-details-section-title">ANÁLISE VISUAL</div>
+                        <div>${patient.axonEyeResults || "Nenhuma análise visual feita."}</div>
+                    </div>
+                `;
+                
+                // Seção Imagens
+                if (patient.capturedImages && patient.capturedImages.length > 0) {
+                    detailsHTML += `
+                        <div class="patient-details-section">
+                            <div class="patient-details-section-title">IMAGENS (${patient.capturedImages.length})</div>
+                            <div class="patient-images-grid">
+                    `;
+                    
+                    patient.capturedImages.forEach((imageDataURL, index) => {
+                        detailsHTML += `
+                            <div class="patient-image-item">
+                                <img src="${imageDataURL}" class="patient-image" onclick="openFullscreenModal('${imageDataURL}')" alt="Imagem ${index + 1}">
+                            </div>
+                        `;
+                    });
+                    
+                    detailsHTML += `
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                patientDetailsBody.innerHTML = detailsHTML;
                 patientDetailsModal.style.display = 'flex';
                 
             } catch (e) {
@@ -2718,245 +2600,80 @@
             }
         };
 
-        const displayCurrentAnamnesis = () => {
-            if (currentPatientAnamneses.length === 0) {
-                patientDetailsBody.innerHTML = '<div class="info">Nenhuma anamnese encontrada para este paciente.</div>';
-                return;
-            }
+        // NOVA FUNÇÃO: Gerar PDF
+        const generatePDF = (patientName) => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
 
-            const currentAnamnesis = currentPatientAnamneses[currentAnamnesisIndex];
+            // Cabeçalho
+            doc.setFontSize(20);
+            doc.setTextColor(88, 166, 255); // Cor do Axon
+            doc.text('AXON A.I', 105, 20, { align: 'center' });
             
-            let detailsHTML = '';
+            doc.setFontSize(16);
+            doc.setTextColor(201, 209, 217); // Cor do texto
+            doc.text(`PRONTUÁRIO MÉDICO - ${patientName.toUpperCase()}`, 105, 30, { align: 'center' });
             
-            // Informações da anamnese
-            detailsHTML += `
-                <div class="patient-details-section">
-                    <div class="patient-details-section-title">ANAMNESE (${new Date(currentAnamnesis.savedAt?.toDate()).toLocaleString()})</div>
-                    <div>
-                        <strong>Queixa Principal (QP):</strong> ${currentAnamnesis.anamnesis?.qp || "Não informado"}<br>
-                        <strong>História da Moléstia Atual (HMA):</strong> ${currentAnamnesis.anamnesis?.hma || "Não informado"}<br>
-                        <strong>História Patológica (HP):</strong> ${currentAnamnesis.anamnesis?.hp || "Não informado"}<br>
-                        <strong>História Familiar (HF):</strong> ${currentAnamnesis.anamnesis?.hf || "Não informado"}<br>
-                        <strong>História Psicossocial (HPS):</strong> ${currentAnamnesis.anamnesis?.hps || "Não informado"}
-                    </div>
-                </div>
-            `;
+            doc.setFontSize(10);
+            doc.text(`Gerado em: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
             
-            // Resultados de Exames
-            if (currentAnamnesis.examsResults) {
-                detailsHTML += `
-                    <div class="patient-details-section">
-                        <div class="patient-details-section-title">RESULTADOS DOS EXAMES</div>
-                        <div>${currentAnamnesis.examsResults}</div>
-                    </div>
-                `;
-            }
+            let y = 50;
+
+            // Seção Anamnese
+            doc.setFontSize(14);
+            doc.setTextColor(31, 111, 235); // Azul highlight
+            doc.text('ANAMNESE', 14, y);
+            y += 10;
             
-            // Análise Visual
-            if (currentAnamnesis.axonEyeResults) {
-                detailsHTML += `
-                    <div class="patient-details-section">
-                        <div class="patient-details-section-title">ANÁLISE VISUAL</div>
-                        <div>${currentAnamnesis.axonEyeResults}</div>
-                    </div>
-                `;
-            }
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0); // Preto para conteúdo
+            const anamnesisContent = `
+Queixa Principal: ${anamnesis.qp || "Não informado"}
+História da Moléstia Atual: ${anamnesis.hma || "Não informado"}
+História Patológica: ${anamnesis.hp || "Não informado"}
+História Familiar: ${anamnesis.hf || "Não informado"}
+História Psicossocial: ${anamnesis.hps || "Não informado"}
+            `.trim();
             
-            // Imagens
-            if (currentAnamnesis.capturedImages && currentAnamnesis.capturedImages.length > 0) {
-                detailsHTML += `
-                    <div class="patient-details-section">
-                        <div class="patient-details-section-title">IMAGENS (${currentAnamnesis.capturedImages.length})</div>
-                        <div class="patient-images-grid">
-                `;
-                
-                currentAnamnesis.capturedImages.forEach((imageDataURL, index) => {
-                    detailsHTML += `
-                        <div class="patient-image-item">
-                            <img src="${imageDataURL}" class="patient-image" onclick="openFullscreenModal('${imageDataURL}')" alt="Imagem ${index + 1}">
-                        </div>
-                    `;
-                });
-                
-                detailsHTML += `
-                        </div>
-                    </div>
-                `;
-            }
-            
-            patientDetailsBody.innerHTML = detailsHTML;
-        };
+            const splitAnamnesis = doc.splitTextToSize(anamnesisContent, 180);
+            doc.text(splitAnamnesis, 14, y);
+            y += splitAnamnesis.length * 5 + 15;
 
-        const updatePatientNavigation = () => {
-            const totalAnamneses = currentPatientAnamneses.length;
-            
-            prevAnamnesisBtn.disabled = currentAnamnesisIndex <= 0;
-            nextAnamnesisBtn.disabled = currentAnamnesisIndex >= totalAnamneses - 1;
-            
-            patientNavInfo.textContent = `Anamnese ${currentAnamnesisIndex + 1} de ${totalAnamneses} (${new Date(currentPatientAnamneses[currentAnamnesisIndex].savedAt?.toDate()).toLocaleDateString()})`;
-        };
-
-        const navigateToPreviousAnamnesis = () => {
-            if (currentAnamnesisIndex > 0) {
-                currentAnamnesisIndex--;
-                displayCurrentAnamnesis();
-                updatePatientNavigation();
-            }
-        };
-
-        const navigateToNextAnamnesis = () => {
-            if (currentAnamnesisIndex < currentPatientAnamneses.length - 1) {
-                currentAnamnesisIndex++;
-                displayCurrentAnamnesis();
-                updatePatientNavigation();
-            }
-        };
-
-        const deletePatient = async (patientId, patientName) => {
-            if (!isLoggedIn) {
-                appendOutput("Você precisa estar logado para excluir pacientes.", "error");
-                return;
-            }
-
-            if (!confirm(`Tem certeza que deseja excluir o paciente "${patientName}" e todas as suas anamneses?`)) {
-                return;
-            }
-
-            try {
-                const patientRef = doc(db, "patients", patientId);
-                await deleteDoc(patientRef);
-                appendOutput(`Paciente '${patientName}' excluído com sucesso.`, "success");
-                
-                // Fechar modais se estiverem abertos
-                patientDetailsModal.style.display = 'none';
-                
-                // Recarregar a lista de pacientes
-                await loadPatientList();
-            } catch (e) {
-                appendOutput(`Erro ao excluir paciente: ${e.message}`, "error");
-                console.error("Erro ao excluir paciente:", e);
-            }
-        };
-
-        const generatePatientPDF = async (patientId, patientName) => {
-            try {
-                const patientRef = doc(db, "patients", patientId);
-                const docSnap = await getDoc(patientRef);
-                
-                if (!docSnap.exists()) {
-                    appendOutput("Paciente não encontrado.", "error");
-                    return;
-                }
-                
-                const patient = docSnap.data();
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-
-                // Cabeçalho
-                doc.setFontSize(20);
-                doc.setTextColor(88, 166, 255);
-                doc.text('AXON A.I', 105, 20, { align: 'center' });
-                
-                doc.setFontSize(16);
-                doc.setTextColor(201, 209, 217);
-                doc.text(`PRONTUÁRIO MÉDICO - ${patient.patientName.toUpperCase()}`, 105, 30, { align: 'center' });
+            // Seção Resultados de Exames
+            if (examsResults) {
+                doc.setFontSize(14);
+                doc.setTextColor(31, 111, 235);
+                doc.text('RESULTADOS DOS EXAMES', 14, y);
+                y += 10;
                 
                 doc.setFontSize(10);
-                doc.text(`Data de Nascimento: ${patient.birthDate}`, 105, 37, { align: 'center' });
-                doc.text(`Gerado em: ${new Date().toLocaleString()}`, 105, 44, { align: 'center' });
-                
-                let y = 60;
-
-                // Para cada anamnese do paciente
-                patient.anamneses.forEach((anamnesisData, index) => {
-                    if (y > 270) {
-                        doc.addPage();
-                        y = 20;
-                    }
-
-                    // Seção Anamnese
-                    doc.setFontSize(14);
-                    doc.setTextColor(31, 111, 235);
-                    doc.text(`ANAMNESE ${index + 1} (${new Date(anamnesisData.savedAt?.toDate()).toLocaleString()})`, 14, y);
-                    y += 10;
-                    
-                    doc.setFontSize(10);
-                    doc.setTextColor(0, 0, 0);
-                    const anamnesisContent = `
-Queixa Principal: ${anamnesisData.anamnesis?.qp || "Não informado"}
-História da Moléstia Atual: ${anamnesisData.anamnesis?.hma || "Não informado"}
-História Patológica: ${anamnesisData.anamnesis?.hp || "Não informado"}
-História Familiar: ${anamnesisData.anamnesis?.hf || "Não informado"}
-História Psicossocial: ${anamnesisData.anamnesis?.hps || "Não informado"}
-                    `.trim();
-                    
-                    const splitAnamnesis = doc.splitTextToSize(anamnesisContent, 180);
-                    doc.text(splitAnamnesis, 14, y);
-                    y += splitAnamnesis.length * 5 + 15;
-
-                    // Seção Resultados de Exames
-                    if (anamnesisData.examsResults) {
-                        if (y > 250) {
-                            doc.addPage();
-                            y = 20;
-                        }
-                        
-                        doc.setFontSize(14);
-                        doc.setTextColor(31, 111, 235);
-                        doc.text('RESULTADOS DOS EXAMES', 14, y);
-                        y += 10;
-                        
-                        doc.setFontSize(10);
-                        doc.setTextColor(0, 0, 0);
-                        const splitExams = doc.splitTextToSize(anamnesisData.examsResults, 180);
-                        doc.text(splitExams, 14, y);
-                        y += splitExams.length * 5 + 15;
-                    }
-
-                    // Seção Análise Visual
-                    if (anamnesisData.axonEyeResults) {
-                        if (y > 250) {
-                            doc.addPage();
-                            y = 20;
-                        }
-                        
-                        doc.setFontSize(14);
-                        doc.setTextColor(31, 111, 235);
-                        doc.text('ANÁLISE VISUAL', 14, y);
-                        y += 10;
-                        
-                        doc.setFontSize(10);
-                        doc.setTextColor(0, 0, 0);
-                        const splitAxonEye = doc.splitTextToSize(anamnesisData.axonEyeResults, 180);
-                        doc.text(splitAxonEye, 14, y);
-                        y += splitAxonEye.length * 5 + 15;
-                    }
-
-                    // Adicionar separador entre anamneses
-                    if (index < patient.anamneses.length - 1) {
-                        if (y > 270) {
-                            doc.addPage();
-                            y = 20;
-                        } else {
-                            doc.setDrawColor(200, 200, 200);
-                            doc.line(14, y, 196, y);
-                            y += 10;
-                        }
-                    }
-                });
-
-                // Rodapé
-                doc.setFontSize(8);
-                doc.setTextColor(128, 128, 128);
-                doc.text('Documento gerado automaticamente pelo Sistema Axon A.I - Desenvolvido por Ian Bastos', 105, 280, { align: 'center' });
-
-                // Salvar PDF
-                doc.save(`prontuario_${patient.patientName}.pdf`);
-                appendOutput(`PDF gerado com sucesso: prontuario_${patient.patientName}.pdf`, "success");
-            } catch (e) {
-                appendOutput(`Erro ao gerar PDF: ${e.message}`, "error");
-                console.error("Erro ao gerar PDF:", e);
+                doc.setTextColor(0, 0, 0);
+                const splitExams = doc.splitTextToSize(examsResults, 180);
+                doc.text(splitExams, 14, y);
+                y += splitExams.length * 5 + 15;
             }
+
+            // Seção Análise Visual
+            if (axonEyeResults) {
+                doc.setFontSize(14);
+                doc.setTextColor(31, 111, 235);
+                doc.text('ANÁLISE VISUAL', 14, y);
+                y += 10;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                const splitAxonEye = doc.splitTextToSize(axonEyeResults, 180);
+                doc.text(splitAxonEye, 14, y);
+            }
+
+            // Rodapé
+            doc.setFontSize(8);
+            doc.setTextColor(128, 128, 128);
+            doc.text('Documento gerado automaticamente pelo Sistema Axon A.I - Desenvolvido por Ian Bastos', 105, 280, { align: 'center' });
+
+            // Salvar PDF
+            doc.save(`prontuario_${patientName}.pdf`);
+            appendOutput(`PDF gerado com sucesso: prontuario_${patientName}.pdf`, "success");
         };
 
         // Processar comandos - ATUALIZADO com novos comandos
@@ -3213,16 +2930,23 @@ História Psicossocial: ${anamnesisData.anamnesis?.hps || "Não informado"}
                 const username = parts[2];
                 await deleteUser(adminPassword, username);
             }
-            // NOVO COMANDO: Salvar paciente com data de nascimento
-            else if (cmd.startsWith('/save')) {
-                const parts = command.split(' ');
-                if (parts.length < 3) {
-                    appendOutput("Uso: /save [Nome do Paciente] [DD/MM/AAAA]", "error");
+            // NOVO COMANDO: Gerar PDF
+            else if (cmd.startsWith('/pdf')) {
+                const patientName = command.substring(4).trim();
+                if (!patientName) {
+                    appendOutput("Uso: /pdf [Nome do Paciente]", "error");
                     return;
                 }
-                const patientName = parts[1];
-                const birthDate = parts[2];
-                await savePatient(patientName, birthDate);
+                generatePDF(patientName);
+            }
+            // NOVO COMANDO: Salvar paciente
+            else if (cmd.startsWith('/save')) {
+                const patientName = command.substring(5).trim();
+                if (!patientName) {
+                    appendOutput("Uso: /save [Nome do Paciente]", "error");
+                    return;
+                }
+                await savePatient(patientName);
             }
             // NOVO COMANDO: Carregar lista de pacientes
             else if (cmd === '/load') {
@@ -3261,44 +2985,50 @@ História Psicossocial: ${anamnesisData.anamnesis?.hps || "Não informado"}
     <li class="help-item"><span class="command">/hear on</span> - Ativar reconhecimento de voz</li>
     <li class="help-item"><span class="command">/hear off</span> - Desativar reconhecimento de voz</li>
     <li class="help-item"><span class="command">/hd</span> - Gerar hipóteses diagnósticas</li>
-    <li class="help-item"><span class="command">/cd</span> - Gerar conduta médica</li>
-    <li class="help-item"><span class="command">/copy</span> - Copiar conteúdo do Monitor</li>
-    <li class="help-item"><span class="command">/ia [pergunta]</span> - Consulta rápida à IA</li>
-    <li class="help-item"><span class="command">/ask [pergunta]</span> - Pergunta baseada no contexto da consulta</li>
-    <li class="help-item"><span class="command">/exames</span> - Ativar câmera para exames</li>
-    <li class="help-item"><span class="command">/see</span> - Ativar câmera para análise visual</li>
-    <li class="help-item"><span class="command">/save [nome] [DD/MM/AAAA]</span> - Salvar paciente</li>
-    <li class="help-item"><span class="command">/load</span> - Carregar pacientes salvos</li>
-    <li class="help-item"><span class="command">/api [senha_admin]</span> - Verificar status da API</li>
-    <li class="help-item"><span class="command">/api-set [senha_admin] [nova_chave]</span> - Definir chave da API</li>
-    <li class="help-item"><span class="command">/api-restore [senha_admin]</span> - Restaurar chave padrão da API</li>
-    <li class="help-item"><span class="command">/api-engine [senha_admin] [motor]</span> - Alterar motor da IA</li>
-    <li class="help-item"><span class="command">/register [senha_admin] [usuário] [senha]</span> - Registrar usuário</li>
-    <li class="help-item"><span class="command">/delete [senha_admin] [usuário]</span> - Deletar usuário</li>
-    <li class="help-item"><span class="command">/clear</span> - Limpar terminal e reiniciar sessão</li>
-    <li class="help-item"><span class="command">/exit</span> - Sair e apagar dados da sessão</li>
+    <li class="help-item"><span class="command">/cd</span> - Gerar conduta médica (tratamentos SUS)</li>
+    <li class="help-item"><span class="command">/copy</span> - Copiar conteúdo do terminal Monitor</li>
+    <li class="help-item"><span class="command">/ia [pergunta]</span> - Fazer pergunta livre à I.A</li>
+    <li class="help-item"><span class="command">/ask [pergunta]</span> - Fazer pergunta baseada na anamnese, exames e análises visuais</li>
+    <li class="help-item"><span class="command">/exames</span> - Abrir câmera para fotografar/carregar exames e enviar à I.A para análise de resultados</li>
+    <li class="help-item"><span class="command">/see</span> - Abrir câmera para fotografar/carregar imagens e enviar à I.A para opinião clínica</li>
+    <li class="help-item"><span class="command">/save [nome]</span> - Salvar informações do paciente atual</li>
+    <li class="help-item"><span class="command">/load</span> - Carregar lista de pacientes salvos</li>
+    <li class="help-item"><span class="command">/pdf [nome]</span> - Gerar PDF do prontuário do paciente</li>
+    <li class="help-item"><span class="command">/delete [senha_admin] [usuário]</span> - Deletar usuário do sistema</li>
+    <li class="help-item"><span class="command">/exit</span> - Encerrar sessão</li>
+    <li class="help-item"><span class="command">/clear</span> - Limpar terminal e reiniciar anamnese</li>
+    <li class="help-item"><span class="command">/api [senha_admin]</span> - Mostrar API utilizada e status de conexão</li>
+    <li class="help-item"><span class="command">/api-set [senha_admin] [nova_chave]</span> - Definir uma nova chave de API</li>
+    <li class="help-item"><span class="command">/api-restore [senha_admin]</span> - Restaurar a chave de API padrão</li>
+    <li class="help-item"><span class="command">/api-engine [senha_admin] [${availableEnginesList}]</span> - Trocar o motor da IA</li>
+    <li class="help-item"><span class="command">/register [senha_admin] [usuário] [senha]</span> - Registrar um novo usuário</li>
+    <li class="help-item"><span class="command">/help</span> - Mostrar esta ajuda</li>
 </ul>
-<br>
-<span class="info">Motores de IA disponíveis: ${availableEnginesList}</span>
-                `, "output");
-            }
+Para inserir informações na anamnese, basta digitar normalmente após fazer login
+                `, "info");
+            } 
             else {
-                if (!isCommand) {
-                    processAnamnesisInfo(command);
-                }
+                appendOutput("Processando informações...", "info");
+                await processAnamnesisInfo(command);
             }
             
             commandInput.value = '';
         };
 
         // Event Listeners
-        commandInput.addEventListener('keypress', (e) => {
+        commandInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                const command = commandInput.value.trim();
-                processCommand(command);
+                processCommand(commandInput.value);
             }
         });
 
+        document.addEventListener('keydown', (e) => {
+            if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete' || e.key === ' ') {
+                commandInput.focus();
+            }
+        });
+
+        // Camera Event Listeners
         captureButton.addEventListener('click', capturePhoto);
         uploadButton.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileUpload);
@@ -3308,72 +3038,103 @@ História Psicossocial: ${anamnesisData.anamnesis?.hps || "Não informado"}
         cameraCloseBtn.addEventListener('click', stopCamera);
         cameraSwitchButton.addEventListener('click', switchCamera);
         flashlightButton.addEventListener('click', toggleFlashlight);
+
+        // Album Modal Event Listeners
         albumButton.addEventListener('click', openAlbumModal);
         albumModalClose.addEventListener('click', closeAlbumModal);
-
-        toggleAnamnesisButton.addEventListener('click', () => toggleMonitorView('anamnesis'));
-        toggleExamsButton.addEventListener('click', () => toggleMonitorView('exams'));
-        toggleAxonEyeButton.addEventListener('click', () => toggleMonitorView('axon-eye'));
-
-        // NOVOS EVENT LISTENERS
-        patientListClose.addEventListener('click', () => patientListModal.style.display = 'none');
-        patientDetailsClose.addEventListener('click', () => patientDetailsModal.style.display = 'none');
-        prevAnamnesisBtn.addEventListener('click', navigateToPreviousAnamnesis);
-        nextAnamnesisBtn.addEventListener('click', navigateToNextAnamnesis);
-
-        // Fechar modais ao clicar fora
-        window.addEventListener('click', (event) => {
-            if (event.target === patientListModal) {
-                patientListModal.style.display = 'none';
-            }
-            if (event.target === patientDetailsModal) {
-                patientDetailsModal.style.display = 'none';
-            }
+        albumModal.addEventListener('click', (event) => {
             if (event.target === albumModal) {
                 closeAlbumModal();
             }
         });
 
-        // Inicialização
-        const init = async () => {
-            // Verificar se há usuário logado
-            const savedUser = localStorage.getItem('axon_logged_in_user');
-            if (savedUser) {
+        // Monitor Toggle Buttons Event Listeners
+        toggleAnamnesisButton.addEventListener('click', () => toggleMonitorView('anamnesis'));
+        toggleExamsButton.addEventListener('click', () => toggleMonitorView('exams'));
+        toggleAxonEyeButton.addEventListener('click', () => toggleMonitorView('axon-eye'));
+
+        // NOVOS EVENT LISTENERS para modais de pacientes
+        patientListClose.addEventListener('click', () => {
+            patientListModal.style.display = 'none';
+        });
+
+        patientDetailsClose.addEventListener('click', () => {
+            patientDetailsModal.style.display = 'none';
+        });
+
+        patientListModal.addEventListener('click', (event) => {
+            if (event.target === patientListModal) {
+                patientListModal.style.display = 'none';
+            }
+        });
+
+        patientDetailsModal.addEventListener('click', (event) => {
+            if (event.target === patientDetailsModal) {
+                patientDetailsModal.style.display = 'none';
+            }
+        });
+
+        if (isSpeechRecognitionSupported()) {
+            initSpeechRecognition();
+        } else {
+            appendOutput("Reconhecimento de voz não suportado neste navegador.", "error", false);
+        }
+
+        // Apply mobile text abbreviations
+        if (isMobile) {
+            statusTextApi.textContent = 'API';
+            statusTextMic.textContent = 'Micro';
+            statusTextCam.textContent = 'Cam';
+        }
+
+        setInterval(() => {
+            apiStatus.style.backgroundColor = apiStatus.style.backgroundColor === 'var(--success-color)' ? 
+                'var(--error-color)' : 'var(--success-color)';
+        }, 3000);
+
+        // Função para restaurar o login ao carregar a página
+        const restoreLogin = async () => {
+            const storedUser = localStorage.getItem('axon_logged_in_user');
+            if (storedUser) {
                 isLoggedIn = true;
-                currentUser = savedUser;
-                appendOutput(`Login automático realizado para ${currentUser}. Digite /help para ver os comandos disponíveis.`, "success");
+                currentUser = storedUser;
+                appendOutput(`Login recuperado para o usuário '${currentUser}'.`, "success");
+                initialMessagesContainer.innerHTML = `
+                    <pre class="info">
+ █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
+██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
+███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
+██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
+██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                    </pre>
+                    <span class="info">Axon - Assistente Médico v1.0</span><br>
+                    <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
+                `;
                 initialMessagesContainer.style.display = 'none';
+                appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
                 setupFirebaseListener(currentUser);
-            }
-
-            // Inicializar reconhecimento de voz se suportado
-            if (isSpeechRecognitionSupported()) {
-                initSpeechRecognition();
-            } else {
-                appendOutput("Reconhecimento de voz não suportado neste navegador.", "info");
-                micStatus.classList.add('status-off');
-            }
-
-            // Verificar status da API
-            await initializeAIModel();
-
-            // Verificar permissões de câmera
-            try {
-                await navigator.mediaDevices.getUserMedia({ video: true });
-                cameraStatus.classList.remove('status-off');
-            } catch (err) {
-                cameraStatus.classList.add('status-off');
-            }
-
-            // Ajustar texto para mobile
-            if (isMobile) {
-                statusTextApi.textContent = '';
-                statusTextMic.textContent = '';
-                statusTextCam.textContent = '';
+                toggleMonitorView('anamnesis');
             }
         };
 
-        init();
+        window.onload = async () => {
+            await initializeAIModel();
+            await restoreLogin();
+        };
+
+        // PWA: Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registrado com sucesso:', registration);
+                    })
+                    .catch(error => {
+                        console.error('Falha no registro do Service Worker:', error);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
