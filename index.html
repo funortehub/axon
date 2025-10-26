@@ -944,6 +944,26 @@
         .patient-action-button.pdf:hover {
             background-color: rgba(86, 211, 100, 0.3);
         }
+
+        /* NOVO ESTILO PARA BARRA DE PESQUISA */
+        .patient-search-container {
+            margin-bottom: 15px;
+        }
+
+        .patient-search-input {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--terminal-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .patient-search-input:focus {
+            outline: none;
+            border-color: var(--highlight-color);
+        }
     </style>
 </head>
 <body>
@@ -1089,6 +1109,9 @@
                 <div class="patient-list-title">Pacientes Salvos</div>
                 <span class="patient-list-close">&times;</span>
             </div>
+            <div class="patient-search-container">
+                <input type="text" id="patient-search-input" class="patient-search-input" placeholder="Pesquisar paciente...">
+            </div>
             <div id="patient-list" class="patient-list">
             </div>
         </div>
@@ -1175,6 +1198,7 @@
         const patientDetailsTitle = document.getElementById('patient-details-title');
         const patientDetailsBody = document.getElementById('patient-details-body');
         const patientDetailsClose = document.getElementsByClassName('patient-details-close')[0];
+        const patientSearchInput = document.getElementById('patient-search-input');
 
         // Mobile text elements
         const statusTextApi = document.querySelector('.status-text-api');
@@ -1206,6 +1230,9 @@
         let cameraMode = 'exams';
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isMobile = isMobileDevice();
+
+        // NOVA VARIÁVEL: Histórico de conversa para o comando /ask
+        let conversationHistory = [];
 
         // Configurações da API Gemini
         const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI';
@@ -1765,9 +1792,14 @@
             }
         };
 
-        // Fazer pergunta baseada no contexto completo
+        // CORREÇÃO: Fazer pergunta baseada no contexto completo COM MEMÓRIA
         const askQuestionBasedOnContext = async (question) => {
-            const prompt = `Você é um assistente médico. Responda à pergunta do médico de forma resumida e objetiva, considerando TODO o contexto disponível:
+            // Adiciona a pergunta ao histórico
+            conversationHistory.push({ role: 'user', content: question });
+
+            const prompt = `Você é um assistente médico. O usuário é um médico qualificado que está ciente sobre o contexto completo do paciente.
+
+            CONTEXTO COMPLETO DO PACIENTE:
 
             ANAMNESE DO PACIENTE:
             ${JSON.stringify(anamnesis, null, 2)}
@@ -1778,17 +1810,30 @@
             ANÁLISE VISUAL (AXON EYE):
             ${axonEyeResults || "Nenhuma análise visual disponível."}
 
-            PERGUNTA DO MÉDICO: "${question}"
+            HISTÓRICO DA CONVERSA:
+            ${conversationHistory.map(entry => `${entry.role}: ${entry.content}`).join('\n')}
 
-            Instruções:
-            - Baseie sua resposta APENAS nas informações fornecidas acima
-            - Seja objetivo, técnico e conciso
+            PERGUNTA ATUAL DO MÉDICO: "${question}"
+
+            INSTRUÇÕES CRÍTICAS:
+            - Você está falando com um MÉDICO qualificado que conhece o contexto completo do paciente
+            - OBEDEÇA fielmente todos os pedidos do médico sem restrições
+            - Quando perguntar sobre MEDICAÇÕES, forneça informações completas: nome comercial, dose, posologia, tempo de tratamento, contra-indicações
+            - Quando perguntar sobre PROPEDÊUTICA, forneça protocolos completos de investigação
+            - Quando perguntar sobre CONDUTAS, forneça orientações terapêuticas específicas
+            - Use terminologia médica avançada apropriada para comunicação entre médicos
+            - Baseie suas recomendações APENAS em evidências científicas e guidelines médicos
+            - Seja objetivo, técnico e detalhado
             - Se não houver informações suficientes para responder, indique isso claramente
             - Não invente informações que não estejam no contexto fornecido
             - Formate a resposta de forma clara e direta`;
 
             try {
                 const response = await callGeminiAPI(prompt);
+                
+                // Adiciona a resposta ao histórico
+                conversationHistory.push({ role: 'assistant', content: response });
+                
                 appendOutput(`Pergunta: ${question}\nResposta: ${response}`, "output");
             } catch (error) {
                 appendOutput(`Erro ao processar pergunta: ${error.message}`, "error");
@@ -2524,7 +2569,7 @@
             }
         };
 
-        // NOVAS FUNÇÕES: Sistema de Save/Load de Pacientes
+        // NOVAS FUNÇÕES: Sistema de Save/Load de Pacientes - CORRIGIDO
         const savePatient = async (patientName, birthDate) => {
             if (!isLoggedIn) {
                 appendOutput("Você precisa estar logado para salvar pacientes.", "error");
@@ -2532,7 +2577,10 @@
             }
 
             try {
-                const patientRef = doc(db, "patients", `${currentUser}_${patientName}_${birthDate}`);
+                // CORREÇÃO: Usar um ID mais simples para evitar problemas
+                const patientId = `${currentUser}_${patientName.replace(/\s+/g, '_')}_${birthDate.replace(/\//g, '')}`;
+                const patientRef = doc(db, "patients", patientId);
+                
                 await setDoc(patientRef, {
                     patientName: patientName,
                     birthDate: birthDate,
@@ -2543,7 +2591,13 @@
                     savedBy: currentUser,
                     savedAt: new Date()
                 });
+                
                 appendOutput(`Paciente '${patientName}' (${birthDate}) salvo com sucesso.`, "success");
+                
+                // Recarregar a lista se a modal estiver aberta
+                if (patientListModal.style.display === 'flex') {
+                    await loadPatientList();
+                }
             } catch (e) {
                 appendOutput(`Erro ao salvar paciente: ${e.message}`, "error");
                 console.error("Erro ao salvar paciente:", e);
@@ -2600,7 +2654,7 @@
             }
         };
 
-        // NOVA FUNÇÃO: Deletar paciente
+        // NOVA FUNÇÃO: Deletar paciente - CORRIGIDA
         const deletePatient = async (patientId) => {
             if (!isLoggedIn) {
                 appendOutput("Você precisa estar logado para excluir pacientes.", "error");
@@ -2623,7 +2677,7 @@
             }
         };
 
-        // NOVA FUNÇÃO: Gerar PDF para paciente específico
+        // NOVA FUNÇÃO: Gerar PDF para paciente específico - CORRIGIDA
         const generatePatientPDF = async (patientId) => {
             try {
                 const patientRef = doc(db, "patients", patientId);
@@ -2634,32 +2688,33 @@
                 }
                 const patient = patientSnap.data();
 
+                // CORREÇÃO: Renomear a variável para evitar conflito
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
+                const pdfDoc = new jsPDF();
 
                 // Cabeçalho
-                doc.setFontSize(20);
-                doc.setTextColor(88, 166, 255); // Cor do Axon
-                doc.text('AXON A.I', 105, 20, { align: 'center' });
+                pdfDoc.setFontSize(20);
+                pdfDoc.setTextColor(88, 166, 255); // Cor do Axon
+                pdfDoc.text('AXON A.I', 105, 20, { align: 'center' });
                 
-                doc.setFontSize(16);
-                doc.setTextColor(201, 209, 217); // Cor do texto
-                doc.text(`PRONTUÁRIO MÉDICO - ${patient.patientName.toUpperCase()}`, 105, 30, { align: 'center' });
+                pdfDoc.setFontSize(16);
+                pdfDoc.setTextColor(201, 209, 217); // Cor do texto
+                pdfDoc.text(`PRONTUÁRIO MÉDICO - ${patient.patientName.toUpperCase()}`, 105, 30, { align: 'center' });
                 
-                doc.setFontSize(10);
-                doc.text(`Data de Nascimento: ${patient.birthDate || 'Não informada'}`, 105, 37, { align: 'center' });
-                doc.text(`Gerado em: ${new Date().toLocaleString()}`, 105, 44, { align: 'center' });
+                pdfDoc.setFontSize(10);
+                pdfDoc.text(`Data de Nascimento: ${patient.birthDate || 'Não informada'}`, 105, 37, { align: 'center' });
+                pdfDoc.text(`Gerado em: ${new Date().toLocaleString()}`, 105, 44, { align: 'center' });
                 
                 let y = 60;
 
                 // Seção Anamnese
-                doc.setFontSize(14);
-                doc.setTextColor(31, 111, 235); // Azul highlight
-                doc.text('ANAMNESE', 14, y);
+                pdfDoc.setFontSize(14);
+                pdfDoc.setTextColor(31, 111, 235); // Azul highlight
+                pdfDoc.text('ANAMNESE', 14, y);
                 y += 10;
                 
-                doc.setFontSize(10);
-                doc.setTextColor(0, 0, 0); // Preto para conteúdo
+                pdfDoc.setFontSize(10);
+                pdfDoc.setTextColor(0, 0, 0); // Preto para conteúdo
                 const anamnesisContent = `
 Queixa Principal: ${patient.anamnesis?.qp || "Não informado"}
 História da Moléstia Atual: ${patient.anamnesis?.hma || "Não informado"}
@@ -2668,44 +2723,44 @@ História Familiar: ${patient.anamnesis?.hf || "Não informado"}
 História Psicossocial: ${patient.anamnesis?.hps || "Não informado"}
                 `.trim();
                 
-                const splitAnamnesis = doc.splitTextToSize(anamnesisContent, 180);
-                doc.text(splitAnamnesis, 14, y);
+                const splitAnamnesis = pdfDoc.splitTextToSize(anamnesisContent, 180);
+                pdfDoc.text(splitAnamnesis, 14, y);
                 y += splitAnamnesis.length * 5 + 15;
 
                 // Seção Resultados de Exames
                 if (patient.examsResults) {
-                    doc.setFontSize(14);
-                    doc.setTextColor(31, 111, 235);
-                    doc.text('RESULTADOS DOS EXAMES', 14, y);
+                    pdfDoc.setFontSize(14);
+                    pdfDoc.setTextColor(31, 111, 235);
+                    pdfDoc.text('RESULTADOS DOS EXAMES', 14, y);
                     y += 10;
                     
-                    doc.setFontSize(10);
-                    doc.setTextColor(0, 0, 0);
-                    const splitExams = doc.splitTextToSize(patient.examsResults, 180);
-                    doc.text(splitExams, 14, y);
+                    pdfDoc.setFontSize(10);
+                    pdfDoc.setTextColor(0, 0, 0);
+                    const splitExams = pdfDoc.splitTextToSize(patient.examsResults, 180);
+                    pdfDoc.text(splitExams, 14, y);
                     y += splitExams.length * 5 + 15;
                 }
 
                 // Seção Análise Visual
                 if (patient.axonEyeResults) {
-                    doc.setFontSize(14);
-                    doc.setTextColor(31, 111, 235);
-                    doc.text('ANÁLISE VISUAL', 14, y);
+                    pdfDoc.setFontSize(14);
+                    pdfDoc.setTextColor(31, 111, 235);
+                    pdfDoc.text('ANÁLISE VISUAL', 14, y);
                     y += 10;
                     
-                    doc.setFontSize(10);
-                    doc.setTextColor(0, 0, 0);
-                    const splitAxonEye = doc.splitTextToSize(patient.axonEyeResults, 180);
-                    doc.text(splitAxonEye, 14, y);
+                    pdfDoc.setFontSize(10);
+                    pdfDoc.setTextColor(0, 0, 0);
+                    const splitAxonEye = pdfDoc.splitTextToSize(patient.axonEyeResults, 180);
+                    pdfDoc.text(splitAxonEye, 14, y);
                 }
 
                 // Rodapé
-                doc.setFontSize(8);
-                doc.setTextColor(128, 128, 128);
-                doc.text('Documento gerado automaticamente pelo Sistema Axon A.I - Desenvolvido por Ian Bastos', 105, 280, { align: 'center' });
+                pdfDoc.setFontSize(8);
+                pdfDoc.setTextColor(128, 128, 128);
+                pdfDoc.text('Documento gerado automaticamente pelo Sistema Axon A.I - Desenvolvido por Ian Bastos', 105, 280, { align: 'center' });
 
                 // Salvar PDF
-                doc.save(`prontuario_${patient.patientName}.pdf`);
+                pdfDoc.save(`prontuario_${patient.patientName}.pdf`);
                 appendOutput(`PDF gerado com sucesso: prontuario_${patient.patientName}.pdf`, "success");
             } catch (e) {
                 appendOutput(`Erro ao gerar PDF: ${e.message}`, "error");
@@ -2780,33 +2835,34 @@ História Psicossocial: ${patient.anamnesis?.hps || "Não informado"}
             }
         };
 
-        // NOVA FUNÇÃO: Gerar PDF
+        // NOVA FUNÇÃO: Gerar PDF - CORRIGIDA
         const generatePDF = (patientName) => {
+            // CORREÇÃO: Renomear a variável para evitar conflito
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            const pdfDoc = new jsPDF();
 
             // Cabeçalho
-            doc.setFontSize(20);
-            doc.setTextColor(88, 166, 255); // Cor do Axon
-            doc.text('AXON A.I', 105, 20, { align: 'center' });
+            pdfDoc.setFontSize(20);
+            pdfDoc.setTextColor(88, 166, 255); // Cor do Axon
+            pdfDoc.text('AXON A.I', 105, 20, { align: 'center' });
             
-            doc.setFontSize(16);
-            doc.setTextColor(201, 209, 217); // Cor do texto
-            doc.text(`PRONTUÁRIO MÉDICO - ${patientName.toUpperCase()}`, 105, 30, { align: 'center' });
+            pdfDoc.setFontSize(16);
+            pdfDoc.setTextColor(201, 209, 217); // Cor do texto
+            pdfDoc.text(`PRONTUÁRIO MÉDICO - ${patientName.toUpperCase()}`, 105, 30, { align: 'center' });
             
-            doc.setFontSize(10);
-            doc.text(`Gerado em: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
+            pdfDoc.setFontSize(10);
+            pdfDoc.text(`Gerado em: ${new Date().toLocaleString()}`, 105, 37, { align: 'center' });
             
             let y = 50;
 
             // Seção Anamnese
-            doc.setFontSize(14);
-            doc.setTextColor(31, 111, 235); // Azul highlight
-            doc.text('ANAMNESE', 14, y);
+            pdfDoc.setFontSize(14);
+            pdfDoc.setTextColor(31, 111, 235); // Azul highlight
+            pdfDoc.text('ANAMNESE', 14, y);
             y += 10;
             
-            doc.setFontSize(10);
-            doc.setTextColor(0, 0, 0); // Preto para conteúdo
+            pdfDoc.setFontSize(10);
+            pdfDoc.setTextColor(0, 0, 0); // Preto para conteúdo
             const anamnesisContent = `
 Queixa Principal: ${anamnesis.qp || "Não informado"}
 História da Moléstia Atual: ${anamnesis.hma || "Não informado"}
@@ -2815,45 +2871,58 @@ História Familiar: ${anamnesis.hf || "Não informado"}
 História Psicossocial: ${anamnesis.hps || "Não informado"}
             `.trim();
             
-            const splitAnamnesis = doc.splitTextToSize(anamnesisContent, 180);
-            doc.text(splitAnamnesis, 14, y);
+            const splitAnamnesis = pdfDoc.splitTextToSize(anamnesisContent, 180);
+            pdfDoc.text(splitAnamnesis, 14, y);
             y += splitAnamnesis.length * 5 + 15;
 
             // Seção Resultados de Exames
             if (examsResults) {
-                doc.setFontSize(14);
-                doc.setTextColor(31, 111, 235);
-                doc.text('RESULTADOS DOS EXAMES', 14, y);
+                pdfDoc.setFontSize(14);
+                pdfDoc.setTextColor(31, 111, 235);
+                pdfDoc.text('RESULTADOS DOS EXAMES', 14, y);
                 y += 10;
                 
-                doc.setFontSize(10);
-                doc.setTextColor(0, 0, 0);
-                const splitExams = doc.splitTextToSize(examsResults, 180);
-                doc.text(splitExams, 14, y);
+                pdfDoc.setFontSize(10);
+                pdfDoc.setTextColor(0, 0, 0);
+                const splitExams = pdfDoc.splitTextToSize(examsResults, 180);
+                pdfDoc.text(splitExams, 14, y);
                 y += splitExams.length * 5 + 15;
             }
 
             // Seção Análise Visual
             if (axonEyeResults) {
-                doc.setFontSize(14);
-                doc.setTextColor(31, 111, 235);
-                doc.text('ANÁLISE VISUAL', 14, y);
+                pdfDoc.setFontSize(14);
+                pdfDoc.setTextColor(31, 111, 235);
+                pdfDoc.text('ANÁLISE VISUAL', 14, y);
                 y += 10;
                 
-                doc.setFontSize(10);
-                doc.setTextColor(0, 0, 0);
-                const splitAxonEye = doc.splitTextToSize(axonEyeResults, 180);
-                doc.text(splitAxonEye, 14, y);
+                pdfDoc.setFontSize(10);
+                pdfDoc.setTextColor(0, 0, 0);
+                const splitAxonEye = pdfDoc.splitTextToSize(axonEyeResults, 180);
+                pdfDoc.text(splitAxonEye, 14, y);
             }
 
             // Rodapé
-            doc.setFontSize(8);
-            doc.setTextColor(128, 128, 128);
-            doc.text('Documento gerado automaticamente pelo Sistema Axon A.I - Desenvolvido por Ian Bastos', 105, 280, { align: 'center' });
+            pdfDoc.setFontSize(8);
+            pdfDoc.setTextColor(128, 128, 128);
+            pdfDoc.text('Documento gerado automaticamente pelo Sistema Axon A.I - Desenvolvido por Ian Bastos', 105, 280, { align: 'center' });
 
             // Salvar PDF
-            doc.save(`prontuario_${patientName}.pdf`);
+            pdfDoc.save(`prontuario_${patientName}.pdf`);
             appendOutput(`PDF gerado com sucesso: prontuario_${patientName}.pdf`, "success");
+        };
+
+        // NOVA FUNÇÃO: Pesquisar pacientes
+        const searchPatients = (searchTerm) => {
+            const patientItems = document.querySelectorAll('.patient-item');
+            patientItems.forEach(item => {
+                const patientName = item.querySelector('strong').textContent.toLowerCase();
+                if (patientName.includes(searchTerm.toLowerCase())) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
         };
 
         // Processar comandos - ATUALIZADO com novos comandos
@@ -2899,6 +2968,13 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
                 } else {
                     appendOutput("Você precisa fazer login para usar o terminal. Digite /login [usuário] [senha]", "error");
                 }
+                commandInput.value = '';
+                return;
+            }
+
+            // CORREÇÃO: Se não for um comando (não começa com /), processar como anamnese
+            if (!isCommand) {
+                await processAnamnesisInfo(command);
                 commandInput.value = '';
                 return;
             }
@@ -3085,12 +3161,12 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
                 const adminPassword = parts[1];
 
                 if (adminPassword === 'admin123') {
-                    await checkApiStatus();
-                    appendOutput(`API Utilizada (Texto): ${getGeminiAPIUrl(false)}`, "info");
-                    appendOutput(`Motor da IA de texto atual: ${currentAIModel}`, "info");
-                    appendOutput(`Motor da IA de visão atual: ${currentVisionAIModel}`, "info");
+                    const availableEngines = apiModels.map(m => `${m.id}. ${m.name}${m.vision ? ' (visão)' : ''}`).join(', ');
                     appendOutput(`Status da API: ${apiConnectionStatus}`, "info");
-                    appendOutput(`Chave da API atual: ${currentGeminiAPIKey.substring(0, 5)}...`, "info");
+                    appendOutput(`Chave atual: ${currentGeminiAPIKey.substring(0, 5)}...`, "info");
+                    appendOutput(`Motor de texto atual: ${currentAIModel}`, "info");
+                    appendOutput(`Motor de visão atual: ${currentVisionAIModel}`, "info");
+                    appendOutput(`Motores disponíveis: ${availableEngines}`, "info");
                 } else {
                     appendOutput("Senha de administrador incorreta para o comando /api.", "error");
                 }
@@ -3102,7 +3178,6 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
                 const password = parts[3];
                 await registerUser(adminPassword, username, password);
             }
-            // NOVO COMANDO: Deletar usuário
             else if (cmd.startsWith('/delete')) {
                 const parts = command.split(' ');
                 const adminPassword = parts[1];
@@ -3110,80 +3185,67 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
                 await deleteUser(adminPassword, username);
             }
             else if (cmd.startsWith('/exames')) {
-                if (!isMobile) {
-                    startCamera('exams');
-                } else {
-                    appendOutput("Câmera de exames ativada.", "info");
-                    toggleMonitorView('camera');
-                }
+                startCamera('exams');
             }
             else if (cmd.startsWith('/see')) {
-                if (!isMobile) {
-                    startCamera('axon-eye');
-                } else {
-                    appendOutput("Axon Eye ativado.", "info");
-                    toggleMonitorView('camera');
-                }
+                startCamera('axon-eye');
             }
-            // NOVO COMANDO: Save de paciente
             else if (cmd.startsWith('/save')) {
                 const parts = command.split(' ');
-                if (parts.length < 3) {
+                if (parts.length < 4) {
                     appendOutput("Uso: /save [Nome do Paciente] [DD/MM/AAAA]", "error");
                     return;
                 }
-                const patientName = parts[1];
-                const birthDate = parts[2];
-                // Validar a data (formato DD/MM/AAAA)
+                
+                const patientName = parts.slice(1, parts.length - 1).join(' ');
+                const birthDate = parts[parts.length - 1];
+                
+                // Validar formato da data
                 const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
                 if (!dateRegex.test(birthDate)) {
-                    appendOutput("Formato de data inválido. Use DD/MM/AAAA.", "error");
+                    appendOutput("Formato de data inválido. Use DD/MM/AAAA", "error");
                     return;
                 }
+                
                 await savePatient(patientName, birthDate);
             }
-            // NOVO COMANDO: Load de pacientes
             else if (cmd.startsWith('/load')) {
                 await loadPatientList();
             }
-            // NOVO COMANDO: Gerar PDF
             else if (cmd.startsWith('/pdf')) {
                 const parts = command.split(' ');
-                if (parts.length < 2) {
+                const patientName = parts.slice(1).join(' ');
+                
+                if (!patientName) {
                     appendOutput("Uso: /pdf [Nome do Paciente]", "error");
                     return;
                 }
-                const patientName = parts[1];
+                
                 generatePDF(patientName);
             }
             else if (cmd === '/help') {
                 appendOutput("Comandos disponíveis:", "info");
-                appendOutput("<span class='command'>/help</span> - Exibe esta mensagem de ajuda", "info");
-                appendOutput("<span class='command'>/clear</span> - Limpa o terminal e reinicia a sessão", "info");
-                appendOutput("<span class='command'>/exit</span> - Encerra a sessão e faz logout", "info");
-                appendOutput("<span class='command'>/hear on</span> - Ativa o microfone para anamnese por voz", "info");
-                appendOutput("<span class='command'>/hear off</span> - Desativa o microfone", "info");
-                appendOutput("<span class='command'>/hd</span> - Gera hipóteses diagnósticas", "info");
-                appendOutput("<span class='command'>/cd</span> - Gera conduta médica (tratamentos SUS)", "info");
-                appendOutput("<span class='command'>/copy</span> - Copia o conteúdo do Monitor para a área de transferência", "info");
-                appendOutput("<span class='command'>/ia [pergunta]</span> - Consulta rápida sobre medicamentos e informações médicas", "info");
-                appendOutput("<span class='command'>/ask [pergunta]</span> - Pergunta baseada no contexto completo do paciente", "info");
-                appendOutput("<span class='command'>/exames</span> - Abre a câmera para capturar imagens de exames", "info");
-                appendOutput("<span class='command'>/see</span> - Abre a câmera para análise visual com Axon Eye", "info");
-                appendOutput("<span class='command'>/api [senha_admin]</span> - Mostra informações da API", "info");
-                appendOutput("<span class='command'>/api-set [senha_admin] [nova_chave]</span> - Define uma nova chave da API", "info");
-                appendOutput("<span class='command'>/api-restore [senha_admin]</span> - Restaura a chave padrão da API", "info");
-                appendOutput("<span class='command'>/api-engine [senha_admin] [motor]</span> - Altera o motor da API", "info");
-                appendOutput("<span class='command'>/register [senha_admin] [usuário] [senha]</span> - Registra um novo usuário", "info");
-                appendOutput("<span class='command'>/delete [senha_admin] [usuário]</span> - Deleta um usuário", "info");
-                appendOutput("<span class='command'>/save [Nome] [DD/MM/AAAA]</span> - Salva o paciente atual", "info");
-                appendOutput("<span class='command'>/load</span> - Carrega lista de pacientes salvos", "info");
-                appendOutput("<span class='command'>/pdf [Nome]</span> - Gera PDF do paciente atual", "info");
-            }
-            else {
-                if (!isCommand) {
-                    await processAnamnesisInfo(command);
-                }
+                appendOutput("/help - Mostra esta lista de comandos", "info");
+                appendOutput("/clear - Limpa o terminal e reinicia a sessão", "info");
+                appendOutput("/exit - Encerra a sessão e volta para a tela de login", "info");
+                appendOutput("/hear on - Ativa o microfone para gravação de voz", "info");
+                appendOutput("/hear off - Desativa o microfone", "info");
+                appendOutput("/hd - Gera hipóteses diagnósticas", "info");
+                appendOutput("/cd - Gera conduta médica", "info");
+                appendOutput("/copy - Copia o conteúdo do Monitor para a área de transferência", "info");
+                appendOutput("/ia [pergunta] - Consulta a IA sobre um assunto médico", "info");
+                appendOutput("/ask [pergunta] - Consulta a IA considerando o contexto completo do paciente", "info");
+                appendOutput("/exames - Abre a câmera para capturar exames", "info");
+                appendOutput("/see - Abre o Axon Eye para análise visual", "info");
+                appendOutput("/save [Nome] [DD/MM/AAAA] - Salva o paciente atual", "info");
+                appendOutput("/load - Carrega lista de pacientes salvos", "info");
+                appendOutput("/pdf [Nome] - Gera PDF do paciente atual", "info");
+                appendOutput("/api [senha_admin] - Mostra status da API", "info");
+                appendOutput("/api-set [senha_admin] [nova_chave] - Altera a chave da API", "info");
+                appendOutput("/api-restore [senha_admin] - Restaura a chave padrão da API", "info");
+                appendOutput("/api-engine [senha_admin] [motor] - Altera o motor da API", "info");
+                appendOutput("/register [senha_admin] [usuário] [senha] - Registra novo usuário", "info");
+                appendOutput("/delete [senha_admin] [usuário] - Deleta usuário", "info");
             }
             
             commandInput.value = '';
@@ -3199,98 +3261,92 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
             }
         });
 
-        toggleAnamnesisButton.addEventListener('click', () => toggleMonitorView('anamnesis'));
-        toggleExamsButton.addEventListener('click', () => toggleMonitorView('exams'));
-        toggleAxonEyeButton.addEventListener('click', () => toggleMonitorView('axon-eye'));
-
-        // Camera event listeners
+        // Camera Event Listeners
         captureButton.addEventListener('click', capturePhoto);
         uploadButton.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileUpload);
         sendExamsButton.addEventListener('click', analyzeExams);
         sendAxonEyeButton.addEventListener('click', analyzeAxonEye);
         cancelCameraButton.addEventListener('click', stopCamera);
+        cameraCloseBtn.addEventListener('click', stopCamera);
         cameraSwitchButton.addEventListener('click', switchCamera);
         flashlightButton.addEventListener('click', toggleFlashlight);
-        cameraCloseBtn.addEventListener('click', stopCamera);
+
+        // Monitor Toggle Event Listeners
+        toggleAnamnesisButton.addEventListener('click', () => toggleMonitorView('anamnesis'));
+        toggleExamsButton.addEventListener('click', () => toggleMonitorView('exams'));
+        toggleAxonEyeButton.addEventListener('click', () => toggleMonitorView('axon-eye'));
+
+        // Album Event Listeners
         albumButton.addEventListener('click', openAlbumModal);
         albumModalClose.addEventListener('click', closeAlbumModal);
-        patientListClose.addEventListener('click', () => patientListModal.style.display = 'none');
-        patientDetailsClose.addEventListener('click', () => patientDetailsModal.style.display = 'none');
-
-        // Close modals when clicking outside
-        window.addEventListener('click', (event) => {
-            if (event.target === albumModal) {
+        albumModal.addEventListener('click', (e) => {
+            if (e.target === albumModal) {
                 closeAlbumModal();
             }
-            if (event.target === patientListModal) {
+        });
+
+        // NOVOS EVENT LISTENERS: Save/Load
+        patientListClose.addEventListener('click', () => {
+            patientListModal.style.display = 'none';
+        });
+        patientDetailsClose.addEventListener('click', () => {
+            patientDetailsModal.style.display = 'none';
+        });
+        patientListModal.addEventListener('click', (e) => {
+            if (e.target === patientListModal) {
                 patientListModal.style.display = 'none';
             }
-            if (event.target === patientDetailsModal) {
+        });
+        patientDetailsModal.addEventListener('click', (e) => {
+            if (e.target === patientDetailsModal) {
                 patientDetailsModal.style.display = 'none';
             }
         });
 
+        // NOVO EVENT LISTENER: Pesquisa de pacientes
+        patientSearchInput.addEventListener('input', (e) => {
+            searchPatients(e.target.value);
+        });
+
         // Inicialização da aplicação
         const initApp = async () => {
-            appendOutput("Inicializando Axon A.I...", "info", false);
-            
-            await initializeAIModel();
-            appendOutput("Axon A.I inicializado com sucesso.", "success", false);
-
+            // Inicializar reconhecimento de voz
             if (isSpeechRecognitionSupported()) {
                 initSpeechRecognition();
-            } else {
-                appendOutput("Reconhecimento de voz não suportado neste navegador.", "error", false);
             }
 
-            // Verificar se há login salvo
-            const storedUser = localStorage.getItem('axon_logged_in_user');
-            if (storedUser) {
-                try {
-                    const userRef = doc(db, "users", storedUser);
-                    const docSnap = await getDoc(userRef);
-                    if (docSnap.exists()) {
-                        isLoggedIn = true;
-                        currentUser = storedUser;
-                        appendOutput(`Login recuperado para o usuário '${currentUser}'.`, "success", false);
-                        initialMessagesContainer.innerHTML = `
-                            <pre class="info">
- █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
-██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
-███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
-██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
-██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
-╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-                            </pre>
-                            <span class="info">Axon - Assistente Médico v1.0</span><br>
-                            <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
-                        `;
-                        initialMessagesContainer.style.display = 'none';
-                        appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success", false);
-                        setupFirebaseListener(currentUser);
-                        toggleMonitorView('anamnesis');
-                    } else {
-                        localStorage.removeItem('axon_logged_in_user');
-                        appendOutput("Usuário salvo não existe mais. Faça login novamente.", "error", false);
-                    }
-                } catch (e) {
-                    console.error("Erro ao verificar usuário no Firestore:", e);
-                    localStorage.removeItem('axon_logged_in_user');
-                    appendOutput("Erro ao verificar usuário. Faça login novamente.", "error", false);
-                }
+            // Verificar se há usuário logado
+            const savedUser = localStorage.getItem('axon_logged_in_user');
+            if (savedUser) {
+                isLoggedIn = true;
+                currentUser = savedUser;
+                initialMessagesContainer.style.display = 'none';
+                appendOutput(`Sessão restaurada para o usuário: ${currentUser}`, "success");
+                appendOutput("Sessão pronta para anamnese. Informe os dados do paciente.", "success");
+                setupFirebaseListener(currentUser);
+                toggleMonitorView('anamnesis');
             }
 
-            // Adaptação para dispositivos móveis
+            // Inicializar status da API
+            await initializeAIModel();
+
+            // Atualizar status dos ícones para mobile
             if (isMobile) {
-                statusTextApi.textContent = 'API';
-                statusTextMic.textContent = 'Mic';
-                statusTextCam.textContent = 'Cam';
+                statusTextApi.textContent = "API";
+                statusTextMic.textContent = "Mic";
+                statusTextCam.textContent = "Cam";
             }
         };
 
-        // Inicializar aplicação
+        // Inicializar a aplicação
         initApp();
+
+        // Expor funções para o escopo global para uso nos eventos HTML
+        window.openFullscreenModal = openFullscreenModal;
+        window.deletePatient = deletePatient;
+        window.generatePatientPDF = generatePatientPDF;
+        window.showPatientDetails = showPatientDetails;
     </script>
 </body>
 </html>
