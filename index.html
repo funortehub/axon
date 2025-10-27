@@ -3156,20 +3156,12 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
                     appendOutput("Senha de administrador incorreta para o comando /api-engine.", "error");
                 }
             }
-            else if (cmd.startsWith('/api')) {
-                const parts = command.split(' ');
-                const adminPassword = parts[1];
-
-                if (adminPassword === 'admin123') {
-                    const availableEngines = apiModels.map(m => `${m.id}. ${m.name}${m.vision ? ' (visão)' : ''}`).join(', ');
-                    appendOutput(`Status da API: ${apiConnectionStatus}`, "info");
-                    appendOutput(`Chave atual: ${currentGeminiAPIKey.substring(0, 5)}...`, "info");
-                    appendOutput(`Motor de texto atual: ${currentAIModel}`, "info");
-                    appendOutput(`Motor de visão atual: ${currentVisionAIModel}`, "info");
-                    appendOutput(`Motores disponíveis: ${availableEngines}`, "info");
-                } else {
-                    appendOutput("Senha de administrador incorreta para o comando /api.", "error");
-                }
+            else if (cmd === '/api') {
+                const availableEngines = apiModels.map(m => `${m.id}. ${m.name} (${m.vision ? 'visão' : 'texto'})`).join(', ');
+                appendOutput(`Status da API: ${apiConnectionStatus}`, "info");
+                appendOutput(`Motor de texto atual: ${currentAIModel}`, "info");
+                appendOutput(`Motor de visão atual: ${currentVisionAIModel}`, "info");
+                appendOutput(`Motores disponíveis: ${availableEngines}`, "info");
             }
             else if (cmd.startsWith('/register')) {
                 const parts = command.split(' ');
@@ -3184,68 +3176,62 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
                 const username = parts[2];
                 await deleteUser(adminPassword, username);
             }
-            else if (cmd.startsWith('/exames')) {
-                startCamera('exams');
+            else if (cmd === '/help') {
+                appendOutput("Comandos disponíveis:", "info");
+                appendOutput("/login [usuário] [senha] - Fazer login no sistema", "info");
+                appendOutput("/hear on - Ativar reconhecimento de voz para anamnese", "info");
+                appendOutput("/hear off - Desativar reconhecimento de voz", "info");
+                appendOutput("/hd - Gerar hipóteses diagnósticas", "info");
+                appendOutput("/cd - Gerar conduta médica (SUS)", "info");
+                appendOutput("/ia [pergunta] - Fazer uma pergunta à IA médica", "info");
+                appendOutput("/ask [pergunta] - Fazer uma pergunta contextual ao paciente", "info");
+                appendOutput("/exames - Abrir câmera para exames", "info");
+                appendOutput("/see - Abrir câmera para Axon Eye", "info");
+                appendOutput("/copy - Copiar conteúdo do Monitor para área de transferência", "info");
+                appendOutput("/save [nome_do_paciente] [data_nascimento] - Salvar paciente atual", "info");
+                appendOutput("/load - Carregar lista de pacientes salvos", "info");
+                appendOutput("/pdf [nome_do_paciente] - Gerar PDF do prontuário", "info");
+                appendOutput("/api - Ver status da API", "info");
+                appendOutput("/api-set [senha_admin] [nova_chave] - Alterar chave da API", "info");
+                appendOutput("/api-restore [senha_admin] - Restaurar chave padrão da API", "info");
+                appendOutput("/api-engine [senha_admin] [motor] - Alterar motor da API", "info");
+                appendOutput("/register [senha_admin] [usuário] [senha] - Registrar novo usuário", "info");
+                appendOutput("/delete [senha_admin] [usuário] - Deletar usuário", "info");
+                appendOutput("/clear - Limpar terminal e dados atuais", "info");
+                appendOutput("/exit - Encerrar sessão", "info");
             }
-            else if (cmd.startsWith('/see')) {
-                startCamera('axon-eye');
+            else if (cmd === '/exames') {
+                await startCamera('exams');
+            }
+            else if (cmd === '/see') {
+                await startCamera('axon-eye');
             }
             else if (cmd.startsWith('/save')) {
                 const parts = command.split(' ');
-                if (parts.length < 4) {
-                    appendOutput("Uso: /save [Nome do Paciente] [DD/MM/AAAA]", "error");
-                    return;
-                }
-                
                 const patientName = parts.slice(1, parts.length - 1).join(' ');
                 const birthDate = parts[parts.length - 1];
                 
-                // Validar formato da data
-                const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
-                if (!dateRegex.test(birthDate)) {
-                    appendOutput("Formato de data inválido. Use DD/MM/AAAA", "error");
+                if (!patientName || !birthDate) {
+                    appendOutput("Uso: /save [nome_do_paciente] [data_nascimento]", "error");
                     return;
                 }
                 
                 await savePatient(patientName, birthDate);
             }
-            else if (cmd.startsWith('/load')) {
+            else if (cmd === '/load') {
                 await loadPatientList();
             }
             else if (cmd.startsWith('/pdf')) {
-                const parts = command.split(' ');
-                const patientName = parts.slice(1).join(' ');
-                
+                const patientName = command.substring(4).trim();
                 if (!patientName) {
-                    appendOutput("Uso: /pdf [Nome do Paciente]", "error");
+                    appendOutput("Uso: /pdf [nome_do_paciente]", "error");
                     return;
                 }
                 
                 generatePDF(patientName);
             }
-            else if (cmd === '/help') {
-                appendOutput("Comandos disponíveis:", "info");
-                appendOutput("/help - Mostra esta lista de comandos", "info");
-                appendOutput("/clear - Limpa o terminal e reinicia a sessão", "info");
-                appendOutput("/exit - Encerra a sessão e volta para a tela de login", "info");
-                appendOutput("/hear on - Ativa o microfone para gravação de voz", "info");
-                appendOutput("/hear off - Desativa o microfone", "info");
-                appendOutput("/hd - Gera hipóteses diagnósticas", "info");
-                appendOutput("/cd - Gera conduta médica", "info");
-                appendOutput("/copy - Copia o conteúdo do Monitor para a área de transferência", "info");
-                appendOutput("/ia [pergunta] - Consulta a IA sobre um assunto médico", "info");
-                appendOutput("/ask [pergunta] - Consulta a IA considerando o contexto completo do paciente", "info");
-                appendOutput("/exames - Abre a câmera para capturar exames", "info");
-                appendOutput("/see - Abre o Axon Eye para análise visual", "info");
-                appendOutput("/save [Nome] [DD/MM/AAAA] - Salva o paciente atual", "info");
-                appendOutput("/load - Carrega lista de pacientes salvos", "info");
-                appendOutput("/pdf [Nome] - Gera PDF do paciente atual", "info");
-                appendOutput("/api [senha_admin] - Mostra status da API", "info");
-                appendOutput("/api-set [senha_admin] [nova_chave] - Altera a chave da API", "info");
-                appendOutput("/api-restore [senha_admin] - Restaura a chave padrão da API", "info");
-                appendOutput("/api-engine [senha_admin] [motor] - Altera o motor da API", "info");
-                appendOutput("/register [senha_admin] [usuário] [senha] - Registra novo usuário", "info");
-                appendOutput("/delete [senha_admin] [usuário] - Deleta usuário", "info");
+            else {
+                appendOutput(`Comando '${command}' não reconhecido. Digite /help para ver os comandos disponíveis.`, "error");
             }
             
             commandInput.value = '';
@@ -3254,62 +3240,65 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
         // Event Listeners
         commandInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                const command = commandInput.value.trim();
-                if (command) {
-                    processCommand(command);
-                }
+                processCommand(commandInput.value);
             }
         });
 
-        // Camera Event Listeners
         captureButton.addEventListener('click', capturePhoto);
         uploadButton.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileUpload);
         sendExamsButton.addEventListener('click', analyzeExams);
         sendAxonEyeButton.addEventListener('click', analyzeAxonEye);
         cancelCameraButton.addEventListener('click', stopCamera);
-        cameraCloseBtn.addEventListener('click', stopCamera);
         cameraSwitchButton.addEventListener('click', switchCamera);
         flashlightButton.addEventListener('click', toggleFlashlight);
+        cameraCloseBtn.addEventListener('click', stopCamera);
 
-        // Monitor Toggle Event Listeners
         toggleAnamnesisButton.addEventListener('click', () => toggleMonitorView('anamnesis'));
         toggleExamsButton.addEventListener('click', () => toggleMonitorView('exams'));
         toggleAxonEyeButton.addEventListener('click', () => toggleMonitorView('axon-eye'));
 
-        // Album Event Listeners
         albumButton.addEventListener('click', openAlbumModal);
         albumModalClose.addEventListener('click', closeAlbumModal);
-        albumModal.addEventListener('click', (e) => {
-            if (e.target === albumModal) {
+        albumModal.addEventListener('click', (event) => {
+            if (event.target === albumModal) {
                 closeAlbumModal();
             }
         });
 
-        // NOVOS EVENT LISTENERS: Save/Load
+        // NOVOS EVENT LISTENERS para os modais de pacientes
         patientListClose.addEventListener('click', () => {
             patientListModal.style.display = 'none';
         });
+
         patientDetailsClose.addEventListener('click', () => {
             patientDetailsModal.style.display = 'none';
         });
-        patientListModal.addEventListener('click', (e) => {
-            if (e.target === patientListModal) {
+
+        patientListModal.addEventListener('click', (event) => {
+            if (event.target === patientListModal) {
                 patientListModal.style.display = 'none';
             }
         });
-        patientDetailsModal.addEventListener('click', (e) => {
-            if (e.target === patientDetailsModal) {
+
+        patientDetailsModal.addEventListener('click', (event) => {
+            if (event.target === patientDetailsModal) {
                 patientDetailsModal.style.display = 'none';
             }
         });
 
-        // NOVO EVENT LISTENER: Pesquisa de pacientes
         patientSearchInput.addEventListener('input', (e) => {
             searchPatients(e.target.value);
         });
 
-        // Inicialização da aplicação
+        // Atualizar textos para mobile
+        if (isMobile) {
+            statusTextApi.textContent = "API";
+            statusTextMic.textContent = "Mic";
+            statusTextCam.textContent = "Cam";
+        }
+
+        // Inicializar aplicação
         const initApp = async () => {
             // Inicializar reconhecimento de voz
             if (isSpeechRecognitionSupported()) {
@@ -3339,14 +3328,8 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
             }
         };
 
-        // Inicializar a aplicação
+        // Inicializar aplicação
         initApp();
-
-        // Expor funções para o escopo global para uso nos eventos HTML
-        window.openFullscreenModal = openFullscreenModal;
-        window.deletePatient = deletePatient;
-        window.generatePatientPDF = generatePatientPDF;
-        window.showPatientDetails = showPatientDetails;
     </script>
 </body>
 </html>
