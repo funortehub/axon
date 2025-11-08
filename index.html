@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -1259,10 +1260,6 @@
             return isVision ? apiModels.find(m => m.vision)?.urlBuilder(currentGeminiAPIKey) || apiModels[0].urlBuilder(currentGeminiAPIKey) : apiModels[0].urlBuilder(currentGeminiAPIKey);
         };
 
-        // Imgur API
-        const IMGUR_CLIENT_ID = '4ae8b96c539d446';
-        const IMGUR_ACCESS_TOKEN = '898e039bb7db651c7b94f4d104a60aae3f5c6ff0';
-
         // Comandos válidos - ATUALIZADO com novos comandos
         const validCommands = [
             '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
@@ -1486,9 +1483,9 @@
                 formattedResults = examsResults.split('\n')
                     .filter(line => line.trim() !== '')
                     .map(line => {
-                        if (line.includes('(Alterado)') || line.includes('(Anormal)')) {
-                            const cleanLine = line.replace(/\(Alterado\)/g, '').replace(/\(Anormal\)/g, '').trim();
-                            return `<div class="output">${cleanLine} <span class="altered-text">(Alterado)</span></div>`;
+                        if (line.includes('(ALTERADO)') || line.includes('(ANORMAL)')) {
+                            const cleanLine = line.replace(/\(ALTERADO\)/g, '').replace(/\(ANORMAL\)/g, '').trim();
+                            return `<div class="output">${cleanLine} <span class="altered-text">(ALTERADO)</span></div>`;
                         }
                         return `<div class="output">${line.trim()}</div>`;
                     })
@@ -1513,7 +1510,7 @@
             }
 
             if (axonEyeResults) {
-                const impressionRegex = /(Impressão Diagnóstica|Interpretação Clínica|Diagnósticos Diferenciais):\s*(.*)/i;
+                const impressionRegex = /(IMPRESSÃO DIAGNÓSTICA|INTERPRETAÇÃO CLÍNICA|DIAGNÓSTICOS DIFERENCIAIS):\s*(.*)/i;
                 let match = axonEyeResults.match(impressionRegex);
 
                 if (match) {
@@ -1688,14 +1685,15 @@
             5. Mantenha as informações das OUTRAS seções INALTERADAS, a menos que a nova informação as afete diretamente.
             6. Seja objetivo, conciso e use terminologia médica apropriada.
             7. Formate a resposta EXCLUSIVAMENTE como um objeto JSON, contendo TODAS as chaves da anamnese (qp, hma, hp, hf, hps), mesmo que algumas permaneçam vazias ou inalteradas.
+            8. TODO O TEXTO DENTRO DOS VALORES DO JSON DEVE ESTAR EM CAIXA ALTA (UPPERCASE).
 
             Exemplo de resposta esperada (apenas o JSON):
             {
-              "qp": "Dor de cabeça pulsátil há 3 dias, com piora progressiva.",
-              "hma": "O paciente relata febre baixa associada e náuseas. Iniciou com dor leve e evoluiu para intensa.",
-              "hp": "Hipertensão arterial controlada com captopril 25mg. Nega diabetes.",
-              "hf": "Mãe com história de enxaqueca. Pai falecido por infarto.",
-              "hps": "Trabalha como professor, casado, dois filhos."
+              "qp": "DOR DE CABEÇA PULSÁTIL HÁ 3 DIAS, COM PIORA PROGRESSIVA.",
+              "hma": "O PACIENTE RELATA FEBRE BAIXA ASSOCIADA E NÁUSEAS. INICIOU COM DOR LEVE E EVOLUIU PARA INTENSA.",
+              "hp": "HIPERTENSÃO ARTERIAL CONTROLADA COM CAPTOPRIL 25MG. NEGA DIABETES.",
+              "hf": "MÃE COM HISTÓRIA DE ENXAQUECA. PAI FALECIDO POR INFARTO.",
+              "hps": "TRABALHA COMO PROFESSOR, CASADO, DOIS FILHOS."
             }`;
 
             try {
@@ -1704,14 +1702,14 @@
                 const jsonStart = response.indexOf('{');
                 const jsonEnd = response.lastIndexOf('}') + 1;
                 const jsonString = response.substring(jsonStart, jsonEnd);
-                const updatedAnamnesis = JSON.parse(jsonString);
+                const parsedAnamnesis = JSON.parse(jsonString);
                 
                 anamnesis = {
-                    qp: updatedAnamnesis.qp || "",
-                    hma: updatedAnamnesis.hma || "",
-                    hp: updatedAnamnesis.hp || "",
-                    hf: updatedAnamnesis.hf || "",
-                    hps: updatedAnamnesis.hps || ""
+                    qp: (parsedAnamnesis.qp || "").toUpperCase(),
+                    hma: (parsedAnamnesis.hma || "").toUpperCase(),
+                    hp: (parsedAnamnesis.hp || "").toUpperCase(),
+                    hf: (parsedAnamnesis.hf || "").toUpperCase(),
+                    hps: (parsedAnamnesis.hps || "").toUpperCase()
                 };
                 
                 updateAnamnesisPreview();
@@ -2435,36 +2433,6 @@
             }
         };
 
-        const uploadImageToImgur = async (imageDataURL, index, total) => {
-            appendOutput(`Enviando imagens aos servidores Axon... (${index + 1}/${total} - ${Math.round(((index + 1) / total) * 100)}%)`, "info");
-            try {
-                const base64Image = imageDataURL.split(',')[1];
-                const formData = new FormData();
-                formData.append('image', base64Image);
-                formData.append('type', 'base64');
-
-                const response = await fetch('https://api.imgur.com/3/image', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Client-ID ${IMGUR_CLIENT_ID}`
-                    },
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(`Erro ao fazer upload para o Imgur: ${response.status} - ${errorData.data.error || 'Erro desconhecido'}`);
-                }
-
-                const data = await response.json();
-                return data.data.link;
-            } catch (error) {
-                appendOutput(`Falha ao enviar imagem para o Imgur: ${error.message}`, "error");
-                console.error("Imgur upload error:", error);
-                throw error;
-            }
-        };
-
         const analyzeExams = async () => {
             if (capturedImages.length === 0) {
                 appendOutput("Nenhuma imagem de exame para analisar.", "info");
@@ -2479,14 +2447,7 @@
             toggleMonitorView('exams');
 
             try {
-                const imgurLinks = [];
-                for (let i = 0; i < capturedImages.length; i++) {
-                    const imageDataURL = capturedImages[i];
-                    const link = await uploadImageToImgur(imageDataURL, i, capturedImages.length);
-                    imgurLinks.push(link);
-                }
-                appendOutput("Todas as imagens enviadas com sucesso.", "success");
-                appendOutput("Axon medical está analisando suas imagens...", "info");
+                appendOutput("Enviando imagens para análise do Axon...", "info");
 
                 const prompt = `Você é um assistente médico. Analise as imagens de exames laboratoriais ou de imagem fornecidas.
                 Para cada exame, retorne os resultados de forma resumida e objetiva em formato de tópicos, sem símbolos como asterisco ou traços.
@@ -2497,14 +2458,15 @@
                 Raio-X de Tórax: Sem alterações significativas
                 (Anormal) Tomografia de Crânio: Lesão expansiva em lobo frontal esquerdo.
                 
-                Retorne apenas a lista de resultados, sem introdução ou conclusão.`;
+                Retorne apenas a lista de resultados, sem introdução ou conclusão.
+                TODO O TEXTO DA RESPOSTA DEVE ESTAR EM CAIXA ALTA (UPPERCASE).`;
 
                 const response = await callGeminiVisionAPI(capturedImages, prompt);
 
                 if (examsResults) {
                     examsResults += `<br><div class="section-title">NOVOS RESULTADOS:</div>`;
                 }
-                examsResults += response;
+                examsResults += response.toUpperCase();
                 
                 updateExamsResultsPreview();
                 appendOutput("Análise de exames concluída.", "success");
@@ -2513,7 +2475,7 @@
                 updateAlbumCount();
             } catch (error) {
                 appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
-                examsResults = '<div class="error">Erro ao analisar exames.</div>';
+                examsResults = '<div class="error">ERRO AO ANALISAR EXAMES.</div>';
                 updateExamsResultsPreview();
             }
         };
@@ -2532,14 +2494,7 @@
             toggleMonitorView('axon-eye');
 
             try {
-                const imgurLinks = [];
-                for (let i = 0; i < capturedImages.length; i++) {
-                    const imageDataURL = capturedImages[i];
-                    const link = await uploadImageToImgur(imageDataURL, i, capturedImages.length);
-                    imgurLinks.push(link);
-                }
-                appendOutput("Todas as imagens enviadas com sucesso.", "success");
-                appendOutput("Axon Eye está analisando suas imagens...", "info");
+                appendOutput("Enviando imagens para análise do Axon Eye...", "info");
 
                 const prompt = `Você é um assistente médico. Analise as imagens fornecidas e forneça uma opinião clínica detalhada.
                 Não inclua a data da análise em sua resposta.
@@ -2548,14 +2503,15 @@
                 Se for uma imagem de um sintoma (ex: inchaço, vermelhidão), descreva o sintoma e suas possíveis causas.
                 Ao final da sua análise, inclua uma seção com o título "Impressão Diagnóstica:" ou "Interpretação Clínica:" ou "Diagnósticos Diferenciais:" (escolha o mais apropriado para o contexto da imagem), seguida de um parágrafo conciso com sua conclusão ou as principais hipóteses.
                 Seja o mais descritivo e clinicamente relevante possível.
-                Retorne a análise de forma clara e concisa, como um relatório ou parecer.`;
+                Retorne a análise de forma clara e concisa, como um relatório ou parecer.
+                TODO O TEXTO DA RESPOSTA DEVE ESTAR EM CAIXA ALTA (UPPERCASE).`;
 
                 const response = await callGeminiVisionAPI(capturedImages, prompt);
 
                 if (axonEyeResults) {
                     axonEyeResults += `<br><div class="section-title">NOVA ANÁLISE:</div>`;
                 }
-                axonEyeResults += response;
+                axonEyeResults += response.toUpperCase();
                 
                 updateAxonEyeResultsPreview();
                 appendOutput("Análise Axon Eye concluída.", "success");
@@ -2564,7 +2520,7 @@
                 updateAlbumCount();
             } catch (error) {
                 appendOutput(`Erro ao analisar com Axon Eye: ${error.message}`, "error");
-                axonEyeResults = '<div class="error">Erro ao analisar com Axon Eye.</div>';
+                axonEyeResults = '<div class="error">ERRO AO ANALISAR COM AXON EYE.</div>';
                 updateAxonEyeResultsPreview();
             }
         };
