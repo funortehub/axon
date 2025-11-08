@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -1483,9 +1482,9 @@
                 formattedResults = examsResults.split('\n')
                     .filter(line => line.trim() !== '')
                     .map(line => {
-                        if (line.includes('(ALTERADO)') || line.includes('(ANORMAL)')) {
-                            const cleanLine = line.replace(/\(ALTERADO\)/g, '').replace(/\(ANORMAL\)/g, '').trim();
-                            return `<div class="output">${cleanLine} <span class="altered-text">(ALTERADO)</span></div>`;
+                        if (line.includes('(Alterado)') || line.includes('(Anormal)')) {
+                            const cleanLine = line.replace(/\(Alterado\)/g, '').replace(/\(Anormal\)/g, '').trim();
+                            return `<div class="output">${cleanLine} <span class="altered-text">(Alterado)</span></div>`;
                         }
                         return `<div class="output">${line.trim()}</div>`;
                     })
@@ -1510,7 +1509,7 @@
             }
 
             if (axonEyeResults) {
-                const impressionRegex = /(IMPRESSÃO DIAGNÓSTICA|INTERPRETAÇÃO CLÍNICA|DIAGNÓSTICOS DIFERENCIAIS):\s*(.*)/i;
+                const impressionRegex = /(Impressão Diagnóstica|Interpretação Clínica|Diagnósticos Diferenciais):\s*(.*)/i;
                 let match = axonEyeResults.match(impressionRegex);
 
                 if (match) {
@@ -1685,15 +1684,14 @@
             5. Mantenha as informações das OUTRAS seções INALTERADAS, a menos que a nova informação as afete diretamente.
             6. Seja objetivo, conciso e use terminologia médica apropriada.
             7. Formate a resposta EXCLUSIVAMENTE como um objeto JSON, contendo TODAS as chaves da anamnese (qp, hma, hp, hf, hps), mesmo que algumas permaneçam vazias ou inalteradas.
-            8. TODO O TEXTO DENTRO DOS VALORES DO JSON DEVE ESTAR EM CAIXA ALTA (UPPERCASE).
 
             Exemplo de resposta esperada (apenas o JSON):
             {
-              "qp": "DOR DE CABEÇA PULSÁTIL HÁ 3 DIAS, COM PIORA PROGRESSIVA.",
-              "hma": "O PACIENTE RELATA FEBRE BAIXA ASSOCIADA E NÁUSEAS. INICIOU COM DOR LEVE E EVOLUIU PARA INTENSA.",
-              "hp": "HIPERTENSÃO ARTERIAL CONTROLADA COM CAPTOPRIL 25MG. NEGA DIABETES.",
-              "hf": "MÃE COM HISTÓRIA DE ENXAQUECA. PAI FALECIDO POR INFARTO.",
-              "hps": "TRABALHA COMO PROFESSOR, CASADO, DOIS FILHOS."
+              "qp": "Dor de cabeça pulsátil há 3 dias, com piora progressiva.",
+              "hma": "O paciente relata febre baixa associada e náuseas. Iniciou com dor leve e evoluiu para intensa.",
+              "hp": "Hipertensão arterial controlada com captopril 25mg. Nega diabetes.",
+              "hf": "Mãe com história de enxaqueca. Pai falecido por infarto.",
+              "hps": "Trabalha como professor, casado, dois filhos."
             }`;
 
             try {
@@ -1702,14 +1700,14 @@
                 const jsonStart = response.indexOf('{');
                 const jsonEnd = response.lastIndexOf('}') + 1;
                 const jsonString = response.substring(jsonStart, jsonEnd);
-                const parsedAnamnesis = JSON.parse(jsonString);
+                const updatedAnamnesis = JSON.parse(jsonString);
                 
                 anamnesis = {
-                    qp: (parsedAnamnesis.qp || "").toUpperCase(),
-                    hma: (parsedAnamnesis.hma || "").toUpperCase(),
-                    hp: (parsedAnamnesis.hp || "").toUpperCase(),
-                    hf: (parsedAnamnesis.hf || "").toUpperCase(),
-                    hps: (parsedAnamnesis.hps || "").toUpperCase()
+                    qp: updatedAnamnesis.qp || "",
+                    hma: updatedAnamnesis.hma || "",
+                    hp: updatedAnamnesis.hp || "",
+                    hf: updatedAnamnesis.hf || "",
+                    hps: updatedAnamnesis.hps || ""
                 };
                 
                 updateAnamnesisPreview();
@@ -2447,7 +2445,7 @@
             toggleMonitorView('exams');
 
             try {
-                appendOutput("Enviando imagens para análise do Axon...", "info");
+                appendOutput(`Enviando ${capturedImages.length} imagem(ns) diretamente para a I.A...`, "info");
 
                 const prompt = `Você é um assistente médico. Analise as imagens de exames laboratoriais ou de imagem fornecidas.
                 Para cada exame, retorne os resultados de forma resumida e objetiva em formato de tópicos, sem símbolos como asterisco ou traços.
@@ -2458,15 +2456,14 @@
                 Raio-X de Tórax: Sem alterações significativas
                 (Anormal) Tomografia de Crânio: Lesão expansiva em lobo frontal esquerdo.
                 
-                Retorne apenas a lista de resultados, sem introdução ou conclusão.
-                TODO O TEXTO DA RESPOSTA DEVE ESTAR EM CAIXA ALTA (UPPERCASE).`;
+                Retorne apenas a lista de resultados, sem introdução ou conclusão.`;
 
                 const response = await callGeminiVisionAPI(capturedImages, prompt);
 
                 if (examsResults) {
                     examsResults += `<br><div class="section-title">NOVOS RESULTADOS:</div>`;
                 }
-                examsResults += response.toUpperCase();
+                examsResults += response;
                 
                 updateExamsResultsPreview();
                 appendOutput("Análise de exames concluída.", "success");
@@ -2475,7 +2472,7 @@
                 updateAlbumCount();
             } catch (error) {
                 appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
-                examsResults = '<div class="error">ERRO AO ANALISAR EXAMES.</div>';
+                examsResults = '<div class="error">Erro ao analisar exames.</div>';
                 updateExamsResultsPreview();
             }
         };
@@ -2494,7 +2491,7 @@
             toggleMonitorView('axon-eye');
 
             try {
-                appendOutput("Enviando imagens para análise do Axon Eye...", "info");
+                appendOutput(`Enviando ${capturedImages.length} imagem(ns) diretamente para o Axon Eye...`, "info");
 
                 const prompt = `Você é um assistente médico. Analise as imagens fornecidas e forneça uma opinião clínica detalhada.
                 Não inclua a data da análise em sua resposta.
@@ -2503,15 +2500,14 @@
                 Se for uma imagem de um sintoma (ex: inchaço, vermelhidão), descreva o sintoma e suas possíveis causas.
                 Ao final da sua análise, inclua uma seção com o título "Impressão Diagnóstica:" ou "Interpretação Clínica:" ou "Diagnósticos Diferenciais:" (escolha o mais apropriado para o contexto da imagem), seguida de um parágrafo conciso com sua conclusão ou as principais hipóteses.
                 Seja o mais descritivo e clinicamente relevante possível.
-                Retorne a análise de forma clara e concisa, como um relatório ou parecer.
-                TODO O TEXTO DA RESPOSTA DEVE ESTAR EM CAIXA ALTA (UPPERCASE).`;
+                Retorne a análise de forma clara e concisa, como um relatório ou parecer.`;
 
                 const response = await callGeminiVisionAPI(capturedImages, prompt);
 
                 if (axonEyeResults) {
                     axonEyeResults += `<br><div class="section-title">NOVA ANÁLISE:</div>`;
                 }
-                axonEyeResults += response.toUpperCase();
+                axonEyeResults += response;
                 
                 updateAxonEyeResultsPreview();
                 appendOutput("Análise Axon Eye concluída.", "success");
@@ -2520,7 +2516,7 @@
                 updateAlbumCount();
             } catch (error) {
                 appendOutput(`Erro ao analisar com Axon Eye: ${error.message}`, "error");
-                axonEyeResults = '<div class="error">ERRO AO ANALISAR COM AXON EYE.</div>';
+                axonEyeResults = '<div class="error">Erro ao analisar com Axon Eye.</div>';
                 updateAxonEyeResultsPreview();
             }
         };
