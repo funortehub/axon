@@ -1617,13 +1617,13 @@
         const callGeminiVisionAPI = async (imageUrls, prompt, retryCount = 0) => {
             const maxRetries = 3;
             try {
-                const contents = imageUrls.map(url => ({
+                const imageParts = imageUrls.map(url => ({
                     inlineData: {
                         mimeType: 'image/jpeg',
                         data: url.split(',')[1]
                     }
                 }));
-                contents.push({ text: prompt });
+                const textPart = { text: prompt };
 
                 const response = await fetch(getGeminiAPIUrl(true), {
                     method: 'POST',
@@ -1632,7 +1632,7 @@
                     },
                     body: JSON.stringify({
                         contents: [{
-                            parts: contents.flatMap(c => c.inlineData ? [{ inlineData: c.inlineData }] : [{ text: c.text }])
+                            parts: [...imageParts, textPart]
                         }]
                     })
                 });
@@ -2445,7 +2445,7 @@
             toggleMonitorView('exams');
 
             try {
-                appendOutput(`Enviando ${capturedImages.length} imagem(ns) diretamente para a I.A...`, "info");
+                appendOutput("Analisando imagens diretamente com a A.I...", "info");
 
                 const prompt = `Você é um assistente médico. Analise as imagens de exames laboratoriais ou de imagem fornecidas.
                 Para cada exame, retorne os resultados de forma resumida e objetiva em formato de tópicos, sem símbolos como asterisco ou traços.
@@ -2491,7 +2491,7 @@
             toggleMonitorView('axon-eye');
 
             try {
-                appendOutput(`Enviando ${capturedImages.length} imagem(ns) diretamente para o Axon Eye...`, "info");
+                appendOutput("Analisando imagens diretamente com a A.I...", "info");
 
                 const prompt = `Você é um assistente médico. Analise as imagens fornecidas e forneça uma opinião clínica detalhada.
                 Não inclua a data da análise em sua resposta.
