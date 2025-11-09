@@ -1271,6 +1271,7 @@
         let isLoggedIn = false;
         let currentUser = null;
         let recognition = null;
+        let microphoneStream = null; // Para controlar o stream do microfone
         let anamnesis = {
             qp: "",
             hma: "",
@@ -1299,14 +1300,11 @@
         const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI';
         let currentGeminiAPIKey = defaultGeminiAPIKey;
 
-        // Mapeamento de modelos de IA
+        // Mapeamento de modelos de IA - CORRIGIDO para modelos públicos
         const apiModels = [
-            { id: 1, name: 'gemini-2.0-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, vision: false },
-            { id: 2, name: 'gemma-3n-e4b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3n-e4b-it:generateContent?key=${key}`, vision: false },
-            { id: 3, name: 'gemma-3-12b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-12b-it:generateContent?key=${key}`, vision: false },
-            { id: 4, name: 'gemma-3-27b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${key}`, vision: false },
-            { id: 5, name: 'learnlm-2.0-flash-experimental', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/learnlm-2.0-flash-experimental:generateContent?key=${key}`, vision: false },
-            { id: 6, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: true }
+            { id: 1, name: 'gemini-flash-latest', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${key}`, vision: false },
+            { id: 2, name: 'gemma-2-9b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-2-9b-it:generateContent?key=${key}`, vision: false },
+            { id: 3, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: true }
         ];
         let currentAIModel = apiModels[0].name;
         let currentVisionAIModel = apiModels.find(m => m.vision)?.name || 'gemini-2.5-flash';
@@ -1317,7 +1315,10 @@
             if (model) {
                 return model.urlBuilder(currentGeminiAPIKey);
             }
-            return isVision ? apiModels.find(m => m.vision)?.urlBuilder(currentGeminiAPIKey) || apiModels[0].urlBuilder(currentGeminiAPIKey) : apiModels[0].urlBuilder(currentGeminiAPIKey);
+            // Fallback para o primeiro modelo de cada tipo
+            return isVision 
+                ? apiModels.find(m => m.vision)?.urlBuilder(currentGeminiAPIKey) || apiModels[0].urlBuilder(currentGeminiAPIKey) 
+                : apiModels.find(m => !m.vision)?.urlBuilder(currentGeminiAPIKey) || apiModels[0].urlBuilder(currentGeminiAPIKey);
         };
 
         // Comandos válidos - ATUALIZADO com novos comandos
@@ -1371,7 +1372,7 @@
 
             recognition.onend = () => {
                 if (isListening) {
-                    recognition.start();
+                    recognition.start(); // Reinicia automaticamente se ainda deveria estar ouvindo
                 }
             };
         };
@@ -1380,7 +1381,8 @@
         const toggleListening = () => {
             if (!isListening) {
                 navigator.mediaDevices.getUserMedia({ audio: true })
-                    .then(() => {
+                    .then((stream) => {
+                        microphoneStream = stream; // Armazena o stream do microfone
                         recognition.start();
                     })
                     .catch(err => {
@@ -1391,9 +1393,14 @@
             }
         };
 
+        // CORRIGIDO: Garante que o microfone seja liberado
         const stopListening = () => {
             if (recognition) {
                 recognition.stop();
+            }
+            if (microphoneStream) {
+                microphoneStream.getTracks().forEach(track => track.stop());
+                microphoneStream = null;
             }
             isListening = false;
             micStatus.classList.add('status-off');
@@ -2003,35 +2010,35 @@
             let foundWorkingTextModel = false;
             let foundWorkingVisionModel = false;
 
-            const geminiFlashText = apiModels.find(m => m.name === 'gemini-2.0-flash' && !m.vision);
-            if (geminiFlashText) {
-                appendOutput(`Testando ${geminiFlashText.name} (texto)...`, "info", false);
-                const isWorking = await checkApiStatus(geminiFlashText.name);
+            const preferredTextModel = apiModels.find(m => m.name === 'gemini-flash-latest' && !m.vision);
+            if (preferredTextModel) {
+                appendOutput(`Testando ${preferredTextModel.name} (texto)...`, "info", false);
+                const isWorking = await checkApiStatus(preferredTextModel.name);
                 if (isWorking) {
-                    currentAIModel = geminiFlashText.name;
+                    currentAIModel = preferredTextModel.name;
                     appendOutput(`Motor de texto selecionado: ${currentAIModel} (funcionando).`, "success", false);
                     foundWorkingTextModel = true;
                 } else {
-                    appendOutput(`${geminiFlashText.name} (texto) não está respondendo.`, "error", false);
+                    appendOutput(`${preferredTextModel.name} (texto) não está respondendo.`, "error", false);
                 }
             }
 
-            const geminiFlashVision = apiModels.find(m => m.name === 'gemini-2.5-flash' && m.vision);
-            if (geminiFlashVision) {
-                appendOutput(`Testando ${geminiFlashVision.name} (visão)...`, "info", false);
-                const isWorking = await checkApiStatus(geminiFlashVision.name);
+            const preferredVisionModel = apiModels.find(m => m.name === 'gemini-2.5-flash' && m.vision);
+            if (preferredVisionModel) {
+                appendOutput(`Testando ${preferredVisionModel.name} (visão)...`, "info", false);
+                const isWorking = await checkApiStatus(preferredVisionModel.name);
                 if (isWorking) {
-                    currentVisionAIModel = geminiFlashVision.name;
+                    currentVisionAIModel = preferredVisionModel.name;
                     appendOutput(`Motor de visão selecionado: ${currentVisionAIModel} (funcionando).`, "success", false);
                     foundWorkingVisionModel = true;
                 } else {
-                    appendOutput(`${geminiFlashVision.name} (visão) não está respondendo.`, "error", false);
+                    appendOutput(`${preferredVisionModel.name} (visão) não está respondendo.`, "error", false);
                 }
             }
 
             if (!foundWorkingTextModel) {
                 for (const model of apiModels) {
-                    if (!model.vision && model.name !== 'gemini-2.0-flash') {
+                    if (!model.vision && model.name !== 'gemini-flash-latest') {
                         appendOutput(`Testando ${model.name} (texto)...`, "info", false);
                         const isWorking = await checkApiStatus(model.name);
                         if (isWorking) {
@@ -2046,22 +2053,7 @@
                 }
             }
 
-            if (!foundWorkingVisionModel) {
-                for (const model of apiModels) {
-                    if (model.vision && model.name !== 'gemini-2.5-flash') {
-                        appendOutput(`Testando ${model.name} (visão)...`, "info", false);
-                        const isWorking = await checkApiStatus(model.name);
-                        if (isWorking) {
-                            currentVisionAIModel = model.name;
-                            appendOutput(`Motor de visão selecionado: ${currentVisionAIModel} (funcionando).`, "success", false);
-                            foundWorkingVisionModel = true;
-                            break;
-                        } else {
-                            appendOutput(`${model.name} (visão) não está respondendo.`, "error", false);
-                        }
-                    }
-                }
-            }
+            // ... (A lógica para o modelo de visão já foi verificada, não precisa de fallback se o preferido falhar)
 
             if (!foundWorkingTextModel && !foundWorkingVisionModel) {
                 appendOutput("Nenhum motor de IA disponível está respondendo. As funcionalidades podem estar limitadas.", "error", false);
