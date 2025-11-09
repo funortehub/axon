@@ -174,7 +174,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-top: 5px;
+            margin-top: 0;
         }
 
         .prompt {
@@ -394,7 +394,7 @@
             border-radius: 50%;
             cursor: pointer;
             font-size: 18px;
-            transition: background-color: 0.3s ease, transform: 0.2s ease;
+            transition: background-color 0.3s ease, transform 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -456,7 +456,7 @@
             cursor: pointer;
             font-size: 11px;
             font-family: 'Consolas', 'Courier New', monospace;
-            transition: background-color 0.2s;
+            transition: background-color: 0.2s;
             display: flex;
             align-items: center;
             gap: 5px;
@@ -493,7 +493,7 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 12px;
-            transition: background-color: 0.3s ease;
+            transition: background-color 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -964,6 +964,51 @@
             outline: none;
             border-color: var(--highlight-color);
         }
+
+        /* NOVOS ESTILOS PARA A BARRA DE AÇÕES MOBILE */
+        .terminal-footer {
+            padding: 8px 15px;
+            border-top: 1px solid var(--border-color);
+            background-color: #161b22;
+        }
+
+        .action-buttons-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+        }
+
+        .action-button {
+            background-color: var(--border-color);
+            color: var(--text-color);
+            border: 1px solid #444c56;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s, transform 0.1s;
+        }
+
+        .action-button:hover, .action-button:focus {
+            background-color: var(--highlight-color);
+            color: var(--bg-color);
+            outline: none;
+        }
+
+        .action-button:active {
+            transform: scale(0.95);
+        }
+
+        .action-button.active {
+            background-color: var(--success-color);
+            color: var(--bg-color);
+            box-shadow: 0 0 8px var(--success-color);
+        }
+
     </style>
 </head>
 <body>
@@ -1009,7 +1054,16 @@
                     <span class="info">Axon - Assistente Médico v1.0</span><br>
                     <span class="info">Para começar, digite </span><span class="command">/login [usuário] [senha]</span><span class="info">.</span><br><br>
                 </div>
-                <div class="input-line" style="position: relative; z-index: 1;">
+            </div>
+            <div class="terminal-footer">
+                <div class="action-buttons-container">
+                    <button id="btn-exames" class="action-button" title="Analisar Exames (/exames)"><i class="fas fa-file-medical-alt"></i></button>
+                    <button id="btn-see" class="action-button" title="Análise Visual Axon Eye (/see)"><i class="fas fa-eye"></i></button>
+                    <button id="btn-hd" class="action-button" title="Gerar Hipóteses Diagnósticas (/hd)"><i class="fas fa-lightbulb"></i></button>
+                    <button id="btn-cd" class="action-button" title="Gerar Conduta Médica (/cd)"><i class="fas fa-pills"></i></button>
+                    <button id="btn-mic" class="action-button" title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button>
+                </div>
+                <div class="input-line">
                     <span class="prompt">></span>
                     <input type="text" class="command-input" id="command-input" autocomplete="off" autofocus>
                 </div>
@@ -1190,6 +1244,13 @@
         const albumModalClose = document.getElementsByClassName('album-modal-close')[0];
         const albumGrid = document.getElementById('album-grid');
 
+        // Action buttons
+        const btnExames = document.getElementById('btn-exames');
+        const btnSee = document.getElementById('btn-see');
+        const btnHd = document.getElementById('btn-hd');
+        const btnCd = document.getElementById('btn-cd');
+        const btnMic = document.getElementById('btn-mic');
+
         // NOVOS ELEMENTOS PARA SAVE/LOAD
         const patientListModal = document.getElementById('patient-list-modal');
         const patientList = document.getElementById('patient-list');
@@ -1286,6 +1347,8 @@
             recognition.onstart = () => {
                 isListening = true;
                 micStatus.classList.remove('status-off');
+                btnMic.classList.add('active');
+                btnMic.innerHTML = '<i class="fas fa-microphone"></i>';
                 appendOutput("Microfone ativado. Gravando consulta...", "success");
                 if (isLoggedIn && currentUser) {
                     updateMonitorStateInFirestore(currentUser, { activeView: 'anamnesis' });
@@ -1334,6 +1397,8 @@
             }
             isListening = false;
             micStatus.classList.add('status-off');
+            btnMic.classList.remove('active');
+            btnMic.innerHTML = '<i class="fas fa-microphone-slash"></i>';
             appendOutput("Microfone desativado.", "info");
         };
 
@@ -1357,8 +1422,7 @@
                 outputElement.innerHTML = `<span class="${type}">${text}</span>`;
             }
             
-            const inputLine = interactiveOutput.querySelector('.input-line');
-            interactiveOutput.insertBefore(outputElement, inputLine);
+            interactiveOutput.appendChild(outputElement);
             interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
 
             if (logToFirebase && isLoggedIn && currentUser) {
@@ -1396,11 +1460,13 @@
 
         // Função para limpar o terminal interativo
         const resetInteractiveTerminal = (requireLogin = false) => {
+            const elementsToKeep = [initialMessagesContainer];
             Array.from(interactiveOutput.children).forEach(child => {
-                if (child !== initialMessagesContainer && !child.classList.contains('input-line') && !child.classList.contains('terminal-logo-internal')) {
+                if (!elementsToKeep.includes(child) && !child.classList.contains('terminal-logo-internal')) {
                     child.remove();
                 }
             });
+
             initialMessagesContainer.style.display = 'block';
             
             if (requireLogin) {
@@ -3215,6 +3281,19 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
         albumModal.addEventListener('click', (event) => {
             if (event.target === albumModal) {
                 closeAlbumModal();
+            }
+        });
+
+        // Event Listeners for Action Buttons
+        btnExames.addEventListener('click', () => processCommand('/exames'));
+        btnSee.addEventListener('click', () => processCommand('/see'));
+        btnHd.addEventListener('click', () => processCommand('/hd'));
+        btnCd.addEventListener('click', () => processCommand('/cd'));
+        btnMic.addEventListener('click', () => {
+            if (isListening) {
+                processCommand('/hear off');
+            } else {
+                processCommand('/hear on');
             }
         });
 
