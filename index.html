@@ -1137,7 +1137,7 @@
 ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
                     </pre>
                     <span class="info">Axon - Assistente Médico v1.0</span><br>
-                    <span class="info">Para começar, digite </span><span class="command">/login [usuário] [senha]</span><span class="info">.</span><br><br>
+                    <span class="info">Aguardando autenticação...</span><br><br>
                 </div>
             </div>
             <div class="terminal-footer">
@@ -1433,10 +1433,10 @@
             return fallbackModel.urlBuilder(currentGeminiAPIKey);
         };
 
-        // Comandos válidos - ATUALIZADO com novos comandos
+        // Comandos válidos - ATUALIZADO para remover /login
         const validCommands = [
             '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
-            '/ia', '/help', '/login', '/clear', '/api', '/api-set', '/api-restore', '/api-engine', '/register', '/exames', '/see', '/ask', '/delete', '/pdf', '/save', '/load'
+            '/ia', '/help', '/clear', '/api', '/api-set', '/api-restore', '/api-engine', '/register', '/exames', '/see', '/ask', '/delete', '/pdf', '/save', '/load'
         ];
 
         // Verificar suporte a reconhecimento de voz
@@ -1607,8 +1607,11 @@
 ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
                     </pre>
                     <span class="info">Axon - Assistente Médico v1.0</span><br>
-                    <span class="info">Para começar, digite </span><span class="command">/login [usuário] [senha]</span><span class="info">.</span><br><br>
+                    <span class="info">Aguardando autenticação...</span><br><br>
                 `;
+                // Exibe o modal de login
+                loginModal.style.display = 'flex';
+                loginModalUser.focus();
             } else {
                 initialMessagesContainer.innerHTML = `
                     <pre class="info">
@@ -1958,7 +1961,7 @@
                 
                 const formattedConduct = response
                     .replace(/Medicações:|Medicamentos:/gi, '<div class="conduct-title">MEDICAÇÕES (SUS):</div>')
-                    .replace(/Exames complementares|Exames:/gi, '<div class="conduct-title">EXAMES COMPLEMENTARES (SUS):</div>')
+                    .replace(/Exames complementares|Exames:/gi, '<div class="conduct-title">EXAMES COMPLEMENTAREs (SUS):</div>')
                     .replace(/Condutas não farmacológicas|Condutas não-farmacológicas:/gi, '<div class="conduct-title">CONDUTAS NÃO FARMACOLÓGICAS:</div>')
                     .replace(/Recomendações ao paciente|Recomendações:/gi, '<div class="conduct-title">RECOMENDAÇÕES:</div>')
                     .split('\n')
@@ -3089,7 +3092,7 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
             initializeAIModel(); 
         };
 
-        // Processar comandos - ATUALIZADO com novos comandos
+        // Processar comandos - ATUALIZADO para remover /login
         const processCommand = async (command) => {
             if (!command.trim()) return;
             
@@ -3098,21 +3101,10 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
             const cmd = command.trim().toLowerCase();
             const isCommand = cmd.startsWith('/');
 
-            // Lógica de login
+            // Lógica de login - ALTERADA
             if (!isLoggedIn) {
-                if (cmd.startsWith('/login')) {
-                    const parts = command.split(' ');
-                    const username = parts[1];
-                    const password = parts[2];
-
-                    if (await authenticateUser(username, password)) {
-                        handleSuccessfulLogin(username, false);
-                    } else {
-                        appendOutput("Usuário ou senha incorretos.", "error");
-                    }
-                } else {
-                    appendOutput("Você precisa fazer login para usar o terminal. Digite /login [usuário] [senha]", "error");
-                }
+                // Com o modal de login, nenhum comando deve ser processado antes do login
+                appendOutput("Por favor, faça o login através do pop-up para continuar.", "error");
                 commandInput.value = '';
                 return;
             }
@@ -3323,7 +3315,6 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
             }
             else if (cmd === '/help') {
                 appendOutput("Comandos disponíveis:", "info");
-                appendOutput("/login [usuário] [senha] - Fazer login no sistema", "info");
                 appendOutput("/hear on - Ativar reconhecimento de voz para anamnese", "info");
                 appendOutput("/hear off - Desativar reconhecimento de voz", "info");
                 appendOutput("/hd - Gerar hipóteses diagnósticas", "info");
@@ -3392,7 +3383,7 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
         captureButton.addEventListener('click', capturePhoto);
         uploadButton.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileUpload);
-        sendExamesButton.addEventListener('click', analyzeExams);
+        sendExamsButton.addEventListener('click', analyzeExams);
         sendAxonEyeButton.addEventListener('click', analyzeAxonEye);
         cancelCameraButton.addEventListener('click', stopCamera);
         cameraSwitchButton.addEventListener('click', switchCamera);
@@ -3488,7 +3479,7 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
             }
         });
 
-        // Inicializar aplicação
+        // Função de inicialização da aplicação
         const initApp = async () => {
             // Inicializar reconhecimento de voz
             if (isSpeechRecognitionSupported()) {
@@ -3514,8 +3505,9 @@ História Psicossocial: ${anamnesis.hps || "Não informado"}
             }
         };
 
-        // Inicializar aplicação
-        initApp();
+        // GARANTIR QUE O DOM ESTÁ PRONTO ANTES DE INICIAR
+        document.addEventListener('DOMContentLoaded', initApp);
+        
     </script>
 </body>
 </html>
