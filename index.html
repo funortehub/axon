@@ -899,17 +899,36 @@
             object-fit: cover;
             display: block;
         }
+        
+        /* ESTILOS PARA HISTÓRICO DE CONSULTAS */
+        .consultation-item {
+            background-color: #161b22;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .consultation-header {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .consultation-header:hover {
+            background-color: #21262d;
+        }
+        .consultation-body {
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            background-color: rgba(0,0,0,0.1);
+        }
 
+
+        /* NOVOS ESTILOS PARA BOTÕES DE AÇÃO NO PACIENTE */
         .patient-actions {
             display: flex;
             gap: 10px;
             margin-top: 10px;
-        }
-        
-        .patient-item .patient-actions {
-            margin-top: 15px;
-            padding-top: 10px;
-            border-top: 1px solid var(--border-color);
         }
 
         .patient-action-button {
@@ -928,32 +947,46 @@
             flex: 1;
         }
         
-        .patient-action-button.details {
-            flex: 2; /* Faz o botão de detalhes ser maior */
+        .patient-action-button.disabled {
+            background-color: #21262d;
+            color: #8b949e;
+            cursor: not-allowed;
+            opacity: 0.6;
         }
 
-        .patient-action-button:hover {
+        .patient-action-button:not(.disabled):hover {
             background-color: #444c56;
         }
 
-        .patient-action-button.delete {
+        .patient-action-button.delete:not(.disabled) {
             background-color: rgba(255, 0, 0, 0.2);
             color: var(--error-color);
         }
 
-        .patient-action-button.delete:hover {
+        .patient-action-button.delete:not(.disabled):hover {
             background-color: rgba(255, 0, 0, 0.3);
         }
 
-        .patient-action-button.pdf {
+        .patient-action-button.pdf:not(.disabled) {
             background-color: rgba(86, 211, 100, 0.2);
             color: var(--success-color);
         }
 
-        .patient-action-button.pdf:hover {
+        .patient-action-button.pdf:not(.disabled):hover {
             background-color: rgba(86, 211, 100, 0.3);
         }
+        
+        .patient-action-button.details:not(.disabled) {
+             background-color: rgba(88, 166, 255, 0.2);
+            color: var(--prompt-color);
+        }
+        
+        .patient-action-button.details:not(.disabled):hover {
+            background-color: rgba(88, 166, 255, 0.3);
+        }
 
+
+        /* NOVO ESTILO PARA BARRA DE PESQUISA */
         .patient-search-container {
             margin-bottom: 15px;
         }
@@ -973,6 +1006,7 @@
             border-color: var(--highlight-color);
         }
 
+        /* NOVOS ESTILOS PARA A BARRA DE AÇÕES MOBILE */
         .terminal-footer {
             padding: 8px 15px;
             border-top: 1px solid var(--border-color);
@@ -1016,6 +1050,7 @@
             box-shadow: 0 0 8px var(--success-color);
         }
 
+        /* NOVOS ESTILOS PARA O MODAL DE LOGIN (E SAVE) */
         .app-modal {
             display: none;
             position: fixed;
@@ -1100,6 +1135,7 @@
             min-height: 20px;
         }
 
+        /* Adicionando um botão de fechar genérico */
         .app-modal-close {
             position: absolute;
             top: 10px;
@@ -1112,39 +1148,6 @@
         .app-modal-close:hover {
             color: white;
         }
-        
-        /* Estilos para o Histórico de Consultas */
-        .consultation-history {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .consultation-item {
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        .consultation-header {
-            padding: 10px 15px;
-            background-color: #161b22;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .consultation-header:hover {
-            background-color: #21262d;
-        }
-
-        .consultation-body {
-            display: none;
-            padding: 15px;
-            background-color: rgba(0,0,0,0.2);
-        }
-
 
     </style>
 </head>
@@ -1360,7 +1363,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, where, arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -1479,6 +1482,7 @@
         let cameraMode = 'exams';
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isMobile = isMobileDevice();
+        let allPatients = [];
 
         let conversationHistory = [];
 
@@ -2015,6 +2019,7 @@
         };
 
         const deleteFromImgur = async (deleteHash) => {
+            if (!deleteHash) return;
             try {
                 await fetch(`https://api.imgur.com/3/image/${deleteHash}`, {
                     method: 'DELETE',
@@ -2147,40 +2152,44 @@
                 appendOutput("Você precisa estar logado.", "error");
                 return;
             }
-            savePatientFeedback.textContent = "Salvando...";
             savePatientButton.disabled = true;
-
+            savePatientFeedback.textContent = 'Salvando...';
+        
             try {
-                const patientId = `${currentUser}_${patientName.replace(/\s+/g, '_')}_${birthDate.replace(/\//g, '')}`;
+                const patientId = `${currentUser}_${patientName.replace(/\s+/g, '_').toLowerCase()}_${birthDate.replace(/\//g, '')}`;
                 const patientRef = doc(db, "patients", patientId);
-                const patientSnap = await getDoc(patientRef);
-
+        
                 const newConsultation = {
-                    savedAt: new Date(),
-                    anamnesis,
+                    date: new Date(),
+                    anamnesis: { ...anamnesis },
                     examsResults,
                     axonEyeResults,
-                    axonEyeImages: temporaryImgurUploads // Salva os links do Imgur da sessão atual
+                    axonEyeImages: [...temporaryImgurUploads], // Salva os links do Imgur para esta consulta
                 };
-
-                if (patientSnap.exists()) {
-                    // Paciente existe, adiciona nova consulta
+        
+                const docSnap = await getDoc(patientRef);
+        
+                if (docSnap.exists()) {
+                    const existingData = docSnap.data();
+                    const updatedConsultations = existingData.consultations ? [...existingData.consultations, newConsultation] : [newConsultation];
                     await updateDoc(patientRef, {
-                        consultations: arrayUnion(newConsultation)
+                        consultations: updatedConsultations,
+                        lastUpdated: new Date()
                     });
-                    appendOutput(`Nova consulta adicionada para o paciente '${patientName}'.`, "success");
+                    appendOutput(`Nova consulta salva para '${patientName}'.`, "success");
                 } else {
-                    // Paciente não existe, cria novo registro
                     await setDoc(patientRef, {
                         patientName,
                         birthDate,
                         savedBy: currentUser,
-                        consultations: [newConsultation]
+                        createdAt: new Date(),
+                        consultations: [newConsultation],
+                        lastUpdated: new Date()
                     });
-                    appendOutput(`Paciente '${patientName}' salvo com sucesso.`, "success");
+                    appendOutput(`Paciente '${patientName}' e primeira consulta salvos com sucesso.`, "success");
                 }
-                
-                temporaryImgurUploads = []; // Limpa os temporários após salvar com sucesso
+        
+                temporaryImgurUploads = []; // Limpa os temporários APÓS salvar com sucesso
                 closeSaveModal();
             } catch (e) {
                 appendOutput(`Erro ao salvar paciente: ${e.message}`, "error");
@@ -2192,27 +2201,40 @@
 
         const loadPatientList = async () => {
             if (!isLoggedIn) return appendOutput("Você precisa estar logado.", "error");
-            await clearTemporaryUploads(); 
             try {
                 const q = query(collection(db, "patients"), where("savedBy", "==", currentUser));
                 const querySnapshot = await getDocs(q);
-                const patients = []; querySnapshot.forEach((doc) => patients.push({ id: doc.id, ...doc.data() }));
+                
+                allPatients = [];
+                querySnapshot.forEach((doc) => {
+                    allPatients.push({ id: doc.id, ...doc.data() });
+                });
+
+                allPatients.sort((a, b) => {
+                    const dateA = a.lastUpdated?.toDate() || a.createdAt?.toDate() || 0;
+                    const dateB = b.lastUpdated?.toDate() || b.createdAt?.toDate() || 0;
+                    return dateB - dateA;
+                });
+
                 patientList.innerHTML = '';
-                if (patients.length === 0) {
+                if (allPatients.length === 0) {
                     patientList.innerHTML = '<div class="info">Nenhum paciente salvo.</div>';
                 } else {
-                    patients.sort((a,b) => b.consultations[b.consultations.length-1].savedAt.toDate() - a.consultations[a.consultations.length-1].savedAt.toDate());
-                    patients.forEach(p => {
-                        const lastConsultation = p.consultations[p.consultations.length - 1];
+                    allPatients.forEach(p => {
+                        const hasConsultations = p.consultations && p.consultations.length > 0;
+                        const lastConsultDate = hasConsultations
+                            ? new Date(p.consultations[p.consultations.length - 1].date?.toDate()).toLocaleString()
+                            : 'Nenhuma consulta registrada';
+
                         const item = document.createElement('div'); 
                         item.className = 'patient-item';
                         item.dataset.patientId = p.id;
                         item.innerHTML = `<div><strong>${p.patientName}</strong> - ${p.birthDate || 'N/A'}</div>
-                                          <div style="font-size: 12px; color: #888;">Última consulta: ${new Date(lastConsultation.savedAt?.toDate()).toLocaleString()}</div>
+                                          <div style="font-size: 12px; color: #888;">Última consulta: ${lastConsultDate}</div>
                                           <div class="patient-actions">
-                                            <button class="patient-action-button details"><i class="fas fa-eye"></i> Ver Detalhes</button>
-                                            <button class="patient-action-button delete"><i class="fas fa-trash"></i> Excluir</button>
-                                            <button class="patient-action-button pdf"><i class="fas fa-file-pdf"></i> PDF</button>
+                                            <button class="patient-action-button delete" data-id="${p.id}"><i class="fas fa-trash"></i> Excluir</button>
+                                            <button class="patient-action-button details ${!hasConsultations ? 'disabled' : ''}" data-id="${p.id}"><i class="fas fa-eye"></i> Detalhes</button>
+                                            <button class="patient-action-button pdf ${!hasConsultations ? 'disabled' : ''}" data-id="${p.id}"><i class="fas fa-file-pdf"></i> PDF</button>
                                           </div>`;
                         patientList.appendChild(item);
                     });
@@ -2224,28 +2246,28 @@
         };
 
         const deletePatient = async (patientId) => {
-            if (!confirm("Tem certeza que deseja excluir este paciente e todas as suas consultas? Esta ação não pode ser desfeita.")) return;
+            if (!confirm("Tem certeza que deseja excluir este paciente e TODAS as suas consultas? A ação é irreversível.")) return;
             try {
                 const patientRef = doc(db, "patients", patientId);
-                const patientSnap = await getDoc(patientRef);
-                if (patientSnap.exists()) {
-                    const patientData = patientSnap.data();
+                const docSnap = await getDoc(patientRef);
+
+                if (docSnap.exists()) {
+                    const patientData = docSnap.data();
                     if (patientData.consultations && patientData.consultations.length > 0) {
-                        appendOutput('Excluindo imagens associadas...', 'info');
-                        const deletePromises = [];
-                        patientData.consultations.forEach(consult => {
+                        appendOutput("Excluindo imagens associadas do Imgur...", "info");
+                        for (const consult of patientData.consultations) {
                             if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
-                                consult.axonEyeImages.forEach(img => {
-                                    deletePromises.push(deleteFromImgur(img.deleteHash));
-                                });
+                                for (const img of consult.axonEyeImages) {
+                                    await deleteFromImgur(img.deleteHash);
+                                }
                             }
-                        });
-                        await Promise.all(deletePromises);
+                        }
                     }
                 }
+
                 await deleteDoc(patientRef);
-                appendOutput("Paciente excluído com sucesso.", "success");
-                await loadPatientList(); // Recarrega a lista
+                appendOutput("Paciente e todos os registros foram excluídos com sucesso.", "success");
+                await loadPatientList();
             } catch (e) {
                 appendOutput(`Erro ao excluir paciente: ${e.message}`, "error");
             }
@@ -2257,105 +2279,91 @@
                 if (!patientSnap.exists()) return appendOutput("Paciente não encontrado.", "error");
                 
                 const patient = patientSnap.data();
+                if (!patient.consultations || patient.consultations.length === 0) {
+                    return appendOutput("Nenhuma consulta registrada para gerar PDF.", "info");
+                }
+
                 const { jsPDF } = window.jspdf; 
                 const pdfDoc = new jsPDF();
                 
                 pdfDoc.setFontSize(18).text('AXON A.I - Prontuário Médico Completo', 105, 20, { align: 'center' });
-                pdfDoc.setFontSize(14).text(`${patient.patientName}`, 105, 30, { align: 'center' });
-                pdfDoc.setFontSize(12).text(`Data de Nascimento: ${patient.birthDate || 'N/A'}`, 105, 38, { align: 'center' });
-                
+                pdfDoc.setFontSize(14).text(`Paciente: ${patient.patientName}`, 14, 35);
+                pdfDoc.setFontSize(12).text(`Data de Nascimento: ${patient.birthDate || 'N/A'}`, 14, 42);
+                pdfDoc.line(14, 45, 196, 45);
+
                 let y = 55;
-
-                const checkPageBreak = (neededHeight) => {
-                    if (y + neededHeight > 280) { // Margem inferior de ~17mm
-                        pdfDoc.addPage();
-                        y = 20;
-                    }
-                };
-
-                const addSection = (title, content) => {
+                const pageHeight = pdfDoc.internal.pageSize.height;
+                const addSection = (title, content, doc) => {
                     if (!content || (typeof content === 'string' && !content.trim()) || (typeof content === 'object' && Object.values(content).every(v => !v))) return;
-                    checkPageBreak(15);
-                    pdfDoc.setFontSize(12).setFont(undefined, 'bold').text(title, 14, y);
-                    y += 7;
                     
-                    const text = typeof content === 'object' 
-                        ? Object.entries(content).map(([k, v]) => `${k.toUpperCase()}: ${v || 'N/A'}`).join('\n') 
-                        : content;
+                    if (y + 15 > pageHeight - 20) { doc.addPage(); y = 20; }
+                    doc.setFontSize(12).setFont(undefined, 'bold').text(title, 14, y); y += 7;
                     
-                    const splitText = pdfDoc.splitTextToSize(text, 180);
-                    checkPageBreak(splitText.length * 5);
-                    pdfDoc.setFontSize(10).setFont(undefined, 'normal').text(splitText, 14, y);
+                    const text = typeof content === 'object' ? Object.entries(content).map(([k, v]) => `${k.toUpperCase()}: ${v || 'Não informado'}`).join('\n') : content;
+                    const splitText = doc.splitTextToSize(text, 180);
+                    
+                    if (y + (splitText.length * 5) > pageHeight - 20) { doc.addPage(); y = 20; }
+                    doc.setFontSize(10).setFont(undefined, 'normal').text(splitText, 14, y);
                     y += splitText.length * 5 + 5;
                 };
 
-                const sortedConsultations = patient.consultations.sort((a,b) => b.savedAt.toDate() - a.savedAt.toDate());
+                const sortedConsultations = [...patient.consultations].sort((a, b) => a.date.toDate() - b.date.toDate());
 
                 sortedConsultations.forEach((consult, index) => {
-                    checkPageBreak(20);
-                    pdfDoc.setDrawColor(150).line(14, y, 196, y); y += 5;
-                    pdfDoc.setFontSize(14).setFont(undefined, 'bold').text(`Consulta #${sortedConsultations.length - index}: ${new Date(consult.savedAt.toDate()).toLocaleString()}`, 14, y);
+                    if (y + 20 > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
+                    pdfDoc.setFontSize(14).setFont(undefined, 'bold').text(`Consulta ${index + 1}: ${consult.date.toDate().toLocaleString()}`, 105, y, { align: 'center' });
+                    y += 5;
+                    pdfDoc.line(14, y, 196, y);
                     y += 10;
-
-                    addSection('Anamnese', consult.anamnesis);
-                    addSection('Resultados dos Exames', consult.examsResults);
-                    addSection('Análise Visual (Axon Eye)', consult.axonEyeResults);
+                    
+                    addSection('Anamnese', consult.anamnesis, pdfDoc);
+                    addSection('Resultados dos Exames', consult.examsResults, pdfDoc);
+                    addSection('Análise Visual (Axon Eye)', consult.axonEyeResults, pdfDoc);
                 });
-
+                
                 pdfDoc.save(`prontuario_${patient.patientName.replace(/\s+/g, '_')}.pdf`);
                 appendOutput(`PDF do prontuário completo gerado com sucesso.`, "success");
 
-            } catch (e) { 
-                appendOutput(`Erro ao gerar PDF: ${e.message}`, "error"); 
-                console.error(e);
-            }
+            } catch (e) { appendOutput(`Erro ao gerar PDF: ${e.message}`, "error"); }
         };
 
         const showPatientDetails = (patient) => {
-            patientDetailsTitle.textContent = `Prontuário: ${patient.patientName}`;
-            let detailsHTML = `<div class="consultation-history">`;
+            patientDetailsTitle.textContent = `Paciente: ${patient.patientName}`;
+            let detailsHTML = '';
             
-            const sortedConsultations = [...patient.consultations].sort((a, b) => b.savedAt.toDate() - a.savedAt.toDate());
+            const addDetailSection = (title, content) => {
+                if (!content || (typeof content === 'string' && !content.trim()) || (typeof content === 'object' && Object.values(content).every(v => !v))) return '';
+                let body = '';
+                if (typeof content === 'object') body = Object.entries(content).map(([k, v]) => `<strong>${k.toUpperCase()}:</strong> ${v || "Não informado"}<br>`).join('');
+                else body = content.replace(/\n/g, '<br>');
+                return `<div class="patient-details-section"><div class="patient-details-section-title">${title}</div><div>${body}</div></div>`;
+            };
 
-            sortedConsultations.forEach((consult, index) => {
-                const consultationDate = new Date(consult.savedAt.toDate()).toLocaleString('pt-BR');
-                detailsHTML += `
-                    <div class="consultation-item">
-                        <div class="consultation-header" data-index="${index}">
-                            <strong>Consulta #${sortedConsultations.length - index}</strong>
-                            <span>${consultationDate}</span>
-                        </div>
-                        <div class="consultation-body" id="consultation-body-${index}">
-                `;
-
-                const addDetailSection = (title, content) => {
-                    if (!content || (typeof content === 'string' && !content.trim()) || (typeof content === 'object' && Object.values(content).every(v => !v))) return '';
-                    let body = '';
-                    if (typeof content === 'object') {
-                        body = Object.entries(content).map(([k, v]) => `<strong>${k.toUpperCase()}:</strong> ${v || "Não informado"}`).join('<br>');
-                    } else {
-                        body = content.replace(/\n/g, '<br>');
+            if (patient.consultations && patient.consultations.length > 0) {
+                const sortedConsultations = [...patient.consultations].sort((a, b) => b.date.toDate() - a.date.toDate());
+                detailsHTML += `<div class="consultation-list">`;
+                sortedConsultations.forEach((consult, index) => {
+                    detailsHTML += `<div class="consultation-item">
+                                        <div class="consultation-header">
+                                            <i class="fas fa-chevron-right"></i> Consulta de ${consult.date.toDate().toLocaleString()}
+                                        </div>
+                                        <div class="consultation-body" style="display: none;">
+                                            ${addDetailSection('ANAMNESE', consult.anamnesis)}
+                                            ${addDetailSection('RESULTADOS DOS EXAMES', consult.examsResults)}
+                                            ${addDetailSection('ANÁLISE VISUAL (AXON EYE)', consult.axonEyeResults)}`;
+                    if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
+                        detailsHTML += `<div class="patient-details-section"><div class="patient-details-section-title">IMAGENS (${consult.axonEyeImages.length})</div><div class="patient-images-grid">`;
+                        consult.axonEyeImages.forEach(img => {
+                            detailsHTML += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" onclick="openFullscreenModal('${img.link}')" alt="Imagem do paciente"></div>`;
+                        });
+                        detailsHTML += `</div></div>`;
                     }
-                    return `<div class="patient-details-section"><div class="patient-details-section-title">${title}</div><div>${body}</div></div>`;
-                };
-
-                const consultationBody = document.createElement('div');
-                consultationBody.innerHTML += addDetailSection('ANAMNESE', consult.anamnesis);
-                consultationBody.innerHTML += addDetailSection('RESULTADOS DOS EXAMES', consult.examsResults);
-                consultationBody.innerHTML += addDetailSection('ANÁLISE VISUAL', consult.axonEyeResults);
-
-                if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
-                    let imagesHTML = `<div class="patient-details-section"><div class="patient-details-section-title">IMAGENS (${consult.axonEyeImages.length})</div><div class="patient-images-grid">`;
-                    consult.axonEyeImages.forEach(img => {
-                        imagesHTML += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" onclick="openFullscreenModal('${img.link}')" alt="Imagem do paciente"></div>`;
-                    });
-                    imagesHTML += `</div></div>`;
-                    consultationBody.innerHTML += imagesHTML;
-                }
-                detailsHTML += consultationBody.innerHTML + `</div></div>`;
-            });
-            
-            detailsHTML += `</div>`;
+                    detailsHTML += `</div></div>`;
+                });
+                detailsHTML += `</div>`;
+            } else {
+                 detailsHTML = '<div class="info">Nenhuma consulta registrada para este paciente.</div>';
+            }
             patientDetailsBody.innerHTML = detailsHTML;
             patientDetailsModal.style.display = 'flex';
         };
@@ -2399,11 +2407,13 @@
                 }
             });
 
+            // Remove a mensagem "Nenhum paciente encontrado" antiga, se existir
             const noResultsMessage = patientList.querySelector('.info');
             if (noResultsMessage) {
                 noResultsMessage.remove();
             }
 
+            // Adiciona a mensagem se nenhum item estiver visível e a lista não estiver vazia
             if (visibleCount === 0 && patientItems.length > 0) {
                 const noResults = document.createElement('div');
                 noResults.className = 'info';
@@ -2496,31 +2506,46 @@
 
 
         // Modais de Pacientes
-        patientListClose.addEventListener('click', () => patientListModal.style.display = 'none');
-        patientDetailsClose.addEventListener('click', () => patientDetailsModal.style.display = 'none');
-        patientListModal.addEventListener('click', async (e) => {
-            const button = e.target.closest('button');
-            if (!button) return;
-            const patientItem = e.target.closest('.patient-item');
-            if (!patientItem) return;
-            const patientId = patientItem.dataset.patientId;
-            if (button.classList.contains('delete')) await deletePatient(patientId);
-            else if (button.classList.contains('pdf')) await generatePatientPDF(patientId);
-            else if (button.classList.contains('details')) {
-                const patientSnap = await getDoc(doc(db, "patients", patientId));
-                if(patientSnap.exists()) showPatientDetails({id: patientId, ...patientSnap.data()});
-            }
-        });
-        patientSearchInput.addEventListener('input', (e) => searchPatients(e.target.value));
-        
-        patientDetailsBody.addEventListener('click', (e) => {
-            if (e.target.closest('.consultation-header')) {
-                const header = e.target.closest('.consultation-header');
-                const body = header.nextElementSibling;
-                body.style.display = body.style.display === 'block' ? 'none' : 'block';
+        patientListModal.addEventListener('click', (e) => {
+            const target = e.target;
+            const deleteButton = target.closest('.delete');
+            const pdfButton = target.closest('.pdf');
+            const detailsButton = target.closest('.details');
+            const patientItem = target.closest('.patient-item');
+
+            if (deleteButton) {
+                deletePatient(deleteButton.dataset.id);
+            } else if (pdfButton && !pdfButton.classList.contains('disabled')) {
+                generatePatientPDF(pdfButton.dataset.id);
+            } else if (detailsButton && !detailsButton.classList.contains('disabled')) {
+                const patientId = detailsButton.dataset.id;
+                const patientData = allPatients.find(p => p.id === patientId);
+                if (patientData) showPatientDetails(patientData);
+            } else if (patientItem) {
+                const detailsBtnInItem = patientItem.querySelector('.details');
+                if (detailsBtnInItem && !detailsBtnInItem.classList.contains('disabled')) {
+                    const patientId = patientItem.dataset.patientId;
+                    const patientData = allPatients.find(p => p.id === patientId);
+                    if (patientData) showPatientDetails(patientData);
+                }
             }
         });
 
+        patientDetailsModal.addEventListener('click', (e) => {
+            const header = e.target.closest('.consultation-header');
+            if (header) {
+                const body = header.nextElementSibling;
+                const icon = header.querySelector('i');
+                const isVisible = body.style.display === 'block';
+                body.style.display = isVisible ? 'none' : 'block';
+                icon.classList.toggle('fa-chevron-down', !isVisible);
+                icon.classList.toggle('fa-chevron-right', isVisible);
+            }
+        });
+        
+        patientListClose.addEventListener('click', () => patientListModal.style.display = 'none');
+        patientDetailsClose.addEventListener('click', () => patientDetailsModal.style.display = 'none');
+        patientSearchInput.addEventListener('input', (e) => searchPatients(e.target.value));
 
         // Modal de Login
         loginModalButton.addEventListener('click', async () => {
@@ -2542,16 +2567,17 @@
         savePatientButton.addEventListener('click', () => {
             const name = savePatientNameInput.value.trim();
             const dob = savePatientDobInput.value.trim();
-            if (!name || !dob || !/^\d{2}\/\d{2}\/\d{4}$/.test(dob)) {
-                savePatientFeedback.textContent = 'Preencha todos os campos corretamente (DD/MM/AAAA).';
-                return;
-            }
+            if (!name || !dob) return savePatientFeedback.textContent = 'Preencha todos os campos.';
             savePatient(name, dob);
         });
         savePatientDobInput.addEventListener('input', (e) => {
             let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 2) value = value.substring(0, 2) + '/' + value.substring(2);
-            if (value.length > 5) value = value.substring(0, 5) + '/' + value.substring(5);
+            if (value.length > 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2);
+            }
+            if (value.length > 5) {
+                value = value.substring(0, 5) + '/' + value.substring(5);
+            }
             e.target.value = value.substring(0, 10);
         });
         savePatientDobInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') savePatientButton.click(); });
