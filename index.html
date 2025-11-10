@@ -493,7 +493,7 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 12px;
-            transition: background-color: 0.3s ease;
+            transition: background-color 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -696,7 +696,7 @@
             justify-content: center;
             cursor: pointer;
             z-index: 10;
-            transition: background-color: 0.2s;
+            transition: background-color 0.2s;
         }
 
         .album-delete-button:hover {
@@ -939,7 +939,7 @@
             border-radius: 5px;
             cursor: pointer;
             font-size: 12px;
-            transition: background-color: 0.3s ease;
+            transition: background-color 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1929,6 +1929,8 @@
                 textModelOK = await checkApiStatus(currentAIModel);
             }
             if (textModelOK) appendOutput(`Motor de texto (${currentAIModel}) conectado.`, "success", false);
+            else appendOutput(`Motor de texto alternativo (${currentAIModel}) também falhou.`, "error", false);
+
 
             let visionModelOK = await checkApiStatus(currentVisionAIModel);
             if (!visionModelOK) {
@@ -1938,6 +1940,7 @@
                 visionModelOK = await checkApiStatus(currentVisionAIModel);
             }
             if(visionModelOK) appendOutput(`Motor de visão (${currentVisionAIModel}) conectado.`, "success", false);
+            else appendOutput(`Motor de visão alternativo (${currentVisionAIModel}) também falhou.`, "error", false);
         };
 
         // Firebase Functions
@@ -1964,6 +1967,7 @@
         };
         const registerUser = async (adminPassword, username, password) => {
             if (adminPassword !== 'admin123') return appendOutput("Senha de administrador incorreta.", "error");
+            if (!username || !password) return appendOutput("Uso: /register [senha_admin] [usuário] [senha]", "error");
             try {
                 const userRef = doc(db, "users", username);
                 const docSnap = await getDoc(userRef);
@@ -1973,6 +1977,7 @@
         };
         const deleteUser = async (adminPassword, username) => {
             if (adminPassword !== 'admin123') return appendOutput("Senha de administrador incorreta.", "error");
+            if (!username) return appendOutput("Uso: /delete [senha_admin] [usuário]", "error");
             try {
                 const userRef = doc(db, "users", username);
                 await deleteDoc(userRef);
@@ -2232,7 +2237,7 @@
                         let lastConsultDateStr = 'Nenhuma consulta registrada';
                         if (hasConsultations) {
                             const mostRecentConsult = p.consultations
-                                .filter(c => c.date) 
+                                .filter(c => c.date && c.date.toDate) 
                                 .sort((a, b) => b.date.toDate() - a.date.toDate())[0];
                             if (mostRecentConsult) {
                                 lastConsultDateStr = mostRecentConsult.date.toDate().toLocaleString();
@@ -2272,7 +2277,7 @@
                         for (const consult of patientData.consultations) {
                             if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
                                 for (const img of consult.axonEyeImages) {
-                                    await deleteFromImgur(img.deleteHash); // FIX: Corrected typo from Imugr to Imgur
+                                    await deleteFromImgur(img.deleteHash); 
                                 }
                             }
                         }
@@ -2321,15 +2326,13 @@
                     y += splitText.length * 5 + 5;
                 };
 
-                // FIX: Filter consultations with dates before sorting to prevent errors
                 const sortedConsultations = [...patient.consultations]
-                    .filter(c => c.date)
+                    .filter(c => c.date && c.date.toDate)
                     .sort((a, b) => (a.date.toDate()) - (b.date.toDate()));
 
                 sortedConsultations.forEach((consult, index) => {
                     if (y + 20 > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
                     
-                    // FIX: Safely display date
                     const consultDate = consult.date ? consult.date.toDate().toLocaleString() : 'Data indisponível';
                     pdfDoc.setFontSize(14).setFont(undefined, 'bold').text(`Consulta ${index + 1}: ${consultDate}`, 105, y, { align: 'center' });
                     y += 5;
@@ -2346,6 +2349,46 @@
 
             } catch (e) { appendOutput(`Erro ao gerar PDF: ${e.message}`, "error"); console.error(e); }
         };
+        
+        const generatePDFFromCurrentSession = (patientName) => {
+            if (!patientName) {
+                appendOutput("Uso: /pdf [nome_do_paciente]", "error");
+                return;
+            }
+        
+            const { jsPDF } = window.jspdf;
+            const pdfDoc = new jsPDF();
+        
+            pdfDoc.setFontSize(18).text('AXON A.I - Prontuário Médico', 105, 20, { align: 'center' });
+            pdfDoc.setFontSize(14).text(`Paciente: ${patientName}`, 14, 35);
+            pdfDoc.setFontSize(12).text(`Gerado em: ${new Date().toLocaleString()}`, 14, 42);
+            pdfDoc.line(14, 45, 196, 45);
+        
+            let y = 55;
+            const pageHeight = pdfDoc.internal.pageSize.height;
+        
+            const addSection = (title, content) => {
+                if (!content || (typeof content === 'string' && !content.trim()) || (typeof content === 'object' && Object.values(content).every(v => !v))) return;
+        
+                if (y + 15 > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
+                pdfDoc.setFontSize(12).setFont(undefined, 'bold').text(title, 14, y); y += 7;
+        
+                const text = typeof content === 'object' ? Object.entries(content).map(([k, v]) => `${k.toUpperCase()}: ${v || 'Não informado'}`).join('\n') : content;
+                const splitText = pdfDoc.splitTextToSize(text, 180);
+        
+                if (y + (splitText.length * 5) > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
+                pdfDoc.setFontSize(10).setFont(undefined, 'normal').text(splitText, 14, y);
+                y += splitText.length * 5 + 5;
+            };
+        
+            addSection('Anamnese', anamnesis);
+            addSection('Resultados dos Exames', examsResults);
+            addSection('Análise Visual (Axon Eye)', axonEyeResults);
+        
+            pdfDoc.save(`prontuario_atual_${patientName.replace(/\s+/g, '_')}.pdf`);
+            appendOutput(`PDF da sessão atual gerado com sucesso.`, "success");
+        };
+
 
         const showPatientDetails = (patient) => {
             patientDetailsTitle.textContent = `Paciente: ${patient.patientName}`;
@@ -2360,13 +2403,11 @@
             };
 
             if (patient.consultations && patient.consultations.length > 0) {
-                // FIX: Filter consultations with dates before sorting to prevent errors
                 const sortedConsultations = [...patient.consultations]
-                    .filter(c => c.date)
+                    .filter(c => c.date && c.date.toDate)
                     .sort((a, b) => b.date.toDate() - a.date.toDate());
                 detailsHTML += `<div class="consultation-list">`;
                 sortedConsultations.forEach((consult, index) => {
-                    // FIX: Safely display date
                     const consultDate = consult.date ? consult.date.toDate().toLocaleString() : 'Data indisponível';
                     detailsHTML += `<div class="consultation-item">
                                         <div class="consultation-header">
@@ -2432,13 +2473,11 @@
                 }
             });
 
-            // Remove a mensagem "Nenhum paciente encontrado" antiga, se existir
             const noResultsMessage = patientList.querySelector('.info');
             if (noResultsMessage) {
                 noResultsMessage.remove();
             }
 
-            // Adiciona a mensagem se nenhum item estiver visível e a lista não estiver vazia
             if (visibleCount === 0 && patientItems.length > 0) {
                 const noResults = document.createElement('div');
                 noResults.className = 'info';
@@ -2450,51 +2489,173 @@
         const processCommand = async (command) => {
             if (!command.trim()) return;
             appendOutput(command, "command");
-            const cmd = command.trim().toLowerCase();
-            const isCommand = cmd.startsWith('/');
-
+        
+            const parts = command.trim().split(' ');
+            const mainCmd = parts[0].toLowerCase();
+            const isCommand = mainCmd.startsWith('/');
+        
             if (!isLoggedIn) {
-                appendOutput("Por favor, faça o login para continuar.", "error"); return;
+                appendOutput("Por favor, faça o login para continuar.", "error");
+                commandInput.value = '';
+                return;
             }
+        
             if (!isCommand) {
                 await processAnamnesisInfo(command);
-            } else if (!validCommands.some(vc => cmd.startsWith(vc.split(' ')[0]))) {
-                appendOutput(`Comando '${command}' não existe. Digite /help.`, "error");
-            } else if (cmd === '/exit') {
-                await clearTemporaryUploads();
-                if (currentUser) await deleteDoc(doc(db, "sessions", currentUser));
-                resetInteractiveTerminal(true);
-            } else if (cmd === '/clear') {
-                await clearTemporaryUploads();
-                if (currentUser) await deleteDoc(doc(db, "sessions", currentUser));
-                anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
-                examsResults = "";
-                axonEyeResults = "";
-                conversationHistory = [];
-                updateAnamnesisPreview(false);
-                updateExamsResultsPreview(false);
-                updateAxonEyeResultsPreview(false);
-                resetInteractiveTerminal(false);
-                appendOutput("Sessão limpa.", "success");
-            } else if (cmd === '/hear on') { toggleListening(); } 
-            else if (cmd === '/hear off') { stopListening(); } 
-            else if (cmd === '/hd') { await generateDiagnosticHypotheses(); } 
-            else if (cmd === '/cd') { await generateMedicalConduct(); } 
-            else if (cmd === '/copy') { copyMonitorContent(); } 
-            else if (cmd.startsWith('/ia')) { const q = command.substring(3).trim(); if(q) await callGeminiAPI(`Responda de forma objetiva à pergunta médica: "${q}"`); } 
-            else if (cmd.startsWith('/ask')) { const q = command.substring(4).trim(); if(q) await askQuestionBasedOnContext(q); } 
-            else if (cmd.startsWith('/api-set')) { const [_,p,k] = command.split(' '); if(p==='admin123'&&k){currentGeminiAPIKey=k;checkApiStatus();} } 
-            else if (cmd.startsWith('/api-restore')) { if(command.split(' ')[1]==='admin123'){currentGeminiAPIKey=defaultGeminiAPIKey;checkApiStatus();} } 
-            else if (cmd.startsWith('/api-engine')) { const [_,p,e] = command.split(' '); if(p==='admin123'&&e){const m=apiModels.find(m=>m.id==e||m.name.toLowerCase()==e.toLowerCase());if(m){if(m.vision)currentVisionAIModel=m.name;else currentAIModel=m.name;checkApiStatus(m.name);}} } 
-            else if (cmd === '/api') { appendOutput(`Status: ${apiConnectionStatus}\nTexto: ${currentAIModel}\nVisão: ${currentVisionAIModel}`, "info"); } 
-            else if (cmd.startsWith('/register')) { const [_,p,u,pw] = command.split(' '); await registerUser(p, u, pw); } 
-            else if (cmd.startsWith('/delete')) { const [_,p,u] = command.split(' '); await deleteUser(p, u); } 
-            else if (cmd === '/help') { appendOutput(`Comandos: ${validCommands.join(', ')}`, "info"); } 
-            else if (cmd === '/exames') { await startCamera('exams'); } 
-            else if (cmd === '/see') { await startCamera('axon-eye'); } 
-            else if (cmd === '/load') { await loadPatientList(); } 
-            else if (cmd.startsWith('/pdf')) { const patientName = command.substring(4).trim(); if(patientName) generatePDF(patientName); }
-            
+                commandInput.value = '';
+                return;
+            }
+        
+            if (!validCommands.some(vc => mainCmd === vc.split(' ')[0])) {
+                appendOutput(`Comando '${mainCmd}' não existe. Digite /help para ver os comandos disponíveis.`, "error");
+                commandInput.value = '';
+                return;
+            }
+        
+            switch (mainCmd) {
+                case '/exit':
+                    await clearTemporaryUploads();
+                    if (currentUser) await deleteDoc(doc(db, "sessions", currentUser));
+                    resetInteractiveTerminal(true);
+                    break;
+        
+                case '/clear':
+                    await clearTemporaryUploads();
+                    if (currentUser) await deleteDoc(doc(db, "sessions", currentUser));
+                    anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+                    examsResults = "";
+                    axonEyeResults = "";
+                    conversationHistory = [];
+                    updateAnamnesisPreview(false);
+                    updateExamsResultsPreview(false);
+                    updateAxonEyeResultsPreview(false);
+                    resetInteractiveTerminal(false);
+                    appendOutput("Sessão limpa.", "success");
+                    break;
+        
+                case '/hear':
+                    if (parts[1] === 'on') toggleListening();
+                    else if (parts[1] === 'off') stopListening();
+                    else appendOutput("Uso: /hear on|off", "error");
+                    break;
+        
+                case '/hd':
+                    appendOutput("Gerando hipóteses diagnósticas...", "info");
+                    await generateDiagnosticHypotheses();
+                    break;
+        
+                case '/cd':
+                    appendOutput("Gerando conduta médica...", "info");
+                    await generateMedicalConduct();
+                    break;
+        
+                case '/copy':
+                    copyMonitorContent();
+                    break;
+        
+                case '/ia':
+                    const questionIA = command.substring(3).trim();
+                    if (!questionIA) {
+                        appendOutput("Uso: /ia [pergunta]", "error");
+                        break;
+                    }
+                    appendOutput("Processando sua pergunta...", "info");
+                    try {
+                        const response = await callGeminiAPI(`Responda de forma objetiva à pergunta médica: "${questionIA}"`);
+                        appendOutput(response, "output");
+                    } catch (error) {
+                        appendOutput(`Erro ao consultar a IA: ${error.message}`, "error");
+                    }
+                    break;
+        
+                case '/ask':
+                    const questionAsk = command.substring(4).trim();
+                    if (!questionAsk) {
+                        appendOutput("Uso: /ask [pergunta contextual]", "error");
+                        break;
+                    }
+                    appendOutput("Processando pergunta contextual...", "info");
+                    await askQuestionBasedOnContext(questionAsk);
+                    break;
+        
+                case '/api-set':
+                    const [, adminPassSet, newKey] = parts;
+                    if (adminPassSet === 'admin123' && newKey) {
+                        currentGeminiAPIKey = newKey;
+                        appendOutput(`Chave da API alterada. Verificando...`, "success");
+                        await checkApiStatus();
+                    } else {
+                        appendOutput("Uso: /api-set [senha_admin] [nova_chave]", "error");
+                    }
+                    break;
+        
+                case '/api-restore':
+                    if (parts[1] === 'admin123') {
+                        currentGeminiAPIKey = defaultGeminiAPIKey;
+                        appendOutput("Chave da API restaurada para o padrão. Verificando...", "success");
+                        await checkApiStatus();
+                    } else {
+                        appendOutput("Senha de administrador incorreta.", "error");
+                    }
+                    break;
+        
+                case '/api-engine':
+                    const [, adminPassEngine, engineId] = parts;
+                    if (adminPassEngine === 'admin123' && engineId) {
+                        const model = apiModels.find(m => m.id == engineId || m.name.toLowerCase() === engineId.toLowerCase());
+                        if (model) {
+                            if (model.vision) currentVisionAIModel = model.name;
+                            else currentAIModel = model.name;
+                            appendOutput(`Motor ${model.vision ? 'de visão' : 'de texto'} alterado para: ${model.name}. Verificando...`, "success");
+                            await checkApiStatus(model.name);
+                        } else {
+                            appendOutput(`Motor '${engineId}' não encontrado.`, "error");
+                        }
+                    } else {
+                        appendOutput("Uso: /api-engine [senha_admin] [id_do_motor]", "error");
+                    }
+                    break;
+        
+                case '/api':
+                    const availableEngines = apiModels.map(m => `  ${m.id}. ${m.name} (${m.vision ? 'visão' : 'texto'})`).join('\n');
+                    appendOutput(`Status da API: ${apiConnectionStatus}\nMotor de texto atual: ${currentAIModel}\nMotor de visão atual: ${currentVisionAIModel}\n\nMotores disponíveis:\n${availableEngines}`, "info");
+                    break;
+        
+                case '/register':
+                    const [, adminPassReg, newUser, newPass] = parts;
+                    await registerUser(adminPassReg, newUser, newPass);
+                    break;
+        
+                case '/delete':
+                    const [, adminPassDel, userToDel] = parts;
+                    await deleteUser(adminPassDel, userToDel);
+                    break;
+        
+                case '/help':
+                    appendOutput(`Comandos: ${validCommands.join(', ')}`, "info");
+                    break;
+        
+                case '/exames':
+                    await startCamera('exams');
+                    break;
+        
+                case '/see':
+                    await startCamera('axon-eye');
+                    break;
+        
+                case '/load':
+                    await loadPatientList();
+                    break;
+        
+                case '/pdf':
+                    const patientName = command.substring(4).trim();
+                    generatePDFFromCurrentSession(patientName);
+                    break;
+        
+                default:
+                    appendOutput(`Comando '${mainCmd}' não reconhecido.`, "error");
+            }
+        
             commandInput.value = '';
         };
 
