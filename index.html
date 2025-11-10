@@ -860,6 +860,43 @@
             overflow-y: auto;
             padding-right: 5px;
         }
+        
+        /* ESTILOS PARA VISUALIZAÇÃO DE MÚLTIPLAS CONSULTAS */
+        .consultation-item {
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .consultation-header {
+            background-color: #161b22;
+            padding: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .consultation-header:hover {
+            background-color: #222831;
+        }
+        .consultation-header::after {
+            content: '\\f078'; /* FontAwesome down arrow */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            transition: transform 0.2s ease-in-out;
+        }
+        .consultation-header.active::after {
+            transform: rotate(180deg);
+        }
+        .consultation-body {
+            padding: 15px;
+            display: none;
+            border-top: 1px solid var(--border-color);
+        }
+        .consultation-body.active {
+            display: block;
+        }
 
         .patient-details-section {
             margin-bottom: 20px;
@@ -1162,6 +1199,7 @@
                     <button id="btn-cd" class="action-button" title="Gerar Conduta Médica (/cd)"><i class="fas fa-pills"></i></button>
                     <button id="btn-save" class="action-button" title="Salvar Paciente"><i class="fas fa-save"></i></button>
                     <button id="btn-load" class="action-button" title="Carregar Paciente"><i class="fas fa-folder-open"></i></button>
+                    <button id="btn-clear" class="action-button" title="Limpar Sessão (/clear)"><i class="fas fa-eraser"></i></button>
                     <button id="btn-mic" class="action-button" title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button>
                 </div>
                 <div class="input-line">
@@ -1304,7 +1342,7 @@
         <div class="app-modal-content">
             <span class="app-modal-close">&times;</span>
             <div class="app-modal-header">
-                <h2 class="app-modal-title">Salvar Paciente</h2>
+                <h2 class="app-modal-title">Salvar Consulta</h2>
             </div>
             <div class="app-modal-body">
                 <p>Insira os dados do paciente para salvar a sessão atual.</p>
@@ -1386,6 +1424,7 @@
         const btnMic = document.getElementById('btn-mic');
         const btnSave = document.getElementById('btn-save');
         const btnLoad = document.getElementById('btn-load');
+        const btnClear = document.getElementById('btn-clear');
 
         // MODAIS
         const patientListModal = document.getElementById('patient-list-modal');
@@ -2103,14 +2142,40 @@
         const savePatient = async (patientName, birthDate) => {
             if (!isLoggedIn) return appendOutput("Você precisa estar logado.", "error");
             try {
-                const patientId = `${currentUser}_${patientName.replace(/\s+/g, '_')}_${birthDate.replace(/\//g, '')}`;
+                const patientId = `${currentUser}_${patientName.replace(/\s+/g, '_').toLowerCase()}_${birthDate.replace(/\//g, '')}`;
                 const patientRef = doc(db, "patients", patientId);
-                await setDoc(patientRef, {
-                    patientName, birthDate, anamnesis, examsResults, axonEyeResults,
-                    axonEyeImages: temporaryImgurUploads, // Salva os links do Imgur
-                    savedBy: currentUser, savedAt: new Date()
-                });
-                appendOutput(`Paciente '${patientName}' salvo com sucesso.`, "success");
+                const docSnap = await getDoc(patientRef);
+
+                const newConsultation = {
+                    consultationDate: new Date(),
+                    anamnesis: { ...anamnesis },
+                    examsResults,
+                    axonEyeResults,
+                    axonEyeImages: [...temporaryImgurUploads],
+                };
+
+                if (docSnap.exists()) {
+                    // Paciente existe, adiciona nova consulta
+                    const existingData = docSnap.data();
+                    const updatedConsultations = existingData.consultations || [];
+                    updatedConsultations.push(newConsultation);
+                    await updateDoc(patientRef, {
+                        consultations: updatedConsultations,
+                        lastUpdatedAt: new Date()
+                    });
+                    appendOutput(`Nova consulta adicionada para '${patientName}'.`, "success");
+                } else {
+                    // Novo paciente, cria o registro
+                    await setDoc(patientRef, {
+                        patientName,
+                        birthDate,
+                        savedBy: currentUser,
+                        createdAt: new Date(),
+                        consultations: [newConsultation]
+                    });
+                    appendOutput(`Paciente '${patientName}' salvo com sucesso.`, "success");
+                }
+                
                 temporaryImgurUploads = []; // Limpa os temporários após salvar
                 closeSaveModal();
             } catch (e) {
@@ -2118,11 +2183,12 @@
             }
         };
 
+
         const loadPatientList = async () => {
             if (!isLoggedIn) return appendOutput("Você precisa estar logado.", "error");
             await clearTemporaryUploads(); // Limpa uploads pendentes ao carregar novo paciente
             try {
-                const q = query(collection(db, "patients"), where("savedBy", "==", currentUser));
+                const q = query(collection(db, "patients"), where("savedBy", "==", currentUser), orderBy("createdAt", "desc"));
                 const querySnapshot = await getDocs(q);
                 const patients = []; querySnapshot.forEach((doc) => patients.push({ id: doc.id, ...doc.data() }));
                 patientList.innerHTML = '';
@@ -2130,14 +2196,20 @@
                     patientList.innerHTML = '<div class="info">Nenhum paciente salvo.</div>';
                 } else {
                     patients.forEach(p => {
-                        const item = document.createElement('div'); item.className = 'patient-item';
+                        const item = document.createElement('div');
+                        item.className = 'patient-item';
                         item.innerHTML = `<div><strong>${p.patientName}</strong> - ${p.birthDate || 'N/A'}</div>
-                                          <div style="font-size: 12px; color: #888;">Salvo em: ${new Date(p.savedAt?.toDate()).toLocaleString()}</div>
+                                          <div style="font-size: 12px; color: #888;">Consultas: ${p.consultations?.length || 0} - Criado em: ${new Date(p.createdAt?.toDate()).toLocaleDateString()}</div>
                                           <div class="patient-actions">
                                             <button class="patient-action-button delete" data-id="${p.id}"><i class="fas fa-trash"></i> Excluir</button>
                                             <button class="patient-action-button pdf" data-id="${p.id}"><i class="fas fa-file-pdf"></i> PDF</button>
                                           </div>`;
-                        item.onclick = () => showPatientDetails(p);
+                        // Ação de clique principal abre os detalhes
+                        item.addEventListener('click', (e) => {
+                             if (!e.target.closest('.patient-action-button')) {
+                                showPatientDetails(p);
+                            }
+                        });
                         patientList.appendChild(item);
                     });
                 }
@@ -2148,11 +2220,11 @@
         };
 
         const deletePatient = async (patientId) => {
-            if (!confirm("Tem certeza?")) return;
+            if (!confirm("Tem certeza que deseja excluir este paciente e todas as suas consultas? Esta ação não pode ser desfeita.")) return;
             try {
                 // Futuramente, adicionar lógica para deletar imagens do Imgur aqui se necessário
                 await deleteDoc(doc(db, "patients", patientId));
-                appendOutput("Paciente excluído.", "success");
+                appendOutput("Paciente excluído com sucesso.", "success");
                 await loadPatientList(); // Recarrega a lista
             } catch (e) {
                 appendOutput(`Erro ao excluir: ${e.message}`, "error");
@@ -2163,52 +2235,125 @@
             try {
                 const patientSnap = await getDoc(doc(db, "patients", patientId));
                 if (!patientSnap.exists()) return appendOutput("Paciente não encontrado.", "error");
+                
                 const patient = patientSnap.data();
-                const { jsPDF } = window.jspdf; const pdfDoc = new jsPDF();
-                pdfDoc.setFontSize(18).text('AXON A.I - Prontuário Médico', 105, 20, { align: 'center' });
-                pdfDoc.setFontSize(12).text(`${patient.patientName} - ${patient.birthDate || 'N/A'}`, 105, 30, { align: 'center' });
+                const { jsPDF } = window.jspdf;
+                const pdfDoc = new jsPDF();
+                
+                pdfDoc.setFontSize(18).text('AXON A.I - Prontuário Médico Completo', 105, 20, { align: 'center' });
+                pdfDoc.setFontSize(14).text(`${patient.patientName} - Nasc: ${patient.birthDate || 'N/A'}`, 105, 30, { align: 'center' });
+                
                 let y = 50;
-                const addSection = (title, content) => {
-                    if (!content || Object.keys(content).length === 0) return;
-                    pdfDoc.setFontSize(14).text(title, 14, y); y += 10;
-                    const text = typeof content === 'object' ? Object.entries(content).map(([k, v]) => `${k.toUpperCase()}: ${v || 'N/A'}`).join('\n') : content;
+
+                const addSection = (title, content, isSubSection = false) => {
+                    if (!content || (typeof content === 'object' && Object.keys(content).length === 0)) return;
+                    if (y > 270) pdfDoc.addPage();
+                    pdfDoc.setFontSize(isSubSection ? 10 : 12).setFont(undefined, 'bold').text(title, 14, y);
+                    y += isSubSection ? 6 : 8;
+                    const text = typeof content === 'object' 
+                        ? Object.entries(content).map(([k, v]) => `${k.toUpperCase()}: ${v || 'N/A'}`).join('\n') 
+                        : content;
                     const splitText = pdfDoc.splitTextToSize(text, 180);
-                    pdfDoc.setFontSize(10).text(splitText, 14, y);
+                    pdfDoc.setFontSize(10).setFont(undefined, 'normal').text(splitText, 14, y);
                     y += splitText.length * 5 + 10;
                 };
-                addSection('Anamnese', patient.anamnesis);
-                addSection('Resultados dos Exames', patient.examsResults);
-                addSection('Análise Visual', patient.axonEyeResults);
-                pdfDoc.save(`prontuario_${patient.patientName}.pdf`);
+
+                if (patient.consultations && patient.consultations.length > 0) {
+                     const sortedConsultations = patient.consultations.sort((a, b) => b.consultationDate.toDate() - a.consultationDate.toDate());
+
+                    for (const consultation of sortedConsultations) {
+                        if (y > 250) pdfDoc.addPage();
+                        pdfDoc.setDrawColor(0);
+                        pdfDoc.line(14, y, 196, y); // Linha separadora
+                        y += 10;
+                        
+                        pdfDoc.setFontSize(14).setFont(undefined, 'bold').text(`Consulta de ${new Date(consultation.consultationDate.toDate()).toLocaleString()}`, 105, y, { align: 'center' });
+                        y += 15;
+
+                        addSection('Anamnese', consultation.anamnesis);
+                        addSection('Resultados dos Exames', consultation.examsResults);
+                        addSection('Análise Visual (Axon Eye)', consultation.axonEyeResults);
+                    }
+                } else {
+                     pdfDoc.text('Nenhuma consulta registrada para este paciente.', 14, y);
+                }
+
+                pdfDoc.save(`prontuario_${patient.patientName.replace(/\s/g, '_')}.pdf`);
                 appendOutput(`PDF gerado com sucesso.`, "success");
-            } catch (e) { appendOutput(`Erro ao gerar PDF: ${e.message}`, "error"); }
+            } catch (e) { 
+                appendOutput(`Erro ao gerar PDF: ${e.message}`, "error");
+                console.error(e);
+            }
         };
+
 
         const showPatientDetails = (patient) => {
             patientDetailsTitle.textContent = `Paciente: ${patient.patientName}`;
-            let detailsHTML = '';
-            const addDetailSection = (title, content) => {
-                if (!content || (typeof content === 'string' && !content.trim()) || (typeof content === 'object' && Object.values(content).every(v => !v))) return '';
-                let body = '';
-                if (typeof content === 'object') body = Object.entries(content).map(([k, v]) => `<strong>${k.toUpperCase()}:</strong> ${v || "Não informado"}<br>`).join('');
-                else body = content.replace(/\n/g, '<br>');
-                return `<div class="patient-details-section"><div class="patient-details-section-title">${title}</div><div>${body}</div></div>`;
-            };
-            detailsHTML += addDetailSection('ANAMNESE', patient.anamnesis);
-            detailsHTML += addDetailSection('RESULTADOS DOS EXAMES', patient.examsResults);
-            detailsHTML += addDetailSection('ANÁLISE VISUAL', patient.axonEyeResults);
-            
-            if (patient.axonEyeImages && patient.axonEyeImages.length > 0) {
-                detailsHTML += `<div class="patient-details-section"><div class="patient-details-section-title">IMAGENS (${patient.axonEyeImages.length})</div><div class="patient-images-grid">`;
-                patient.axonEyeImages.forEach(img => {
-                    detailsHTML += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" onclick="openFullscreenModal('${img.link}')" alt="Imagem do paciente"></div>`;
-                });
-                detailsHTML += `</div></div>`;
-            }
+            patientDetailsBody.innerHTML = ''; // Limpa o corpo do modal
 
-            patientDetailsBody.innerHTML = detailsHTML;
+            if (patient.consultations && patient.consultations.length > 0) {
+                 // Ordena as consultas da mais recente para a mais antiga
+                const sortedConsultations = patient.consultations.sort((a, b) => b.consultationDate.toDate() - a.consultationDate.toDate());
+
+                sortedConsultations.forEach((consult, index) => {
+                    const consultItem = document.createElement('div');
+                    consultItem.className = 'consultation-item';
+
+                    const header = document.createElement('div');
+                    header.className = 'consultation-header';
+                    header.innerHTML = `<span>Consulta - ${new Date(consult.consultationDate.toDate()).toLocaleString()}</span>`;
+                    
+                    const body = document.createElement('div');
+                    body.className = 'consultation-body';
+
+                    let detailsHTML = '';
+                    const addDetailSection = (title, content) => {
+                        if (!content || (typeof content === 'string' && !content.trim()) || (typeof content === 'object' && Object.values(content).every(v => !v))) return '';
+                        let bodyContent = '';
+                        if (typeof content === 'object') {
+                             bodyContent = Object.entries(content).map(([k, v]) => `<strong>${k.toUpperCase()}:</strong> ${v || "Não informado"}<br>`).join('');
+                        } else {
+                             bodyContent = content.replace(/\n/g, '<br>');
+                        }
+                        return `<div class="patient-details-section"><div class="patient-details-section-title">${title}</div><div>${bodyContent}</div></div>`;
+                    };
+
+                    detailsHTML += addDetailSection('ANAMNESE', consult.anamnesis);
+                    detailsHTML += addDetailSection('RESULTADOS DOS EXAMES', consult.examsResults);
+                    detailsHTML += addDetailSection('ANÁLISE VISUAL', consult.axonEyeResults);
+            
+                    if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
+                        detailsHTML += `<div class="patient-details-section"><div class="patient-details-section-title">IMAGENS (${consult.axonEyeImages.length})</div><div class="patient-images-grid">`;
+                        consult.axonEyeImages.forEach(img => {
+                            detailsHTML += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" onclick="openFullscreenModal('${img.link}')" alt="Imagem do paciente"></div>`;
+                        });
+                        detailsHTML += `</div></div>`;
+                    }
+                    body.innerHTML = detailsHTML;
+                    
+                    header.onclick = () => {
+                        const isActive = body.classList.contains('active');
+                        // Fecha todos os outros abertos para um efeito acordeão
+                        patientDetailsBody.querySelectorAll('.consultation-body.active').forEach(b => b.classList.remove('active'));
+                        patientDetailsBody.querySelectorAll('.consultation-header.active').forEach(h => h.classList.remove('active'));
+                        // Abre/fecha o atual
+                        if (!isActive) {
+                           body.classList.add('active');
+                           header.classList.add('active');
+                        }
+                    };
+
+                    consultItem.append(header, body);
+                    patientDetailsBody.appendChild(consultItem);
+                });
+
+            } else {
+                patientDetailsBody.innerHTML = '<div class="info">Nenhuma consulta registrada para este paciente.</div>';
+            }
+            
             patientDetailsModal.style.display = 'flex';
         };
+
 
         const openSaveModal = () => {
             savePatientNameInput.value = '';
@@ -2222,7 +2367,6 @@
             savePatientModal.style.display = 'none';
         };
 
-
         const handleSuccessfulLogin = (username, isRestoredSession = false) => {
             isLoggedIn = true; currentUser = username; localStorage.setItem('axon_logged_in_user', username);
             loginModal.style.display = 'none';
@@ -2233,6 +2377,32 @@
             setupFirebaseListener(currentUser);
             toggleMonitorView('anamnesis');
             initializeAIModel();
+        };
+
+        const searchPatients = (searchTerm) => {
+            const lowerCaseSearchTerm = searchTerm.toLowerCase();
+            const patientItems = patientList.querySelectorAll('.patient-item');
+            let visibleCount = 0;
+
+            patientItems.forEach(item => {
+                const patientName = item.querySelector('strong')?.textContent.toLowerCase();
+                if (patientName && patientName.includes(lowerCaseSearchTerm)) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            const noResultsMessage = patientList.querySelector('.info');
+            if (noResultsMessage) noResultsMessage.remove();
+
+            if (visibleCount === 0 && patientItems.length > 0) {
+                const noResults = document.createElement('div');
+                noResults.className = 'info';
+                noResults.textContent = 'Nenhum paciente encontrado.';
+                patientList.appendChild(noResults);
+            }
         };
 
         const processCommand = async (command) => {
@@ -2255,7 +2425,15 @@
             } else if (cmd === '/clear') {
                 await clearTemporaryUploads();
                 if (currentUser) await deleteDoc(doc(db, "sessions", currentUser));
+                anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+                examsResults = "";
+                axonEyeResults = "";
+                conversationHistory = [];
+                updateAnamnesisPreview(false);
+                updateExamsResultsPreview(false);
+                updateAxonEyeResultsPreview(false);
                 resetInteractiveTerminal(false);
+                appendOutput("Sessão limpa.", "success");
             } else if (cmd === '/hear on') { toggleListening(); } 
             else if (cmd === '/hear off') { stopListening(); } 
             else if (cmd === '/hd') { await generateDiagnosticHypotheses(); } 
@@ -2303,12 +2481,19 @@
         btnCd.addEventListener('click', () => processCommand('/cd'));
         btnSave.addEventListener('click', openSaveModal);
         btnLoad.addEventListener('click', () => processCommand('/load'));
+        btnClear.addEventListener('click', () => processCommand('/clear'));
         btnMic.addEventListener('click', () => processCommand(isListening ? '/hear off' : '/hear on'));
 
         // Modais de Pacientes
         patientListClose.addEventListener('click', () => patientListModal.style.display = 'none');
         patientDetailsClose.addEventListener('click', () => patientDetailsModal.style.display = 'none');
-        patientListModal.addEventListener('click', (e) => { if (e.target.classList.contains('delete')) deletePatient(e.target.dataset.id); else if (e.target.classList.contains('pdf')) generatePatientPDF(e.target.dataset.id); });
+        patientListModal.addEventListener('click', (e) => {
+             if (e.target.closest('.patient-action-button.delete')) {
+                deletePatient(e.target.closest('.patient-action-button.delete').dataset.id);
+            } else if (e.target.closest('.patient-action-button.pdf')) {
+                generatePatientPDF(e.target.closest('.patient-action-button.pdf').dataset.id);
+            }
+        });
         patientSearchInput.addEventListener('input', (e) => searchPatients(e.target.value));
 
         // Modal de Login
@@ -2333,6 +2518,16 @@
             const dob = savePatientDobInput.value.trim();
             if (!name || !dob) return savePatientFeedback.textContent = 'Preencha todos os campos.';
             savePatient(name, dob);
+        });
+        savePatientDobInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2);
+            }
+            if (value.length > 5) {
+                value = value.substring(0, 5) + '/' + value.substring(5);
+            }
+            e.target.value = value.substring(0, 10);
         });
         savePatientDobInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') savePatientButton.click(); });
 
