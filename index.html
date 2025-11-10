@@ -364,6 +364,44 @@
             flex-shrink: 0;
         }
 
+        /* NOVOS ESTILOS PARA MODO DE EXAMES */
+        .camera-modal.exams-mode {
+            position: fixed;
+            z-index: 98; /* Abaixo de outros modais como o de album */
+            border-radius: 0;
+            background-color: rgba(13, 17, 23, 0.95); /* Fundo semi-transparente */
+        }
+
+        .camera-modal.exams-mode .camera-container {
+            justify-content: center;
+        }
+
+        .camera-modal.exams-mode .terminal-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 5;
+            background-color: rgba(22, 27, 34, 0.8);
+        }
+        
+        .camera-modal.exams-mode .camera-video-wrapper {
+            width: auto;
+            height: 90%; /* Ocupa 90% da altura da tela */
+            max-height: 90vh;
+            padding-bottom: 0; /* Remove padding que controlava o aspect ratio antigo */
+            aspect-ratio: 9 / 16; /* Força o aspect ratio de 9:16 */
+            margin: auto; /* Centraliza */
+            border: 2px solid var(--border-color);
+        }
+
+        .camera-modal.exams-mode .camera-controls {
+            position: fixed;
+            bottom: 15px;
+            width: 100%;
+            background-color: transparent;
+        }
+
         .camera-video {
             position: absolute;
             top: 0;
@@ -1503,7 +1541,7 @@
             { id: 9, name: 'gemini-2.5-pro', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${key}`, vision: true },
             { id: 10, name: 'gemini-2.5-flash-image', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${key}`, vision: true }
         ];
-        let currentAIModel = 'gemini-2.5-flash-lite';
+        let currentAIModel = 'gemini-2.0-flash';
         let currentVisionAIModel = 'gemini-2.5-flash';
 
         const getGeminiAPIUrl = (isVision = false) => {
@@ -1919,28 +1957,51 @@
             }
         };
 
+        const checkApiModelWithRetries = async (modelName, retries = 3) => {
+            for (let i = 0; i < retries; i++) {
+                appendOutput(`Verificando motor ${modelName}... (Tentativa ${i + 1}/${retries})`, "info", false);
+                if (await checkApiStatus(modelName)) {
+                    return true;
+                }
+                if (i < retries - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // Pequeno delay entre tentativas
+                }
+            }
+            return false;
+        };
+
         const initializeAIModel = async () => {
-            appendOutput("Verificando status da API...", "info", false);
-            let textModelOK = await checkApiStatus(currentAIModel);
+            appendOutput("Iniciando verificação de status da API...", "info", false);
+            
+            // Checando o motor de texto com retentativas
+            let textModelOK = await checkApiModelWithRetries(currentAIModel, 3);
             if (!textModelOK) {
                 const initialError = apiConnectionStatus;
-                appendOutput(`Motor de texto padrão (${currentAIModel}) falhou: ${initialError}. Tentando alternativo...`, "error", false);
-                currentAIModel = 'gemini-2.5-pro';
-                textModelOK = await checkApiStatus(currentAIModel);
+                appendOutput(`Motor de texto padrão (${currentAIModel}) falhou após 3 tentativas: ${initialError}. Tentando alternativo...`, "error", false);
+                currentAIModel = 'gemini-2.5-pro'; // Fallback model
+                textModelOK = await checkApiModelWithRetries(currentAIModel, 3);
             }
-            if (textModelOK) appendOutput(`Motor de texto (${currentAIModel}) conectado.`, "success", false);
-            else appendOutput(`Motor de texto alternativo (${currentAIModel}) também falhou.`, "error", false);
 
+            if (textModelOK) {
+                appendOutput(`Motor de texto (${currentAIModel}) conectado.`, "success", false);
+            } else {
+                appendOutput(`Motor de texto alternativo (${currentAIModel}) também falhou. Funções de texto podem não funcionar.`, "error", false);
+            }
 
-            let visionModelOK = await checkApiStatus(currentVisionAIModel);
+            // Checando o motor de visão com retentativas
+            let visionModelOK = await checkApiModelWithRetries(currentVisionAIModel, 3);
             if (!visionModelOK) {
                 const initialError = apiConnectionStatus;
-                appendOutput(`Motor de visão padrão (${currentVisionAIModel}) falhou: ${initialError}. Tentando alternativo...`, "error", false);
-                currentVisionAIModel = 'gemini-2.5-pro';
-                visionModelOK = await checkApiStatus(currentVisionAIModel);
+                appendOutput(`Motor de visão padrão (${currentVisionAIModel}) falhou após 3 tentativas: ${initialError}. Tentando alternativo...`, "error", false);
+                currentVisionAIModel = 'gemini-2.5-pro'; // Fallback model
+                visionModelOK = await checkApiModelWithRetries(currentVisionAIModel, 3);
             }
-            if(visionModelOK) appendOutput(`Motor de visão (${currentVisionAIModel}) conectado.`, "success", false);
-            else appendOutput(`Motor de visão alternativo (${currentVisionAIModel}) também falhou.`, "error", false);
+
+            if(visionModelOK) {
+                appendOutput(`Motor de visão (${currentVisionAIModel}) conectado.`, "success", false);
+            } else {
+                appendOutput(`Motor de visão alternativo (${currentVisionAIModel}) também falhou. Funções de imagem podem não funcionar.`, "error", false);
+            }
         };
 
         // Firebase Functions
@@ -2054,6 +2115,12 @@
             cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
             sendExamsButton.style.display = mode === 'exams' ? 'block' : 'none';
             sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'block' : 'none';
+
+            cameraModal.classList.remove('exams-mode');
+            if (mode === 'exams') {
+                cameraModal.classList.add('exams-mode');
+            }
+
             try {
                 if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: isMobile ? 'environment' : currentCameraFacingMode } });
@@ -2076,7 +2143,12 @@
             }
             cameraStatus.classList.add('status-off');
         };
-        const stopCamera = () => { stopCameraStreamOnly(); cameraModal.style.display = 'none'; toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); };
+        const stopCamera = () => { 
+            stopCameraStreamOnly(); 
+            cameraModal.style.display = 'none'; 
+            cameraModal.classList.remove('exams-mode');
+            toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); 
+        };
         const switchCamera = async () => { currentCameraFacingMode = (currentCameraFacingMode === 'user') ? 'environment' : 'user'; await startCamera(cameraMode); };
         const toggleFlashlight = async () => {
             if (!cameraStream) return;
