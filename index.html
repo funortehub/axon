@@ -364,45 +364,6 @@
             flex-shrink: 0;
         }
 
-        /* NOVOS ESTILOS PARA MODO DE EXAMES */
-        .camera-modal.exams-mode {
-            position: fixed;
-            z-index: 98; /* Abaixo de outros modais como o de album */
-            border-radius: 0;
-            background-color: rgba(13, 17, 23, 0.95); /* Fundo semi-transparente */
-        }
-
-        .camera-modal.exams-mode .camera-container {
-            justify-content: center;
-        }
-
-        .camera-modal.exams-mode .terminal-header {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 5;
-            background-color: rgba(22, 27, 34, 0.8);
-        }
-        
-        .camera-modal.exams-mode .camera-video-wrapper {
-            width: auto;
-            height: auto;
-            max-width: 95vw;
-            max-height: 90vh;
-            padding-bottom: 0; /* Remove padding que controlava o aspect ratio antigo */
-            aspect-ratio: 9 / 16; /* Força o aspect ratio de 9:16 */
-            margin: auto; /* Centraliza */
-            border: 2px solid var(--border-color);
-        }
-
-        .camera-modal.exams-mode .camera-controls {
-            position: fixed;
-            bottom: 15px;
-            width: 100%;
-            background-color: transparent;
-        }
-
         .camera-video {
             position: absolute;
             top: 0;
@@ -1542,7 +1503,7 @@
             { id: 9, name: 'gemini-2.5-pro', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${key}`, vision: true },
             { id: 10, name: 'gemini-2.5-flash-image', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${key}`, vision: true }
         ];
-        let currentAIModel = 'gemini-2.0-flash';
+        let currentAIModel = 'gemini-2.5-flash-lite';
         let currentVisionAIModel = 'gemini-2.5-flash';
 
         const getGeminiAPIUrl = (isVision = false) => {
@@ -1606,43 +1567,20 @@
             };
         };
 
-        const toggleListening = async () => {
-            if (isListening) {
+        const toggleListening = () => {
+            if (!isListening) {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        audioStream = stream;
+                        recognition.start();
+                    })
+                    .catch(err => {
+                        appendOutput(`Permissão de microfone negada: ${err.message}`, "error");
+                    });
+            } else {
                 stopListening();
-                return;
-            }
-
-            try {
-                // Proactively check for microphone permission
-                const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
-                if (permissionStatus.state === 'denied') {
-                    appendOutput("Acesso ao microfone bloqueado. Por favor, habilite a permissão nas configurações do seu navegador e tente novamente.", "error");
-                    return;
-                }
-            } catch (e) {
-                console.warn("API de Permissões não suportada, prosseguindo com getUserMedia.", e);
-            }
-
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                audioStream = stream;
-                if (recognition) {
-                    recognition.start();
-                } else {
-                    initSpeechRecognition();
-                    if(recognition) recognition.start();
-                }
-            } catch (err) {
-                let errorMessage = `Erro ao acessar o microfone: ${err.message}.`;
-                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    errorMessage = "Acesso ao microfone negado. Para usar o comando de voz, por favor, permita o acesso quando solicitado ou habilite-o nas configurações do navegador.";
-                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                    errorMessage = "Nenhum microfone foi encontrado no seu dispositivo.";
-                }
-                appendOutput(errorMessage, "error");
             }
         };
-
 
         const stopListening = () => {
             if (recognition) {
@@ -1981,51 +1919,28 @@
             }
         };
 
-        const checkApiModelWithRetries = async (modelName, retries = 3) => {
-            for (let i = 0; i < retries; i++) {
-                appendOutput(`Verificando motor ${modelName}... (Tentativa ${i + 1}/${retries})`, "info", false);
-                if (await checkApiStatus(modelName)) {
-                    return true;
-                }
-                if (i < retries - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 1000)); // Pequeno delay entre tentativas
-                }
-            }
-            return false;
-        };
-
         const initializeAIModel = async () => {
-            appendOutput("Iniciando verificação de status da API...", "info", false);
-            
-            // Checando o motor de texto com retentativas
-            let textModelOK = await checkApiModelWithRetries(currentAIModel, 3);
+            appendOutput("Verificando status da API...", "info", false);
+            let textModelOK = await checkApiStatus(currentAIModel);
             if (!textModelOK) {
                 const initialError = apiConnectionStatus;
-                appendOutput(`Motor de texto padrão (${currentAIModel}) falhou após 3 tentativas: ${initialError}. Tentando alternativo...`, "error", false);
-                currentAIModel = 'gemini-2.5-pro'; // Fallback model
-                textModelOK = await checkApiModelWithRetries(currentAIModel, 3);
+                appendOutput(`Motor de texto padrão (${currentAIModel}) falhou: ${initialError}. Tentando alternativo...`, "error", false);
+                currentAIModel = 'gemini-2.5-pro';
+                textModelOK = await checkApiStatus(currentAIModel);
             }
+            if (textModelOK) appendOutput(`Motor de texto (${currentAIModel}) conectado.`, "success", false);
+            else appendOutput(`Motor de texto alternativo (${currentAIModel}) também falhou.`, "error", false);
 
-            if (textModelOK) {
-                appendOutput(`Motor de texto (${currentAIModel}) conectado.`, "success", false);
-            } else {
-                appendOutput(`Motor de texto alternativo (${currentAIModel}) também falhou. Funções de texto podem não funcionar.`, "error", false);
-            }
 
-            // Checando o motor de visão com retentativas
-            let visionModelOK = await checkApiModelWithRetries(currentVisionAIModel, 3);
+            let visionModelOK = await checkApiStatus(currentVisionAIModel);
             if (!visionModelOK) {
                 const initialError = apiConnectionStatus;
-                appendOutput(`Motor de visão padrão (${currentVisionAIModel}) falhou após 3 tentativas: ${initialError}. Tentando alternativo...`, "error", false);
-                currentVisionAIModel = 'gemini-2.5-pro'; // Fallback model
-                visionModelOK = await checkApiModelWithRetries(currentVisionAIModel, 3);
+                appendOutput(`Motor de visão padrão (${currentVisionAIModel}) falhou: ${initialError}. Tentando alternativo...`, "error", false);
+                currentVisionAIModel = 'gemini-2.5-pro';
+                visionModelOK = await checkApiStatus(currentVisionAIModel);
             }
-
-            if(visionModelOK) {
-                appendOutput(`Motor de visão (${currentVisionAIModel}) conectado.`, "success", false);
-            } else {
-                appendOutput(`Motor de visão alternativo (${currentVisionAIModel}) também falhou. Funções de imagem podem não funcionar.`, "error", false);
-            }
+            if(visionModelOK) appendOutput(`Motor de visão (${currentVisionAIModel}) conectado.`, "success", false);
+            else appendOutput(`Motor de visão alternativo (${currentVisionAIModel}) também falhou.`, "error", false);
         };
 
         // Firebase Functions
@@ -2135,26 +2050,10 @@
 
         // Camera and Image Processing Functions
         const startCamera = async (mode) => {
-            try {
-                const permissionStatus = await navigator.permissions.query({ name: 'camera' });
-                if (permissionStatus.state === 'denied') {
-                    appendOutput("Acesso à câmera está bloqueado. Por favor, habilite a permissão nas configurações do seu navegador e tente novamente.", "error");
-                    return;
-                }
-            } catch (e) {
-                console.warn("API de Permissões não suportada, prosseguindo com getUserMedia.", e);
-            }
-        
             cameraMode = mode;
             cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
             sendExamsButton.style.display = mode === 'exams' ? 'block' : 'none';
             sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'block' : 'none';
-        
-            cameraModal.classList.remove('exams-mode');
-            if (mode === 'exams') {
-                cameraModal.classList.add('exams-mode');
-            }
-        
             try {
                 if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: isMobile ? 'environment' : currentCameraFacingMode } });
@@ -2167,15 +2066,7 @@
                 const track = stream.getVideoTracks()[0];
                 if (track && 'torch' in track.getCapabilities()) flashlightButton.style.display = 'block';
             } catch (err) {
-                let errorMessage = `Erro ao acessar a câmera: ${err.message}.`;
-                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    errorMessage = "Acesso à câmera negado. Para usar esta função, por favor, permita o acesso quando solicitado ou habilite-o nas configurações do seu navegador.";
-                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                    errorMessage = "Nenhuma câmera foi encontrada no seu dispositivo.";
-                } else if (err.name === 'NotReadableError') {
-                    errorMessage = "Não foi possível iniciar a câmera. Pode estar sendo usada por outro aplicativo.";
-                }
-                appendOutput(errorMessage, "error");
+                appendOutput(`Erro ao acessar a câmera: ${err.message}.`, "error");
             }
         };
         const stopCameraStreamOnly = () => {
@@ -2185,12 +2076,7 @@
             }
             cameraStatus.classList.add('status-off');
         };
-        const stopCamera = () => { 
-            stopCameraStreamOnly(); 
-            cameraModal.style.display = 'none'; 
-            cameraModal.classList.remove('exams-mode');
-            toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); 
-        };
+        const stopCamera = () => { stopCameraStreamOnly(); cameraModal.style.display = 'none'; toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); };
         const switchCamera = async () => { currentCameraFacingMode = (currentCameraFacingMode === 'user') ? 'environment' : 'user'; await startCamera(cameraMode); };
         const toggleFlashlight = async () => {
             if (!cameraStream) return;
@@ -2648,7 +2534,7 @@
                     break;
         
                 case '/hear':
-                    if (parts[1] === 'on') await toggleListening();
+                    if (parts[1] === 'on') toggleListening();
                     else if (parts[1] === 'off') stopListening();
                     else appendOutput("Uso: /hear on|off", "error");
                     break;
