@@ -1297,17 +1297,17 @@
         let conversationHistory = [];
 
         // Configurações da API Gemini
-        const defaultGeminiAPIKey = 'AIzaSyBWwhUDvakN71D3jgDwv0UUk0mxCx8olbI';
+        const defaultGeminiAPIKey = 'AIzaSyAJk2u0SsCv11d9mrECAkoBRafHEVGgwwg';
         let currentGeminiAPIKey = defaultGeminiAPIKey;
 
         // Mapeamento de modelos de IA (CORRIGIDO para modelos públicos)
         const apiModels = [
-            { id: 1, name: 'gemini-flash-latest', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${key}`, vision: false },
-            { id: 2, name: 'gemma-2-9b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-2-9b-it:generateContent?key=${key}`, vision: false },
-            { id: 3, name: 'gemini-1.5-flash-latest', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${key}`, vision: true }
+            { id: 1, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: false },
+            { id: 2, name: 'gemini-2.5-pro', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${key}`, vision: true },
+            { id: 3, name: 'gemma-2-9b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-2-9b-it:generateContent?key=${key}`, vision: false }
         ];
-        let currentAIModel = apiModels[0].name;
-        let currentVisionAIModel = apiModels.find(m => m.vision)?.name || 'gemini-1.5-flash-latest';
+        let currentAIModel = 'gemini-2.5-flash';
+        let currentVisionAIModel = 'gemini-2.5-pro';
 
         const getGeminiAPIUrl = (isVision = false) => {
             const modelName = isVision ? currentVisionAIModel : currentAIModel;
