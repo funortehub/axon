@@ -1421,7 +1421,7 @@
             { id: 9, name: 'gemini-2.5-pro', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${key}`, vision: true },
             { id: 10, name: 'gemini-2.5-flash-image', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${key}`, vision: true }
         ];
-        let currentAIModel = 'gemini-2.5-flash';
+        let currentAIModel = 'gemini-2.5-flash-lite';
         let currentVisionAIModel = 'gemini-2.5-flash';
 
         const getGeminiAPIUrl = (isVision = false) => {
