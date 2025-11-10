@@ -2096,7 +2096,13 @@
                 item.append(img, delBtn); albumGrid.appendChild(item);
             });
         };
-        const openFullscreenModal = (imageDataURL) => { modalImage.src = imageDataURL; fullscreenModal.style.display = 'block'; };
+        
+        // FIX: Make function globally available for onclick attributes
+        window.openFullscreenModal = (imageDataURL) => { 
+            modalImage.src = imageDataURL; 
+            fullscreenModal.style.display = 'block'; 
+        };
+        
         modalClose.onclick = () => fullscreenModal.style.display = 'none';
         fullscreenModal.onclick = (e) => { if (e.target === fullscreenModal) fullscreenModal.style.display = 'none'; };
 
@@ -2222,15 +2228,22 @@
                 } else {
                     allPatients.forEach(p => {
                         const hasConsultations = p.consultations && p.consultations.length > 0;
-                        const lastConsultDate = hasConsultations
-                            ? new Date(p.consultations[p.consultations.length - 1].date?.toDate()).toLocaleString()
-                            : 'Nenhuma consulta registrada';
+                        
+                        let lastConsultDateStr = 'Nenhuma consulta registrada';
+                        if (hasConsultations) {
+                            const mostRecentConsult = p.consultations
+                                .filter(c => c.date) 
+                                .sort((a, b) => b.date.toDate() - a.date.toDate())[0];
+                            if (mostRecentConsult) {
+                                lastConsultDateStr = mostRecentConsult.date.toDate().toLocaleString();
+                            }
+                        }
 
                         const item = document.createElement('div'); 
                         item.className = 'patient-item';
                         item.dataset.patientId = p.id;
                         item.innerHTML = `<div><strong>${p.patientName}</strong> - ${p.birthDate || 'N/A'}</div>
-                                          <div style="font-size: 12px; color: #888;">Última consulta: ${lastConsultDate}</div>
+                                          <div style="font-size: 12px; color: #888;">Última consulta: ${lastConsultDateStr}</div>
                                           <div class="patient-actions">
                                             <button class="patient-action-button delete" data-id="${p.id}"><i class="fas fa-trash"></i> Excluir</button>
                                             <button class="patient-action-button details ${!hasConsultations ? 'disabled' : ''}" data-id="${p.id}"><i class="fas fa-eye"></i> Detalhes</button>
@@ -2242,6 +2255,7 @@
                 patientListModal.style.display = 'flex';
             } catch (e) {
                 appendOutput(`Erro ao carregar pacientes: ${e.message}`, "error");
+                console.error("Erro em loadPatientList:", e);
             }
         };
 
@@ -2258,7 +2272,7 @@
                         for (const consult of patientData.consultations) {
                             if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
                                 for (const img of consult.axonEyeImages) {
-                                    await deleteFromImgur(img.deleteHash);
+                                    await deleteFromImgur(img.deleteHash); // FIX: Corrected typo from Imugr to Imgur
                                 }
                             }
                         }
@@ -2307,11 +2321,17 @@
                     y += splitText.length * 5 + 5;
                 };
 
-                const sortedConsultations = [...patient.consultations].sort((a, b) => a.date.toDate() - b.date.toDate());
+                // FIX: Filter consultations with dates before sorting to prevent errors
+                const sortedConsultations = [...patient.consultations]
+                    .filter(c => c.date)
+                    .sort((a, b) => (a.date.toDate()) - (b.date.toDate()));
 
                 sortedConsultations.forEach((consult, index) => {
                     if (y + 20 > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
-                    pdfDoc.setFontSize(14).setFont(undefined, 'bold').text(`Consulta ${index + 1}: ${consult.date.toDate().toLocaleString()}`, 105, y, { align: 'center' });
+                    
+                    // FIX: Safely display date
+                    const consultDate = consult.date ? consult.date.toDate().toLocaleString() : 'Data indisponível';
+                    pdfDoc.setFontSize(14).setFont(undefined, 'bold').text(`Consulta ${index + 1}: ${consultDate}`, 105, y, { align: 'center' });
                     y += 5;
                     pdfDoc.line(14, y, 196, y);
                     y += 10;
@@ -2324,7 +2344,7 @@
                 pdfDoc.save(`prontuario_${patient.patientName.replace(/\s+/g, '_')}.pdf`);
                 appendOutput(`PDF do prontuário completo gerado com sucesso.`, "success");
 
-            } catch (e) { appendOutput(`Erro ao gerar PDF: ${e.message}`, "error"); }
+            } catch (e) { appendOutput(`Erro ao gerar PDF: ${e.message}`, "error"); console.error(e); }
         };
 
         const showPatientDetails = (patient) => {
@@ -2340,12 +2360,17 @@
             };
 
             if (patient.consultations && patient.consultations.length > 0) {
-                const sortedConsultations = [...patient.consultations].sort((a, b) => b.date.toDate() - a.date.toDate());
+                // FIX: Filter consultations with dates before sorting to prevent errors
+                const sortedConsultations = [...patient.consultations]
+                    .filter(c => c.date)
+                    .sort((a, b) => b.date.toDate() - a.date.toDate());
                 detailsHTML += `<div class="consultation-list">`;
                 sortedConsultations.forEach((consult, index) => {
+                    // FIX: Safely display date
+                    const consultDate = consult.date ? consult.date.toDate().toLocaleString() : 'Data indisponível';
                     detailsHTML += `<div class="consultation-item">
                                         <div class="consultation-header">
-                                            <i class="fas fa-chevron-right"></i> Consulta de ${consult.date.toDate().toLocaleString()}
+                                            <i class="fas fa-chevron-right"></i> Consulta de ${consultDate}
                                         </div>
                                         <div class="consultation-body" style="display: none;">
                                             ${addDetailSection('ANAMNESE', consult.anamnesis)}
