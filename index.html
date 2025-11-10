@@ -1302,12 +1302,11 @@
 
         // Mapeamento de modelos de IA
         const apiModels = [
-            { id: 1, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: false },
-            { id: 2, name: 'gemini-2.5-pro', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${key}`, vision: true },
-            { id: 3, name: 'gemma-2-9b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-2-9b-it:generateContent?key=${key}`, vision: false }
+            { id: 1, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: true },
+            { id: 2, name: 'gemini-2.5-pro', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${key}`, vision: true }
         ];
         let currentAIModel = 'gemini-2.5-flash';
-        let currentVisionAIModel = 'gemini-2.5-pro';
+        let currentVisionAIModel = 'gemini-2.5-flash';
 
         const getGeminiAPIUrl = (isVision = false) => {
             const modelName = isVision ? currentVisionAIModel : currentAIModel;
@@ -1665,7 +1664,9 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Erro na API: ${response.status}`);
+                    const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
+                    const errorMessage = errorData.error?.message || `Erro desconhecido na API (${response.status})`;
+                    throw new Error(errorMessage);
                 }
 
                 const data = await response.json();
@@ -1711,7 +1712,9 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Erro na API de Visão: ${response.status}`);
+                    const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
+                    const errorMessage = errorData.error?.message || `Erro desconhecido na API de Visão (${response.status})`;
+                    throw new Error(errorMessage);
                 }
 
                 const data = await response.json();
@@ -1977,8 +1980,8 @@
                 // Modelos de visão precisam de uma parte de imagem, mesmo para um ping
                 const dummyImagePart = {
                     inlineData: {
-                        mimeType: 'image/gif',
-                        data: 'R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=' // 1x1 GIF preto
+                        mimeType: 'image/png',
+                        data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' // 1x1 PNG preto
                     }
                 };
                 const textPart = { text: "ping" };
@@ -2017,21 +2020,46 @@
             }
         };
 
-        // CORRIGIDO: Simplificado para testar os modelos padrão
+        // CORRIGIDO: Implementa fallback para o motor de visão na inicialização
         const initializeAIModel = async () => {
             appendOutput("Verificando status da API...", "info", false);
-            const textModelOK = await checkApiStatus(currentAIModel);
+            
+            // --- Check Text Model with Fallback ---
+            let textModelOK = await checkApiStatus(currentAIModel);
             if (textModelOK) {
                 appendOutput(`Motor de texto (${currentAIModel}) conectado.`, "success", false);
             } else {
-                appendOutput(`Motor de texto padrão (${currentAIModel}) falhou. Verifique a chave da API ou tente outro motor.`, "error", false);
-            }
+                const initialError = apiConnectionStatus; // Capture error from first attempt
+                appendOutput(`Motor de texto padrão (${currentAIModel}) falhou: ${initialError}. Tentando motor alternativo...`, "error", false);
+                
+                const fallbackTextModel = 'gemini-2.5-pro';
+                currentAIModel = fallbackTextModel;
+                textModelOK = await checkApiStatus(currentAIModel);
 
-            const visionModelOK = await checkApiStatus(currentVisionAIModel);
+                if (textModelOK) {
+                    appendOutput(`Motor de texto alternativo (${currentAIModel}) conectado.`, "success", false);
+                } else {
+                    appendOutput(`Motor de texto alternativo (${currentAIModel}) também falhou: ${apiConnectionStatus}.`, "error", false);
+                }
+            }
+            
+            // --- Check Vision Model with Fallback ---
+            let visionModelOK = await checkApiStatus(currentVisionAIModel);
             if (visionModelOK) {
                 appendOutput(`Motor de visão (${currentVisionAIModel}) conectado.`, "success", false);
             } else {
-                appendOutput(`Motor de visão padrão (${currentVisionAIModel}) falhou.`, "error", false);
+                const initialError = apiConnectionStatus; // Capture error from first attempt
+                appendOutput(`Motor de visão padrão (${currentVisionAIModel}) falhou: ${initialError}. Tentando motor alternativo...`, "error", false);
+                
+                const fallbackVisionModel = 'gemini-2.5-pro';
+                currentVisionAIModel = fallbackVisionModel;
+                visionModelOK = await checkApiStatus(currentVisionAIModel);
+
+                if (visionModelOK) {
+                    appendOutput(`Motor de visão alternativo (${currentVisionAIModel}) conectado.`, "success", false);
+                } else {
+                    appendOutput(`Motor de visão alternativo (${currentVisionAIModel}) também falhou: ${apiConnectionStatus}. A funcionalidade de visão pode estar indisponível.`, "error", false);
+                }
             }
 
             if (!textModelOK && !visionModelOK) {
