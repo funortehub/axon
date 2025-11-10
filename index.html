@@ -1496,15 +1496,15 @@
             { id: 2, name: 'learnlm-2.0-flash-experimental', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/learnlm-2.0-flash-experimental:generateContent?key=${key}`, vision: true },
             { id: 3, name: 'gemini-2.0-flash-lite', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${key}`, vision: false },
             { id: 4, name: 'gemini-2.0-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, vision: false },
-            { id: 5, name: 'gemini-2.5-flash-lite', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`, vision: false },
+            { id: 5, name: 'gemini-2.5-flash-lite', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`, vision: true },
             { id: 6, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: true },
             { id: 7, name: 'gemini-flash-lite-latest', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${key}`, vision: true },
             { id: 8, name: 'gemini-flash-latest', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${key}`, vision: true },
             { id: 9, name: 'gemini-2.5-pro', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${key}`, vision: true },
             { id: 10, name: 'gemini-2.5-flash-image', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${key}`, vision: true }
         ];
-        let currentAIModel = 'gemini-2.5-flash-lite';
-        let currentVisionAIModel = 'gemini-2.5-flash';
+        let currentAIModel = 'gemini-2.0-flash';
+        let currentVisionAIModel = 'gemini-2.5-flash-lite';
 
         const getGeminiAPIUrl = (isVision = false) => {
             const modelName = isVision ? currentVisionAIModel : currentAIModel;
@@ -1771,43 +1771,88 @@
         };
 
         const callGeminiAPI = async (prompt) => {
-            try {
-                const response = await fetch(getGeminiAPIUrl(false), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
-                    throw new Error(errorData.error?.message || `Erro desconhecido na API (${response.status})`);
+            const textModelsToTry = [currentAIModel, 'gemini-2.5-flash', 'gemini-2.5-pro']; // Fallback order
+            let lastError = null;
+
+            for (const modelName of textModelsToTry) {
+                appendOutput(`Tentando com o motor de texto: ${modelName}...`, "info", false);
+                const model = apiModels.find(m => m.name === modelName);
+                if (!model) {
+                    lastError = new Error(`Modelo ${modelName} não encontrado.`);
+                    continue; // Try next model
                 }
-                const data = await response.json();
-                return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta.";
-            } catch (error) {
-                console.error("Erro na chamada da API:", error);
-                throw error;
+
+                for (let attempt = 1; attempt <= 3; attempt++) {
+                    try {
+                        const response = await fetch(model.urlBuilder(currentGeminiAPIKey), {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta.";
+                        }
+                        
+                        const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
+                        lastError = new Error(errorData.error?.message || `Erro desconhecido na API (${response.status})`);
+                        appendOutput(`Tentativa ${attempt}/3 com ${modelName} falhou: ${lastError.message}`, "error", false);
+
+                    } catch (error) {
+                        lastError = error;
+                        appendOutput(`Tentativa ${attempt}/3 com ${modelName} falhou (rede): ${error.message}`, "error", false);
+                    }
+                     if (attempt < 3) await new Promise(res => setTimeout(res, 1000)); // wait before retrying
+                }
             }
+
+            console.error("Erro final na chamada da API de texto:", lastError);
+            throw lastError || new Error("Todas as tentativas e modelos de texto falharam.");
         };
 
         const callGeminiVisionAPI = async (imageUrls, prompt) => {
-            try {
+            const visionModelsToTry = [currentVisionAIModel, 'gemini-2.5-flash', 'gemini-flash-latest']; // Fallback order
+            let lastError = null;
+
+            for (const modelName of visionModelsToTry) {
+                 appendOutput(`Tentando com o motor de visão: ${modelName}...`, "info", false);
+                const model = apiModels.find(m => m.name === modelName && m.vision);
+                if (!model) {
+                    lastError = new Error(`Modelo de visão ${modelName} não encontrado.`);
+                    continue; // Try next model
+                }
+                
                 const imageParts = imageUrls.map(url => ({ inlineData: { mimeType: 'image/jpeg', data: url.split(',')[1] } }));
                 const textPart = { text: prompt };
-                const response = await fetch(getGeminiAPIUrl(true), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [...imageParts, textPart] }] })
-                });
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
-                    throw new Error(errorData.error?.message || `Erro desconhecido na API de Visão (${response.status})`);
+
+                for (let attempt = 1; attempt <= 3; attempt++) {
+                    try {
+                        const response = await fetch(model.urlBuilder(currentGeminiAPIKey), {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [...imageParts, textPart] }] })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta da análise de imagem.";
+                        }
+
+                        const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
+                        lastError = new Error(errorData.error?.message || `Erro desconhecido na API de Visão (${response.status})`);
+                        appendOutput(`Tentativa ${attempt}/3 com ${modelName} falhou: ${lastError.message}`, "error", false);
+
+                    } catch (error) {
+                        lastError = error;
+                        appendOutput(`Tentativa ${attempt}/3 com ${modelName} falhou (rede): ${error.message}`, "error", false);
+                    }
+                     if (attempt < 3) await new Promise(res => setTimeout(res, 1000)); // wait before retrying
                 }
-                const data = await response.json();
-                return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta da análise de imagem.";
-            } catch (error) {
-                console.error("Erro na chamada da API de Visão:", error);
-                throw error;
             }
+            
+            console.error("Erro final na chamada da API de visão:", lastError);
+            throw lastError || new Error("Todas as tentativas e modelos de visão falharam.");
         };
 
         const processAnamnesisInfo = async (info) => {
