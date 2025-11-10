@@ -13,7 +13,6 @@
     <meta name="theme-color" content="#0d1117">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* Todos os estilos CSS anteriores permanecem exatamente iguais */
         :root {
             --bg-color: #0d1117;
             --terminal-bg: #0a0e14;
@@ -307,7 +306,6 @@
             z-index: 0;
         }
 
-        /* MODIFICAÇÃO: Texto em caixa alta apenas no monitor */
         .monitor-view {
             text-transform: uppercase;
         }
@@ -318,52 +316,34 @@
             text-transform: none;
         }
 
-        /* Estilos para o modal da câmera DENTRO DO TERMINAL */
-        .camera-modal {
+        /* Estilos para o overlay da câmera 9:16 */
+        .camera-overlay {
             display: none;
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: var(--terminal-bg);
-            z-index: 10;
-            flex-direction: column;
-            justify-content: flex-start;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
             align-items: center;
-            padding: 0;
-            border-radius: 8px;
-            overflow: hidden;
         }
 
-        .camera-container {
+        .camera-frame {
+            position: relative;
+            width: 90vw;
+            max-width: 400px;
+            aspect-ratio: 9 / 16;
+            background-color: black;
+            border-radius: 24px;
+            border: 3px solid var(--border-color);
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            background-color: var(--terminal-bg);
-            border: none;
-            border-radius: 0;
-            position: relative;
-            z-index: 1;
-            padding: 0;
-            gap: 10px;
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
-            max-width: none;
-            max-height: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
-
-        .camera-video-wrapper {
-            position: relative;
-            width: 100%;
-            padding-bottom: 75%;
-            background-color: black;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-
+        
         .camera-video {
             position: absolute;
             top: 0;
@@ -373,109 +353,120 @@
             object-fit: cover;
         }
 
-        .camera-controls {
+        .camera-top-bar {
             position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 0;
+            left: 0;
+            width: 100%;
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
             z-index: 2;
-            width: 90%;
+        }
+
+        .camera-top-bar .camera-button-sm,
+        .camera-top-bar .album-button {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px;
+            border-radius: 50%;
+            font-size: 14px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .album-button {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            position: relative;
+        }
+        
+        .album-count {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background-color: var(--highlight-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--bg-color);
+        }
+
+        .camera-bottom-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            z-index: 2;
         }
 
         .camera-button {
-            background-color: rgba(0, 0, 0, 0.6);
+            background-color: transparent;
             color: white;
-            border: 1px solid var(--border-color);
-            padding: 10px 15px;
-            border-radius: 50%;
+            border: none;
+            font-size: 24px;
             cursor: pointer;
-            font-size: 18px;
-            transition: background-color 0.3s ease, transform 0.2s ease;
+            transition: transform 0.2s, opacity 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
             width: 50px;
             height: 50px;
-            flex-shrink: 0;
+            opacity: 0.9;
         }
-
         .camera-button:hover {
-            background-color: var(--highlight-color);
-            transform: scale(1.05);
+            opacity: 1;
         }
-
+        
         .camera-button.disabled {
-            background-color: #555;
+            opacity: 0.4;
             cursor: not-allowed;
-            opacity: 0.7;
         }
-
-        .camera-action-buttons {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            gap: 5px;
-            z-index: 10;
-        }
-
-        .camera-switch-button, .flashlight-button {
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            padding: 4px 8px;
-            cursor: pointer;
-            font-size: 11px;
-            font-family: 'Consolas', 'Courier New', monospace;
-            transition: background-color: 0.2s;
-        }
-
-        .camera-switch-button:hover, .flashlight-button:hover {
-            background-color: rgba(0, 0, 0, 0.7);
-        }
-
-        .flashlight-button.active {
-            background-color: var(--highlight-color);
-            color: var(--bg-color);
-        }
-
-        .album-button {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            padding: 4px 8px;
-            cursor: pointer;
-            font-size: 11px;
-            font-family: 'Consolas', 'Courier New', monospace;
-            transition: background-color: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            z-index: 10;
-        }
-
-        .album-button:hover {
-            background-color: rgba(0, 0, 0, 0.7);
-        }
-
-        .album-count {
-            background-color: var(--highlight-color);
-            color: var(--bg-color);
+        
+        #capture-button {
+            width: 70px;
+            height: 70px;
+            background-color: white;
             border-radius: 50%;
-            padding: 2px 6px;
-            font-size: 10px;
+            border: 4px solid rgba(0,0,0,0.3);
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        #capture-button:active {
+            transform: scale(0.95);
+        }
+        
+        .flashlight-button.active {
+            color: yellow;
+        }
+        
+        .camera-modal-title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 16px;
             font-weight: bold;
-            min-width: 18px;
-            text-align: center;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+            z-index: 3;
         }
 
         .monitor-toggle-buttons {
@@ -537,52 +528,83 @@
             }
         }
 
-        .fullscreen-modal {
+        /* Estilos da Galeria de Imagens (Lightbox) */
+        .image-gallery-modal {
             display: none;
             position: fixed;
-            z-index: 100;
-            padding-top: 60px;
+            z-index: 1001; /* Z-index maior para sobrepor outros modais */
+            padding-top: 0;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgba(0,0,0,0.9);
+            background-color: rgba(0,0,0,0.95);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
         }
-
-        .modal-content {
-            margin: auto;
+        .gallery-content {
+            position: relative;
             display: block;
-            width: 80%;
-            max-width: 700px;
+            max-width: 90vw;
+            max-height: 80vh;
         }
-
-        .modal-content, #caption {
+        .gallery-content {
             animation-name: zoom;
-            animation-duration: 0.6s;
+            animation-duration: 0.4s;
         }
-
         @keyframes zoom {
-            from {transform:scale(0)}
+            from {transform:scale(0.8)}
             to {transform:scale(1)}
         }
-
-        .modal-close {
+        .gallery-close {
             position: absolute;
             top: 15px;
-            right: 35px;
+            right: 25px;
             color: #f1f1f1;
             font-size: 40px;
             font-weight: bold;
             transition: 0.3s;
+            cursor: pointer;
+            z-index: 2;
+        }
+        .gallery-prev, .gallery-next {
+            cursor: pointer;
+            position: absolute;
+            top: 50%;
+            width: auto;
+            padding: 16px;
+            margin-top: -50px;
+            color: white;
+            font-weight: bold;
+            font-size: 24px;
+            transition: 0.6s ease;
+            border-radius: 0 3px 3px 0;
+            user-select: none;
+            -webkit-user-select: none;
+            background-color: rgba(0,0,0,0.3);
+        }
+        .gallery-next {
+            right: 0;
+            border-radius: 3px 0 0 3px;
+        }
+        .gallery-prev {
+            left: 0;
+        }
+        .gallery-prev:hover, .gallery-next:hover {
+            background-color: rgba(0,0,0,0.8);
+        }
+        .gallery-counter {
+            color: #ccc;
+            font-size: 14px;
+            padding: 8px 12px;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
-        .modal-close:hover,
-        .modal-close:focus {
-            color: #bbb;
-            text-decoration: none;
-            cursor: pointer;
-        }
 
         .output .altered-text {
             color: var(--altered-color);
@@ -593,7 +615,7 @@
         .album-modal {
             display: none;
             position: fixed;
-            z-index: 99;
+            z-index: 1002; /* Maior que a galeria */
             left: 0;
             top: 0;
             width: 100%;
@@ -720,7 +742,6 @@
             border-radius: 5px;
         }
 
-        /* NOVOS ESTILOS PARA O SISTEMA DE SAVE/LOAD */
         .patient-list-modal {
             display: none;
             position: fixed;
@@ -802,7 +823,7 @@
         .patient-details-modal {
             display: none;
             position: fixed;
-            z-index: 100;
+            z-index: 1000;
             left: 0;
             top: 0;
             width: 100%;
@@ -900,7 +921,6 @@
             display: block;
         }
         
-        /* ESTILOS PARA HISTÓRICO DE CONSULTAS */
         .consultation-item {
             background-color: #161b22;
             border: 1px solid var(--border-color);
@@ -924,7 +944,6 @@
         }
 
 
-        /* NOVOS ESTILOS PARA BOTÕES DE AÇÃO NO PACIENTE */
         .patient-actions {
             display: flex;
             gap: 10px;
@@ -986,7 +1005,6 @@
         }
 
 
-        /* NOVO ESTILO PARA BARRA DE PESQUISA */
         .patient-search-container {
             margin-bottom: 15px;
         }
@@ -1006,7 +1024,6 @@
             border-color: var(--highlight-color);
         }
 
-        /* NOVOS ESTILOS PARA A BARRA DE AÇÕES MOBILE */
         .terminal-footer {
             padding: 8px 15px;
             border-top: 1px solid var(--border-color);
@@ -1050,7 +1067,6 @@
             box-shadow: 0 0 8px var(--success-color);
         }
 
-        /* NOVOS ESTILOS PARA O MODAL DE LOGIN (E SAVE) */
         .app-modal {
             display: none;
             position: fixed;
@@ -1135,7 +1151,6 @@
             min-height: 20px;
         }
 
-        /* Adicionando um botão de fechar genérico */
         .app-modal-close {
             position: absolute;
             top: 10px;
@@ -1242,38 +1257,6 @@
                 <div id="axon-eye-results-preview" class="monitor-view" style="display: none;">
                     <div class="info">Nenhuma análise visual feita ainda.</div>
                 </div>
-
-                <div id="camera-modal" class="camera-modal">
-                    <div class="camera-container">
-                        <div class="terminal-header">
-                            <div class="terminal-title" id="camera-modal-title">Câmera de Exames</div>
-                            <div class="terminal-actions">
-                                <div class="terminal-btn close-btn" id="camera-close-btn"></div>
-                            </div>
-                        </div>
-                        <div class="terminal-content" style="padding: 10px;">
-                            <div class="camera-video-wrapper">
-                                <video id="camera-video" class="camera-video" autoplay playsinline></video>
-                                <div class="camera-action-buttons">
-                                    <button id="flashlight-button" class="flashlight-button" style="display:none;"><i class="fas fa-lightbulb"></i> Lanterna</button>
-                                    <button id="camera-switch-button" class="camera-switch-button" style="display:none;"><i class="fas fa-sync-alt"></i> Trocar Câmera</button>
-                                </div>
-                                <button id="album-button" class="album-button" style="display:none;">
-                                    <i class="fas fa-images"></i> Álbum <span id="album-count" class="album-count">0</span>
-                                </button>
-                                <div class="camera-controls">
-                                    <button id="capture-button" class="camera-button" title="Capturar Foto"><i class="fas fa-camera"></i></button>
-                                    <input type="file" id="file-input" accept="image/*" multiple style="display: none;">
-                                    <button id="upload-button" class="camera-button" title="Carregar Arquivo"><i class="fas fa-upload"></i></button>
-                                    <button id="send-exams-button" class="camera-button disabled" title="Enviar Exames"><i class="fas fa-paper-plane"></i></button>
-                                    <button id="send-axon-eye-button" class="camera-button disabled" title="Analisar com Axon Eye" style="display:none;"><i class="fas fa-eye"></i></button>
-                                    <button id="cancel-camera-button" class="camera-button" title="Cancelar"><i class="fas fa-times"></i></button>
-                                </div>
-                            </div>
-                            <canvas id="camera-canvas" style="display:none;"></canvas>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -1282,9 +1265,45 @@
         <span>AXON | Sistema médico inteligente desenvolvido por Ian Bastos</span>
     </div>
 
-    <div id="fullscreen-modal" class="fullscreen-modal">
-        <span class="modal-close">&times;</span>
-        <img class="modal-content" id="modal-image">
+    <!-- MODAL DA CÂMERA REDESENHADO -->
+    <div id="camera-overlay" class="camera-overlay">
+        <div id="camera-frame" class="camera-frame">
+            <div id="camera-modal-title" class="camera-modal-title">Câmera</div>
+            <video id="camera-video" class="camera-video" autoplay playsinline></video>
+            
+            <div class="camera-top-bar">
+                <button id="camera-close-btn" class="camera-button-sm" title="Fechar Câmera"><i class="fas fa-times"></i></button>
+                <div style="display: flex; gap: 10px;">
+                    <button id="flashlight-button" class="camera-button-sm flashlight-button" title="Lanterna" style="display:none;"><i class="fas fa-lightbulb"></i></button>
+                    <button id="camera-switch-button" class="camera-button-sm" title="Trocar Câmera" style="display:none;"><i class="fas fa-sync-alt"></i></button>
+                </div>
+            </div>
+            
+            <div class="camera-bottom-bar">
+                <div id="album-button" class="album-button" title="Álbum" style="display:none;">
+                    <i class="fas fa-images"></i>
+                    <span id="album-count" class="album-count">0</span>
+                </div>
+                <button id="capture-button" title="Capturar Foto"></button>
+                <input type="file" id="file-input" accept="image/*" multiple style="display: none;">
+                <button id="upload-button" class="camera-button" title="Carregar Arquivo"><i class="fas fa-upload"></i></button>
+            </div>
+            <canvas id="camera-canvas" style="display:none;"></canvas>
+        </div>
+        <!-- Botões de ação movidos para fora do frame para melhor acessibilidade -->
+        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; z-index: 1001;">
+            <button id="send-exams-button" class="action-button disabled" title="Enviar Exames" style="width: 50px; height: 50px; font-size: 20px; background-color: var(--success-color);"><i class="fas fa-paper-plane"></i></button>
+            <button id="send-axon-eye-button" class="action-button disabled" title="Analisar com Axon Eye" style="display:none; width: 50px; height: 50px; font-size: 20px; background-color: var(--prompt-color);"><i class="fas fa-eye"></i></button>
+        </div>
+    </div>
+
+    <!-- GALERIA DE IMAGENS (LIGHTBOX) -->
+    <div id="image-gallery-modal" class="image-gallery-modal">
+        <span class="gallery-close">&times;</span>
+        <img class="gallery-content" id="gallery-image">
+        <a class="gallery-prev">&#10094;</a>
+        <a class="gallery-next">&#10095;</a>
+        <div id="gallery-counter" class="gallery-counter"></div>
     </div>
 
     <div id="album-modal" class="album-modal">
@@ -1298,7 +1317,6 @@
         </div>
     </div>
 
-    <!-- NOVOS MODAIS PARA SAVE/LOAD -->
     <div id="patient-list-modal" class="patient-list-modal">
         <div class="patient-list-content">
             <div class="patient-list-header">
@@ -1327,7 +1345,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE LOGIN INICIAL -->
     <div id="login-modal" class="app-modal">
         <div class="app-modal-content">
             <div class="app-modal-header">
@@ -1343,7 +1360,6 @@
         </div>
     </div>
 
-    <!-- MODAL PARA SALVAR PACIENTE -->
     <div id="save-patient-modal" class="app-modal">
         <div class="app-modal-content">
             <span class="app-modal-close">&times;</span>
@@ -1390,8 +1406,8 @@
         const cameraStatus = document.getElementById('camera-status');
         const initialMessagesContainer = document.getElementById('initial-messages');
 
-        // Camera elements
-        const cameraModal = document.getElementById('camera-modal');
+        // Camera elements (NOVO LAYOUT)
+        const cameraOverlay = document.getElementById('camera-overlay');
         const cameraModalTitle = document.getElementById('camera-modal-title');
         const cameraVideo = document.getElementById('camera-video');
         const cameraCanvas = document.getElementById('camera-canvas');
@@ -1400,7 +1416,6 @@
         const uploadButton = document.getElementById('upload-button');
         const sendExamsButton = document.getElementById('send-exams-button');
         const sendAxonEyeButton = document.getElementById('send-axon-eye-button');
-        const cancelCameraButton = document.getElementById('cancel-camera-button');
         const cameraSwitchButton = document.getElementById('camera-switch-button');
         const flashlightButton = document.getElementById('flashlight-button');
         const cameraCloseBtn = document.getElementById('camera-close-btn');
@@ -1410,10 +1425,13 @@
         const toggleExamsButton = document.getElementById('toggle-exams');
         const toggleAxonEyeButton = document.getElementById('toggle-axon-eye');
 
-        // Fullscreen Modal elements
-        const fullscreenModal = document.getElementById('fullscreen-modal');
-        const modalImage = document.getElementById('modal-image');
-        const modalClose = document.getElementsByClassName('modal-close')[0];
+        // Image Gallery (Lightbox) elements
+        const imageGalleryModal = document.getElementById('image-gallery-modal');
+        const galleryImage = document.getElementById('gallery-image');
+        const galleryClose = document.getElementsByClassName('gallery-close')[0];
+        const galleryPrev = document.getElementsByClassName('gallery-prev')[0];
+        const galleryNext = document.getElementsByClassName('gallery-next')[0];
+        const galleryCounter = document.getElementById('gallery-counter');
 
         // Album Modal elements
         const albumButton = document.getElementById('album-button');
@@ -1483,6 +1501,8 @@
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isMobile = isMobileDevice();
         let allPatients = [];
+        let galleryImages = []; // Para a nova galeria
+        let currentGalleryIndex = 0; // Para a nova galeria
 
         let conversationHistory = [];
 
@@ -1746,12 +1766,7 @@
             anamnesisPreview.style.display = 'none';
             examsResultsPreview.style.display = 'none';
             axonEyeResultsPreview.style.display = 'none';
-            if (view === 'camera' && !fromRemote) {
-                cameraModal.style.display = 'flex';
-            } else {
-                cameraModal.style.display = 'none';
-                stopCameraStreamOnly();
-            }
+            
             toggleAnamnesisButton.classList.remove('active');
             toggleExamsButton.classList.remove('active');
             toggleAxonEyeButton.classList.remove('active');
@@ -1872,7 +1887,7 @@
 
         const askQuestionBasedOnContext = async (question) => {
             conversationHistory.push({ role: 'user', content: question });
-            const prompt = `Você é um assistente médico falando com um médico qualificado. Contexto: ANAMNESE: ${JSON.stringify(anamnesis)}, EXAMES: ${examsResults || "Nenhum"}, ANÁLISE VISUAL: ${axonEyeResults || "Nenhum"}. HISTÓRICO DA CONVERSA: ${conversationHistory.map(e => `${e.role}: ${e.content}`).join('\n')}. PERGUNTA ATUAL: "${question}". Responda de forma técnica, detalhada e objetiva, obedecendo fielmente ao pedido do médico.`;
+            const prompt = `Você é um assistente médico falando com um médico qualificado. Contexto: ANAMNESE: ${JSON.stringify(anamnesis)}, EXAMES: ${examsResults || "Nenhum"}, ANÁLISE VISUAL: ${axonEyeResults || "Nenhuma"}. HISTÓRICO DA CONVERSA: ${conversationHistory.map(e => `${e.role}: ${e.content}`).join('\n')}. PERGUNTA ATUAL: "${question}". Responda de forma técnica, detalhada e objetiva, obedecendo fielmente ao pedido do médico.`;
             try {
                 const response = await callGeminiAPI(prompt);
                 conversationHistory.push({ role: 'assistant', content: response });
@@ -2047,15 +2062,18 @@
         const startCamera = async (mode) => {
             cameraMode = mode;
             cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
-            sendExamsButton.style.display = mode === 'exams' ? 'block' : 'none';
-            sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'block' : 'none';
+            sendExamsButton.style.display = mode === 'exams' ? 'flex' : 'none';
+            sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'flex' : 'none';
             try {
                 if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: isMobile ? 'environment' : currentCameraFacingMode } });
-                cameraVideo.srcObject = stream; cameraStream = stream; toggleMonitorView('camera');
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentCameraFacingMode } });
+                cameraVideo.srcObject = stream; 
+                cameraStream = stream; 
+                cameraOverlay.style.display = 'flex';
                 cameraStatus.classList.remove('status-off');
                 appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}.`, "info");
-                albumButton.style.display = 'flex'; updateAlbumCount();
+                albumButton.style.display = 'flex'; 
+                updateAlbumCount();
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 if (devices.filter(d => d.kind === 'videoinput').length > 1) cameraSwitchButton.style.display = 'block';
                 const track = stream.getVideoTracks()[0];
@@ -2071,7 +2089,7 @@
             }
             cameraStatus.classList.add('status-off');
         };
-        const stopCamera = () => { stopCameraStreamOnly(); cameraModal.style.display = 'none'; toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); };
+        const stopCamera = () => { stopCameraStreamOnly(); cameraOverlay.style.display = 'none'; };
         const switchCamera = async () => { currentCameraFacingMode = (currentCameraFacingMode === 'user') ? 'environment' : 'user'; await startCamera(cameraMode); };
         const toggleFlashlight = async () => {
             if (!cameraStream) return;
@@ -2091,20 +2109,31 @@
             albumGrid.innerHTML = capturedImages.length === 0 ? '<div class="info" style="grid-column: 1 / -1; text-align: center;">Nenhuma imagem no álbum.</div>' : '';
             capturedImages.forEach(url => {
                 const item = document.createElement('div'); item.className = 'album-item';
-                const img = document.createElement('img'); img.src = url; img.className = 'album-image'; img.onclick = () => openFullscreenModal(url);
+                const img = document.createElement('img'); img.src = url; img.className = 'album-image'; img.onclick = () => openImageGallery([url], 0);
                 const delBtn = document.createElement('button'); delBtn.className = 'album-delete-button'; delBtn.innerHTML = '&times;'; delBtn.onclick = (e) => { e.stopPropagation(); removeCapturedImage(url); };
                 item.append(img, delBtn); albumGrid.appendChild(item);
             });
         };
         
-        // FIX: Make function globally available for onclick attributes
-        window.openFullscreenModal = (imageDataURL) => { 
-            modalImage.src = imageDataURL; 
-            fullscreenModal.style.display = 'block'; 
+        // Nova Galeria de Imagens (Lightbox)
+        const showGalleryImage = (index) => {
+            if (index < 0 || index >= galleryImages.length) return;
+            currentGalleryIndex = index;
+            galleryImage.src = galleryImages[index];
+            galleryCounter.textContent = `${index + 1} / ${galleryImages.length}`;
+            galleryPrev.style.display = index > 0 ? 'block' : 'none';
+            galleryNext.style.display = index < galleryImages.length - 1 ? 'block' : 'none';
         };
         
-        modalClose.onclick = () => fullscreenModal.style.display = 'none';
-        fullscreenModal.onclick = (e) => { if (e.target === fullscreenModal) fullscreenModal.style.display = 'none'; };
+        window.openImageGallery = (images, index) => {
+            galleryImages = images;
+            imageGalleryModal.style.display = 'flex';
+            showGalleryImage(index);
+        };
+        
+        galleryClose.onclick = () => imageGalleryModal.style.display = 'none';
+        galleryPrev.onclick = () => showGalleryImage(currentGalleryIndex - 1);
+        galleryNext.onclick = () => showGalleryImage(currentGalleryIndex + 1);
 
         const analyzeExams = async () => {
             if (capturedImages.length === 0) return appendOutput("Nenhuma imagem de exame para analisar.", "info");
@@ -2232,7 +2261,7 @@
                         let lastConsultDateStr = 'Nenhuma consulta registrada';
                         if (hasConsultations) {
                             const mostRecentConsult = p.consultations
-                                .filter(c => c.date) 
+                                .filter(c => c.date && c.date.toDate) 
                                 .sort((a, b) => b.date.toDate() - a.date.toDate())[0];
                             if (mostRecentConsult) {
                                 lastConsultDateStr = mostRecentConsult.date.toDate().toLocaleString();
@@ -2272,7 +2301,7 @@
                         for (const consult of patientData.consultations) {
                             if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
                                 for (const img of consult.axonEyeImages) {
-                                    await deleteFromImgur(img.deleteHash); // FIX: Corrected typo from Imugr to Imgur
+                                    await deleteFromImgur(img.deleteHash); 
                                 }
                             }
                         }
@@ -2321,15 +2350,13 @@
                     y += splitText.length * 5 + 5;
                 };
 
-                // FIX: Filter consultations with dates before sorting to prevent errors
                 const sortedConsultations = [...patient.consultations]
-                    .filter(c => c.date)
+                    .filter(c => c.date && c.date.toDate)
                     .sort((a, b) => (a.date.toDate()) - (b.date.toDate()));
 
                 sortedConsultations.forEach((consult, index) => {
                     if (y + 20 > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
                     
-                    // FIX: Safely display date
                     const consultDate = consult.date ? consult.date.toDate().toLocaleString() : 'Data indisponível';
                     pdfDoc.setFontSize(14).setFont(undefined, 'bold').text(`Consulta ${index + 1}: ${consultDate}`, 105, y, { align: 'center' });
                     y += 5;
@@ -2360,14 +2387,14 @@
             };
 
             if (patient.consultations && patient.consultations.length > 0) {
-                // FIX: Filter consultations with dates before sorting to prevent errors
                 const sortedConsultations = [...patient.consultations]
-                    .filter(c => c.date)
+                    .filter(c => c.date && c.date.toDate)
                     .sort((a, b) => b.date.toDate() - a.date.toDate());
                 detailsHTML += `<div class="consultation-list">`;
-                sortedConsultations.forEach((consult, index) => {
-                    // FIX: Safely display date
+                sortedConsultations.forEach((consult) => {
                     const consultDate = consult.date ? consult.date.toDate().toLocaleString() : 'Data indisponível';
+                    const imageUrls = (consult.axonEyeImages || []).map(img => img.link);
+
                     detailsHTML += `<div class="consultation-item">
                                         <div class="consultation-header">
                                             <i class="fas fa-chevron-right"></i> Consulta de ${consultDate}
@@ -2376,10 +2403,10 @@
                                             ${addDetailSection('ANAMNESE', consult.anamnesis)}
                                             ${addDetailSection('RESULTADOS DOS EXAMES', consult.examsResults)}
                                             ${addDetailSection('ANÁLISE VISUAL (AXON EYE)', consult.axonEyeResults)}`;
-                    if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
-                        detailsHTML += `<div class="patient-details-section"><div class="patient-details-section-title">IMAGENS (${consult.axonEyeImages.length})</div><div class="patient-images-grid">`;
-                        consult.axonEyeImages.forEach(img => {
-                            detailsHTML += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" onclick="openFullscreenModal('${img.link}')" alt="Imagem do paciente"></div>`;
+                    if (imageUrls.length > 0) {
+                        detailsHTML += `<div class="patient-details-section"><div class="patient-details-section-title">IMAGENS (${imageUrls.length})</div><div class="patient-images-grid">`;
+                        imageUrls.forEach((link, imgIndex) => {
+                            detailsHTML += `<div class="patient-image-item"><img src="${link}" class="patient-image" onclick='openImageGallery(${JSON.stringify(imageUrls)}, ${imgIndex})' alt="Imagem do paciente"></div>`;
                         });
                         detailsHTML += `</div></div>`;
                     }
@@ -2432,13 +2459,11 @@
                 }
             });
 
-            // Remove a mensagem "Nenhum paciente encontrado" antiga, se existir
             const noResultsMessage = patientList.querySelector('.info');
             if (noResultsMessage) {
                 noResultsMessage.remove();
             }
 
-            // Adiciona a mensagem se nenhum item estiver visível e a lista não estiver vazia
             if (visibleCount === 0 && patientItems.length > 0) {
                 const noResults = document.createElement('div');
                 noResults.className = 'info';
@@ -2505,7 +2530,6 @@
         fileInput.addEventListener('change', handleFileUpload);
         sendExamsButton.addEventListener('click', analyzeExams);
         sendAxonEyeButton.addEventListener('click', analyzeAxonEye);
-        cancelCameraButton.addEventListener('click', stopCamera);
         cameraSwitchButton.addEventListener('click', switchCamera);
         flashlightButton.addEventListener('click', toggleFlashlight);
         cameraCloseBtn.addEventListener('click', stopCamera);
