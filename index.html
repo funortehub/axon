@@ -1971,6 +1971,23 @@
                 return false;
             }
 
+            // CORREÇÃO: Corpo da requisição condicional para modelos de visão
+            let requestBody;
+            if (model.vision) {
+                // Modelos de visão precisam de uma parte de imagem, mesmo para um ping
+                const dummyImagePart = {
+                    inlineData: {
+                        mimeType: 'image/gif',
+                        data: 'R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=' // 1x1 GIF preto
+                    }
+                };
+                const textPart = { text: "ping" };
+                requestBody = JSON.stringify({ contents: [{ parts: [dummyImagePart, textPart] }] });
+            } else {
+                // Modelos de texto
+                requestBody = JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] });
+            }
+
             try {
                 const testUrl = model.urlBuilder(currentGeminiAPIKey);
                 const response = await fetch(testUrl, {
@@ -1978,13 +1995,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: "ping"
-                            }]
-                        }]
-                    }),
+                    body: requestBody, // Usar o corpo da requisição correto
                     signal: AbortSignal.timeout(5000)
                 });
 
@@ -1993,7 +2004,9 @@
                     apiStatus.classList.remove('status-off');
                     return true;
                 } else {
-                    apiConnectionStatus = `Erro (${response.status})`;
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMessage = errorData?.error?.message || `Erro (${response.status})`;
+                    apiConnectionStatus = errorMessage;
                     apiStatus.classList.add('status-off');
                     return false;
                 }
