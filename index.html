@@ -1300,7 +1300,7 @@
         const defaultGeminiAPIKey = 'AIzaSyAJk2u0SsCv11d9mrECAkoBRafHEVGgwwg';
         let currentGeminiAPIKey = defaultGeminiAPIKey;
 
-        // Mapeamento de modelos de IA (CORRIGIDO para modelos públicos)
+        // Mapeamento de modelos de IA
         const apiModels = [
             { id: 1, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: false },
             { id: 2, name: 'gemini-2.5-pro', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${key}`, vision: true },
