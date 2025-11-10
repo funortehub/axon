@@ -1412,7 +1412,12 @@
         const apiModels = [
             { id: 1, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: true },
             { id: 2, name: 'gemini-2.5-pro', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${key}`, vision: true },
-            { id: 3, name: 'gemini-1.0-pro', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key=${key}`, vision: false }
+            { id: 3, name: 'gemini-1.0-pro', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key=${key}`, vision: false },
+            { id: 4, name: 'gemini-2.0-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, vision: true },
+            { id: 5, name: 'gemma-3n-e4b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3n-e4b-it:generateContent?key=${key}`, vision: false },
+            { id: 6, name: 'gemma-3-12b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-12b-it:generateContent?key=${key}`, vision: false },
+            { id: 7, name: 'gemma-3-27b-it', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${key}`, vision: false },
+            { id: 8, name: 'learnlm-2.0-flash-experimental', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/learnlm-2.0-flash-experimental:generateContent?key=${key}`, vision: true }
         ];
         let currentAIModel = 'gemini-2.5-flash';
         let currentVisionAIModel = 'gemini-2.5-flash';
