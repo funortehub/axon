@@ -387,7 +387,8 @@
         
         .camera-modal.exams-mode .camera-video-wrapper {
             width: auto;
-            height: 90%; /* Ocupa 90% da altura da tela */
+            height: auto;
+            max-width: 95vw;
             max-height: 90vh;
             padding-bottom: 0; /* Remove padding que controlava o aspect ratio antigo */
             aspect-ratio: 9 / 16; /* Força o aspect ratio de 9:16 */
@@ -1605,20 +1606,43 @@
             };
         };
 
-        const toggleListening = () => {
-            if (!isListening) {
-                navigator.mediaDevices.getUserMedia({ audio: true })
-                    .then(stream => {
-                        audioStream = stream;
-                        recognition.start();
-                    })
-                    .catch(err => {
-                        appendOutput(`Permissão de microfone negada: ${err.message}`, "error");
-                    });
-            } else {
+        const toggleListening = async () => {
+            if (isListening) {
                 stopListening();
+                return;
+            }
+
+            try {
+                // Proactively check for microphone permission
+                const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
+                if (permissionStatus.state === 'denied') {
+                    appendOutput("Acesso ao microfone bloqueado. Por favor, habilite a permissão nas configurações do seu navegador e tente novamente.", "error");
+                    return;
+                }
+            } catch (e) {
+                console.warn("API de Permissões não suportada, prosseguindo com getUserMedia.", e);
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioStream = stream;
+                if (recognition) {
+                    recognition.start();
+                } else {
+                    initSpeechRecognition();
+                    if(recognition) recognition.start();
+                }
+            } catch (err) {
+                let errorMessage = `Erro ao acessar o microfone: ${err.message}.`;
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    errorMessage = "Acesso ao microfone negado. Para usar o comando de voz, por favor, permita o acesso quando solicitado ou habilite-o nas configurações do navegador.";
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    errorMessage = "Nenhum microfone foi encontrado no seu dispositivo.";
+                }
+                appendOutput(errorMessage, "error");
             }
         };
+
 
         const stopListening = () => {
             if (recognition) {
@@ -2111,16 +2135,26 @@
 
         // Camera and Image Processing Functions
         const startCamera = async (mode) => {
+            try {
+                const permissionStatus = await navigator.permissions.query({ name: 'camera' });
+                if (permissionStatus.state === 'denied') {
+                    appendOutput("Acesso à câmera está bloqueado. Por favor, habilite a permissão nas configurações do seu navegador e tente novamente.", "error");
+                    return;
+                }
+            } catch (e) {
+                console.warn("API de Permissões não suportada, prosseguindo com getUserMedia.", e);
+            }
+        
             cameraMode = mode;
             cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
             sendExamsButton.style.display = mode === 'exams' ? 'block' : 'none';
             sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'block' : 'none';
-
+        
             cameraModal.classList.remove('exams-mode');
             if (mode === 'exams') {
                 cameraModal.classList.add('exams-mode');
             }
-
+        
             try {
                 if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: isMobile ? 'environment' : currentCameraFacingMode } });
@@ -2133,7 +2167,15 @@
                 const track = stream.getVideoTracks()[0];
                 if (track && 'torch' in track.getCapabilities()) flashlightButton.style.display = 'block';
             } catch (err) {
-                appendOutput(`Erro ao acessar a câmera: ${err.message}.`, "error");
+                let errorMessage = `Erro ao acessar a câmera: ${err.message}.`;
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    errorMessage = "Acesso à câmera negado. Para usar esta função, por favor, permita o acesso quando solicitado ou habilite-o nas configurações do seu navegador.";
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    errorMessage = "Nenhuma câmera foi encontrada no seu dispositivo.";
+                } else if (err.name === 'NotReadableError') {
+                    errorMessage = "Não foi possível iniciar a câmera. Pode estar sendo usada por outro aplicativo.";
+                }
+                appendOutput(errorMessage, "error");
             }
         };
         const stopCameraStreamOnly = () => {
@@ -2606,7 +2648,7 @@
                     break;
         
                 case '/hear':
-                    if (parts[1] === 'on') toggleListening();
+                    if (parts[1] === 'on') await toggleListening();
                     else if (parts[1] === 'off') stopListening();
                     else appendOutput("Uso: /hear on|off", "error");
                     break;
