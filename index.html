@@ -1011,6 +1011,7 @@
             padding: 8px 15px;
             border-top: 1px solid var(--border-color);
             background-color: #161b22;
+            position: relative;
         }
 
         .action-buttons-container {
@@ -1149,6 +1150,76 @@
             color: white;
         }
 
+        /* NOVOS ESTILOS PARA O GUIA MÉDICO */
+        .guide-bubble {
+            display: none;
+            position: absolute;
+            bottom: 65px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 350px;
+            background-color: var(--highlight-color);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .guide-bubble.show {
+            display: block;
+            opacity: 1;
+            transform: translateX(-50%) translateY(-10px);
+        }
+
+        .guide-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid var(--highlight-color);
+        }
+
+        .guide-bubble-content ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: left;
+        }
+        
+        .guide-bubble-content li {
+            margin-bottom: 8px;
+            padding-left: 15px;
+            position: relative;
+        }
+        
+        .guide-bubble-content li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: white;
+        }
+
+        .guide-bubble-close {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
     </style>
 </head>
 <body>
@@ -1201,9 +1272,14 @@
                     <button id="btn-see" class="action-button" title="Análise Visual Axon Eye (/see)"><i class="fas fa-eye"></i></button>
                     <button id="btn-hd" class="action-button" title="Gerar Hipóteses Diagnósticas (/hd)"><i class="fas fa-lightbulb"></i></button>
                     <button id="btn-cd" class="action-button" title="Gerar Conduta Médica (/cd)"><i class="fas fa-pills"></i></button>
-                    <button id="btn-records" class="action-button" title="Prontuários"><i class="fas fa-book-medical"></i></button>
+                    <button id="btn-guide" class="action-button" title="Guia Médico (/guide)"><i class="fas fa-question-circle"></i></button>
+                    <button id="btn-records" class="action-button" title="Prontuários (/load)"><i class="fas fa-book-medical"></i></button>
                     <button id="btn-clear" class="action-button" title="Limpar Sessão (/clear)"><i class="fas fa-eraser"></i></button>
                     <button id="btn-mic" class="action-button" title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button>
+                </div>
+                <div id="guide-bubble" class="guide-bubble">
+                    <div id="guide-bubble-content"></div>
+                    <button id="guide-bubble-close" class="guide-bubble-close">&times;</button>
                 </div>
                 <div class="input-line">
                     <span class="prompt">></span>
@@ -1430,6 +1506,12 @@
         const btnMic = document.getElementById('btn-mic');
         const btnRecords = document.getElementById('btn-records');
         const btnClear = document.getElementById('btn-clear');
+        const btnGuide = document.getElementById('btn-guide');
+
+        // Guia Médico elements
+        const guideBubble = document.getElementById('guide-bubble');
+        const guideBubbleContent = document.getElementById('guide-bubble-content');
+        const guideBubbleClose = document.getElementById('guide-bubble-close');
 
         // MODAIS
         const patientListModal = document.getElementById('patient-list-modal');
@@ -1518,7 +1600,7 @@
 
         const validCommands = [
             '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
-            '/ia', '/help', '/clear', '/api', '/api-set', '/api-restore', '/api-engine', '/register', '/exames', '/see', '/ask', '/delete', '/pdf', '/load'
+            '/ia', '/help', '/clear', '/api', '/api-set', '/api-restore', '/api-engine', '/register', '/exames', '/see', '/ask', '/delete', '/pdf', '/load', '/guide'
         ];
 
         const isSpeechRecognitionSupported = () => 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
@@ -1895,6 +1977,33 @@
                 appendOutput(`Erro ao gerar hipóteses: ${error.message}`, "error");
             }
         };
+        
+        const generateMedicalGuide = async () => {
+            if (guideBubble.classList.contains('show')) {
+                guideBubble.classList.remove('show');
+                return;
+            }
+
+            guideBubbleContent.innerHTML = 'Analisando contexto e gerando sugestões... <i class="fas fa-spinner fa-spin"></i>';
+            guideBubble.classList.add('show');
+            
+            const prompt = `Baseado no contexto médico atual - ANAMNESE: ${JSON.stringify(anamnesis)}, EXAMES: ${examsResults || "Nenhum"}, ANÁLISE VISUAL: ${axonEyeResults || "Nenhuma"} - sugira uma lista de 3 a 5 perguntas pertinentes que o médico pode fazer ao paciente para refinar a anamnese e o diagnóstico. As perguntas devem ser diretas e claras. Retorne APENAS a lista de perguntas, cada uma em uma nova linha.`;
+
+            try {
+                const response = await callGeminiAPI(prompt);
+                const questions = response.split('\n').filter(q => q.trim() !== '');
+                if (questions.length > 0) {
+                    const questionsHTML = '<ul>' + questions.map(q => `<li>${q.replace(/^[-\d.\s]*/, '')}</li>`).join('') + '</ul>';
+                    guideBubbleContent.innerHTML = questionsHTML;
+                } else {
+                    guideBubbleContent.textContent = 'Não foi possível gerar sugestões no momento.';
+                }
+            } catch (error) {
+                guideBubbleContent.textContent = `Erro ao gerar guia: ${error.message}`;
+                console.error("Erro no Guia Médico:", error);
+            }
+        };
+
 
         const generateMedicalConduct = async () => {
             const prompt = `Com base na anamnese: ${JSON.stringify(anamnesis)}, exames: ${examsResults || "Nenhum"}, e análise visual: ${axonEyeResults || "Nenhuma"}, proponha uma conduta médica completa, dividida em: 1. Medicações (SUS), 2. Exames complementares (SUS), 3. Condutas não farmacológicas, 4. Recomendações. Seja técnico e resumido.`;
@@ -2696,6 +2805,10 @@
                     const patientName = command.substring(4).trim();
                     generatePDFFromCurrentSession(patientName);
                     break;
+
+                case '/guide':
+                    await generateMedicalGuide();
+                    break;
         
                 default:
                     appendOutput(`Comando '${mainCmd}' não reconhecido.`, "error");
@@ -2730,9 +2843,18 @@
         btnRecords.addEventListener('click', () => processCommand('/load'));
         btnClear.addEventListener('click', () => processCommand('/clear'));
         btnMic.addEventListener('click', () => processCommand(isListening ? '/hear off' : '/hear on'));
+        btnGuide.addEventListener('click', () => processCommand('/guide'));
         btnSaveFromList.addEventListener('click', () => {
             patientListModal.style.display = 'none';
             openSaveModal();
+        });
+
+        // Guia Médico Bubble
+        guideBubbleClose.addEventListener('click', () => guideBubble.classList.remove('show'));
+        document.addEventListener('click', (e) => {
+            if (!guideBubble.contains(e.target) && !btnGuide.contains(e.target) && guideBubble.classList.contains('show')) {
+                guideBubble.classList.remove('show');
+            }
         });
 
 
