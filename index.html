@@ -1565,6 +1565,7 @@
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isMobile = isMobileDevice();
         let allPatients = [];
+        let isGuideActive = false;
 
         let conversationHistory = [];
 
@@ -1962,6 +1963,7 @@
                 };
                 updateAnamnesisPreview();
                 appendOutput("Anamnese atualizada com sucesso.", "success");
+                updateMedicalGuide();
             } catch (error) {
                 appendOutput(`Erro ao atualizar a anamnese: ${error.message}.`, "error");
             }
@@ -1978,11 +1980,8 @@
             }
         };
         
-        const generateMedicalGuide = async () => {
-            if (guideBubble.classList.contains('show')) {
-                guideBubble.classList.remove('show');
-                return;
-            }
+        const updateMedicalGuide = async () => {
+            if (!isGuideActive) return;
 
             guideBubbleContent.innerHTML = 'Analisando contexto e gerando sugestões... <i class="fas fa-spinner fa-spin"></i>';
             guideBubble.classList.add('show');
@@ -1996,7 +1995,7 @@
                     const questionsHTML = '<ul>' + questions.map(q => `<li>${q.replace(/^[-\d.\s]*/, '')}</li>`).join('') + '</ul>';
                     guideBubbleContent.innerHTML = questionsHTML;
                 } else {
-                    guideBubbleContent.textContent = 'Não foi possível gerar sugestões no momento.';
+                    guideBubbleContent.textContent = 'Não há novas sugestões no momento.';
                 }
             } catch (error) {
                 guideBubbleContent.textContent = `Erro ao gerar guia: ${error.message}`;
@@ -2004,6 +2003,14 @@
             }
         };
 
+        const deactivateGuide = () => {
+            if (isGuideActive) {
+                isGuideActive = false;
+                btnGuide.classList.remove('active');
+                guideBubble.classList.remove('show');
+                appendOutput("Guia Médico desativado.", "info");
+            }
+        };
 
         const generateMedicalConduct = async () => {
             const prompt = `Com base na anamnese: ${JSON.stringify(anamnesis)}, exames: ${examsResults || "Nenhum"}, e análise visual: ${axonEyeResults || "Nenhuma"}, proponha uma conduta médica completa, dividida em: 1. Medicações (SUS), 2. Exames complementares (SUS), 3. Condutas não farmacológicas, 4. Recomendações. Seja técnico e resumido.`;
@@ -2274,6 +2281,7 @@
                 const response = await callGeminiVisionAPI(capturedImages, prompt);
                 examsResults = response; updateExamsResultsPreview();
                 appendOutput("Análise de exames concluída.", "success");
+                updateMedicalGuide();
             } catch (error) {
                 appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
             } finally {
@@ -2304,6 +2312,7 @@
                 const response = await callGeminiVisionAPI(capturedImages, prompt);
                 axonEyeResults = response; updateAxonEyeResultsPreview();
                 appendOutput("Análise Axon Eye concluída. Imagens prontas para salvar.", "success");
+                updateMedicalGuide();
             } catch (error) {
                 appendOutput(`Erro com Axon Eye: ${error.message}`, "error");
                 await clearTemporaryUploads(); // Limpa em caso de erro
@@ -2807,7 +2816,14 @@
                     break;
 
                 case '/guide':
-                    await generateMedicalGuide();
+                    if (isGuideActive) {
+                        deactivateGuide();
+                    } else {
+                        isGuideActive = true;
+                        btnGuide.classList.add('active');
+                        appendOutput("Guia Médico ativado. Sugestões serão atualizadas automaticamente.", "info");
+                        await updateMedicalGuide();
+                    }
                     break;
         
                 default:
@@ -2850,10 +2866,10 @@
         });
 
         // Guia Médico Bubble
-        guideBubbleClose.addEventListener('click', () => guideBubble.classList.remove('show'));
+        guideBubbleClose.addEventListener('click', deactivateGuide);
         document.addEventListener('click', (e) => {
             if (!guideBubble.contains(e.target) && !btnGuide.contains(e.target) && guideBubble.classList.contains('show')) {
-                guideBubble.classList.remove('show');
+                deactivateGuide();
             }
         });
 
