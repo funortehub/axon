@@ -1487,8 +1487,13 @@
         let conversationHistory = [];
 
         // Configurações da API Gemini e Imgur
-        const defaultGeminiAPIKey = 'AIzaSyAJk2u0SsCv11d9mrECAkoBRafHEVGgwwg';
-        let currentGeminiAPIKey = defaultGeminiAPIKey;
+        const apiKeys = [
+            'AIzaSyB7krrv-Jjw4hn34MIFYBcrzDa5mWB9PpU',
+            'AIzaSyAJk2u0SsCv11d9mrECAkoBRafHEVGgwwg',
+            'AIzaSyAG0j6JuMlR5FoCTUcNQOvNy_lcS5C9ew0'
+        ];
+        let currentApiKeyIndex = 1; // Start with the original default key index
+        let currentGeminiAPIKey = apiKeys[currentApiKeyIndex];
         const IMGUR_CLIENT_ID = '546c25a59c58ad7'; 
 
         const apiModels = [
@@ -1771,20 +1776,24 @@
         };
 
         const callGeminiAPI = async (prompt) => {
-            const textModelsToTry = [currentAIModel, 'gemini-2.5-flash', 'gemini-2.5-pro']; // Fallback order
+            const textModelsToTry = [currentAIModel, 'gemini-2.5-flash', 'gemini-2.5-pro'];
             let lastError = null;
 
             for (const modelName of textModelsToTry) {
-                appendOutput(`Tentando com o motor de texto: ${modelName}...`, "info", false);
                 const model = apiModels.find(m => m.name === modelName);
                 if (!model) {
                     lastError = new Error(`Modelo ${modelName} não encontrado.`);
-                    continue; // Try next model
+                    continue;
                 }
 
-                for (let attempt = 1; attempt <= 3; attempt++) {
+                for (let i = 0; i < apiKeys.length; i++) {
+                    const keyIndex = (currentApiKeyIndex + i) % apiKeys.length;
+                    const apiKeyToTry = apiKeys[keyIndex];
+                    
+                    appendOutput(`Tentando motor ${modelName} com chave API #${keyIndex + 1}...`, "info", false);
+
                     try {
-                        const response = await fetch(model.urlBuilder(currentGeminiAPIKey), {
+                        const response = await fetch(model.urlBuilder(apiKeyToTry), {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
@@ -1792,43 +1801,50 @@
 
                         if (response.ok) {
                             const data = await response.json();
+                            currentApiKeyIndex = keyIndex;
+                            currentGeminiAPIKey = apiKeys[currentApiKeyIndex];
+                            appendOutput(`Sucesso com motor ${modelName} e chave API #${keyIndex + 1}.`, "success", false);
                             return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta.";
                         }
-                        
+
                         const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
-                        lastError = new Error(errorData.error?.message || `Erro desconhecido na API (${response.status})`);
-                        appendOutput(`Tentativa ${attempt}/3 com ${modelName} falhou: ${lastError.message}`, "error", false);
+                        lastError = new Error(errorData.error?.message || `Erro desconhecido (${response.status})`);
+                        appendOutput(`Falha com chave API #${keyIndex + 1}: ${lastError.message}`, "error", false);
 
                     } catch (error) {
                         lastError = error;
-                        appendOutput(`Tentativa ${attempt}/3 com ${modelName} falhou (rede): ${error.message}`, "error", false);
+                        appendOutput(`Falha de rede com chave API #${keyIndex + 1}: ${error.message}`, "error", false);
                     }
-                     if (attempt < 3) await new Promise(res => setTimeout(res, 1000)); // wait before retrying
                 }
+                appendOutput(`Todas as chaves falharam para o motor ${modelName}. Tentando próximo motor...`, "error", false);
             }
 
             console.error("Erro final na chamada da API de texto:", lastError);
-            throw lastError || new Error("Todas as tentativas e modelos de texto falharam.");
+            throw lastError || new Error("Todas as tentativas de chaves e motores de texto falharam.");
         };
 
         const callGeminiVisionAPI = async (imageUrls, prompt) => {
-            const visionModelsToTry = [currentVisionAIModel, 'gemini-2.5-flash', 'gemini-flash-latest']; // Fallback order
+            const visionModelsToTry = [currentVisionAIModel, 'gemini-2.5-flash', 'gemini-flash-latest'];
             let lastError = null;
-
+        
             for (const modelName of visionModelsToTry) {
-                 appendOutput(`Tentando com o motor de visão: ${modelName}...`, "info", false);
                 const model = apiModels.find(m => m.name === modelName && m.vision);
                 if (!model) {
                     lastError = new Error(`Modelo de visão ${modelName} não encontrado.`);
-                    continue; // Try next model
+                    continue;
                 }
                 
                 const imageParts = imageUrls.map(url => ({ inlineData: { mimeType: 'image/jpeg', data: url.split(',')[1] } }));
                 const textPart = { text: prompt };
 
-                for (let attempt = 1; attempt <= 3; attempt++) {
+                for (let i = 0; i < apiKeys.length; i++) {
+                    const keyIndex = (currentApiKeyIndex + i) % apiKeys.length;
+                    const apiKeyToTry = apiKeys[keyIndex];
+                    
+                    appendOutput(`Tentando motor de visão ${modelName} com chave API #${keyIndex + 1}...`, "info", false);
+
                     try {
-                        const response = await fetch(model.urlBuilder(currentGeminiAPIKey), {
+                        const response = await fetch(model.urlBuilder(apiKeyToTry), {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ contents: [{ parts: [...imageParts, textPart] }] })
@@ -1836,43 +1852,41 @@
 
                         if (response.ok) {
                             const data = await response.json();
+                            currentApiKeyIndex = keyIndex;
+                            currentGeminiAPIKey = apiKeys[currentApiKeyIndex];
+                            appendOutput(`Sucesso com motor de visão ${modelName} e chave API #${keyIndex + 1}.`, "success", false);
                             return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta da análise de imagem.";
                         }
 
                         const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
                         lastError = new Error(errorData.error?.message || `Erro desconhecido na API de Visão (${response.status})`);
-                        appendOutput(`Tentativa ${attempt}/3 com ${modelName} falhou: ${lastError.message}`, "error", false);
+                        appendOutput(`Falha com chave API #${keyIndex + 1}: ${lastError.message}`, "error", false);
 
                     } catch (error) {
                         lastError = error;
-                        appendOutput(`Tentativa ${attempt}/3 com ${modelName} falhou (rede): ${error.message}`, "error", false);
+                        appendOutput(`Falha de rede com chave API #${keyIndex + 1}: ${error.message}`, "error", false);
                     }
-                     if (attempt < 3) await new Promise(res => setTimeout(res, 1000)); // wait before retrying
                 }
+                appendOutput(`Todas as chaves falharam para o motor de visão ${modelName}. Tentando próximo motor...`, "error", false);
             }
             
             console.error("Erro final na chamada da API de visão:", lastError);
-            throw lastError || new Error("Todas as tentativas e modelos de visão falharam.");
+            throw lastError || new Error("Todas as tentativas de chaves e motores de visão falharam.");
         };
+
 
         const processAnamnesisInfo = async (info) => {
             lastAnamnesisInfo = info;
-            const prompt = `Você é um assistente médico sênior especialista em semiologia. Sua tarefa é redigir uma anamnese técnica, concisa e bem estruturada, utilizando termos médicos apropriados.
-            A nova informação recebida (uma transcrição da conversa) é: "${info}".
+            const prompt = `Você é um assistente médico. Sua tarefa é organizar as informações fornecidas nas seções adequadas da anamnese.
+            A nova informação recebida é: "${info}".
+            É crucial que você **distinga as falas do médico das falas do paciente**. As falas do médico (perguntas, saudações, explicações que não são informações do paciente) **NÃO DEVEM SER ADICIONADAS À ANAMNESE**. Apenas as informações relevantes fornecidas pelo paciente devem ser incluídas.
             As informações existentes na anamnese são:
             - QP (Queixa Principal): "${anamnesis.qp || "Nenhuma"}"
             - HMA (História da Moléstia Atual): "${anamnesis.hma || "Nenhuma"}"
             - HP (História Patológica): "${anamnesis.hp || "Nenhuma"}"
             - HF (História Familiar): "${anamnesis.hf || "Nenhuma"}"
             - HPS (História Psicossocial): "${anamnesis.hps || "Nenhuma"}"
-
-            **Instruções Críticas:**
-            1.  **Distinga e Ignore Falas do Médico:** Ignore perguntas, saudações, e explicações do médico. Foque **exclusivamente** nas informações fornecidas pelo paciente.
-            2.  **Organização Contextual:** Analise a nova informação e adicione-a à seção mais relevante (QP, HMA, HP, HF, HPS). Você deve entender o contexto e organizar as informações de forma lógica, mesmo que tenham sido ditas fora de ordem.
-            3.  **Linguagem Técnica:** Reescreva as informações do paciente usando terminologia médica precisa. Por exemplo, "dor no peito" pode se tornar "precordialgia", "falta de ar" como "dispneia", etc.
-            4.  **Coerência e Concisão:** Garanta que a anamnese seja bem redigida, coesa e sem informações desconexas.
-            5.  **Fidelidade à Fonte:** **NUNCA** invente informações ou crie frases que não foram ditas (como "Paciente nega outros sintomas" ou "Paciente não soube informar..."), a menos que essa negação ou incerteza tenha sido explicitamente declarada pelo paciente ou médico.
-            6.  **Formato de Saída:** Retorne a anamnese completa e atualizada EXCLUSIVAMENTE como um objeto JSON, contendo TODAS as chaves (qp, hma, hp, hf, hps). Mantenha o conteúdo das seções não alteradas.`;
+            Instruções: Analise a "nova informação recebida", ignore falas do médico, e adicione a informação do paciente à seção MAIS RELEVANTE (QP, HMA, HP, HF, HPS), mantendo o conteúdo das outras seções inalterado. Formate a resposta EXCLUSIVAMENTE como um objeto JSON, contendo TODAS as chaves (qp, hma, hp, hf, hps).`;
             try {
                 const response = await callGeminiAPI(prompt);
                 const jsonStart = response.indexOf('{');
@@ -2642,7 +2656,8 @@
         
                 case '/api-restore':
                     if (parts[1] === 'admin123') {
-                        currentGeminiAPIKey = defaultGeminiAPIKey;
+                        currentGeminiAPIKey = apiKeys[1]; // Restore to the original default key
+                        currentApiKeyIndex = 1;
                         appendOutput("Chave da API restaurada para o padrão. Verificando...", "success");
                         await checkApiStatus();
                     } else {
@@ -2832,3 +2847,4 @@
         
     </script>
 </body>
+</html>
