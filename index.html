@@ -510,6 +510,29 @@
             border-color: var(--highlight-color);
         }
 
+        #monitor-content-wrapper {
+            position: relative;
+        }
+
+        .monitor-copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: #30363d;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.3s ease;
+            z-index: 5;
+        }
+
+        .monitor-copy-btn:hover {
+            background-color: #444c56;
+        }
+
         @media (max-width: 768px) {
             .monitor-toggle-button span {
                 display: none;
@@ -1233,6 +1256,7 @@
                 </div>
             </div>
             <div class="terminal-content" id="monitor-content-wrapper">
+                <button id="monitor-copy-btn" class="monitor-copy-btn" title="Copiar Conteúdo"><i class="fas fa-copy"></i></button>
                 <div id="anamnesis-preview" class="monitor-view">
                     <div class="info">Aguardando início da anamnese...</div>
                 </div>
@@ -1389,6 +1413,7 @@
         const micStatus = document.getElementById('mic-status');
         const cameraStatus = document.getElementById('camera-status');
         const initialMessagesContainer = document.getElementById('initial-messages');
+        const monitorCopyBtn = document.getElementById('monitor-copy-btn');
 
         // Camera elements
         const cameraModal = document.getElementById('camera-modal');
@@ -2735,6 +2760,7 @@
 
         // Event Listeners
         commandInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') processCommand(commandInput.value); });
+        monitorCopyBtn.addEventListener('click', copyMonitorContent);
         captureButton.addEventListener('click', capturePhoto);
         uploadButton.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileUpload);
