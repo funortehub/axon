@@ -1149,6 +1149,35 @@
             color: white;
         }
 
+        /* ESTILOS PARA GUIA MÉDICO */
+        .guide-bubble {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: rgba(31, 111, 235, 0.2);
+            border: 1px solid var(--highlight-color);
+            border-radius: 8px;
+            padding: 12px;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            z-index: 5;
+            color: var(--text-color);
+            font-size: 13px;
+            line-height: 1.6;
+            cursor: move;
+            user-select: none;
+        }
+
+        .guide-bubble .guide-title {
+            font-weight: bold;
+            color: var(--prompt-color);
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .guide-bubble em {
+            color: #888;
+        }
     </style>
 </head>
 <body>
@@ -1182,6 +1211,7 @@
             </div>
             <div class="terminal-content" id="interactive-output">
                 <img src="axon.png" alt="Axon Logo Terminal" class="terminal-logo-internal">
+                <div id="guide-bubble" class="guide-bubble" style="display: none;"></div>
                 <div id="initial-messages" style="position: relative; z-index: 1;">
                     <pre class="info">
  █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
@@ -1201,6 +1231,7 @@
                     <button id="btn-see" class="action-button" title="Análise Visual Axon Eye (/see)"><i class="fas fa-eye"></i></button>
                     <button id="btn-hd" class="action-button" title="Gerar Hipóteses Diagnósticas (/hd)"><i class="fas fa-lightbulb"></i></button>
                     <button id="btn-cd" class="action-button" title="Gerar Conduta Médica (/cd)"><i class="fas fa-pills"></i></button>
+                    <button id="btn-guide" class="action-button" title="Guia Médico"><i class="fas fa-compass"></i></button>
                     <button id="btn-records" class="action-button" title="Prontuários"><i class="fas fa-book-medical"></i></button>
                     <button id="btn-clear" class="action-button" title="Limpar Sessão (/clear)"><i class="fas fa-eraser"></i></button>
                     <button id="btn-mic" class="action-button" title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button>
@@ -1389,6 +1420,7 @@
         const micStatus = document.getElementById('mic-status');
         const cameraStatus = document.getElementById('camera-status');
         const initialMessagesContainer = document.getElementById('initial-messages');
+        const guideBubble = document.getElementById('guide-bubble');
 
         // Camera elements
         const cameraModal = document.getElementById('camera-modal');
@@ -1430,6 +1462,7 @@
         const btnMic = document.getElementById('btn-mic');
         const btnRecords = document.getElementById('btn-records');
         const btnClear = document.getElementById('btn-clear');
+        const btnGuide = document.getElementById('btn-guide');
 
         // MODAIS
         const patientListModal = document.getElementById('patient-list-modal');
@@ -1483,6 +1516,7 @@
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isMobile = isMobileDevice();
         let allPatients = [];
+        let isGuideActive = false;
 
         let conversationHistory = [];
 
@@ -1505,6 +1539,90 @@
         ];
         let currentAIModel = 'gemini-2.0-flash';
         let currentVisionAIModel = 'gemini-2.5-flash-lite';
+
+        // Lógica para tornar o balão do guia arrastável
+        const dragElement = (elmnt) => {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            const dragMouseDown = (e) => {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+                elmnt.style.cursor = 'grabbing';
+            };
+
+            const elementDrag = (e) => {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                
+                const parent = elmnt.parentElement;
+                const parentRect = parent.getBoundingClientRect();
+                const elmntRect = elmnt.getBoundingClientRect();
+
+                let newTop = elmnt.offsetTop - pos2;
+                let newLeft = elmnt.offsetLeft - pos1;
+
+                if (newTop < 0) newTop = 0;
+                if (newLeft < 0) newLeft = 0;
+                if (newTop + elmntRect.height > parent.clientHeight) newTop = parent.clientHeight - elmntRect.height;
+                if (newLeft + elmntRect.width > parent.clientWidth) newLeft = parent.clientWidth - elmntRect.width;
+
+                elmnt.style.top = newTop + "px";
+                elmnt.style.left = newLeft + "px";
+            };
+
+            const closeDragElement = () => {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                document.ontouchend = null;
+                document.ontouchmove = null;
+                elmnt.style.cursor = 'move';
+            };
+
+            const touchStart = (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                pos3 = touch.clientX;
+                pos4 = touch.clientY;
+                document.ontouchend = closeDragElement;
+                document.ontouchmove = touchDrag;
+                elmnt.style.cursor = 'grabbing';
+            };
+
+            const touchDrag = (e) => {
+                const touch = e.touches[0];
+                pos1 = pos3 - touch.clientX;
+                pos2 = pos4 - touch.clientY;
+                pos3 = touch.clientX;
+                pos4 = touch.clientY;
+                
+                const parent = elmnt.parentElement;
+                
+                let newTop = elmnt.offsetTop - pos2;
+                let newLeft = elmnt.offsetLeft - pos1;
+
+                if (newTop < 0) newTop = 0;
+                if (newLeft < 0) newLeft = 0;
+                if (newTop + elmnt.offsetHeight > parent.clientHeight) newTop = parent.clientHeight - elmnt.offsetHeight;
+                if (newLeft + elmnt.offsetWidth > parent.clientWidth) newLeft = parent.clientWidth - elmnt.offsetWidth;
+
+                elmnt.style.top = newTop + "px";
+                elmnt.style.left = newLeft + "px";
+            };
+
+            elmnt.onmousedown = dragMouseDown;
+            elmnt.ontouchstart = touchStart;
+        };
+
+        dragElement(document.getElementById("guide-bubble"));
+
 
         const getGeminiAPIUrl = (isVision = false) => {
             const modelName = isVision ? currentVisionAIModel : currentAIModel;
@@ -1625,7 +1743,7 @@
         };
 
         const resetInteractiveTerminal = (requireLogin = false) => {
-            const elementsToKeep = [initialMessagesContainer];
+            const elementsToKeep = [initialMessagesContainer, guideBubble];
             Array.from(interactiveOutput.children).forEach(child => {
                 if (!elementsToKeep.includes(child) && !child.classList.contains('terminal-logo-internal')) {
                     child.remove();
@@ -1854,19 +1972,28 @@
             console.error("Erro final na chamada da API de visão:", lastError);
             throw lastError || new Error("Todas as tentativas e modelos de visão falharam.");
         };
+        
+        const updateGuideSuggestions = async () => {
+            if (!isGuideActive) return;
+
+            guideBubble.innerHTML = '<em>Gerando novas sugestões...</em>';
+
+            const prompt = `Baseado na anamnese atual: QP: "${anamnesis.qp}", HMA: "${anamnesis.hma}", HP: "${anamnesis.hp}", HF: "${anamnesis.hf}", HPS: "${anamnesis.hps}". Sugira 3 perguntas curtas e diretas que um médico poderia fazer ao paciente para aprofundar a investigação. Retorne apenas as perguntas, cada uma em uma nova linha, sem numeração ou marcadores.`;
+
+            try {
+                const response = await callGeminiAPI(prompt);
+                const questions = response.split('\n').filter(q => q.trim() !== '');
+                const suggestionsHTML = questions.map(q => `<div>- ${q.trim()}</div>`).join('');
+                guideBubble.innerHTML = `<div class="guide-title"><i class="fas fa-compass"></i> Guia Médico:</div>${suggestionsHTML}`;
+            } catch (error) {
+                guideBubble.innerHTML = '<em>Erro ao buscar sugestões.</em>';
+                console.error("Error fetching guide suggestions:", error);
+            }
+        };
 
         const processAnamnesisInfo = async (info) => {
             lastAnamnesisInfo = info;
-            const prompt = `Você é um assistente médico. Sua tarefa é organizar as informações fornecidas nas seções adequadas da anamnese.
-            A nova informação recebida é: "${info}".
-            É crucial que você **distinga as falas do médico das falas do paciente**. As falas do médico (perguntas, saudações, explicações que não são informações do paciente) **NÃO DEVEM SER ADICIONADAS À ANAMNESE**. Apenas as informações relevantes fornecidas pelo paciente devem ser incluídas.
-            As informações existentes na anamnese são:
-            - QP (Queixa Principal): "${anamnesis.qp || "Nenhuma"}"
-            - HMA (História da Moléstia Atual): "${anamnesis.hma || "Nenhuma"}"
-            - HP (História Patológica): "${anamnesis.hp || "Nenhuma"}"
-            - HF (História Familiar): "${anamnesis.hf || "Nenhuma"}"
-            - HPS (História Psicossocial): "${anamnesis.hps || "Nenhuma"}"
-            Instruções: Analise a "nova informação recebida", ignore falas do médico, e adicione a informação do paciente à seção MAIS RELEVANTE (QP, HMA, HP, HF, HPS), mantendo o conteúdo das outras seções inalterado. Formate a resposta EXCLUSIVAMENTE como um objeto JSON, contendo TODAS as chaves (qp, hma, hp, hf, hps).`;
+            const prompt = `Você é uma IA assistente médica altamente qualificada. Sua tarefa é documentar de forma precisa e profissional a anamnese de um paciente a partir de fragmentos de diálogo. A nova informação recebida é: "${info}". Instruções: 1. Analise a 'nova informação recebida' e integre-a na seção mais relevante da anamnese (QP, HMA, HP, HF, HPS), reorganizando as informações de forma lógica e coerente dentro de cada seção. 2. A anamnese final deve ser bem redigida, usar terminologia médica apropriada e apresentar um fluxo de informações coeso, mesmo que os dados tenham sido fornecidos fora de ordem. 3. Ignore as perguntas e comentários do médico; documente apenas as informações fornecidas pelo paciente. 4. **CRÍTICO: Não adicione nenhuma informação, frase ou conclusão que não tenha sido explicitamente declarada na entrada. Não invente frases como 'Paciente nega outros sintomas' ou 'Paciente não sabe especificar', a menos que isso tenha sido dito textualmente.** 5. Mantenha o conteúdo existente das seções que não foram afetadas pela nova informação. A anamnese atual é: QP: "${anamnesis.qp}", HMA: "${anamnesis.hma}", HP: "${anamnesis.hp}", HF: "${anamnesis.hf}", HPS: "${anamnesis.hps}". Sua resposta deve ser **exclusivamente** um objeto JSON contendo todas as chaves: qp, hma, hp, hf, hps.`;
             try {
                 const response = await callGeminiAPI(prompt);
                 const jsonStart = response.indexOf('{');
@@ -1880,6 +2007,9 @@
                 };
                 updateAnamnesisPreview();
                 appendOutput("Anamnese atualizada com sucesso.", "success");
+                if (isGuideActive) {
+                    updateGuideSuggestions();
+                }
             } catch (error) {
                 appendOutput(`Erro ao atualizar a anamnese: ${error.message}.`, "error");
             }
@@ -2571,6 +2701,9 @@
                     examsResults = "";
                     axonEyeResults = "";
                     conversationHistory = [];
+                    isGuideActive = false;
+                    btnGuide.classList.remove('active');
+                    guideBubble.style.display = 'none';
                     updateAnamnesisPreview(false);
                     updateExamsResultsPreview(false);
                     updateAxonEyeResultsPreview(false);
@@ -2733,6 +2866,14 @@
         btnSaveFromList.addEventListener('click', () => {
             patientListModal.style.display = 'none';
             openSaveModal();
+        });
+        btnGuide.addEventListener('click', () => {
+            isGuideActive = !isGuideActive;
+            btnGuide.classList.toggle('active', isGuideActive);
+            guideBubble.style.display = isGuideActive ? 'block' : 'none';
+            if (isGuideActive) {
+                updateGuideSuggestions();
+            }
         });
 
 
