@@ -1857,16 +1857,22 @@
 
         const processAnamnesisInfo = async (info) => {
             lastAnamnesisInfo = info;
-            const prompt = `Você é um assistente médico. Sua tarefa é organizar as informações fornecidas nas seções adequadas da anamnese.
-            A nova informação recebida é: "${info}".
-            É crucial que você **distinga as falas do médico das falas do paciente**. As falas do médico (perguntas, saudações, explicações que não são informações do paciente) **NÃO DEVEM SER ADICIONADAS À ANAMNESE**. Apenas as informações relevantes fornecidas pelo paciente devem ser incluídas.
+            const prompt = `Você é um assistente médico sênior especialista em semiologia. Sua tarefa é redigir uma anamnese técnica, concisa e bem estruturada, utilizando termos médicos apropriados.
+            A nova informação recebida (uma transcrição da conversa) é: "${info}".
             As informações existentes na anamnese são:
             - QP (Queixa Principal): "${anamnesis.qp || "Nenhuma"}"
             - HMA (História da Moléstia Atual): "${anamnesis.hma || "Nenhuma"}"
             - HP (História Patológica): "${anamnesis.hp || "Nenhuma"}"
             - HF (História Familiar): "${anamnesis.hf || "Nenhuma"}"
             - HPS (História Psicossocial): "${anamnesis.hps || "Nenhuma"}"
-            Instruções: Analise a "nova informação recebida", ignore falas do médico, e adicione a informação do paciente à seção MAIS RELEVANTE (QP, HMA, HP, HF, HPS), mantendo o conteúdo das outras seções inalterado. Formate a resposta EXCLUSIVAMENTE como um objeto JSON, contendo TODAS as chaves (qp, hma, hp, hf, hps).`;
+
+            **Instruções Críticas:**
+            1.  **Distinga e Ignore Falas do Médico:** Ignore perguntas, saudações, e explicações do médico. Foque **exclusivamente** nas informações fornecidas pelo paciente.
+            2.  **Organização Contextual:** Analise a nova informação e adicione-a à seção mais relevante (QP, HMA, HP, HF, HPS). Você deve entender o contexto e organizar as informações de forma lógica, mesmo que tenham sido ditas fora de ordem.
+            3.  **Linguagem Técnica:** Reescreva as informações do paciente usando terminologia médica precisa. Por exemplo, "dor no peito" pode se tornar "precordialgia", "falta de ar" como "dispneia", etc.
+            4.  **Coerência e Concisão:** Garanta que a anamnese seja bem redigida, coesa e sem informações desconexas.
+            5.  **Fidelidade à Fonte:** **NUNCA** invente informações ou crie frases que não foram ditas (como "Paciente nega outros sintomas" ou "Paciente não soube informar..."), a menos que essa negação ou incerteza tenha sido explicitamente declarada pelo paciente ou médico.
+            6.  **Formato de Saída:** Retorne a anamnese completa e atualizada EXCLUSIVAMENTE como um objeto JSON, contendo TODAS as chaves (qp, hma, hp, hf, hps). Mantenha o conteúdo das seções não alteradas.`;
             try {
                 const response = await callGeminiAPI(prompt);
                 const jsonStart = response.indexOf('{');
@@ -2826,4 +2832,3 @@
         
     </script>
 </body>
-</html>
