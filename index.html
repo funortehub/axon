@@ -1877,16 +1877,24 @@
 
         const processAnamnesisInfo = async (info) => {
             lastAnamnesisInfo = info;
-            const prompt = `Você é um assistente médico. Sua tarefa é organizar as informações fornecidas nas seções adequadas da anamnese.
-            A nova informação recebida é: "${info}".
-            É crucial que você **distinga as falas do médico das falas do paciente**. As falas do médico (perguntas, saudações, explicações que não são informações do paciente) **NÃO DEVEM SER ADICIONADAS À ANAMNESE**. Apenas as informações relevantes fornecidas pelo paciente devem ser incluídas.
-            As informações existentes na anamnese são:
+            const prompt = `Você é um assistente médico especialista em semiologia. Sua tarefa é redigir uma anamnese médica profissional, organizando as informações fornecidas em seções adequadas. A anamnese deve ser bem redigida, coesa e utilizar termos médicos apropriados.
+            Contexto da consulta atual (informações existentes):
             - QP (Queixa Principal): "${anamnesis.qp || "Nenhuma"}"
             - HMA (História da Moléstia Atual): "${anamnesis.hma || "Nenhuma"}"
             - HP (História Patológica): "${anamnesis.hp || "Nenhuma"}"
             - HF (História Familiar): "${anamnesis.hf || "Nenhuma"}"
             - HPS (História Psicossocial): "${anamnesis.hps || "Nenhuma"}"
-            Instruções: Analise a "nova informação recebida", ignore falas do médico, e adicione a informação do paciente à seção MAIS RELEVANTE (QP, HMA, HP, HF, HPS), mantendo o conteúdo das outras seções inalterado. Formate a resposta EXCLUSIVAMENTE como um objeto JSON, contendo TODAS as chaves (qp, hma, hp, hf, hps).`;
+
+            Nova informação recebida (diálogo médico-paciente): "${info}"
+
+            Instruções cruciais:
+            1.  **Analise o contexto completo**: Considere tanto as informações existentes quanto a "nova informação recebida" para construir a anamnese mais precisa.
+            2.  **Ordene logicamente**: Mesmo que as informações sejam fornecidas fora de ordem, organize-as de forma coerente dentro da seção correta (QP, HMA, HP, HF, HPS).
+            3.  **Seja Fiel ao Conteúdo**: NÃO adicione, invente ou presuma informações que não foram explicitamente ditas. Frases como "Paciente não relata outros sintomas" ou "Paciente não sabe especificar" só devem ser incluídas se o médico ou paciente as tiverem mencionado.
+            4.  **Distinga os interlocutores**: Ignore as perguntas e comentários do médico que não contenham informações do paciente. Foque apenas no que o paciente relata.
+            5.  **Atualize, não substitua**: Integre a nova informação à seção apropriada, complementando o que já existe. Mantenha o conteúdo das outras seções inalterado.
+
+            Formato da Resposta: Retorne EXCLUSIVAMENTE um objeto JSON, contendo TODAS as chaves (qp, hma, hp, hf, hps) com os textos atualizados.`;
             try {
                 const response = await callGeminiAPI(prompt);
                 const jsonStart = response.indexOf('{');
