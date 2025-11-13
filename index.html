@@ -1916,9 +1916,9 @@
             1.  **Analise o contexto completo**: Considere tanto as informações existentes quanto a "nova informação recebida" para construir a anamnese mais precisa.
             2.  **Ordene logicamente**: Mesmo que as informações sejam fornecidas fora de ordem, organize-as de forma coerente dentro da seção correta (QP, HMA, HP, HF, HPS).
             3.  **Seja Fiel ao Conteúdo**: NÃO adicione, invente ou presuma informações que não foram explicitamente ditas. Frases como "Paciente não relata outros sintomas" ou "Paciente não sabe especificar" só devem ser incluídas se o médico ou paciente as tiverem mencionado.
-            4.  **Distinga os interlocutores**: Ignore as perguntas e comentários do médico que não contenham informações do paciente. Foque apenas no que o paciente relata.
+            4.  **Distinga os interlocutores e filtre as perguntas**: Sua tarefa é extrair APENAS as respostas e relatos do paciente. IGNORE completamente as perguntas diretas feitas pelo médico. Por exemplo, se o diálogo for "Médico: Você tem febre? Paciente: Sim, desde ontem.", a informação a ser registrada é "Paciente relata febre desde o dia anterior". A pergunta "Você tem febre?" NÃO DEVE ser incluída no texto da anamnese.
             5.  **Atualize, não substitua**: Integre a nova informação à seção apropriada, complementando o que já existe. Mantenha o conteúdo das outras seções inalterado.
-            6.  **Filtre o Ruído**: Ignore completamente saudações (bom dia, olá), cumprimentos, despedidas, e qualquer outra conversa que não seja clinicamente relevante para a anamnese (por exemplo, comentários sobre o tempo, trânsito, etc.). O foco é exclusivamente em informações de saúde.
+            6.  **Filtro Rigoroso de Relevância Clínica**: Ignore A-B-S-O-L-U-T-A-M-E-N-T-E qualquer parte da conversa que não seja estritamente sobre a saúde do paciente. Isso inclui, mas não se limita a: saudações (bom dia, olá), cumprimentos, despedidas, comentários sobre o tempo, trânsito, amenidades sociais ou qualquer diálogo que não descreva um sintoma, um histórico médico, um hábito de vida relevante (fumo, álcool) ou uma queixa. Seu foco é 100% clínico.
 
             Formato da Resposta: Retorne EXCLUSIVAMENTE um objeto JSON, contendo TODAS as chaves (qp, hma, hp, hf, hps) com os textos atualizados.`;
             try {
