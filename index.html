@@ -68,7 +68,6 @@
             display: flex;
             gap: 15px;
             font-size: 14px;
-            margin-right: 20px;
         }
 
         .status-item {
@@ -87,6 +86,25 @@
         .status-off {
             background-color: var(--error-color);
         }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logout-button {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 18px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .logout-button:hover {
+            color: var(--error-color);
+        }
 
         .container {
             display: flex;
@@ -99,6 +117,9 @@
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
+            }
+            .header-right {
+                gap: 15px;
             }
         }
 
@@ -547,12 +568,15 @@
 
             .status-bar {
                 gap: 10px;
-                margin-right: 0;
+            }
+            
+            .status-bar .status-item span {
+                display: none;
+            }
+            .status-text-api, .status-text-mic, .status-text-cam {
+                 display: none;
             }
 
-            .status-item span {
-                font-size: 12px;
-            }
 
             .status-item .status-indicator {
                 width: 8px;
@@ -1177,19 +1201,22 @@
 <body>
     <div class="header">
         <div class="app-title">AXON A.I</div>
-        <div class="status-bar">
-            <div class="status-item">
-                <div class="status-indicator" id="api-status"></div>
-                <span class="status-text-api">API</span>
+        <div class="header-right">
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-indicator" id="api-status"></div>
+                    <span class="status-text-api">API</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-indicator status-off" id="mic-status"></div>
+                    <span class="status-text-mic">Microfone</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-indicator status-off" id="camera-status"></div>
+                    <span class="status-text-cam">Câmera</span>
+                </div>
             </div>
-            <div class="status-item">
-                <div class="status-indicator status-off" id="mic-status"></div>
-                <span class="status-text-mic">Microfone</span>
-            </div>
-            <div class="status-item">
-                <div class="status-indicator status-off" id="camera-status"></div>
-                <span class="status-text-cam">Câmera</span>
-            </div>
+            <button id="logout-btn" title="Sair" class="logout-button"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </div>
 
@@ -1414,6 +1441,7 @@
         const cameraStatus = document.getElementById('camera-status');
         const initialMessagesContainer = document.getElementById('initial-messages');
         const monitorCopyBtn = document.getElementById('monitor-copy-btn');
+        const logoutBtn = document.getElementById('logout-btn');
 
         // Camera elements
         const cameraModal = document.getElementById('camera-modal');
@@ -2557,6 +2585,38 @@
             initializeAIModel();
         };
 
+        const handleLogout = async () => {
+            if (!isLoggedIn) return;
+            
+            appendOutput("Fazendo logout e limpando a sessão...", "info", false);
+
+            if (isListening) stopListening();
+            if (cameraStream) stopCamera();
+
+            await clearTemporaryUploads();
+
+            if (currentUser) {
+                try {
+                    await deleteDoc(doc(db, "sessions", currentUser));
+                } catch (e) {
+                    console.error("Falha ao deletar a sessão ao sair:", e);
+                }
+            }
+
+            anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+            examsResults = "";
+            axonEyeResults = "";
+            capturedImages = [];
+            conversationHistory = [];
+            
+            updateAnamnesisPreview(false);
+            updateExamsResultsPreview(false);
+            updateAxonEyeResultsPreview(false);
+            updateAlbumCount();
+
+            resetInteractiveTerminal(true);
+        };
+
         const searchPatients = (searchTerm) => {
             const lowerCaseSearchTerm = searchTerm.toLowerCase();
             const patientItems = patientList.querySelectorAll('.patient-item');
@@ -2613,9 +2673,7 @@
         
             switch (mainCmd) {
                 case '/exit':
-                    await clearTemporaryUploads();
-                    if (currentUser) await deleteDoc(doc(db, "sessions", currentUser));
-                    resetInteractiveTerminal(true);
+                    handleLogout();
                     break;
         
                 case '/clear':
@@ -2761,6 +2819,7 @@
 
         // Event Listeners
         commandInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') processCommand(commandInput.value); });
+        logoutBtn.addEventListener('click', handleLogout);
         monitorCopyBtn.addEventListener('click', copyMonitorContent);
         captureButton.addEventListener('click', capturePhoto);
         uploadButton.addEventListener('click', () => fileInput.click());
@@ -2875,7 +2934,9 @@
             const savedUser = localStorage.getItem('axon_logged_in_user');
             if (savedUser) handleSuccessfulLogin(savedUser, true);
             else { loginModal.style.display = 'flex'; loginModalUser.focus(); }
-            if (isMobile) { statusTextApi.textContent = "API"; statusTextMic.textContent = "Mic"; statusTextCam.textContent = "Cam"; }
+            if (isMobile) { 
+                document.querySelectorAll('.status-text-api, .status-text-mic, .status-text-cam').forEach(el => el.style.display = 'none');
+            }
         };
 
         document.addEventListener('DOMContentLoaded', initApp);
