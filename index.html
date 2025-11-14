@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -1525,7 +1526,7 @@
         let axonEyeResults = "";
         let lastAnamnesisInfo = "";
         let apiConnectionStatus = "Desconhecido";
-        let unsubscribeSnapshot = null;
+        let unsubscribeSnapshot = null, unsubscribeUserListener = null;
         let cameraStream = null;
         let capturedImages = [];
         let temporaryImgurUploads = []; // Para armazenar uploads do /see antes de salvar
@@ -1699,6 +1700,10 @@
                 if (unsubscribeSnapshot) {
                     unsubscribeSnapshot();
                     unsubscribeSnapshot = null;
+                }
+                if (unsubscribeUserListener) {
+                    unsubscribeUserListener();
+                    unsubscribeUserListener = null;
                 }
                 initialMessagesContainer.innerHTML = `
                     <pre class="info">
@@ -2022,7 +2027,7 @@
             if (!model) return false;
             let requestBody;
             if (model.vision) {
-                const dummyImagePart = { inlineData: { mimeType: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' } };
+                const dummyImagePart = { inlineData: { mimeType: 'image/png', data: 'iVBORw0KGgoAAAANSUEUEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' } };
                 requestBody = JSON.stringify({ contents: [{ parts: [dummyImagePart, { text: "ping" }] }] });
             } else {
                 requestBody = JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] });
@@ -2076,6 +2081,7 @@
         const saveExamsResultsToFirestore = async (username, data) => { try { await setDoc(doc(db, "sessions", username), { examsResults: data, lastUpdated: new Date() }, { merge: true }); } catch (e) { console.error("Erro ao salvar exames: ", e); } };
         const saveAxonEyeResultsToFirestore = async (username, data) => { try { await setDoc(doc(db, "sessions", username), { axonEyeResults: data, lastUpdated: new Date() }, { merge: true }); } catch (e) { console.error("Erro ao salvar Axon Eye: ", e); } };
         const updateMonitorStateInFirestore = async (username, state) => { try { await setDoc(doc(db, "sessions", username), { monitorState: { ...state, lastUpdated: new Date() } }, { merge: true }); } catch (e) { console.error("Erro ao salvar estado do monitor: ", e); } };
+        
         const setupFirebaseListener = (username) => {
             if (unsubscribeSnapshot) unsubscribeSnapshot();
             const docRef = doc(db, "sessions", username);
@@ -2092,6 +2098,25 @@
                 }
             });
         };
+
+        const setupUserExistenceListener = (username) => {
+            if (unsubscribeUserListener) unsubscribeUserListener();
+            if (username === 'ian') return; // Don't listen for hardcoded user
+
+            const userRef = doc(db, "users", username);
+            unsubscribeUserListener = onSnapshot(userRef, (docSnap) => {
+                if (!docSnap.exists() && isLoggedIn && currentUser === username) {
+                    appendOutput("Sua conta foi removida ou desativada. Desconectando...", "error", false);
+                    setTimeout(() => {
+                        handleLogout();
+                    }, 2000);
+                }
+            }, (error) => {
+                console.error("Erro no listener de usuário:", error);
+                appendOutput("Erro de conexão ao verificar status da conta.", "error");
+            });
+        };
+
         const registerUser = async (adminPassword, username, password) => {
             if (adminPassword !== 'admin123') return appendOutput("Senha de administrador incorreta.", "error");
             if (!username || !password) return appendOutput("Uso: /register [senha_admin] [usuário] [senha]", "error");
@@ -2109,7 +2134,6 @@
                 const userRef = doc(db, "users", username);
                 await deleteDoc(userRef);
                 appendOutput(`Usuário '${username}' deletado.`, "success");
-                if (currentUser === username) { resetInteractiveTerminal(true); appendOutput("Você foi desconectado.", "info"); }
             } catch (e) { appendOutput(`Erro ao deletar: ${e.message}`, "error"); }
         };
         const authenticateUser = async (username, password) => {
@@ -2593,6 +2617,7 @@
             initialMessagesContainer.style.display = 'none';
             appendOutput("Sessão pronta. Informe os dados do paciente ou use um comando.", "success");
             setupFirebaseListener(currentUser);
+            setupUserExistenceListener(currentUser);
             toggleMonitorView('anamnesis');
             initializeAIModel();
         };
@@ -2601,6 +2626,11 @@
             if (!isLoggedIn) return;
             
             appendOutput("Fazendo logout e limpando a sessão...", "info", false);
+            
+            if (unsubscribeUserListener) {
+                unsubscribeUserListener();
+                unsubscribeUserListener = null;
+            }
 
             if (isListening) stopListening();
             if (cameraStream) stopCamera();
