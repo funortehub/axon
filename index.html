@@ -575,46 +575,6 @@
                 font-size: 18px;
                 margin-left: 10px;
             }
-
-            /* ESTILOS PARA CÂMERA FULLSCREEN EM MÓVEIS */
-            body.camera-fullscreen-mobile .header,
-            body.camera-fullscreen-mobile .container,
-            body.camera-fullscreen-mobile .footer {
-                display: none;
-            }
-
-            body.camera-fullscreen-mobile {
-                overflow: hidden;
-            }
-
-            body.camera-fullscreen-mobile #camera-modal {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                border-radius: 0;
-                z-index: 1000;
-            }
-            
-            body.camera-fullscreen-mobile .camera-container {
-                height: 100%;
-                border-radius: 0;
-                gap: 0;
-            }
-            
-            body.camera-fullscreen-mobile .camera-container > .terminal-content {
-                padding: 0;
-                height: calc(100% - 37px); /* Altura do .terminal-header interno */
-            }
-            
-            body.camera-fullscreen-mobile .camera-video-wrapper {
-                height: 100%;
-                width: 100%;
-                border-radius: 0;
-                border: none;
-                padding-bottom: 0;
-            }
         }
 
         .fullscreen-modal {
@@ -673,7 +633,7 @@
         .album-modal {
             display: none;
             position: fixed;
-            z-index: 99;
+            z-index: 105;
             left: 0;
             top: 0;
             width: 100%;
@@ -1229,6 +1189,63 @@
             color: white;
         }
 
+        /* NOVOS ESTILOS PARA CÂMERA FULLSCREEN EM MOBILE */
+        @media (max-width: 768px) {
+            body.mobile-camera-fullscreen {
+                overflow: hidden;
+            }
+
+            body.mobile-camera-fullscreen .header,
+            body.mobile-camera-fullscreen .container,
+            body.mobile-camera-fullscreen .footer {
+                display: none;
+            }
+            
+            body.mobile-camera-fullscreen .non-interactive-terminal {
+                overflow: visible;
+                position: static;
+            }
+
+            body.mobile-camera-fullscreen #camera-modal {
+                display: flex !important;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 90;
+                background-color: black;
+                border-radius: 0;
+            }
+
+            body.mobile-camera-fullscreen .camera-container,
+            body.mobile-camera-fullscreen .terminal-content {
+                padding: 0 !important;
+                justify-content: center;
+            }
+
+            body.mobile-camera-fullscreen .camera-video-wrapper {
+                height: 100%;
+                width: 100%;
+                padding-bottom: 0;
+                border: none;
+                border-radius: 0;
+                background-color: black;
+            }
+            
+            body.mobile-camera-fullscreen .camera-video {
+                object-fit: cover; /* Fill the screen, might crop edges */
+            }
+            
+            body.mobile-camera-fullscreen .terminal-header {
+                position: absolute;
+                width: 100%;
+                z-index: 95;
+                background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%,rgba(0,0,0,0) 100%);
+                border-bottom: none;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -1572,7 +1589,6 @@
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isMobile = isMobileDevice();
         let allPatients = [];
-        let cameraModalOriginalParent = null;
 
         let conversationHistory = [];
 
@@ -2254,18 +2270,14 @@
             cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
             sendExamsButton.style.display = mode === 'exams' ? 'block' : 'none';
             sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'block' : 'none';
+            
+            if (isMobile) {
+                document.body.classList.add('mobile-camera-fullscreen');
+            }
+
             try {
                 if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: isMobile ? 'environment' : currentCameraFacingMode } });
-                
-                if (isMobile) {
-                    if (!cameraModalOriginalParent) {
-                        cameraModalOriginalParent = cameraModal.parentElement;
-                    }
-                    document.body.appendChild(cameraModal);
-                    document.body.classList.add('camera-fullscreen-mobile');
-                }
-
                 cameraVideo.srcObject = stream; cameraStream = stream; toggleMonitorView('camera');
                 cameraStatus.classList.remove('status-off');
                 appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}.`, "info");
@@ -2276,11 +2288,8 @@
                 if (track && 'torch' in track.getCapabilities()) flashlightButton.style.display = 'block';
             } catch (err) {
                 appendOutput(`Erro ao acessar a câmera: ${err.message}.`, "error");
-                if (isMobile) {
-                    document.body.classList.remove('camera-fullscreen-mobile');
-                    if (cameraModalOriginalParent) {
-                        cameraModalOriginalParent.appendChild(cameraModal);
-                    }
+                 if (isMobile) {
+                    document.body.classList.remove('mobile-camera-fullscreen');
                 }
             }
         };
@@ -2291,16 +2300,13 @@
             }
             cameraStatus.classList.add('status-off');
         };
-        const stopCamera = () => {
-            stopCameraStreamOnly();
+        const stopCamera = () => { 
+            stopCameraStreamOnly(); 
+            cameraModal.style.display = 'none'; 
             if (isMobile) {
-                document.body.classList.remove('camera-fullscreen-mobile');
-                if (cameraModalOriginalParent) {
-                    cameraModalOriginalParent.appendChild(cameraModal);
-                }
+                document.body.classList.remove('mobile-camera-fullscreen');
             }
-            cameraModal.style.display = 'none';
-            toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView);
+            toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); 
         };
         const switchCamera = async () => { currentCameraFacingMode = (currentCameraFacingMode === 'user') ? 'environment' : 'user'; await startCamera(cameraMode); };
         const toggleFlashlight = async () => {
