@@ -1526,7 +1526,8 @@
         let axonEyeResults = "";
         let lastAnamnesisInfo = "";
         let apiConnectionStatus = "Desconhecido";
-        let unsubscribeSnapshot = null, unsubscribeUserListener = null;
+        let unsubscribeSnapshot = null;
+        let unsubscribeUserAuthListener = null;
         let cameraStream = null;
         let capturedImages = [];
         let temporaryImgurUploads = []; // Para armazenar uploads do /see antes de salvar
@@ -1701,9 +1702,9 @@
                     unsubscribeSnapshot();
                     unsubscribeSnapshot = null;
                 }
-                if (unsubscribeUserListener) {
-                    unsubscribeUserListener();
-                    unsubscribeUserListener = null;
+                if (unsubscribeUserAuthListener) {
+                    unsubscribeUserAuthListener();
+                    unsubscribeUserAuthListener = null;
                 }
                 initialMessagesContainer.innerHTML = `
                     <pre class="info">
@@ -2027,7 +2028,7 @@
             if (!model) return false;
             let requestBody;
             if (model.vision) {
-                const dummyImagePart = { inlineData: { mimeType: 'image/png', data: 'iVBORw0KGgoAAAANSUEUEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' } };
+                const dummyImagePart = { inlineData: { mimeType: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' } };
                 requestBody = JSON.stringify({ contents: [{ parts: [dummyImagePart, { text: "ping" }] }] });
             } else {
                 requestBody = JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] });
@@ -2099,21 +2100,19 @@
             });
         };
 
-        const setupUserExistenceListener = (username) => {
-            if (unsubscribeUserListener) unsubscribeUserListener();
-            if (username === 'ian') return; // Don't listen for hardcoded user
+        const setupUserAuthListener = (username) => {
+            if (unsubscribeUserAuthListener) {
+                unsubscribeUserAuthListener();
+                unsubscribeUserAuthListener = null;
+            }
 
             const userRef = doc(db, "users", username);
-            unsubscribeUserListener = onSnapshot(userRef, (docSnap) => {
-                if (!docSnap.exists() && isLoggedIn && currentUser === username) {
-                    appendOutput("Sua conta foi removida ou desativada. Desconectando...", "error", false);
-                    setTimeout(() => {
-                        handleLogout();
-                    }, 2000);
+            unsubscribeUserAuthListener = onSnapshot(userRef, (docSnap) => {
+                if (isLoggedIn && currentUser === username && !docSnap.exists()) {
+                    console.log("User document deleted, initiating auto-logout.");
+                    appendOutput("Sua conta foi removida. Você foi desconectado.", "error", false);
+                    handleLogout();
                 }
-            }, (error) => {
-                console.error("Erro no listener de usuário:", error);
-                appendOutput("Erro de conexão ao verificar status da conta.", "error");
             });
         };
 
@@ -2127,33 +2126,27 @@
                 else { await setDoc(userRef, { password, createdAt: new Date() }); appendOutput(`Usuário '${username}' registrado com sucesso.`, "success"); }
             } catch (e) { appendOutput(`Erro ao registrar: ${e.message}`, "error"); }
         };
+
         const deleteUser = async (adminPassword, username) => {
             if (adminPassword !== 'admin123') return appendOutput("Senha de administrador incorreta.", "error");
             if (!username) return appendOutput("Uso: /delete [senha_admin] [usuário]", "error");
             try {
                 const userRef = doc(db, "users", username);
                 await deleteDoc(userRef);
-                appendOutput(`Usuário '${username}' deletado.`, "success");
-            } catch (e) { appendOutput(`Erro ao deletar: ${e.message}`, "error"); }
+                appendOutput(`Usuário '${username}' deletado com sucesso.`, "success");
+            } catch (e) { 
+                appendOutput(`Erro ao deletar usuário: ${e.message}`, "error"); 
+            }
         };
+
         const authenticateUser = async (username, password) => {
-            if (username === 'ian' && password === 'ian123') return true;
             try {
                 const userRef = doc(db, "users", username);
                 const docSnap = await getDoc(userRef);
                 return docSnap.exists() && docSnap.data().password === password;
-            } catch (e) { return false; }
-        };
-
-        const checkUserExists = async (username) => {
-            if (username === 'ian') return true; // Handle hardcoded user
-            try {
-                const userRef = doc(db, "users", username);
-                const docSnap = await getDoc(userRef);
-                return docSnap.exists();
-            } catch (e) {
-                console.error("Erro ao verificar existência do usuário:", e);
-                return false;
+            } catch (e) { 
+                console.error("Authentication error:", e);
+                return false; 
             }
         };
 
@@ -2537,7 +2530,7 @@
                 pdfDoc.setFontSize(12).setFont(undefined, 'bold').text(title, 14, y); y += 7;
         
                 const text = typeof content === 'object' ? Object.entries(content).map(([k, v]) => `${k.toUpperCase()}: ${v || 'Não informado'}`).join('\n') : content;
-                const splitText = doc.splitTextToSize(text, 180);
+                const splitText = pdfDoc.splitTextToSize(text, 180);
         
                 if (y + (splitText.length * 5) > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
                 pdfDoc.setFontSize(10).setFont(undefined, 'normal').text(splitText, 14, y);
@@ -2610,14 +2603,24 @@
         };
 
         const handleSuccessfulLogin = (username, isRestoredSession = false) => {
-            isLoggedIn = true; currentUser = username; localStorage.setItem('axon_logged_in_user', username);
+            isLoggedIn = true; 
+            currentUser = username; 
+            localStorage.setItem('axon_logged_in_user', username);
+            
             loginModal.style.display = 'none';
-            if (isRestoredSession) appendOutput(`Sessão restaurada para: ${currentUser}`, "success", false);
-            else appendOutput(`Login bem-sucedido. Bem-vindo, ${currentUser}.`, "success", false);
+            
+            if (isRestoredSession) {
+                appendOutput(`Sessão restaurada para: ${currentUser}`, "success", false);
+            } else {
+                appendOutput(`Login bem-sucedido. Bem-vindo, ${currentUser}.`, "success", false);
+            }
+            
             initialMessagesContainer.style.display = 'none';
             appendOutput("Sessão pronta. Informe os dados do paciente ou use um comando.", "success");
+            
             setupFirebaseListener(currentUser);
-            setupUserExistenceListener(currentUser);
+            setupUserAuthListener(currentUser); 
+            
             toggleMonitorView('anamnesis');
             initializeAIModel();
         };
@@ -2626,11 +2629,6 @@
             if (!isLoggedIn) return;
             
             appendOutput("Fazendo logout e limpando a sessão...", "info", false);
-            
-            if (unsubscribeUserListener) {
-                unsubscribeUserListener();
-                unsubscribeUserListener = null;
-            }
 
             if (isListening) stopListening();
             if (cameraStream) stopCamera();
@@ -2937,14 +2935,28 @@
 
         // Modal de Login
         loginModalButton.addEventListener('click', async () => {
-            const username = loginModalUser.value.trim(), password = loginModalPass.value.trim();
-            if (!username || !password) return loginModalFeedback.textContent = "Preencha todos os campos.";
-            loginModalFeedback.textContent = "Verificando..."; loginModalButton.disabled = true;
+            loginModalButton.disabled = true;
+            loginModalFeedback.textContent = "Verificando...";
+            const username = loginModalUser.value.trim();
+            const password = loginModalPass.value.trim();
+            
+            if (!username || !password) {
+                loginModalFeedback.textContent = "Preencha todos os campos.";
+                loginModalButton.disabled = false;
+                return;
+            }
+
             if (await authenticateUser(username, password)) {
-                loginModalFeedback.style.color = 'var(--success-color)'; loginModalFeedback.textContent = "Sucesso!";
-                setTimeout(() => handleSuccessfulLogin(username, false), 500);
+                loginModalFeedback.style.color = 'var(--success-color)'; 
+                loginModalFeedback.textContent = "Sucesso!";
+                setTimeout(() => {
+                    handleSuccessfulLogin(username, false);
+                    loginModalButton.disabled = false;
+                    loginModalFeedback.textContent = "";
+                }, 500);
             } else {
-                loginModalFeedback.style.color = 'var(--error-color)'; loginModalFeedback.textContent = "Usuário ou senha incorretos.";
+                loginModalFeedback.style.color = 'var(--error-color)'; 
+                loginModalFeedback.textContent = "Usuário ou senha incorretos.";
                 loginModalButton.disabled = false;
             }
         });
@@ -2975,18 +2987,20 @@
             if (isSpeechRecognitionSupported()) initSpeechRecognition();
             const savedUser = localStorage.getItem('axon_logged_in_user');
             if (savedUser) {
-                const userExists = await checkUserExists(savedUser);
-                if (userExists) {
+                const userExists = await authenticateUser(savedUser, null); 
+                const userRef = doc(db, "users", savedUser);
+                const docSnap = await getDoc(userRef);
+
+                if (docSnap.exists()) {
                     handleSuccessfulLogin(savedUser, true);
                 } else {
                     localStorage.removeItem('axon_logged_in_user');
-                    appendOutput("Sua sessão salva é inválida. Por favor, faça login novamente.", "error", false);
                     loginModal.style.display = 'flex';
                     loginModalUser.focus();
                 }
-            } else {
-                loginModal.style.display = 'flex';
-                loginModalUser.focus();
+            } else { 
+                loginModal.style.display = 'flex'; 
+                loginModalUser.focus(); 
             }
             if (isMobile) { 
                 document.querySelectorAll('.status-text-api, .status-text-mic, .status-text-cam').forEach(el => el.style.display = 'none');
