@@ -575,6 +575,46 @@
                 font-size: 18px;
                 margin-left: 10px;
             }
+
+            /* ESTILOS PARA CÂMERA FULLSCREEN EM MÓVEIS */
+            body.camera-fullscreen-mobile .header,
+            body.camera-fullscreen-mobile .container,
+            body.camera-fullscreen-mobile .footer {
+                display: none;
+            }
+
+            body.camera-fullscreen-mobile {
+                overflow: hidden;
+            }
+
+            body.camera-fullscreen-mobile #camera-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+                z-index: 1000;
+            }
+            
+            body.camera-fullscreen-mobile .camera-container {
+                height: 100%;
+                border-radius: 0;
+                gap: 0;
+            }
+            
+            body.camera-fullscreen-mobile .camera-container > .terminal-content {
+                padding: 0;
+                height: calc(100% - 37px); /* Altura do .terminal-header interno */
+            }
+            
+            body.camera-fullscreen-mobile .camera-video-wrapper {
+                height: 100%;
+                width: 100%;
+                border-radius: 0;
+                border: none;
+                padding-bottom: 0;
+            }
         }
 
         .fullscreen-modal {
@@ -1532,6 +1572,7 @@
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isMobile = isMobileDevice();
         let allPatients = [];
+        let cameraModalOriginalParent = null;
 
         let conversationHistory = [];
 
@@ -2216,6 +2257,15 @@
             try {
                 if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: isMobile ? 'environment' : currentCameraFacingMode } });
+                
+                if (isMobile) {
+                    if (!cameraModalOriginalParent) {
+                        cameraModalOriginalParent = cameraModal.parentElement;
+                    }
+                    document.body.appendChild(cameraModal);
+                    document.body.classList.add('camera-fullscreen-mobile');
+                }
+
                 cameraVideo.srcObject = stream; cameraStream = stream; toggleMonitorView('camera');
                 cameraStatus.classList.remove('status-off');
                 appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}.`, "info");
@@ -2226,6 +2276,12 @@
                 if (track && 'torch' in track.getCapabilities()) flashlightButton.style.display = 'block';
             } catch (err) {
                 appendOutput(`Erro ao acessar a câmera: ${err.message}.`, "error");
+                if (isMobile) {
+                    document.body.classList.remove('camera-fullscreen-mobile');
+                    if (cameraModalOriginalParent) {
+                        cameraModalOriginalParent.appendChild(cameraModal);
+                    }
+                }
             }
         };
         const stopCameraStreamOnly = () => {
@@ -2235,7 +2291,17 @@
             }
             cameraStatus.classList.add('status-off');
         };
-        const stopCamera = () => { stopCameraStreamOnly(); cameraModal.style.display = 'none'; toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); };
+        const stopCamera = () => {
+            stopCameraStreamOnly();
+            if (isMobile) {
+                document.body.classList.remove('camera-fullscreen-mobile');
+                if (cameraModalOriginalParent) {
+                    cameraModalOriginalParent.appendChild(cameraModal);
+                }
+            }
+            cameraModal.style.display = 'none';
+            toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView);
+        };
         const switchCamera = async () => { currentCameraFacingMode = (currentCameraFacingMode === 'user') ? 'environment' : 'user'; await startCamera(cameraMode); };
         const toggleFlashlight = async () => {
             if (!cameraStream) return;
