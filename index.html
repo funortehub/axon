@@ -56,6 +56,7 @@
             align-items: center;
             justify-content: space-between;
             position: relative;
+            height: 65px; /* Altura fixa para cálculo */
         }
         
         .header-right {
@@ -311,6 +312,7 @@
             text-align: center;
             font-size: 12px;
             color: var(--text-color);
+            height: 40px; /* Altura fixa para cálculo */
         }
 
         .terminal-logo-internal {
@@ -759,6 +761,31 @@
             border: 1px solid var(--border-color);
             border-radius: 5px;
         }
+        
+        /* Styles for mobile camera fullscreen */
+        @media (max-width: 768px) {
+            .camera-modal.fullscreen-mobile {
+                position: fixed;
+                top: 65px; /* Header height */
+                bottom: 40px; /* Footer height */
+                left: 0;
+                width: 100%;
+                height: auto; /* Let top and bottom define the height */
+                z-index: 50; /* Above main content, below other modals */
+                border-radius: 0;
+            }
+
+            .camera-modal.fullscreen-mobile .camera-container,
+            .camera-modal.fullscreen-mobile .camera-video-wrapper {
+                border-radius: 0;
+                border: none;
+            }
+
+            .camera-modal.fullscreen-mobile .camera-video-wrapper {
+                padding-bottom: 177.77%; /* 16:9 aspect ratio */
+            }
+        }
+
 
         /* NOVOS ESTILOS PARA O SISTEMA DE SAVE/LOAD */
         .patient-list-modal {
@@ -2213,6 +2240,9 @@
             cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
             sendExamsButton.style.display = mode === 'exams' ? 'block' : 'none';
             sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'block' : 'none';
+            if (isMobile) {
+                cameraModal.classList.add('fullscreen-mobile');
+            }
             try {
                 if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: isMobile ? 'environment' : currentCameraFacingMode } });
@@ -2235,7 +2265,14 @@
             }
             cameraStatus.classList.add('status-off');
         };
-        const stopCamera = () => { stopCameraStreamOnly(); cameraModal.style.display = 'none'; toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView); };
+        const stopCamera = () => {
+            stopCameraStreamOnly();
+            cameraModal.style.display = 'none';
+            if (isMobile) {
+                cameraModal.classList.remove('fullscreen-mobile');
+            }
+            toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView);
+        };
         const switchCamera = async () => { currentCameraFacingMode = (currentCameraFacingMode === 'user') ? 'environment' : 'user'; await startCamera(cameraMode); };
         const toggleFlashlight = async () => {
             if (!cameraStream) return;
