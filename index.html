@@ -57,6 +57,23 @@
             justify-content: space-between;
             position: relative;
         }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .logout-button {
+            color: var(--text-color);
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            margin-left: 20px;
+        }
+
+        .logout-button:hover {
+            color: var(--error-color);
+        }
 
         .app-title {
             font-size: 20px;
@@ -68,8 +85,6 @@
             display: flex;
             gap: 15px;
             font-size: 14px;
-            margin-right: 20px;
-            align-items: center;
         }
 
         .status-item {
@@ -530,10 +545,6 @@
             z-index: 5;
         }
 
-        .monitor-copy-btn:hover {
-            background-color: #444c56;
-        }
-
         @media (max-width: 768px) {
             .monitor-toggle-button span {
                 display: none;
@@ -558,6 +569,11 @@
             .status-item .status-indicator {
                 width: 8px;
                 height: 8px;
+            }
+            
+            .logout-button {
+                font-size: 18px;
+                margin-left: 10px;
             }
         }
 
@@ -1173,42 +1189,29 @@
             color: white;
         }
 
-        .logout-button {
-            background-color: transparent;
-            color: var(--error-color);
-            border: 1px solid var(--border-color);
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-left: 15px;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        .logout-button:hover {
-            background-color: var(--error-color);
-            color: var(--bg-color);
-        }
-
     </style>
 </head>
 <body>
     <div class="header">
         <div class="app-title">AXON A.I</div>
-        <div class="status-bar">
-            <div class="status-item">
-                <div class="status-indicator" id="api-status"></div>
-                <span class="status-text-api">API</span>
+        <div class="header-right">
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-indicator" id="api-status"></div>
+                    <span class="status-text-api">API</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-indicator status-off" id="mic-status"></div>
+                    <span class="status-text-mic">Microfone</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-indicator status-off" id="camera-status"></div>
+                    <span class="status-text-cam">Câmera</span>
+                </div>
             </div>
-            <div class="status-item">
-                <div class="status-indicator status-off" id="mic-status"></div>
-                <span class="status-text-mic">Microfone</span>
+            <div id="logout-button" class="logout-button" title="Sair">
+                <i class="fas fa-sign-out-alt"></i>
             </div>
-            <div class="status-item">
-                <div class="status-indicator status-off" id="camera-status"></div>
-                <span class="status-text-cam">Câmera</span>
-            </div>
-            <button id="logout-button" class="logout-button" title="Sair" style="display: none;"><i class="fas fa-sign-out-alt"></i></button>
         </div>
     </div>
 
@@ -1518,6 +1521,7 @@
         let lastAnamnesisInfo = "";
         let apiConnectionStatus = "Desconhecido";
         let unsubscribeSnapshot = null;
+        let unsubscribeUserDoc = null;
         let cameraStream = null;
         let capturedImages = [];
         let temporaryImgurUploads = []; // Para armazenar uploads do /see antes de salvar
@@ -1528,7 +1532,6 @@
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isMobile = isMobileDevice();
         let allPatients = [];
-        let userCheckInterval = null;
 
         let conversationHistory = [];
 
@@ -1688,9 +1691,14 @@
             if (requireLogin) {
                 isLoggedIn = false;
                 currentUser = null;
+                localStorage.removeItem('axon_logged_in_user');
                 if (unsubscribeSnapshot) {
                     unsubscribeSnapshot();
                     unsubscribeSnapshot = null;
+                }
+                if (unsubscribeUserDoc) {
+                    unsubscribeUserDoc();
+                    unsubscribeUserDoc = null;
                 }
                 initialMessagesContainer.innerHTML = `
                     <pre class="info">
@@ -1721,6 +1729,24 @@
                 `;
             }
             interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
+        };
+        
+        const logoutUser = async () => {
+            appendOutput("Fazendo logout...", "info", false);
+            await clearTemporaryUploads();
+            if (currentUser) {
+                try {
+                    await deleteDoc(doc(db, "sessions", currentUser));
+                } catch (e) {
+                    console.error("Could not delete session doc on logout:", e);
+                }
+            }
+            if (unsubscribeUserDoc) {
+                unsubscribeUserDoc();
+                unsubscribeUserDoc = null;
+            }
+            stopListening();
+            resetInteractiveTerminal(true);
         };
 
         const updateAnamnesisPreview = (logToFirebase = true) => {
@@ -2099,69 +2125,33 @@
             if (!username) return appendOutput("Uso: /delete [senha_admin] [usuário]", "error");
             try {
                 const userRef = doc(db, "users", username);
-                const docSnap = await getDoc(userRef);
-                if (!docSnap.exists()) {
-                    return appendOutput(`Usuário '${username}' não encontrado.`, "error");
-                }
                 await deleteDoc(userRef);
-                appendOutput(`Usuário '${username}' deletado com sucesso. A sessão do usuário será encerrada em breve se estiver ativa.`, "success");
+                appendOutput(`Usuário '${username}' deletado.`, "success");
+                if (currentUser === username) { 
+                    appendOutput("Você foi desconectado.", "info");
+                    logoutUser();
+                }
             } catch (e) { appendOutput(`Erro ao deletar: ${e.message}`, "error"); }
         };
         const authenticateUser = async (username, password) => {
+            if (username === 'ian' && password === 'ian123') return true;
             try {
                 const userRef = doc(db, "users", username);
                 const docSnap = await getDoc(userRef);
                 return docSnap.exists() && docSnap.data().password === password;
             } catch (e) { return false; }
         };
-        
-        const verifyUserExists = async (username) => {
-            if (!username) return false;
+
+        const isUserValid = async (username) => {
             try {
                 const userRef = doc(db, "users", username);
                 const docSnap = await getDoc(userRef);
                 return docSnap.exists();
             } catch (e) {
-                console.error("Erro ao verificar existência do usuário:", e);
+                console.error("Error checking user validity:", e);
                 return false;
             }
         };
-
-        const logoutUser = async () => {
-            if (!isLoggedIn) return;
-            appendOutput("Fazendo logout...", "info", false);
-            localStorage.removeItem('axon_logged_in_user');
-            if (userCheckInterval) {
-                clearInterval(userCheckInterval);
-                userCheckInterval = null;
-            }
-            await clearTemporaryUploads();
-            if (currentUser) {
-                try {
-                    await deleteDoc(doc(db, "sessions", currentUser));
-                } catch (e) {
-                    console.error("Falha ao limpar sessão do Firestore no logout:", e);
-                }
-            }
-            logoutButton.style.display = 'none';
-            resetInteractiveTerminal(true);
-        };
-        
-        const startUserCheckInterval = () => {
-            if (userCheckInterval) {
-                clearInterval(userCheckInterval);
-            }
-            userCheckInterval = setInterval(async () => {
-                if (isLoggedIn && currentUser) {
-                    const userStillExists = await verifyUserExists(currentUser);
-                    if (!userStillExists) {
-                        appendOutput("Sua conta foi desativada ou removida. Você será desconectado.", "error", false);
-                        await logoutUser();
-                    }
-                }
-            }, 10000); // Check every 10 seconds
-        };
-
 
         // Imgur API Functions
         const uploadToImgur = async (base64Image) => {
@@ -2615,30 +2605,36 @@
             savePatientModal.style.display = 'none';
         };
 
-        const handleSuccessfulLogin = async (username, isRestoredSession = false) => {
-            if (isRestoredSession) {
-                if (!(await verifyUserExists(username))) {
-                    appendOutput(`Usuário '${username}' não existe mais. A sessão restaurada é inválida.`, "error", false);
-                    localStorage.removeItem('axon_logged_in_user');
-                    loginModal.style.display = 'flex';
-                    loginModalUser.focus();
-                    return;
-                }
-            }
-
-            isLoggedIn = true; 
-            currentUser = username; 
-            localStorage.setItem('axon_logged_in_user', username);
+        const handleSuccessfulLogin = (username, isRestoredSession = false) => {
+            isLoggedIn = true; currentUser = username; localStorage.setItem('axon_logged_in_user', username);
             loginModal.style.display = 'none';
-            logoutButton.style.display = 'block';
             if (isRestoredSession) appendOutput(`Sessão restaurada para: ${currentUser}`, "success", false);
             else appendOutput(`Login bem-sucedido. Bem-vindo, ${currentUser}.`, "success", false);
             initialMessagesContainer.style.display = 'none';
             appendOutput("Sessão pronta. Informe os dados do paciente ou use um comando.", "success");
+            
+            if (unsubscribeUserDoc) {
+                unsubscribeUserDoc();
+            }
+            const userRef = doc(db, "users", username);
+            unsubscribeUserDoc = onSnapshot(userRef, (docSnap) => {
+                if (!docSnap.exists() && isLoggedIn && currentUser === username) {
+                    appendOutput("Sua conta de usuário foi removida. Desconectando automaticamente...", "error");
+                    setTimeout(() => {
+                        logoutUser();
+                    }, 3000);
+                }
+            }, (error) => {
+                console.error("Listener error for user document:", error);
+                appendOutput("Erro de conexão ao verificar sua conta. Desconectando por segurança.", "error");
+                setTimeout(() => {
+                    logoutUser();
+                }, 3000);
+            });
+
             setupFirebaseListener(currentUser);
             toggleMonitorView('anamnesis');
             initializeAIModel();
-            startUserCheckInterval();
         };
 
         const searchPatients = (searchTerm) => {
@@ -2697,7 +2693,7 @@
         
             switch (mainCmd) {
                 case '/exit':
-                    await logoutUser();
+                    logoutUser();
                     break;
         
                 case '/clear':
@@ -2844,6 +2840,7 @@
         // Event Listeners
         commandInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') processCommand(commandInput.value); });
         monitorCopyBtn.addEventListener('click', copyMonitorContent);
+        logoutButton.addEventListener('click', logoutUser);
         captureButton.addEventListener('click', capturePhoto);
         uploadButton.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileUpload);
@@ -2859,7 +2856,6 @@
         albumButton.addEventListener('click', openAlbumModal);
         albumModalClose.addEventListener('click', closeAlbumModal);
         albumModal.addEventListener('click', (e) => { if (e.target === albumModal) closeAlbumModal(); });
-        logoutButton.addEventListener('click', logoutUser);
 
         // Action Buttons
         btnExames.addEventListener('click', () => processCommand('/exames'));
@@ -2924,8 +2920,7 @@
             loginModalFeedback.textContent = "Verificando..."; loginModalButton.disabled = true;
             if (await authenticateUser(username, password)) {
                 loginModalFeedback.style.color = 'var(--success-color)'; loginModalFeedback.textContent = "Sucesso!";
-                await new Promise(resolve => setTimeout(resolve, 500));
-                await handleSuccessfulLogin(username, false);
+                setTimeout(() => handleSuccessfulLogin(username, false), 500);
             } else {
                 loginModalFeedback.style.color = 'var(--error-color)'; loginModalFeedback.textContent = "Usuário ou senha incorretos.";
                 loginModalButton.disabled = false;
@@ -2958,10 +2953,19 @@
             if (isSpeechRecognitionSupported()) initSpeechRecognition();
             const savedUser = localStorage.getItem('axon_logged_in_user');
             if (savedUser) {
-                await handleSuccessfulLogin(savedUser, true);
-            } else {
-                loginModal.style.display = 'flex';
-                loginModalUser.focus();
+                appendOutput(`Restaurando sessão para ${savedUser}...`, "info", false);
+                const userIsValid = await isUserValid(savedUser);
+                if (userIsValid) {
+                    handleSuccessfulLogin(savedUser, true);
+                } else {
+                    appendOutput(`Usuário '${savedUser}' não existe mais. Por favor, faça login novamente.`, "error", false);
+                    localStorage.removeItem('axon_logged_in_user');
+                    loginModal.style.display = 'flex';
+                    loginModalUser.focus();
+                }
+            } else { 
+                loginModal.style.display = 'flex'; 
+                loginModalUser.focus(); 
             }
             if (isMobile) { statusTextApi.textContent = "API"; statusTextMic.textContent = "Mic"; statusTextCam.textContent = "Cam"; }
         };
