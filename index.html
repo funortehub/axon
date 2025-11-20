@@ -1705,16 +1705,12 @@
         ];
         
         const defaultApiModels = [
-            { id: 1, name: 'gemini-robotics-er-1.5-preview', vision: false },
-            { id: 2, name: 'learnlm-2.0-flash-experimental', vision: true },
-            { id: 3, name: 'gemini-2.0-flash-lite', vision: false },
-            { id: 4, name: 'gemini-2.0-flash', vision: false },
-            { id: 5, name: 'gemini-2.5-flash-lite', vision: true },
-            { id: 6, name: 'gemini-2.5-flash', vision: true },
-            { id: 7, name: 'gemini-flash-lite-latest', vision: true },
-            { id: 8, name: 'gemini-flash-latest', vision: true },
-            { id: 9, name: 'gemini-2.5-pro', vision: true },
-            { id: 10, name: 'gemini-2.5-flash-image', vision: true }
+            { id: 1, name: 'gemini-2.0-flash', vision: true },
+            { id: 2, name: 'gemini-flash-lite-latest', vision: true },
+            { id: 3, name: 'gemini-2.5-flash', vision: true },
+            { id: 4, name: 'gemini-2.5-pro', vision: true },
+            { id: 5, name: 'gemini-1.5-pro', vision: true },
+            { id: 6, name: 'gemini-1.5-flash', vision: true }
         ];
 
         // Estado local das configurações (Sincronizado com Firebase)
@@ -2015,34 +2011,40 @@
         };
 
         const callGeminiAPI = async (prompt) => {
-            let textModelsToTry = [];
+            let strategyModels = [];
             let keysToTry = [];
 
-            // Determinar estratégia com base no modo Global
             if (globalSettings.mode === 'manual') {
                 if (globalSettings.manualTextModel && globalSettings.manualApiKey) {
-                    textModelsToTry = [globalSettings.manualTextModel];
+                    strategyModels = [globalSettings.manualTextModel];
                     keysToTry = [globalSettings.manualApiKey];
                 } else {
                     throw new Error("Modo manual ativo, mas modelo ou chave não configurados.");
                 }
             } else {
-                // Modo Automático: Usa lista global de modelos e chaves
-                textModelsToTry = [currentAIModel, ...globalSettings.apiModels.filter(m => !m.vision).map(m => m.name)];
-                // Remove duplicatas e garante que o currentAIModel seja o primeiro
-                textModelsToTry = [...new Set(textModelsToTry)];
+                // Modo Automático (Prioridade)
+                const preferredOrder = ['gemini-2.0-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+                const availableModelNames = globalSettings.apiModels.map(m => m.name);
+                
+                // Filtra os preferidos que realmente existem nas configurações
+                const activePreferred = preferredOrder.filter(name => availableModelNames.includes(name));
+                // Pega o restante dos modelos disponíveis
+                const others = availableModelNames.filter(name => !preferredOrder.includes(name));
+                
+                // Estratégia: Tentar preferenciais em ordem, depois os outros
+                strategyModels = [...activePreferred, ...others];
                 keysToTry = globalSettings.apiKeys;
             }
 
             let lastError = null;
 
-            for (const modelName of textModelsToTry) {
+            for (const modelName of strategyModels) {
                 for (let i = 0; i < keysToTry.length; i++) {
-                    // Rotação simples no modo automático
+                    // Rotação de chaves no modo automático
                     const keyIndex = (currentApiKeyIndex + i) % keysToTry.length;
                     const apiKeyToTry = keysToTry[keyIndex];
                     
-                    appendOutput(`Tentando motor ${modelName} com chave API...`, "info", false);
+                    appendOutput(`Tentando motor ${modelName} (Chave #${keyIndex + 1})...`, "info", false);
 
                     try {
                         const url = getGeminiUrl(modelName, apiKeyToTry);
@@ -2054,9 +2056,8 @@
 
                         if (response.ok) {
                             const data = await response.json();
-                            // Se for modo automático, atualiza índice de chave para rotação
                             if (globalSettings.mode === 'automatic') {
-                                currentApiKeyIndex = keyIndex;
+                                currentApiKeyIndex = keyIndex; // Atualiza o índice para rotação
                             }
                             appendOutput(`Sucesso com motor ${modelName}.`, "success", false);
                             return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta.";
@@ -2064,42 +2065,47 @@
 
                         const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
                         lastError = new Error(errorData.error?.message || `Erro desconhecido (${response.status})`);
-                        appendOutput(`Falha com motor ${modelName}: ${lastError.message}`, "error", false);
+                        // Não mostra erro no output principal a cada tentativa falha para não poluir, apenas info de troca
+                        console.warn(`Falha com motor ${modelName} chave ${keyIndex}: ${lastError.message}`);
 
                     } catch (error) {
                         lastError = error;
-                        appendOutput(`Falha de rede: ${error.message}`, "error", false);
+                        console.warn(`Falha de rede motor ${modelName} chave ${keyIndex}: ${error.message}`);
                     }
-                }
-                if (globalSettings.mode === 'automatic') {
-                    appendOutput(`Todas as chaves falharam para o motor ${modelName}. Tentando próximo motor...`, "error", false);
                 }
             }
 
             console.error("Erro final na chamada da API de texto:", lastError);
-            throw lastError || new Error("Todas as tentativas falharam.");
+            throw lastError || new Error("Todas as tentativas de chaves e motores falharam.");
         };
 
         const callGeminiVisionAPI = async (imageUrls, prompt) => {
-            let visionModelsToTry = [];
+            let strategyModels = [];
             let keysToTry = [];
 
             if (globalSettings.mode === 'manual') {
                  if (globalSettings.manualVisionModel && globalSettings.manualApiKey) {
-                    visionModelsToTry = [globalSettings.manualVisionModel];
+                    strategyModels = [globalSettings.manualVisionModel];
                     keysToTry = [globalSettings.manualApiKey];
                 } else {
                     throw new Error("Modo manual ativo, mas modelo de visão ou chave não configurados.");
                 }
             } else {
-                visionModelsToTry = [currentVisionAIModel, ...globalSettings.apiModels.filter(m => m.vision).map(m => m.name)];
-                visionModelsToTry = [...new Set(visionModelsToTry)];
+                 // Modo Automático (Prioridade para Visão também)
+                 // Assumindo que os modelos listados suportam visão se estiverem na lista global e marcados como visão
+                const preferredOrder = ['gemini-2.0-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+                const availableModelNames = globalSettings.apiModels.filter(m => m.vision).map(m => m.name);
+                
+                const activePreferred = preferredOrder.filter(name => availableModelNames.includes(name));
+                const others = availableModelNames.filter(name => !preferredOrder.includes(name));
+                
+                strategyModels = [...activePreferred, ...others];
                 keysToTry = globalSettings.apiKeys;
             }
             
             let lastError = null;
         
-            for (const modelName of visionModelsToTry) {
+            for (const modelName of strategyModels) {
                 const imageParts = imageUrls.map(url => ({ inlineData: { mimeType: 'image/jpeg', data: url.split(',')[1] } }));
                 const textPart = { text: prompt };
 
@@ -2107,7 +2113,7 @@
                     const keyIndex = (currentApiKeyIndex + i) % keysToTry.length;
                     const apiKeyToTry = keysToTry[keyIndex];
                     
-                    appendOutput(`Tentando motor de visão ${modelName}...`, "info", false);
+                    appendOutput(`Tentando motor de visão ${modelName} (Chave #${keyIndex + 1})...`, "info", false);
 
                     try {
                         const url = getGeminiUrl(modelName, apiKeyToTry);
@@ -2128,15 +2134,12 @@
 
                         const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
                         lastError = new Error(errorData.error?.message || `Erro desconhecido na API de Visão (${response.status})`);
-                        appendOutput(`Falha: ${lastError.message}`, "error", false);
+                        console.warn(`Falha visão motor ${modelName} chave ${keyIndex}: ${lastError.message}`);
 
                     } catch (error) {
                         lastError = error;
-                        appendOutput(`Falha de rede: ${error.message}`, "error", false);
+                        console.warn(`Falha de rede visão motor ${modelName} chave ${keyIndex}: ${error.message}`);
                     }
-                }
-                if (globalSettings.mode === 'automatic') {
-                    appendOutput(`Todas as chaves falharam para o motor de visão ${modelName}. Tentando próximo motor...`, "error", false);
                 }
             }
             
@@ -2277,9 +2280,9 @@
                 currentAIModel = globalSettings.manualTextModel || currentAIModel;
                 currentVisionAIModel = globalSettings.manualVisionModel || currentVisionAIModel;
             } else {
-                // Modo automático: tenta usar o primeiro da lista ou o fallback
-                currentAIModel = globalSettings.apiModels.find(m => !m.vision)?.name || 'gemini-2.0-flash';
-                currentVisionAIModel = globalSettings.apiModels.find(m => m.vision)?.name || 'gemini-2.5-flash-lite';
+                // Modo automático: tenta usar o primeiro da lista preferencial ou o fallback
+                currentAIModel = 'gemini-2.0-flash'; // Padrão inicial preferido
+                currentVisionAIModel = 'gemini-2.0-flash';
             }
 
             let textModelOK = await checkApiStatus(currentAIModel);
@@ -2935,8 +2938,8 @@
         const renderAdminSettingsUI = () => {
             const isManual = globalSettings.mode === 'manual';
             
-            // Opções de motores para seleção manual
-            const textModelsOptions = globalSettings.apiModels.filter(m => !m.vision).map(m => 
+            // Opções de motores para seleção manual (AGORA INCLUI TODOS, INCLUSIVE VISÃO NO TEXTO)
+            const textModelsOptions = globalSettings.apiModels.map(m => 
                 `<option value="${m.name}" ${globalSettings.manualTextModel === m.name ? 'selected' : ''}>${m.name}</option>`
             ).join('');
 
