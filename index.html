@@ -2630,17 +2630,18 @@
             } catch (e) { appendOutput(`Erro ao deletar: ${e.message}`, "error"); }
         };
         const authenticateUser = async (username, password) => {
-            if (username === 'ian' && password === 'ian123') return true;
+            if (username === 'ian' && password === 'ian123') return { success: true, isBlocked: false };
             try {
                 const userRef = doc(db, "users", username);
                 const docSnap = await getDoc(userRef);
                 if (docSnap.exists()) {
                     const userData = docSnap.data();
-                    // Removida a verificação de bloqueio aqui para permitir login e mostrar mensagem
-                    return userData.password === password;
+                    if (userData.password === password) {
+                        return { success: true, isBlocked: userData.isBlocked || false };
+                    }
                 }
-                return false;
-            } catch (e) { return false; }
+                return { success: false };
+            } catch (e) { return { success: false }; }
         };
 
         const isUserValid = async (username) => {
@@ -3854,9 +3855,18 @@
             const username = loginModalUser.value.trim(), password = loginModalPass.value.trim();
             if (!username || !password) return loginModalFeedback.textContent = "Preencha todos os campos.";
             loginModalFeedback.textContent = "Verificando..."; loginModalButton.disabled = true;
-            if (await authenticateUser(username, password)) {
-                loginModalFeedback.style.color = 'var(--success-color)'; loginModalFeedback.textContent = "Sucesso!";
-                setTimeout(() => handleSuccessfulLogin(username, false), 500);
+            
+            const authResult = await authenticateUser(username, password);
+
+            if (authResult.success) {
+                if (authResult.isBlocked) {
+                    loginModalFeedback.style.color = '#ffcc00';
+                    loginModalFeedback.textContent = "Sua conta foi bloqueada!";
+                    loginModalButton.disabled = false;
+                } else {
+                    loginModalFeedback.style.color = 'var(--success-color)'; loginModalFeedback.textContent = "Sucesso!";
+                    setTimeout(() => handleSuccessfulLogin(username, false), 500);
+                }
             } else {
                 loginModalFeedback.style.color = 'var(--error-color)'; loginModalFeedback.textContent = "Usuário ou senha incorretos.";
                 loginModalButton.disabled = false;
