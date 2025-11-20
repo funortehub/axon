@@ -64,7 +64,7 @@
             align-items: center;
         }
 
-        .logout-button {
+        .logout-button, .settings-button {
             color: var(--text-color);
             font-size: 20px;
             cursor: pointer;
@@ -72,8 +72,12 @@
             margin-left: 20px;
         }
 
-        .logout-button:hover {
+        .logout-button:hover, .settings-button:hover {
             color: var(--error-color);
+        }
+        
+        .settings-button:hover {
+            color: var(--highlight-color);
         }
 
         .app-title {
@@ -577,7 +581,7 @@
                 height: 8px;
             }
             
-            .logout-button {
+            .logout-button, .settings-button {
                 font-size: 18px;
                 margin-left: 10px;
             }
@@ -1459,6 +1463,41 @@
             margin-top: 10px;
         }
 
+        /* Estilos para as abas do painel administrativo */
+        .admin-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+
+        .admin-tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .admin-tab-btn:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .admin-tab-btn.active {
+            border-bottom-color: var(--highlight-color);
+            color: var(--highlight-color);
+            font-weight: bold;
+        }
+
+        .admin-tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 15px;
+        }
+
         @media (max-width: 768px) {
             .admin-users-container {
                 flex-direction: column;
@@ -1501,6 +1540,9 @@
                     <div class="status-indicator status-off" id="camera-status"></div>
                     <span class="status-text-cam">Câmera</span>
                 </div>
+            </div>
+            <div id="settings-button" class="settings-button" title="Configurações">
+                <i class="fas fa-cog"></i>
             </div>
             <div id="logout-button" class="logout-button" title="Sair">
                 <i class="fas fa-sign-out-alt"></i>
@@ -1715,41 +1757,42 @@
         </div>
     </div>
 
-    <!-- MODAL DE CONFIGURAÇÕES ADMIN -->
-    <div id="admin-settings-modal" class="app-modal">
-        <div class="app-modal-content" style="max-width: 600px;">
+    <!-- MODAL UNIFICADO DE ADMINISTRAÇÃO (PAINEL) -->
+    <div id="admin-panel-modal" class="app-modal">
+        <div class="app-modal-content" style="max-width: 900px; width: 95%; height: 85vh; display: flex; flex-direction: column;">
             <span class="app-modal-close">&times;</span>
             <div class="app-modal-header">
-                <h2 class="app-modal-title">Configurações Globais da API</h2>
+                <h2 class="app-modal-title">Painel Administrativo</h2>
             </div>
-            <div class="app-modal-body" id="admin-settings-body">
-                <!-- Conteúdo gerado dinamicamente -->
+            
+            <!-- Abas de Navegação -->
+            <div class="admin-tabs">
+                <button class="admin-tab-btn active" data-tab="users">Usuários</button>
+                <button class="admin-tab-btn" data-tab="api">API</button>
             </div>
-        </div>
-    </div>
 
-    <!-- MODAL DE USUÁRIOS ADMIN -->
-    <div id="admin-users-modal" class="app-modal">
-        <div class="app-modal-content" style="max-width: 800px; width: 95%;">
-            <span class="app-modal-close">&times;</span>
-            <div class="app-modal-header">
-                <h2 class="app-modal-title">Painel de Usuários</h2>
-            </div>
-            <div class="app-modal-body" style="padding: 0;">
-                <div class="patient-search-container" style="margin: 15px 15px 0 15px;">
+            <!-- Conteúdo da Aba Usuários -->
+            <div id="tab-users" class="admin-tab-content">
+                <div class="patient-search-container" style="margin: 0 0 15px 0;">
                     <input type="text" id="admin-user-search" class="patient-search-input" placeholder="Buscar usuário...">
                 </div>
-                <div class="admin-users-container" style="padding: 15px;">
+                <div class="admin-users-container" style="padding: 0; height: calc(100% - 60px);">
                     <div class="admin-users-list-section">
                         <div class="section-title" style="margin-top: 0; margin-bottom: 10px;">Usuários (Rank de Uso)</div>
                         <div id="admin-users-list" class="user-list-scroll">
-                            <!-- Lista gerada dinamicamente -->
                             <div class="info">Carregando...</div>
                         </div>
                     </div>
                     <div class="admin-users-details-section" id="admin-user-details">
                         <div class="info" style="margin-top: 20px;">Selecione um usuário para ver detalhes.</div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Conteúdo da Aba API -->
+            <div id="tab-api" class="admin-tab-content" style="display: none;">
+                <div id="admin-settings-body">
+                    <!-- Conteúdo gerado dinamicamente -->
                 </div>
             </div>
         </div>
@@ -1786,6 +1829,7 @@
         const initialMessagesContainer = document.getElementById('initial-messages');
         const monitorCopyBtn = document.getElementById('monitor-copy-btn');
         const logoutButton = document.getElementById('logout-button');
+        const settingsButton = document.getElementById('settings-button');
 
         // Camera elements
         const cameraModal = document.getElementById('camera-modal');
@@ -1859,15 +1903,13 @@
         const adminAuthFeedback = document.getElementById('admin-auth-feedback');
         const adminAuthClose = adminAuthModal.querySelector('.app-modal-close');
 
-        const adminSettingsModal = document.getElementById('admin-settings-modal');
+        const adminPanelModal = document.getElementById('admin-panel-modal');
+        const adminPanelClose = adminPanelModal.querySelector('.app-modal-close');
         const adminSettingsBody = document.getElementById('admin-settings-body');
-        const adminSettingsClose = adminSettingsModal.querySelector('.app-modal-close');
-
-        const adminUsersModal = document.getElementById('admin-users-modal');
         const adminUsersList = document.getElementById('admin-users-list');
         const adminUserDetails = document.getElementById('admin-user-details');
         const adminUserSearch = document.getElementById('admin-user-search');
-        const adminUsersClose = adminUsersModal.querySelector('.app-modal-close');
+        const adminTabButtons = document.querySelectorAll('.admin-tab-btn');
 
         // Mobile text elements
         const statusTextApi = document.querySelector('.status-text-api');
@@ -2697,8 +2739,8 @@
                         openRouterModel: data.openRouterModel || 'x-ai/grok-4.1-fast:free'
                     };
                     
-                    // Se o admin estiver com o modal aberto, atualiza o UI em tempo real
-                    if (adminSettingsModal.style.display === 'flex') {
+                    // Se o admin estiver com o modal aberto (API), atualiza o UI em tempo real
+                    if (adminPanelModal.style.display === 'flex' && document.querySelector('.admin-tab-btn[data-tab="api"]').classList.contains('active')) {
                         renderAdminSettingsUI();
                     }
                     
@@ -2772,8 +2814,7 @@
                 if (cameraModal.style.display === 'flex') stopCamera();
                 patientListModal.style.display = 'none';
                 savePatientModal.style.display = 'none';
-                adminSettingsModal.style.display = 'none';
-                adminUsersModal.style.display = 'none';
+                adminPanelModal.style.display = 'none';
             } else {
                  appendOutput("Sua conta foi desbloqueada.", "success");
                  buttons.forEach(btn => btn.classList.remove('blocked-ui'));
@@ -3325,10 +3366,33 @@
         const checkAdminAuth = () => {
             if (adminAuthPass.value === 'admin123') {
                 adminAuthModal.style.display = 'none';
-                renderAdminSettingsUI();
-                adminSettingsModal.style.display = 'flex';
+                // Abre o painel unificado
+                adminPanelModal.style.display = 'flex';
+                // Default para a primeira aba (Usuários)
+                activateAdminTab('users');
             } else {
                 adminAuthFeedback.textContent = 'Senha incorreta.';
+            }
+        };
+
+        const activateAdminTab = (tabName) => {
+            // Update tab buttons
+            adminTabButtons.forEach(btn => {
+                if (btn.dataset.tab === tabName) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            // Hide all content
+            document.getElementById('tab-users').style.display = 'none';
+            document.getElementById('tab-api').style.display = 'none';
+
+            // Show selected content and load data
+            if (tabName === 'users') {
+                document.getElementById('tab-users').style.display = 'block';
+                loadAdminUsersData(); // Load Users Data
+            } else if (tabName === 'api') {
+                document.getElementById('tab-api').style.display = 'block';
+                renderAdminSettingsUI(); // Render API Settings
             }
         };
 
@@ -3768,7 +3832,15 @@
             renderAdminUsersList(filtered);
         });
 
-        adminUsersClose.addEventListener('click', () => adminUsersModal.style.display = 'none');
+        adminPanelClose.addEventListener('click', () => adminPanelModal.style.display = 'none');
+
+        // Tab Event Listeners
+        adminTabButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tabName = e.target.dataset.tab;
+                activateAdminTab(tabName);
+            });
+        });
 
         // Modificar processCommand para incluir o novo comando
         const processCommand = async (command) => {
@@ -3891,8 +3963,9 @@
 
                 case '/users':
                     if (parts[1] === 'admin123') {
-                        loadAdminUsersData();
-                        adminUsersModal.style.display = 'flex';
+                        // Abre o painel na aba de usuários
+                        adminPanelModal.style.display = 'flex';
+                        activateAdminTab('users');
                     } else {
                         appendOutput("Senha de administrador incorreta.", "error");
                     }
@@ -3930,6 +4003,9 @@
         commandInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') processCommand(commandInput.value); });
         monitorCopyBtn.addEventListener('click', copyMonitorContent);
         logoutButton.addEventListener('click', logoutUser);
+        // Listener do novo botão
+        settingsButton.addEventListener('click', openAdminAuth);
+        
         captureButton.addEventListener('click', capturePhoto);
         uploadButton.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileUpload);
@@ -3976,7 +4052,8 @@
         adminAuthClose.addEventListener('click', () => adminAuthModal.style.display = 'none');
         adminAuthButton.addEventListener('click', checkAdminAuth);
         adminAuthPass.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkAdminAuth(); });
-        adminSettingsClose.addEventListener('click', () => adminSettingsModal.style.display = 'none');
+        
+        // removeu-se os listeners antigos pois os modais foram removidos ou substituídos
 
         // Modais de Pacientes
         patientListModal.addEventListener('click', (e) => {
