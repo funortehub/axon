@@ -1311,6 +1311,140 @@
             cursor: pointer;
         }
 
+        /* Admin Users Modal Specifics */
+        .admin-users-container {
+            display: flex;
+            height: 500px;
+            gap: 20px;
+            text-align: left;
+        }
+        
+        .admin-users-list-section {
+            flex: 1;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding-right: 10px;
+        }
+        
+        .admin-users-details-section {
+            flex: 2;
+            overflow-y: auto;
+            padding-left: 10px;
+        }
+        
+        .user-list-scroll {
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .user-list-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-list-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .user-list-item.selected {
+            background-color: rgba(31, 111, 235, 0.2);
+            border-left: 3px solid var(--highlight-color);
+        }
+        
+        .user-name {
+            font-weight: bold;
+        }
+        
+        .analytics-badge {
+            font-size: 10px;
+            background-color: #333;
+            padding: 2px 5px;
+            border-radius: 3px;
+            color: #aaa;
+        }
+        
+        .analytics-high {
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+        
+        .user-detail-header {
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        
+        .user-detail-row {
+            margin-bottom: 10px;
+        }
+        
+        .user-detail-label {
+            color: var(--prompt-color);
+            font-weight: bold;
+            font-size: 12px;
+            display: block;
+            margin-bottom: 2px;
+        }
+        
+        .user-detail-value {
+            color: var(--text-color);
+            font-size: 14px;
+        }
+        
+        .admin-user-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .admin-user-img {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s;
+        }
+        
+        .admin-user-img:hover {
+            transform: scale(1.05);
+        }
+
+        .usage-stats-box {
+            background-color: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .admin-users-container {
+                flex-direction: column;
+                height: auto;
+                max-height: 70vh;
+            }
+            .admin-users-list-section {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 15px;
+                padding-right: 0;
+                height: 200px;
+            }
+            .admin-users-details-section {
+                padding-left: 0;
+                padding-top: 15px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -1557,10 +1691,37 @@
         </div>
     </div>
 
+    <!-- MODAL DE USUÁRIOS ADMIN -->
+    <div id="admin-users-modal" class="app-modal">
+        <div class="app-modal-content" style="max-width: 800px; width: 95%;">
+            <span class="app-modal-close">&times;</span>
+            <div class="app-modal-header">
+                <h2 class="app-modal-title">Painel de Usuários</h2>
+            </div>
+            <div class="app-modal-body" style="padding: 0;">
+                <div class="patient-search-container" style="margin: 15px 15px 0 15px;">
+                    <input type="text" id="admin-user-search" class="patient-search-input" placeholder="Buscar usuário...">
+                </div>
+                <div class="admin-users-container" style="padding: 15px;">
+                    <div class="admin-users-list-section">
+                        <div class="section-title" style="margin-top: 0; margin-bottom: 10px;">Usuários (Rank de Uso)</div>
+                        <div id="admin-users-list" class="user-list-scroll">
+                            <!-- Lista gerada dinamicamente -->
+                            <div class="info">Carregando...</div>
+                        </div>
+                    </div>
+                    <div class="admin-users-details-section" id="admin-user-details">
+                        <div class="info" style="margin-top: 20px;">Selecione um usuário para ver detalhes.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, where, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -1665,6 +1826,12 @@
         const adminSettingsBody = document.getElementById('admin-settings-body');
         const adminSettingsClose = adminSettingsModal.querySelector('.app-modal-close');
 
+        const adminUsersModal = document.getElementById('admin-users-modal');
+        const adminUsersList = document.getElementById('admin-users-list');
+        const adminUserDetails = document.getElementById('admin-user-details');
+        const adminUserSearch = document.getElementById('admin-user-search');
+        const adminUsersClose = adminUsersModal.querySelector('.app-modal-close');
+
         // Mobile text elements
         const statusTextApi = document.querySelector('.status-text-api');
         const statusTextMic = document.querySelector('.status-text-mic');
@@ -1696,6 +1863,7 @@
         let allPatients = [];
 
         let conversationHistory = [];
+        let adminUsersData = []; // Cache para usuários
 
         // Configurações da API Gemini e Imgur
         const defaultApiKeys = [
@@ -1736,7 +1904,7 @@
 
         const validCommands = [
             '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
-            '/ia', '/help', '/clear', '/api', '/api-set', '/register', '/exames', '/see', '/ask', '/delete', '/pdf', '/load'
+            '/ia', '/help', '/clear', '/api', '/api-set', '/register', '/exames', '/see', '/ask', '/delete', '/pdf', '/load', '/users'
         ];
 
         const isSpeechRecognitionSupported = () => 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
@@ -2010,6 +2178,22 @@
             }
         };
 
+        const incrementUserUsage = async (type) => {
+            if (!currentUser || !isLoggedIn) return;
+            const userRef = doc(db, "users", currentUser);
+            try {
+                const updateData = {};
+                if (type === 'text') {
+                    updateData.textRequests = increment(1);
+                } else if (type === 'vision') {
+                    updateData.visionRequests = increment(1);
+                }
+                await updateDoc(userRef, updateData);
+            } catch (e) {
+                console.error("Erro ao incrementar uso do usuário:", e);
+            }
+        };
+
         const callGeminiAPI = async (prompt) => {
             let strategyModels = [];
             let keysToTry = [];
@@ -2059,6 +2243,7 @@
                             if (globalSettings.mode === 'automatic') {
                                 currentApiKeyIndex = keyIndex; // Atualiza o índice para rotação
                             }
+                            await incrementUserUsage('text');
                             appendOutput(`Sucesso com motor ${modelName}.`, "success", false);
                             return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta.";
                         }
@@ -2128,6 +2313,7 @@
                             if (globalSettings.mode === 'automatic') {
                                 currentApiKeyIndex = keyIndex;
                             }
+                            await incrementUserUsage('vision');
                             appendOutput(`Sucesso com motor de visão ${modelName}.`, "success", false);
                             return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta da análise de imagem.";
                         }
@@ -2238,12 +2424,27 @@
         };
 
         const checkApiStatus = async (modelName = currentAIModel) => {
-            let apiKeyToTest = globalSettings.mode === 'manual' && globalSettings.manualApiKey ? globalSettings.manualApiKey : globalSettings.apiKeys[0];
-            let modelToTest = globalSettings.mode === 'manual' && globalSettings.manualTextModel ? globalSettings.manualTextModel : modelName;
+            // Define qual estratégia usar para o teste
+            let keysToTest = [];
+            let modelToTest = modelName;
 
-            let requestBody;
+            if (globalSettings.mode === 'manual') {
+                keysToTest = [globalSettings.manualApiKey || ''];
+                modelToTest = globalSettings.manualTextModel || modelName;
+            } else {
+                // No modo automático, testamos as chaves disponíveis em rotação até achar uma boa
+                keysToTest = globalSettings.apiKeys;
+            }
+
+            if (keysToTest.length === 0 || !keysToTest[0]) {
+                 apiConnectionStatus = "Sem chaves configuradas";
+                 apiStatus.classList.add('status-off');
+                 return false;
+            }
+
             // Verifica se o modelo é de visão (baseado na lista global)
             const isVision = globalSettings.apiModels.find(m => m.name === modelToTest)?.vision;
+            let requestBody;
             
             if (isVision) {
                 const dummyImagePart = { inlineData: { mimeType: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' } };
@@ -2252,24 +2453,38 @@
                 requestBody = JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] });
             }
 
-            try {
-                const url = getGeminiUrl(modelToTest, apiKeyToTest);
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: requestBody,
-                    signal: AbortSignal.timeout(5000)
-                });
-                if (response.ok) {
-                    apiConnectionStatus = "Conectado"; apiStatus.classList.remove('status-off'); return true;
-                } else {
-                    const errorData = await response.json().catch(() => ({}));
-                    apiConnectionStatus = errorData?.error?.message || `Erro (${response.status})`;
-                    apiStatus.classList.add('status-off'); return false;
+            // Tenta encontrar UMA chave que funcione
+            for (let i = 0; i < keysToTest.length; i++) {
+                const apiKey = keysToTest[i];
+                try {
+                    const url = getGeminiUrl(modelToTest, apiKey);
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: requestBody,
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    
+                    if (response.ok) {
+                        apiConnectionStatus = "Conectado"; 
+                        apiStatus.classList.remove('status-off');
+                        
+                        // Se for automático, atualiza o índice para a chave que funcionou
+                        if (globalSettings.mode === 'automatic') {
+                            currentApiKeyIndex = i;
+                        }
+                        return true;
+                    }
+                } catch (error) {
+                    // Continua tentando próxima chave
+                    console.warn(`Falha ao testar chave ${i} no status check: ${error.message}`);
                 }
-            } catch (error) {
-                apiConnectionStatus = `Offline (${error.name || 'Timeout'})`; apiStatus.classList.add('status-off'); return false;
             }
+
+            // Se chegou aqui, nenhuma funcionou
+            apiConnectionStatus = "Offline (Todas as chaves falharam)";
+            apiStatus.classList.add('status-off');
+            return false;
         };
 
         const initializeAIModel = async () => {
@@ -2356,7 +2571,7 @@
                 const userRef = doc(db, "users", username);
                 const docSnap = await getDoc(userRef);
                 if (docSnap.exists()) appendOutput(`Usuário '${username}' já existe.`, "error");
-                else { await setDoc(userRef, { password, createdAt: new Date() }); appendOutput(`Usuário '${username}' registrado com sucesso.`, "success"); }
+                else { await setDoc(userRef, { password, createdAt: new Date(), textRequests: 0, visionRequests: 0 }); appendOutput(`Usuário '${username}' registrado com sucesso.`, "success"); }
             } catch (e) { appendOutput(`Erro ao registrar: ${e.message}`, "error"); }
         };
         const deleteUser = async (adminPassword, username) => {
@@ -3095,7 +3310,175 @@
             } catch (e) { console.error("Erro ao remover modelo:", e); }
         };
 
+        // --- ADMIN USERS PANEL FUNCTIONS ---
 
+        const loadAdminUsersData = async () => {
+            try {
+                const usersSnap = await getDocs(collection(db, "users"));
+                const users = [];
+                
+                // Busca todos os pacientes para contar uso
+                // NOTA: Isso pode ser pesado se houver MUITOS dados, idealmente teríamos um contador no user doc
+                const patientsSnap = await getDocs(collection(db, "patients"));
+                const savedCounts = {};
+                patientsSnap.forEach(doc => {
+                    const data = doc.data();
+                    if (data.savedBy) {
+                        savedCounts[data.savedBy] = (savedCounts[data.savedBy] || 0) + 1;
+                    }
+                });
+
+                usersSnap.forEach(doc => {
+                    const userData = doc.data();
+                    users.push({
+                        username: doc.id,
+                        ...userData,
+                        savedCount: savedCounts[doc.id] || 0
+                    });
+                });
+
+                // Ordenar por uso (savedCount) descendente
+                users.sort((a, b) => b.savedCount - a.savedCount);
+                adminUsersData = users;
+                renderAdminUsersList(users);
+
+            } catch (e) {
+                console.error("Erro ao carregar usuários:", e);
+                adminUsersList.innerHTML = `<div class="error">Erro ao carregar dados: ${e.message}</div>`;
+            }
+        };
+
+        const renderAdminUsersList = (users) => {
+            if (users.length === 0) {
+                adminUsersList.innerHTML = '<div class="info">Nenhum usuário encontrado.</div>';
+                return;
+            }
+
+            adminUsersList.innerHTML = users.map(user => `
+                <div class="user-list-item" onclick="window.selectAdminUser('${user.username}')" id="user-item-${user.username}">
+                    <div>
+                        <span class="user-name">${user.username}</span>
+                        <div style="font-size: 10px; color: #666;">Registrado em: ${user.createdAt ? user.createdAt.toDate().toLocaleDateString() : 'N/A'}</div>
+                    </div>
+                    <span class="analytics-badge ${user.savedCount > 0 ? 'analytics-high' : ''}">${user.savedCount} Pacientes</span>
+                </div>
+            `).join('');
+        };
+
+        window.selectAdminUser = async (username) => {
+            // Highlight selected
+            document.querySelectorAll('.user-list-item').forEach(el => el.classList.remove('selected'));
+            const selectedEl = document.getElementById(`user-item-${username}`);
+            if (selectedEl) selectedEl.classList.add('selected');
+
+            const user = adminUsersData.find(u => u.username === username);
+            if (!user) return;
+
+            adminUserDetails.innerHTML = '<div class="info">Carregando detalhes e imagens...</div>';
+
+            // Buscar imagens enviadas (baseado nos pacientes salvos)
+            // e calcular estatísticas de uso mais granulares (se possível)
+            try {
+                const patientsQuery = query(collection(db, "patients"), where("savedBy", "==", username));
+                const patientsSnap = await getDocs(patientsQuery);
+                
+                let images = [];
+                let consultationsLast7Days = 0;
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+                patientsSnap.forEach(doc => {
+                    const pData = doc.data();
+                    // Verificar consultas recentes
+                    if (pData.consultations) {
+                        pData.consultations.forEach(c => {
+                            if (c.date && c.date.toDate() > oneWeekAgo) consultationsLast7Days++;
+                            // Coletar imagens
+                            if (c.axonEyeImages && c.axonEyeImages.length > 0) {
+                                c.axonEyeImages.forEach(img => images.push(img.link));
+                            }
+                        });
+                    }
+                });
+
+                // Cálculo de média diária (simplificado)
+                const dailyAvg = (consultationsLast7Days / 7).toFixed(1);
+
+                let imagesHtml = '';
+                if (images.length > 0) {
+                    imagesHtml = `
+                        <div class="user-detail-header" style="margin-top: 20px;">
+                            <div class="user-detail-label">IMAGENS ENVIADAS À IA (Histórico)</div>
+                        </div>
+                        <div class="admin-user-images">
+                            ${images.map(src => `<img src="${src}" class="admin-user-img" onclick="window.openFullscreenModal('${src}')">`).join('')}
+                        </div>
+                    `;
+                } else {
+                    imagesHtml = '<div class="info" style="margin-top: 15px;">Nenhuma imagem salva encontrada.</div>';
+                }
+
+                adminUserDetails.innerHTML = `
+                    <div class="user-detail-header">
+                        <h3 style="color: var(--prompt-color); margin-bottom: 5px;">${user.username}</h3>
+                        <span style="font-size: 12px; color: #888;">ID: ${user.username}</span>
+                    </div>
+                    
+                    <div class="user-detail-row">
+                        <span class="user-detail-label">SENHA</span>
+                        <span class="user-detail-value" style="font-family: monospace;">${user.password || '****'}</span>
+                    </div>
+
+                    <div class="user-detail-row">
+                        <span class="user-detail-label">DATA DE REGISTRO</span>
+                        <span class="user-detail-value">${user.createdAt ? user.createdAt.toDate().toLocaleString() : 'Desconhecida'}</span>
+                    </div>
+
+                    <div class="usage-stats-box">
+                        <div class="user-detail-label" style="color: var(--highlight-color);">ESTATÍSTICAS DE USO (API)</div>
+                        <div style="display: flex; gap: 20px; margin-top: 5px; flex-wrap: wrap;">
+                            <div>
+                                <div style="font-size: 20px; font-weight: bold;">${user.textRequests || 0}</div>
+                                <div style="font-size: 10px;">Requisições de Texto</div>
+                            </div>
+                             <div>
+                                <div style="font-size: 20px; font-weight: bold;">${user.visionRequests || 0}</div>
+                                <div style="font-size: 10px;">Requisições de Visão</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 20px; font-weight: bold;">${user.savedCount}</div>
+                                <div style="font-size: 10px;">Total Pacientes Salvos</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 20px; font-weight: bold;">${consultationsLast7Days}</div>
+                                <div style="font-size: 10px;">Consultas (Últ. 7 dias)</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 20px; font-weight: bold;">${dailyAvg}</div>
+                                <div style="font-size: 10px;">Média Diária (Semana)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${imagesHtml}
+                `;
+
+            } catch (e) {
+                console.error("Erro ao carregar detalhes do usuário:", e);
+                adminUserDetails.innerHTML = `<div class="error">Erro ao carregar detalhes: ${e.message}</div>`;
+            }
+        };
+
+        // Search Listener
+        adminUserSearch.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = adminUsersData.filter(u => u.username.toLowerCase().includes(term));
+            renderAdminUsersList(filtered);
+        });
+
+        adminUsersClose.addEventListener('click', () => adminUsersModal.style.display = 'none');
+
+        // Modificar processCommand para incluir o novo comando
         const processCommand = async (command) => {
             if (!command.trim()) return;
             appendOutput(command, "command");
@@ -3206,6 +3589,15 @@
                 case '/delete':
                     const [, adminPassDel, userToDel] = parts;
                     await deleteUser(adminPassDel, userToDel);
+                    break;
+
+                case '/users':
+                    if (parts[1] === 'admin123') {
+                        loadAdminUsersData();
+                        adminUsersModal.style.display = 'flex';
+                    } else {
+                        appendOutput("Senha de administrador incorreta.", "error");
+                    }
                     break;
         
                 case '/help':
