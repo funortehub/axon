@@ -237,6 +237,10 @@
         .highlight {
             color: var(--highlight-color);
         }
+        
+        .blocked-msg {
+            color: #ffcc00; /* Yellow */
+        }
 
         .anamnesis-content {
             line-height: 1.8;
@@ -582,7 +586,7 @@
         .fullscreen-modal {
             display: none;
             position: fixed;
-            z-index: 110;
+            z-index: 2000; /* AUMENTADO PARA FICAR NA FRENTE DE TUDO */
             padding-top: 60px;
             left: 0;
             top: 0;
@@ -1287,6 +1291,27 @@
             margin-top: 10px;
             width: 100%;
         }
+        
+        .admin-action-btn {
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 10px;
+            border: 1px solid transparent;
+        }
+        
+        .admin-btn-block {
+            background-color: rgba(255, 204, 0, 0.2);
+            color: #ffcc00;
+            border-color: #ffcc00;
+        }
+        
+        .admin-btn-delete {
+            background-color: rgba(255, 123, 114, 0.2);
+            color: var(--error-color);
+            border-color: var(--error-color);
+        }
 
         .admin-select {
             width: 100%;
@@ -1317,6 +1342,7 @@
             height: 500px;
             gap: 20px;
             text-align: left;
+            overflow: hidden;
         }
         
         .admin-users-list-section {
@@ -1325,6 +1351,7 @@
             display: flex;
             flex-direction: column;
             padding-right: 10px;
+            overflow-y: hidden;
         }
         
         .admin-users-details-section {
@@ -1429,19 +1456,23 @@
         @media (max-width: 768px) {
             .admin-users-container {
                 flex-direction: column;
-                height: auto;
-                max-height: 70vh;
+                height: 70vh; /* Altura fixa relativa ao viewport para garantir scroll */
+                max-height: none;
             }
             .admin-users-list-section {
+                flex: 0 0 40%; /* Ocupa 40% da altura */
                 border-right: none;
                 border-bottom: 1px solid var(--border-color);
                 padding-bottom: 15px;
                 padding-right: 0;
-                height: 200px;
+                height: auto;
+                min-height: 150px;
             }
             .admin-users-details-section {
+                flex: 1; /* Ocupa o restante */
                 padding-left: 0;
                 padding-top: 15px;
+                overflow-y: auto;
             }
         }
 
@@ -1996,6 +2027,9 @@
                 outputElement.innerHTML = `<span class="info">${text}</span>`;
             } else if (type === "receituario") {
                 outputElement.classList.add('receituario-item');
+                outputElement.textContent = text;
+            } else if (type === "highlight") {
+                outputElement.classList.add('blocked-msg');
                 outputElement.textContent = text;
             }
             else {
@@ -2571,7 +2605,7 @@
                 const userRef = doc(db, "users", username);
                 const docSnap = await getDoc(userRef);
                 if (docSnap.exists()) appendOutput(`Usuário '${username}' já existe.`, "error");
-                else { await setDoc(userRef, { password, createdAt: new Date(), textRequests: 0, visionRequests: 0 }); appendOutput(`Usuário '${username}' registrado com sucesso.`, "success"); }
+                else { await setDoc(userRef, { password, createdAt: new Date(), textRequests: 0, visionRequests: 0, isBlocked: false }); appendOutput(`Usuário '${username}' registrado com sucesso.`, "success"); }
             } catch (e) { appendOutput(`Erro ao registrar: ${e.message}`, "error"); }
         };
         const deleteUser = async (adminPassword, username) => {
@@ -2592,7 +2626,15 @@
             try {
                 const userRef = doc(db, "users", username);
                 const docSnap = await getDoc(userRef);
-                return docSnap.exists() && docSnap.data().password === password;
+                if (docSnap.exists()) {
+                    const userData = docSnap.data();
+                    if (userData.isBlocked) {
+                         appendOutput("Sua conta foi bloqueada!", "highlight");
+                         return false;
+                    }
+                    return userData.password === password;
+                }
+                return false;
             } catch (e) { return false; }
         };
 
@@ -3087,6 +3129,14 @@
                     setTimeout(() => {
                         logoutUser();
                     }, 3000);
+                } else if (docSnap.exists()) {
+                    const userData = docSnap.data();
+                    if (userData.isBlocked && isLoggedIn) {
+                        appendOutput("Sua conta foi bloqueada!", "highlight");
+                         setTimeout(() => {
+                            logoutUser();
+                        }, 3000);
+                    }
                 }
             }, (error) => {
                 console.error("Listener error for user document:", error);
@@ -3357,10 +3407,13 @@
             adminUsersList.innerHTML = users.map(user => `
                 <div class="user-list-item" onclick="window.selectAdminUser('${user.username}')" id="user-item-${user.username}">
                     <div>
-                        <span class="user-name">${user.username}</span>
+                        <span class="user-name" style="${user.isBlocked ? 'text-decoration: line-through; color: #666;' : ''}">${user.username}</span>
                         <div style="font-size: 10px; color: #666;">Registrado em: ${user.createdAt ? user.createdAt.toDate().toLocaleDateString() : 'N/A'}</div>
                     </div>
-                    <span class="analytics-badge ${user.savedCount > 0 ? 'analytics-high' : ''}">${user.savedCount} Pacientes</span>
+                    <div style="display: flex; gap: 5px;">
+                        ${user.isBlocked ? '<span class="analytics-badge" style="color: #ffcc00; border: 1px solid #ffcc00;">Bloqueado</span>' : ''}
+                        <span class="analytics-badge ${user.savedCount > 0 ? 'analytics-high' : ''}">${user.savedCount} Pacientes</span>
+                    </div>
                 </div>
             `).join('');
         };
@@ -3420,7 +3473,7 @@
 
                 adminUserDetails.innerHTML = `
                     <div class="user-detail-header">
-                        <h3 style="color: var(--prompt-color); margin-bottom: 5px;">${user.username}</h3>
+                        <h3 style="color: var(--prompt-color); margin-bottom: 5px;">${user.username} ${user.isBlocked ? '(BLOQUEADO)' : ''}</h3>
                         <span style="font-size: 12px; color: #888;">ID: ${user.username}</span>
                     </div>
                     
@@ -3432,6 +3485,18 @@
                     <div class="user-detail-row">
                         <span class="user-detail-label">DATA DE REGISTRO</span>
                         <span class="user-detail-value">${user.createdAt ? user.createdAt.toDate().toLocaleString() : 'Desconhecida'}</span>
+                    </div>
+
+                     <div class="user-detail-row" style="margin-top: 15px;">
+                         <span class="user-detail-label">AÇÕES DA CONTA</span>
+                         <div style="display: flex; margin-top: 5px;">
+                             <button class="admin-action-btn admin-btn-block" onclick="window.toggleBlockUser('${user.username}', ${!user.isBlocked})">
+                                ${user.isBlocked ? '<i class="fas fa-unlock"></i> Desbloquear' : '<i class="fas fa-ban"></i> Bloquear'}
+                             </button>
+                             <button class="admin-action-btn admin-btn-delete" onclick="window.deleteUserFromPanel('${user.username}')">
+                                <i class="fas fa-trash"></i> Excluir Usuário
+                             </button>
+                         </div>
                     </div>
 
                     <div class="usage-stats-box">
@@ -3466,6 +3531,37 @@
             } catch (e) {
                 console.error("Erro ao carregar detalhes do usuário:", e);
                 adminUserDetails.innerHTML = `<div class="error">Erro ao carregar detalhes: ${e.message}</div>`;
+            }
+        };
+        
+        window.toggleBlockUser = async (username, shouldBlock) => {
+             try {
+                const userRef = doc(db, "users", username);
+                await updateDoc(userRef, { isBlocked: shouldBlock });
+                // Atualiza a lista local
+                const userIdx = adminUsersData.findIndex(u => u.username === username);
+                if (userIdx !== -1) {
+                    adminUsersData[userIdx].isBlocked = shouldBlock;
+                    renderAdminUsersList(adminUsersData);
+                    // Re-renderiza detalhes se for o usuário selecionado
+                    window.selectAdminUser(username);
+                }
+            } catch (e) {
+                alert(`Erro ao alterar status de bloqueio: ${e.message}`);
+            }
+        };
+
+        window.deleteUserFromPanel = async (username) => {
+            if (!confirm(`Tem certeza que deseja excluir o usuário '${username}' permanentemente?`)) return;
+            try {
+                const userRef = doc(db, "users", username);
+                await deleteDoc(userRef);
+                // Remove da lista local
+                adminUsersData = adminUsersData.filter(u => u.username !== username);
+                renderAdminUsersList(adminUsersData);
+                adminUserDetails.innerHTML = '<div class="info" style="margin-top: 20px;">Usuário excluído. Selecione outro.</div>';
+            } catch (e) {
+                 alert(`Erro ao excluir usuário: ${e.message}`);
             }
         };
 
