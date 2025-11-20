@@ -1140,6 +1140,8 @@
             max-width: 400px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7);
             text-align: center;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .app-modal-header {
@@ -1214,6 +1216,99 @@
         }
         .app-modal-close:hover {
             color: white;
+        }
+
+        /* Styles for Admin Settings */
+        .admin-section {
+            margin-bottom: 20px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 5px;
+        }
+        
+        .admin-section-title {
+            color: var(--prompt-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .admin-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .admin-list-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .admin-input-group {
+            flex: 1;
+            display: flex;
+            gap: 5px;
+        }
+
+        .admin-input {
+            flex: 1;
+            padding: 8px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .admin-btn-remove {
+            background-color: rgba(255, 123, 114, 0.2);
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .admin-btn-add {
+            background-color: rgba(86, 211, 100, 0.2);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .admin-select {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
         }
 
     </style>
@@ -1433,6 +1528,35 @@
         </div>
     </div>
 
+    <!-- MODAL DE ADMINISTRAÇÃO (LOGIN) -->
+    <div id="admin-auth-modal" class="app-modal">
+        <div class="app-modal-content">
+            <span class="app-modal-close">&times;</span>
+            <div class="app-modal-header">
+                <h2 class="app-modal-title">Administração</h2>
+            </div>
+            <div class="app-modal-body">
+                <p>Insira a senha de administrador.</p>
+                <input type="password" id="admin-auth-pass" placeholder="Senha" class="app-modal-input">
+                <button id="admin-auth-button" class="app-modal-button">Acessar</button>
+                <div id="admin-auth-feedback" class="app-modal-feedback"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIGURAÇÕES ADMIN -->
+    <div id="admin-settings-modal" class="app-modal">
+        <div class="app-modal-content" style="max-width: 600px;">
+            <span class="app-modal-close">&times;</span>
+            <div class="app-modal-header">
+                <h2 class="app-modal-title">Configurações Globais da API</h2>
+            </div>
+            <div class="app-modal-body" id="admin-settings-body">
+                <!-- Conteúdo gerado dinamicamente -->
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1530,6 +1654,16 @@
         const savePatientFeedback = document.getElementById('save-patient-feedback');
         const savePatientModalClose = savePatientModal.querySelector('.app-modal-close');
 
+        // Admin Modais
+        const adminAuthModal = document.getElementById('admin-auth-modal');
+        const adminAuthPass = document.getElementById('admin-auth-pass');
+        const adminAuthButton = document.getElementById('admin-auth-button');
+        const adminAuthFeedback = document.getElementById('admin-auth-feedback');
+        const adminAuthClose = adminAuthModal.querySelector('.app-modal-close');
+
+        const adminSettingsModal = document.getElementById('admin-settings-modal');
+        const adminSettingsBody = document.getElementById('admin-settings-body');
+        const adminSettingsClose = adminSettingsModal.querySelector('.app-modal-close');
 
         // Mobile text elements
         const statusTextApi = document.querySelector('.status-text-api');
@@ -1549,6 +1683,7 @@
         let apiConnectionStatus = "Desconhecido";
         let unsubscribeSnapshot = null;
         let unsubscribeUserDoc = null;
+        let unsubscribeSettings = null; // Listener para configurações globais
         let cameraStream = null;
         let capturedImages = [];
         let temporaryImgurUploads = []; // Para armazenar uploads do /see antes de salvar
@@ -1563,43 +1698,49 @@
         let conversationHistory = [];
 
         // Configurações da API Gemini e Imgur
-        const apiKeys = [
+        const defaultApiKeys = [
             'AIzaSyB7krrv-Jjw4hn34MIFYBcrzDa5mWB9PpU',
             'AIzaSyAJk2u0SsCv11d9mrECAkoBRafHEVGgwwg',
             'AIzaSyAG0j6JuMlR5FoCTUcNQOvNy_lcS5C9ew0'
         ];
-        let currentApiKeyIndex = 1; // Start with the original default key index
-        let currentGeminiAPIKey = apiKeys[currentApiKeyIndex];
-        const IMGUR_CLIENT_ID = '546c25a59c58ad7'; 
-
-        const apiModels = [
-            { id: 1, name: 'gemini-robotics-er-1.5-preview', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-robotics-er-1.5-preview:generateContent?key=${key}`, vision: false },
-            { id: 2, name: 'learnlm-2.0-flash-experimental', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/learnlm-2.0-flash-experimental:generateContent?key=${key}`, vision: true },
-            { id: 3, name: 'gemini-2.0-flash-lite', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${key}`, vision: false },
-            { id: 4, name: 'gemini-2.0-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, vision: false },
-            { id: 5, name: 'gemini-2.5-flash-lite', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`, vision: true },
-            { id: 6, name: 'gemini-2.5-flash', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, vision: true },
-            { id: 7, name: 'gemini-flash-lite-latest', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${key}`, vision: true },
-            { id: 8, name: 'gemini-flash-latest', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${key}`, vision: true },
-            { id: 9, name: 'gemini-2.5-pro', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${key}`, vision: true },
-            { id: 10, name: 'gemini-2.5-flash-image', urlBuilder: (key) => `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${key}`, vision: true }
+        
+        const defaultApiModels = [
+            { id: 1, name: 'gemini-robotics-er-1.5-preview', vision: false },
+            { id: 2, name: 'learnlm-2.0-flash-experimental', vision: true },
+            { id: 3, name: 'gemini-2.0-flash-lite', vision: false },
+            { id: 4, name: 'gemini-2.0-flash', vision: false },
+            { id: 5, name: 'gemini-2.5-flash-lite', vision: true },
+            { id: 6, name: 'gemini-2.5-flash', vision: true },
+            { id: 7, name: 'gemini-flash-lite-latest', vision: true },
+            { id: 8, name: 'gemini-flash-latest', vision: true },
+            { id: 9, name: 'gemini-2.5-pro', vision: true },
+            { id: 10, name: 'gemini-2.5-flash-image', vision: true }
         ];
+
+        // Estado local das configurações (Sincronizado com Firebase)
+        let globalSettings = {
+            apiKeys: [...defaultApiKeys],
+            apiModels: [...defaultApiModels],
+            mode: 'automatic', // 'automatic' or 'manual'
+            manualTextModel: '',
+            manualVisionModel: '',
+            manualApiKey: ''
+        };
+
+        let currentApiKeyIndex = 0;
         let currentAIModel = 'gemini-2.0-flash';
         let currentVisionAIModel = 'gemini-2.5-flash-lite';
 
-        const getGeminiAPIUrl = (isVision = false) => {
-            const modelName = isVision ? currentVisionAIModel : currentAIModel;
-            const model = apiModels.find(m => m.name === modelName);
-            if (model) {
-                return model.urlBuilder(currentGeminiAPIKey);
-            }
-            const fallbackModel = isVision ? apiModels.find(m => m.vision) : apiModels.find(m => !m.vision);
-            return fallbackModel.urlBuilder(currentGeminiAPIKey);
+        const IMGUR_CLIENT_ID = '546c25a59c58ad7'; 
+
+        // Função auxiliar para construir URL da API dinamicamente
+        const getGeminiUrl = (modelName, apiKey) => {
+            return `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
         };
 
         const validCommands = [
             '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
-            '/ia', '/help', '/clear', '/api', '/api-set', '/api-restore', '/api-engine', '/register', '/exames', '/see', '/ask', '/delete', '/pdf', '/load'
+            '/ia', '/help', '/clear', '/api', '/api-set', '/register', '/exames', '/see', '/ask', '/delete', '/pdf', '/load'
         ];
 
         const isSpeechRecognitionSupported = () => 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
@@ -1874,24 +2015,38 @@
         };
 
         const callGeminiAPI = async (prompt) => {
-            const textModelsToTry = [currentAIModel, 'gemini-2.5-flash', 'gemini-2.5-pro'];
+            let textModelsToTry = [];
+            let keysToTry = [];
+
+            // Determinar estratégia com base no modo Global
+            if (globalSettings.mode === 'manual') {
+                if (globalSettings.manualTextModel && globalSettings.manualApiKey) {
+                    textModelsToTry = [globalSettings.manualTextModel];
+                    keysToTry = [globalSettings.manualApiKey];
+                } else {
+                    throw new Error("Modo manual ativo, mas modelo ou chave não configurados.");
+                }
+            } else {
+                // Modo Automático: Usa lista global de modelos e chaves
+                textModelsToTry = [currentAIModel, ...globalSettings.apiModels.filter(m => !m.vision).map(m => m.name)];
+                // Remove duplicatas e garante que o currentAIModel seja o primeiro
+                textModelsToTry = [...new Set(textModelsToTry)];
+                keysToTry = globalSettings.apiKeys;
+            }
+
             let lastError = null;
 
             for (const modelName of textModelsToTry) {
-                const model = apiModels.find(m => m.name === modelName);
-                if (!model) {
-                    lastError = new Error(`Modelo ${modelName} não encontrado.`);
-                    continue;
-                }
-
-                for (let i = 0; i < apiKeys.length; i++) {
-                    const keyIndex = (currentApiKeyIndex + i) % apiKeys.length;
-                    const apiKeyToTry = apiKeys[keyIndex];
+                for (let i = 0; i < keysToTry.length; i++) {
+                    // Rotação simples no modo automático
+                    const keyIndex = (currentApiKeyIndex + i) % keysToTry.length;
+                    const apiKeyToTry = keysToTry[keyIndex];
                     
-                    appendOutput(`Tentando motor ${modelName} com chave API #${keyIndex + 1}...`, "info", false);
+                    appendOutput(`Tentando motor ${modelName} com chave API...`, "info", false);
 
                     try {
-                        const response = await fetch(model.urlBuilder(apiKeyToTry), {
+                        const url = getGeminiUrl(modelName, apiKeyToTry);
+                        const response = await fetch(url, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
@@ -1899,50 +2054,64 @@
 
                         if (response.ok) {
                             const data = await response.json();
-                            currentApiKeyIndex = keyIndex;
-                            currentGeminiAPIKey = apiKeys[currentApiKeyIndex];
-                            appendOutput(`Sucesso com motor ${modelName} e chave API #${keyIndex + 1}.`, "success", false);
+                            // Se for modo automático, atualiza índice de chave para rotação
+                            if (globalSettings.mode === 'automatic') {
+                                currentApiKeyIndex = keyIndex;
+                            }
+                            appendOutput(`Sucesso com motor ${modelName}.`, "success", false);
                             return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta.";
                         }
 
                         const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
                         lastError = new Error(errorData.error?.message || `Erro desconhecido (${response.status})`);
-                        appendOutput(`Falha com chave API #${keyIndex + 1}: ${lastError.message}`, "error", false);
+                        appendOutput(`Falha com motor ${modelName}: ${lastError.message}`, "error", false);
 
                     } catch (error) {
                         lastError = error;
-                        appendOutput(`Falha de rede com chave API #${keyIndex + 1}: ${error.message}`, "error", false);
+                        appendOutput(`Falha de rede: ${error.message}`, "error", false);
                     }
                 }
-                appendOutput(`Todas as chaves falharam para o motor ${modelName}. Tentando próximo motor...`, "error", false);
+                if (globalSettings.mode === 'automatic') {
+                    appendOutput(`Todas as chaves falharam para o motor ${modelName}. Tentando próximo motor...`, "error", false);
+                }
             }
 
             console.error("Erro final na chamada da API de texto:", lastError);
-            throw lastError || new Error("Todas as tentativas de chaves e motores de texto falharam.");
+            throw lastError || new Error("Todas as tentativas falharam.");
         };
 
         const callGeminiVisionAPI = async (imageUrls, prompt) => {
-            const visionModelsToTry = [currentVisionAIModel, 'gemini-2.5-flash', 'gemini-flash-latest'];
+            let visionModelsToTry = [];
+            let keysToTry = [];
+
+            if (globalSettings.mode === 'manual') {
+                 if (globalSettings.manualVisionModel && globalSettings.manualApiKey) {
+                    visionModelsToTry = [globalSettings.manualVisionModel];
+                    keysToTry = [globalSettings.manualApiKey];
+                } else {
+                    throw new Error("Modo manual ativo, mas modelo de visão ou chave não configurados.");
+                }
+            } else {
+                visionModelsToTry = [currentVisionAIModel, ...globalSettings.apiModels.filter(m => m.vision).map(m => m.name)];
+                visionModelsToTry = [...new Set(visionModelsToTry)];
+                keysToTry = globalSettings.apiKeys;
+            }
+            
             let lastError = null;
         
             for (const modelName of visionModelsToTry) {
-                const model = apiModels.find(m => m.name === modelName && m.vision);
-                if (!model) {
-                    lastError = new Error(`Modelo de visão ${modelName} não encontrado.`);
-                    continue;
-                }
-                
                 const imageParts = imageUrls.map(url => ({ inlineData: { mimeType: 'image/jpeg', data: url.split(',')[1] } }));
                 const textPart = { text: prompt };
 
-                for (let i = 0; i < apiKeys.length; i++) {
-                    const keyIndex = (currentApiKeyIndex + i) % apiKeys.length;
-                    const apiKeyToTry = apiKeys[keyIndex];
+                for (let i = 0; i < keysToTry.length; i++) {
+                    const keyIndex = (currentApiKeyIndex + i) % keysToTry.length;
+                    const apiKeyToTry = keysToTry[keyIndex];
                     
-                    appendOutput(`Tentando motor de visão ${modelName} com chave API #${keyIndex + 1}...`, "info", false);
+                    appendOutput(`Tentando motor de visão ${modelName}...`, "info", false);
 
                     try {
-                        const response = await fetch(model.urlBuilder(apiKeyToTry), {
+                        const url = getGeminiUrl(modelName, apiKeyToTry);
+                        const response = await fetch(url, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ contents: [{ parts: [...imageParts, textPart] }] })
@@ -1950,22 +2119,25 @@
 
                         if (response.ok) {
                             const data = await response.json();
-                            currentApiKeyIndex = keyIndex;
-                            currentGeminiAPIKey = apiKeys[currentApiKeyIndex];
-                            appendOutput(`Sucesso com motor de visão ${modelName} e chave API #${keyIndex + 1}.`, "success", false);
+                            if (globalSettings.mode === 'automatic') {
+                                currentApiKeyIndex = keyIndex;
+                            }
+                            appendOutput(`Sucesso com motor de visão ${modelName}.`, "success", false);
                             return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta da análise de imagem.";
                         }
 
                         const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
                         lastError = new Error(errorData.error?.message || `Erro desconhecido na API de Visão (${response.status})`);
-                        appendOutput(`Falha com chave API #${keyIndex + 1}: ${lastError.message}`, "error", false);
+                        appendOutput(`Falha: ${lastError.message}`, "error", false);
 
                     } catch (error) {
                         lastError = error;
-                        appendOutput(`Falha de rede com chave API #${keyIndex + 1}: ${error.message}`, "error", false);
+                        appendOutput(`Falha de rede: ${error.message}`, "error", false);
                     }
                 }
-                appendOutput(`Todas as chaves falharam para o motor de visão ${modelName}. Tentando próximo motor...`, "error", false);
+                if (globalSettings.mode === 'automatic') {
+                    appendOutput(`Todas as chaves falharam para o motor de visão ${modelName}. Tentando próximo motor...`, "error", false);
+                }
             }
             
             console.error("Erro final na chamada da API de visão:", lastError);
@@ -2063,17 +2235,23 @@
         };
 
         const checkApiStatus = async (modelName = currentAIModel) => {
-            const model = apiModels.find(m => m.name === modelName);
-            if (!model) return false;
+            let apiKeyToTest = globalSettings.mode === 'manual' && globalSettings.manualApiKey ? globalSettings.manualApiKey : globalSettings.apiKeys[0];
+            let modelToTest = globalSettings.mode === 'manual' && globalSettings.manualTextModel ? globalSettings.manualTextModel : modelName;
+
             let requestBody;
-            if (model.vision) {
+            // Verifica se o modelo é de visão (baseado na lista global)
+            const isVision = globalSettings.apiModels.find(m => m.name === modelToTest)?.vision;
+            
+            if (isVision) {
                 const dummyImagePart = { inlineData: { mimeType: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' } };
                 requestBody = JSON.stringify({ contents: [{ parts: [dummyImagePart, { text: "ping" }] }] });
             } else {
                 requestBody = JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] });
             }
+
             try {
-                const response = await fetch(model.urlBuilder(currentGeminiAPIKey), {
+                const url = getGeminiUrl(modelToTest, apiKeyToTest);
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: requestBody,
@@ -2093,26 +2271,23 @@
 
         const initializeAIModel = async () => {
             appendOutput("Verificando status da API...", "info", false);
+            
+            // Se estiver em modo manual, usamos as configurações manuais
+            if (globalSettings.mode === 'manual') {
+                currentAIModel = globalSettings.manualTextModel || currentAIModel;
+                currentVisionAIModel = globalSettings.manualVisionModel || currentVisionAIModel;
+            } else {
+                // Modo automático: tenta usar o primeiro da lista ou o fallback
+                currentAIModel = globalSettings.apiModels.find(m => !m.vision)?.name || 'gemini-2.0-flash';
+                currentVisionAIModel = globalSettings.apiModels.find(m => m.vision)?.name || 'gemini-2.5-flash-lite';
+            }
+
             let textModelOK = await checkApiStatus(currentAIModel);
-            if (!textModelOK) {
-                const initialError = apiConnectionStatus;
-                appendOutput(`Motor de texto padrão (${currentAIModel}) falhou: ${initialError}. Tentando alternativo...`, "error", false);
-                currentAIModel = 'gemini-2.5-pro';
-                textModelOK = await checkApiStatus(currentAIModel);
-            }
             if (textModelOK) appendOutput(`Motor de texto (${currentAIModel}) conectado.`, "success", false);
-            else appendOutput(`Motor de texto alternativo (${currentAIModel}) também falhou.`, "error", false);
+            else appendOutput(`Falha ao conectar motor de texto (${currentAIModel}): ${apiConnectionStatus}.`, "error", false);
 
-
-            let visionModelOK = await checkApiStatus(currentVisionAIModel);
-            if (!visionModelOK) {
-                const initialError = apiConnectionStatus;
-                appendOutput(`Motor de visão padrão (${currentVisionAIModel}) falhou: ${initialError}. Tentando alternativo...`, "error", false);
-                currentVisionAIModel = 'gemini-2.5-pro';
-                visionModelOK = await checkApiStatus(currentVisionAIModel);
-            }
-            if(visionModelOK) appendOutput(`Motor de visão (${currentVisionAIModel}) conectado.`, "success", false);
-            else appendOutput(`Motor de visão alternativo (${currentVisionAIModel}) também falhou.`, "error", false);
+            // A verificação do motor de visão pode ser feita tentando um ping com imagem dummy, ou assumindo status baseado no texto
+            // Para simplificar, consideramos o status da API geral
         };
 
         // Firebase Functions
@@ -2137,6 +2312,40 @@
                 }
             });
         };
+
+        // Sincronização das configurações globais (API Keys e Motores)
+        const setupGlobalSettingsListener = () => {
+            if (unsubscribeSettings) unsubscribeSettings();
+            const docRef = doc(db, "settings", "global");
+            unsubscribeSettings = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    // Atualiza configurações locais
+                    globalSettings = {
+                        apiKeys: data.apiKeys || [...defaultApiKeys],
+                        apiModels: data.apiModels || [...defaultApiModels],
+                        mode: data.mode || 'automatic',
+                        manualTextModel: data.manualTextModel || '',
+                        manualVisionModel: data.manualVisionModel || '',
+                        manualApiKey: data.manualApiKey || ''
+                    };
+                    
+                    // Se o admin estiver com o modal aberto, atualiza o UI em tempo real
+                    if (adminSettingsModal.style.display === 'flex') {
+                        renderAdminSettingsUI();
+                    }
+                    
+                    // Re-inicializa modelos para aplicar mudanças imediatas
+                    initializeAIModel();
+                } else {
+                    // Se documento não existe, cria com padrões
+                    setDoc(docRef, globalSettings);
+                }
+            }, (error) => {
+                console.error("Erro ao sincronizar configurações globais:", error);
+            });
+        };
+
         const registerUser = async (adminPassword, username, password) => {
             if (adminPassword !== 'admin123') return appendOutput("Senha de administrador incorreta.", "error");
             if (!username || !password) return appendOutput("Uso: /register [senha_admin] [usuário] [senha]", "error");
@@ -2670,8 +2879,9 @@
             });
 
             setupFirebaseListener(currentUser);
+            setupGlobalSettingsListener(); // Inicia listener de configurações globais
             toggleMonitorView('anamnesis');
-            initializeAIModel();
+            // initializeAIModel(); // Já chamado pelo setupGlobalSettingsListener
         };
 
         const searchPatients = (searchTerm) => {
@@ -2701,6 +2911,187 @@
                 patientList.appendChild(noResults);
             }
         };
+
+        // --- ADMIN SETTINGS FUNCTIONS ---
+
+        const openAdminAuth = () => {
+            adminAuthPass.value = '';
+            adminAuthFeedback.textContent = '';
+            adminAuthModal.style.display = 'flex';
+            adminAuthPass.focus();
+        };
+
+        const checkAdminAuth = () => {
+            if (adminAuthPass.value === 'admin123') {
+                adminAuthModal.style.display = 'none';
+                renderAdminSettingsUI();
+                adminSettingsModal.style.display = 'flex';
+            } else {
+                adminAuthFeedback.textContent = 'Senha incorreta.';
+            }
+        };
+
+        // Renderização dinâmica da UI de configuração
+        const renderAdminSettingsUI = () => {
+            const isManual = globalSettings.mode === 'manual';
+            
+            // Opções de motores para seleção manual
+            const textModelsOptions = globalSettings.apiModels.filter(m => !m.vision).map(m => 
+                `<option value="${m.name}" ${globalSettings.manualTextModel === m.name ? 'selected' : ''}>${m.name}</option>`
+            ).join('');
+
+            const visionModelsOptions = globalSettings.apiModels.filter(m => m.vision).map(m => 
+                `<option value="${m.name}" ${globalSettings.manualVisionModel === m.name ? 'selected' : ''}>${m.name}</option>`
+            ).join('');
+
+            const apiKeysOptions = globalSettings.apiKeys.map(key => 
+                `<option value="${key}" ${globalSettings.manualApiKey === key ? 'selected' : ''}>${key}</option>`
+            ).join('');
+
+            let html = `
+                <div class="admin-section">
+                    <div class="admin-section-title">Modo de Operação</div>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="apiMode" value="automatic" ${!isManual ? 'checked' : ''} onchange="window.updateMode('automatic')"> Automático (Rotação)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="apiMode" value="manual" ${isManual ? 'checked' : ''} onchange="window.updateMode('manual')"> Manual (Fixo)
+                        </label>
+                    </div>
+
+                    <div id="manual-settings" style="display: ${isManual ? 'block' : 'none'}; margin-top: 15px;">
+                        <div class="admin-section-title">Seleção Manual (Padrão para Todos)</div>
+                        <label>Motor de Texto:</label>
+                        <select id="manual-text-select" class="admin-select" onchange="window.saveManualSelection()">
+                            <option value="">Selecione...</option>
+                            ${textModelsOptions}
+                        </select>
+                        
+                        <label>Motor de Visão:</label>
+                        <select id="manual-vision-select" class="admin-select" onchange="window.saveManualSelection()">
+                            <option value="">Selecione...</option>
+                            ${visionModelsOptions}
+                        </select>
+                        
+                        <label>Chave API:</label>
+                        <select id="manual-key-select" class="admin-select" onchange="window.saveManualSelection()">
+                            <option value="">Selecione...</option>
+                            ${apiKeysOptions}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="admin-section-title">Chaves de API</div>
+                    <div class="admin-list" id="api-keys-list">
+                        ${globalSettings.apiKeys.map((key, index) => `
+                            <div class="admin-list-item">
+                                <input type="text" class="admin-input" value="${key}" readonly>
+                                <button class="admin-btn-remove" onclick="window.removeApiKey(${index})"><i class="fas fa-trash"></i></button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="admin-list-item" style="margin-top: 10px;">
+                         <input type="text" id="new-api-key" class="admin-input" placeholder="Nova chave API...">
+                         <button class="admin-btn-add" style="width: auto;" onclick="window.addApiKey()">Adicionar</button>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="admin-section-title">Motores de IA</div>
+                    <div class="admin-list" id="api-models-list">
+                         ${globalSettings.apiModels.map((model, index) => `
+                            <div class="admin-list-item">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 12px; font-weight: bold;">${model.name}</div>
+                                    <div style="font-size: 10px; color: #888;">${model.vision ? 'Visão' : 'Texto'}</div>
+                                </div>
+                                <button class="admin-btn-remove" onclick="window.removeApiModel(${index})"><i class="fas fa-trash"></i></button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                        <input type="text" id="new-model-name" class="admin-input" placeholder="Nome do modelo (ex: gemini-1.5-pro)" style="width: 100%; margin-bottom: 5px;">
+                        <label class="radio-label" style="font-size: 12px; margin-bottom: 5px;">
+                            <input type="checkbox" id="new-model-vision"> Suporta Visão?
+                        </label>
+                        <button class="admin-btn-add" onclick="window.addApiModel()">Adicionar Modelo</button>
+                    </div>
+                </div>
+            `;
+            adminSettingsBody.innerHTML = html;
+        };
+
+        // Funções globais para interagir com o HTML gerado dinamicamente
+        window.updateMode = async (mode) => {
+            try {
+                await setDoc(doc(db, "settings", "global"), { ...globalSettings, mode }, { merge: true });
+            } catch (e) { console.error("Erro ao atualizar modo:", e); }
+        };
+
+        window.saveManualSelection = async () => {
+            const textModel = document.getElementById('manual-text-select').value;
+            const visionModel = document.getElementById('manual-vision-select').value;
+            const apiKey = document.getElementById('manual-key-select').value;
+            
+            try {
+                await setDoc(doc(db, "settings", "global"), {
+                    ...globalSettings,
+                    manualTextModel: textModel,
+                    manualVisionModel: visionModel,
+                    manualApiKey: apiKey
+                }, { merge: true });
+            } catch (e) { console.error("Erro ao salvar seleção manual:", e); }
+        };
+
+        window.addApiKey = async () => {
+            const input = document.getElementById('new-api-key');
+            const newKey = input.value.trim();
+            if (newKey) {
+                const newKeys = [...globalSettings.apiKeys, newKey];
+                try {
+                    await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiKeys: newKeys }, { merge: true });
+                    input.value = '';
+                } catch (e) { console.error("Erro ao adicionar chave:", e); }
+            }
+        };
+
+        window.removeApiKey = async (index) => {
+            if (globalSettings.apiKeys.length <= 1) {
+                alert("É necessário ter pelo menos uma chave de API.");
+                return;
+            }
+            const newKeys = globalSettings.apiKeys.filter((_, i) => i !== index);
+            try {
+                await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiKeys: newKeys }, { merge: true });
+            } catch (e) { console.error("Erro ao remover chave:", e); }
+        };
+
+        window.addApiModel = async () => {
+            const nameInput = document.getElementById('new-model-name');
+            const visionInput = document.getElementById('new-model-vision');
+            const name = nameInput.value.trim();
+            if (name) {
+                const newModel = { id: Date.now(), name, vision: visionInput.checked };
+                const newModels = [...globalSettings.apiModels, newModel];
+                try {
+                    await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiModels: newModels }, { merge: true });
+                } catch (e) { console.error("Erro ao adicionar modelo:", e); }
+            }
+        };
+
+        window.removeApiModel = async (index) => {
+             if (globalSettings.apiModels.length <= 1) {
+                alert("É necessário ter pelo menos um modelo.");
+                return;
+            }
+            const newModels = globalSettings.apiModels.filter((_, i) => i !== index);
+             try {
+                await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiModels: newModels }, { merge: true });
+            } catch (e) { console.error("Erro ao remover modelo:", e); }
+        };
+
 
         const processCommand = async (command) => {
             if (!command.trim()) return;
@@ -2793,47 +3184,15 @@
                     break;
         
                 case '/api-set':
-                    const [, adminPassSet, newKey] = parts;
-                    if (adminPassSet === 'admin123' && newKey) {
-                        currentGeminiAPIKey = newKey;
-                        appendOutput(`Chave da API alterada. Verificando...`, "success");
-                        await checkApiStatus();
-                    } else {
-                        appendOutput("Uso: /api-set [senha_admin] [nova_chave]", "error");
-                    }
-                    break;
-        
-                case '/api-restore':
-                    if (parts[1] === 'admin123') {
-                        currentGeminiAPIKey = apiKeys[1]; // Restore to the original default key
-                        currentApiKeyIndex = 1;
-                        appendOutput("Chave da API restaurada para o padrão. Verificando...", "success");
-                        await checkApiStatus();
-                    } else {
-                        appendOutput("Senha de administrador incorreta.", "error");
-                    }
-                    break;
-        
-                case '/api-engine':
-                    const [, adminPassEngine, engineId] = parts;
-                    if (adminPassEngine === 'admin123' && engineId) {
-                        const model = apiModels.find(m => m.id == engineId || m.name.toLowerCase() === engineId.toLowerCase());
-                        if (model) {
-                            if (model.vision) currentVisionAIModel = model.name;
-                            else currentAIModel = model.name;
-                            appendOutput(`Motor ${model.vision ? 'de visão' : 'de texto'} alterado para: ${model.name}. Verificando...`, "success");
-                            await checkApiStatus(model.name);
-                        } else {
-                            appendOutput(`Motor '${engineId}' não encontrado.`, "error");
-                        }
-                    } else {
-                        appendOutput("Uso: /api-engine [senha_admin] [id_do_motor]", "error");
-                    }
+                    openAdminAuth();
                     break;
         
                 case '/api':
-                    const availableEngines = apiModels.map(m => `  ${m.id}. ${m.name} (${m.vision ? 'visão' : 'texto'})`).join('\n');
-                    appendOutput(`Status da API: ${apiConnectionStatus}\nMotor de texto atual: ${currentAIModel}\nMotor de visão atual: ${currentVisionAIModel}\n\nMotores disponíveis:\n${availableEngines}`, "info");
+                    const currentText = globalSettings.mode === 'manual' ? (globalSettings.manualTextModel || 'Não definido') : currentAIModel;
+                    const currentVision = globalSettings.mode === 'manual' ? (globalSettings.manualVisionModel || 'Não definido') : currentVisionAIModel;
+                    const modeLabel = globalSettings.mode === 'manual' ? 'Manual (Fixo)' : 'Automático (Rotação)';
+                    
+                    appendOutput(`Status da API: ${apiConnectionStatus}\nModo: ${modeLabel}\nMotor de Texto Atual: ${currentText}\nMotor de Visão Atual: ${currentVision}`, "info");
                     break;
         
                 case '/register':
@@ -2907,6 +3266,11 @@
             openSaveModal();
         });
 
+        // Admin Listeners
+        adminAuthClose.addEventListener('click', () => adminAuthModal.style.display = 'none');
+        adminAuthButton.addEventListener('click', checkAdminAuth);
+        adminAuthPass.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkAdminAuth(); });
+        adminSettingsClose.addEventListener('click', () => adminSettingsModal.style.display = 'none');
 
         // Modais de Pacientes
         patientListModal.addEventListener('click', (e) => {
