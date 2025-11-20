@@ -1120,6 +1120,12 @@
             color: var(--bg-color);
             box-shadow: 0 0 8px var(--success-color);
         }
+        
+        /* Estilo para botão congelado (bloqueado) */
+        .action-button.blocked-ui {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
 
         /* NOVOS ESTILOS PARA O MODAL DE LOGIN (E SAVE) */
         .app-modal {
@@ -1871,6 +1877,7 @@
         // Estado da aplicação
         let isListening = false;
         let isLoggedIn = false;
+        let isUserBlocked = false;
         let currentUser = null;
         let recognition = null;
         let audioStream = null; 
@@ -2056,6 +2063,7 @@
             
             if (requireLogin) {
                 isLoggedIn = false;
+                isUserBlocked = false;
                 currentUser = null;
                 localStorage.removeItem('axon_logged_in_user');
                 if (unsubscribeSnapshot) {
@@ -2628,10 +2636,7 @@
                 const docSnap = await getDoc(userRef);
                 if (docSnap.exists()) {
                     const userData = docSnap.data();
-                    if (userData.isBlocked) {
-                         appendOutput("Sua conta foi bloqueada!", "highlight");
-                         return false;
-                    }
+                    // Removida a verificação de bloqueio aqui para permitir login e mostrar mensagem
                     return userData.password === password;
                 }
                 return false;
@@ -2646,6 +2651,25 @@
             } catch (e) {
                 console.error("Error checking user validity:", e);
                 return false;
+            }
+        };
+        
+        const updateBlockedUI = () => {
+            const buttons = document.querySelectorAll('.action-button');
+            if (isUserBlocked) {
+                appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
+                buttons.forEach(btn => btn.classList.add('blocked-ui'));
+                commandInput.disabled = true;
+                // Se houver modais abertos (ex: câmera, configurações), fechar
+                if (cameraModal.style.display === 'flex') stopCamera();
+                patientListModal.style.display = 'none';
+                savePatientModal.style.display = 'none';
+                adminSettingsModal.style.display = 'none';
+                adminUsersModal.style.display = 'none';
+            } else {
+                 appendOutput("Sua conta foi desbloqueada.", "success");
+                 buttons.forEach(btn => btn.classList.remove('blocked-ui'));
+                 commandInput.disabled = false;
             }
         };
 
@@ -3117,6 +3141,9 @@
             if (isRestoredSession) appendOutput(`Sessão restaurada para: ${currentUser}`, "success", false);
             else appendOutput(`Login bem-sucedido. Bem-vindo, ${currentUser}.`, "success", false);
             initialMessagesContainer.style.display = 'none';
+            
+            // Verificação inicial de status bloqueado é feita via listener abaixo
+            
             appendOutput("Sessão pronta. Informe os dados do paciente ou use um comando.", "success");
             
             if (unsubscribeUserDoc) {
@@ -3131,11 +3158,9 @@
                     }, 3000);
                 } else if (docSnap.exists()) {
                     const userData = docSnap.data();
-                    if (userData.isBlocked && isLoggedIn) {
-                        appendOutput("Sua conta foi bloqueada!", "highlight");
-                         setTimeout(() => {
-                            logoutUser();
-                        }, 3000);
+                    if (userData.isBlocked !== isUserBlocked) {
+                        isUserBlocked = userData.isBlocked;
+                        updateBlockedUI();
                     }
                 }
             }, (error) => {
@@ -3578,6 +3603,12 @@
         const processCommand = async (command) => {
             if (!command.trim()) return;
             appendOutput(command, "command");
+
+            if (isUserBlocked) {
+                appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
+                commandInput.value = '';
+                return;
+            }
         
             const parts = command.trim().split(' ');
             const mainCmd = parts[0].toLowerCase();
@@ -3745,6 +3776,14 @@
         albumModal.addEventListener('click', (e) => { if (e.target === albumModal) closeAlbumModal(); });
 
         // Action Buttons
+        const checkBlockedAndExecute = (callback) => {
+             if(isUserBlocked) {
+                 appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
+             } else {
+                 callback();
+             }
+        }
+
         btnExames.addEventListener('click', () => processCommand('/exames'));
         btnSee.addEventListener('click', () => processCommand('/see'));
         btnHd.addEventListener('click', () => processCommand('/hd'));
@@ -3753,6 +3792,11 @@
         btnClear.addEventListener('click', () => processCommand('/clear'));
         btnMic.addEventListener('click', () => processCommand(isListening ? '/hear off' : '/hear on'));
         btnSaveFromList.addEventListener('click', () => {
+            if(isUserBlocked) {
+                appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
+                patientListModal.style.display = 'none';
+                return;
+            }
             patientListModal.style.display = 'none';
             openSaveModal();
         });
@@ -3772,9 +3816,9 @@
             const patientItem = target.closest('.patient-item');
 
             if (deleteButton) {
-                deletePatient(deleteButton.dataset.id);
+                checkBlockedAndExecute(() => deletePatient(deleteButton.dataset.id));
             } else if (pdfButton && !pdfButton.classList.contains('disabled')) {
-                generatePatientPDF(pdfButton.dataset.id);
+                 checkBlockedAndExecute(() => generatePatientPDF(pdfButton.dataset.id));
             } else if (detailsButton && !detailsButton.classList.contains('disabled')) {
                 const patientId = detailsButton.dataset.id;
                 const patientData = allPatients.find(p => p.id === patientId);
