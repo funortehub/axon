@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -1922,9 +1923,7 @@
         const openRouterModels = [
             { name: 'x-ai/grok-4.1-fast:free', vision: true },
             { name: 'deepseek/deepseek-r1:free', vision: false },
-            { name: 'google/gemini-2.0-flash-exp:free', vision: true },
-            { name: 'mistralai/mistral-small-3.1-24b-instruct:free', vision: true },
-            { name: 'nvidia/nemotron-nano-12b-v2-vl:free', vision: true }
+            { name: 'google/gemini-2.0-flash-exp:free', vision: true }
         ];
 
         // Estado local das configurações (Sincronizado com Firebase)
@@ -2286,8 +2285,8 @@
                     body: JSON.stringify({
                         model: modelName,
                         messages: messages,
-                        // Adiciona reasoning se for Grok ou Nemotron, conforme solicitado pelo usuário
-                        ...((modelName.includes('grok') || modelName.includes('nemotron')) ? { reasoning: { enabled: true } } : {})
+                        // Adiciona reasoning se for Grok, conforme solicitado pelo usuário
+                        ...(modelName.includes('grok') ? { reasoning: { enabled: true } } : {})
                     })
                 });
 
