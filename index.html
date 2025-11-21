@@ -2592,40 +2592,55 @@
 
         const processAnamnesisInfo = async (info) => {
             lastAnamnesisInfo = info;
-            const prompt = `Você é um assistente médico especialista em semiologia. Sua tarefa é redigir uma anamnese médica profissional, organizando as informações fornecidas em seções adequadas. A anamnese deve ser bem redigida, coesa e utilizar termos médicos apropriados.
-            Contexto da consulta atual (informações existentes):
-            - QP (Queixa Principal): "${anamnesis.qp || "Nenhuma"}"
-            - HMA (História da Moléstia Atual): "${anamnesis.hma || "Nenhuma"}"
-            - HP (História Patológica): "${anamnesis.hp || "Nenhuma"}"
-            - HF (História Familiar): "${anamnesis.hf || "Nenhuma"}"
-            - HPS (História Psicossocial): "${anamnesis.hps || "Nenhuma"}"
+            // Prompt modificado para ser mais robusto com Groq/Llama e garantir estrutura JSON correta
+            const prompt = `Atue como um assistente médico especialista em estruturação de dados.
+            Sua tarefa é atualizar o JSON da anamnese com base na nova fala do paciente.
 
-            Nova informação recebida (diálogo médico-paciente): "${info}"
+            DEFINIÇÕES DOS CAMPOS:
+            - qp (Queixa Principal): O motivo principal da consulta (ex: "Dor de cabeça").
+            - hma (História da Moléstia Atual): Detalhes do sintoma atual (início, duração, características, o que melhora/piora).
+            - hp (História Patológica): Doenças prévias, cirurgias, alergias, medicamentos em uso.
+            - hf (História Familiar): Doenças na família (pais, irmãos).
+            - hps (História Psicossocial): Hábitos (fumo, álcool, drogas), profissão, estado civil.
 
-            Instruções cruciais:
-            1.  **Analise o contexto completo**: Considere tanto as informações existentes quanto a "nova informação recebida" para construir a anamnese mais precisa.
-            2.  **Ordene logicamente**: Mesmo que as informações sejam fornecidas fora de ordem, organize-as de forma coerente dentro da seção correta (QP, HMA, HP, HF, HPS).
-            3.  **Seja Fiel ao Conteúdo**: NÃO adicione, invente ou presuma informações que não foram explicitamente ditas. Frases como "Paciente não relata outros sintomas" ou "Paciente não sabe especificar" só devem ser incluídas se o médico ou paciente as tiverem mencionado.
-            4.  **Distinga os interlocutores e filtre as perguntas**: Sua tarefa é extrair APENAS as respostas e relatos do paciente. IGNORE completamente as perguntas diretas feitas pelo médico. Por exemplo, se o diálogo for "Médico: Você tem febre? Paciente: Sim, desde ontem.", a informação a ser registrada é "Paciente relata febre desde o dia anterior". A pergunta "Você tem febre?" NÃO DEVE ser incluída no texto da anamnese.
-            5.  **Atualize, não substitua**: Integre a nova informação à seção apropriada, complementando o que já existe. Mantenha o conteúdo das outras seções inalterado.
-            6.  **Filtro Rigoroso de Relevância Clínica**: Ignore A-B-S-O-L-U-T-A-M-E-N-T-E qualquer parte da conversa que não seja estritamente sobre a saúde do paciente. Isso inclui, mas não se limita a: saudações (bom dia, olá), cumprimentos, despedidas, comentários sobre o tempo, trânsito, amenidades sociais ou qualquer diálogo que não descreva um sintoma, um histórico médico, um hábito de vida relevante (fumo, álcool) ou uma queixa. Seu foco é 100% clínico.
+            ESTADO ATUAL (JSON):
+            ${JSON.stringify(anamnesis)}
 
-            Formato da Resposta: Retorne EXCLUSIVAMENTE um objeto JSON, contendo TODAS as chaves (qp, hma, hp, hf, hps) com os textos atualizados.`;
+            NOVA INFORMAÇÃO (Input):
+            "${info}"
+
+            REGRAS:
+            1. Identifique a qual categoria a "NOVA INFORMAÇÃO" pertence.
+            2. Adicione a informação ao campo correspondente no "ESTADO ATUAL". Mantenha o texto anterior e acrescente o novo.
+            3. Se a informação for irrelevante clinicamente, ignore-a.
+            4. Ignore perguntas do médico, foque nas respostas do paciente.
+            5. IMPORTANTE: Retorne APENAS o objeto JSON atualizado. Sem crases, sem markdown, sem explicações.
+
+            JSON Atualizado:`;
+
             try {
                 const response = await callGeminiAPI(prompt);
+                // Limpeza robusta para garantir que pegamos apenas o JSON, mesmo se o modelo enviar markdown
                 const jsonStart = response.indexOf('{');
                 const jsonEnd = response.lastIndexOf('}') + 1;
+                
+                if (jsonStart === -1 || jsonEnd === -1) throw new Error("Resposta não contém JSON válido");
+                
                 const jsonString = response.substring(jsonStart, jsonEnd);
                 const updatedAnamnesis = JSON.parse(jsonString);
+                
                 anamnesis = {
-                    qp: updatedAnamnesis.qp || "", hma: updatedAnamnesis.hma || "",
-                    hp: updatedAnamnesis.hp || "", hf: updatedAnamnesis.hf || "",
-                    hps: updatedAnamnesis.hps || ""
+                    qp: updatedAnamnesis.qp || anamnesis.qp || "", 
+                    hma: updatedAnamnesis.hma || anamnesis.hma || "",
+                    hp: updatedAnamnesis.hp || anamnesis.hp || "", 
+                    hf: updatedAnamnesis.hf || anamnesis.hf || "",
+                    hps: updatedAnamnesis.hps || anamnesis.hps || ""
                 };
                 updateAnamnesisPreview();
                 appendOutput("Anamnese atualizada com sucesso.", "success");
             } catch (error) {
-                appendOutput(`Erro ao atualizar a anamnese: ${error.message}.`, "error");
+                console.error("Erro de parsing anamnese:", error);
+                appendOutput(`Erro ao atualizar a anamnese (Parsing): ${error.message}.`, "error");
             }
         };
 
