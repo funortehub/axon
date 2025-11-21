@@ -2216,8 +2216,10 @@
                 formattedResults = examsResults.split('\n')
                     .filter(line => line.trim() !== '')
                     .map(line => {
-                        if (line.includes('(Alterado)') || line.includes('(Anormal)')) {
-                            const cleanLine = line.replace(/\(Alterado\)/g, '').replace(/\(Anormal\)/g, '').trim();
+                        // Regex case insensitive para capturar variações
+                        if (/\((Alterado|Anormal)\)/i.test(line)) {
+                            // Remove a marcação original para não duplicar, mantendo o restante do texto
+                            const cleanLine = line.replace(/\((Alterado|Anormal)\)/gi, '').trim();
                             return `<div class="output">${cleanLine} <span class="altered-text">(Alterado)</span></div>`;
                         }
                         return `<div class="output">${line.trim()}</div>`;
@@ -2353,7 +2355,7 @@
                     if (content) {
                         await incrementUserUsage(images.length > 0 ? 'vision' : 'text');
                         appendOutput(`Sucesso via OpenRouter.`, "success", false);
-                        return content;
+                        return content.replace(/\*\*/g, ''); // Remove asteriscos para formatação limpa
                     }
                     throw new Error("Resposta vazia do OpenRouter.");
                 } else {
@@ -2417,7 +2419,7 @@
                     if (content) {
                         await incrementUserUsage(images.length > 0 ? 'vision' : 'text');
                         appendOutput(`Sucesso via Groq.`, "success", false);
-                        return content;
+                        return content.replace(/\*\*/g, ''); // Remove asteriscos para formatação limpa
                     }
                     throw new Error("Resposta vazia do Groq.");
                 } else {
