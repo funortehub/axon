@@ -12,6 +12,7 @@
     <link rel="apple-touch-icon" href="https://i.imgur.com/ZsfZEh2.png">
     <meta name="theme-color" content="#0d1117">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://js.puter.com/v2/"></script>
     <style>
         /* Todos os estilos CSS anteriores permanecem exatamente iguais */
         :root {
@@ -1977,7 +1978,7 @@
             manualTextModel: '',
             manualVisionModel: '',
             manualApiKey: '',
-            apiProvider: 'gemini', // 'gemini' or 'openrouter'
+            apiProvider: 'gemini', // 'gemini', 'openrouter', or 'puter'
             openRouterKey: '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',
             openRouterModel: 'x-ai/grok-4.1-fast:free'
         };
@@ -2289,6 +2290,55 @@
             }
         };
 
+        const callPuterAPI = async (prompt, images = []) => {
+            appendOutput(`Conectando via Puter...`, "info", false);
+            try {
+                if (typeof window.puter === 'undefined' || typeof window.puter.ai?.chat !== 'function') {
+                    throw new Error("Puter SDK não está disponível.");
+                }
+
+                let responseText = '';
+                if (images.length > 0) {
+                    // Vision call
+                    const model = 'gpt-5-nano';
+                    appendOutput(`Usando motor de visão Puter (${model})...`, "info", false);
+                    const visionResponse = await puter.ai.chat(prompt, images[0], { model });
+                    
+                    // Handle both string and object responses
+                    if (typeof visionResponse === 'string') {
+                        responseText = visionResponse;
+                    } else if (visionResponse && typeof visionResponse.text === 'string') {
+                        responseText = visionResponse.text;
+                    }
+                    
+                    await incrementUserUsage('vision');
+                } else {
+                    // Text call (streaming)
+                    const model = 'gemini-2.0-flash';
+                    appendOutput(`Usando motor de texto Puter (${model})...`, "info", false);
+                    
+                    const stream = await puter.ai.chat(prompt, { model, stream: true });
+                    for await (const part of stream) {
+                        if (part?.text) {
+                            responseText += part.text;
+                        }
+                    }
+                    await incrementUserUsage('text');
+                }
+
+                if (typeof responseText === 'string' && responseText.trim()) {
+                    appendOutput(`Sucesso via Puter.`, "success", false);
+                    return responseText;
+                }
+                
+                throw new Error("Resposta vazia ou inesperada do Puter.");
+
+            } catch (e) {
+                console.error("Erro na chamada Puter:", e);
+                throw e; // Re-throw to be caught by the calling function
+            }
+        };
+
         const callOpenRouterAPI = async (prompt, images = []) => {
             const modelName = globalSettings.openRouterModel || 'x-ai/grok-4.1-fast:free';
             const apiKey = globalSettings.openRouterKey;
@@ -2353,6 +2403,11 @@
         };
 
         const callGeminiAPI = async (prompt) => {
+             // Se o provedor for Puter, desvia
+            if (globalSettings.apiProvider === 'puter') {
+                return await callPuterAPI(prompt);
+            }
+
             // Se o provedor for OpenRouter, desvia para a nova função
             if (globalSettings.apiProvider === 'openrouter') {
                 return await callOpenRouterAPI(prompt);
@@ -2428,6 +2483,11 @@
         };
 
         const callGeminiVisionAPI = async (imageUrls, prompt) => {
+             // Se o provedor for Puter, desvia
+            if (globalSettings.apiProvider === 'puter') {
+                return await callPuterAPI(prompt, imageUrls);
+            }
+            
             // Se o provedor for OpenRouter, desvia para a nova função
             if (globalSettings.apiProvider === 'openrouter') {
                 return await callOpenRouterAPI(prompt, imageUrls);
@@ -2596,6 +2656,18 @@
             let keysToTest = [];
             let modelToTest = modelName;
 
+            if (globalSettings.apiProvider === 'puter') {
+                if (window.puter && typeof window.puter.ai.chat === 'function') {
+                    apiConnectionStatus = "Conectado (Puter)";
+                    apiStatus.classList.remove('status-off');
+                    return true;
+                } else {
+                    apiConnectionStatus = "Offline (Puter SDK não carregado)";
+                    apiStatus.classList.add('status-off');
+                    return false;
+                }
+            }
+
             // No modo OpenRouter, testamos o endpoint OpenRouter
             if (globalSettings.apiProvider === 'openrouter') {
                  try {
@@ -2679,17 +2751,17 @@
             appendOutput("Verificando status da API...", "info", false);
             
             // Se estiver em modo manual, usamos as configurações manuais
-            if (globalSettings.mode === 'manual') {
+            if (globalSettings.mode === 'manual' && globalSettings.apiProvider === 'gemini') {
                 currentAIModel = globalSettings.manualTextModel || currentAIModel;
                 currentVisionAIModel = globalSettings.manualVisionModel || currentVisionAIModel;
             } else {
-                // Modo automático: tenta usar o primeiro da lista preferencial ou o fallback
+                // Modo automático ou outros provedores: usa fallbacks
                 currentAIModel = 'gemini-2.0-flash'; // Padrão inicial preferido
                 currentVisionAIModel = 'gemini-2.0-flash';
             }
 
             let textModelOK = await checkApiStatus(currentAIModel);
-            if (textModelOK) appendOutput(`Motor conectado (${globalSettings.apiProvider === 'openrouter' ? 'OpenRouter' : currentAIModel}).`, "success", false);
+            if (textModelOK) appendOutput(`Motor conectado (${globalSettings.apiProvider}).`, "success", false);
             else appendOutput(`Falha ao conectar motor: ${apiConnectionStatus}.`, "error", false);
 
             // A verificação do motor de visão pode ser feita tentando um ping com imagem dummy, ou assumindo status baseado no texto
@@ -3401,6 +3473,7 @@
             const isManual = globalSettings.mode === 'manual';
             const isGoogle = globalSettings.apiProvider === 'gemini';
             const isOpenRouter = globalSettings.apiProvider === 'openrouter';
+            const isPuter = globalSettings.apiProvider === 'puter';
             
             // Opções de motores para seleção manual (AGORA INCLUI TODOS, INCLUSIVE VISÃO NO TEXTO)
             const textModelsOptions = globalSettings.apiModels.map(m => 
@@ -3429,6 +3502,9 @@
                         </label>
                         <label class="radio-label">
                             <input type="radio" name="apiProvider" value="openrouter" ${isOpenRouter ? 'checked' : ''} onchange="window.updateProvider('openrouter')"> OpenRouter (Universal)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="apiProvider" value="puter" ${isPuter ? 'checked' : ''} onchange="window.updateProvider('puter')"> Puter (Sem Chave)
                         </label>
                     </div>
                 </div>
@@ -3485,7 +3561,7 @@
                     </div>
                 </div>
                 `;
-            } else {
+            } else if (isOpenRouter) {
                 // Interface OpenRouter
                 html += `
                 <div class="admin-section">
@@ -3497,6 +3573,23 @@
                     <select id="openrouter-model-select" class="admin-select" onchange="window.saveManualSelection()">
                         ${openRouterModelsOptions}
                     </select>
+                </div>
+                `;
+            } else if (isPuter) {
+                 html += `
+                <div class="admin-section">
+                    <div class="admin-section-title">Configuração Puter</div>
+                    <div class="info">O provedor Puter não requer chave de API e utiliza modelos pré-definidos.</div>
+                    <div style="margin-top: 10px;">
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">MOTOR DE TEXTO</span>
+                            <span class="user-detail-value" style="font-family: monospace;">gemini-2.0-flash</span>
+                        </div>
+                        <div class="user-detail-row">
+                            <span class="user-detail-label">MOTOR DE VISÃO</span>
+                            <span class="user-detail-value" style="font-family: monospace;">gpt-5-nano</span>
+                        </div>
+                    </div>
                 </div>
                 `;
             }
@@ -3948,7 +4041,7 @@
                     const currentVision = globalSettings.mode === 'manual' ? (globalSettings.manualVisionModel || 'Não definido') : currentVisionAIModel;
                     const modeLabel = globalSettings.mode === 'manual' ? 'Manual (Fixo)' : 'Automático (Rotação)';
                     
-                    appendOutput(`Status da API: ${apiConnectionStatus}\nModo: ${modeLabel}\nMotor de Texto Atual: ${currentText}\nMotor de Visão Atual: ${currentVision}`, "info");
+                    appendOutput(`Status da API: ${apiConnectionStatus}\nProvedor: ${globalSettings.apiProvider}\nModo: ${modeLabel}\nMotor de Texto Atual: ${currentText}\nMotor de Visão Atual: ${currentVision}`, "info");
                     break;
         
                 case '/register':
