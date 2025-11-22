@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -41,7 +42,7 @@
 
         body.light-mode {
             /* Light Theme */
-            --bg-gradient: linear-gradient(135deg, #e0f2fe, #f0f9ff);
+            --bg-gradient: linear-gradient(135deg, #f0f9ff, #e0f2fe);
             --glass-bg: rgba(255, 255, 255, 0.5);
             --glass-border: rgba(0, 0, 0, 0.1);
             --glass-shadow: 0 8px 32px 0 rgba(100, 100, 100, 0.2);
@@ -322,24 +323,15 @@
             overflow: hidden; width: 100%; height: 100%; max-width: none; max-height: none;
         }
 
-        #camera-modal .terminal-content {
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-        
         .camera-video-wrapper {
             position: relative;
-            max-width: 100%;
-            max-height: 100%;
-            aspect-ratio: 9 / 16;
+            width: 100%;
+            padding-bottom: 177.77%; /* 9:16 Aspect Ratio */
             background-color: black;
-            border-radius: 16px;
+            border-radius: 10px;
             overflow: hidden;
+            flex-shrink: 0;
         }
-
         .camera-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
 
         .camera-controls {
@@ -567,51 +559,45 @@
         .radio-group { display: flex; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; }
         .radio-label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
 
-        /* Loader Animation Styles */
-        .loader-container {
-            display: none; /* Hidden by default */
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            justify-content: center;
-            align-items: center;
+        /* AI Processing Animation */
+        .ai-processing-animation {
+            display: flex;
             flex-direction: column;
-            background-color: rgba(0,0,0,0.3);
-            z-index: 10;
-            border-radius: 16px;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--prompt-color);
         }
-        .brain-scanner {
+        .scanner-animation {
             width: 100px;
             height: 100px;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%2363b3ed" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5a6.5 6.5 0 0 0-6.5 6.5c0 2.24 1.51 4.29 3.65 5.56.8.48 1.15 1.48.87 2.34-.27.83.31 1.69 1.18 1.93s1.7-.31 1.93-1.18c.23-.87-.12-1.86-.87-2.34C16.99 15.29 18.5 13.24 18.5 11A6.5 6.5 0 0 0 12 4.5z"/><path d="M12 4.5V3"/><path d="M12 21v-1.5"/><path d="M4.22 6.72l-1.06-1.06"/><path d="M20.84 18.34l-1.06-1.06"/><path d="M6.72 19.78l-1.06 1.06"/><path d="M18.34 3.16l1.06 1.06"/><path d="M3 11H1.5"/><path d="M22.5 11H21"/><path d="M12 11a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/><path d="M12 11a2.5 2.5 0 0 1-2.5-2.5"/><path d="M12 11a2.5 2.5 0 0 0 2.5 2.5"/><path d="M12 4.5a6.5 6.5 0 0 1 6.5 6.5c0 .34-.03.68-.08 1.01"/></svg>');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
             position: relative;
-            overflow: hidden;
+            margin-bottom: 15px;
         }
-        .brain-scanner::after {
-            content: '';
+        .scanner-animation .brain-icon {
+            width: 100%;
+            height: 100%;
+            font-size: 80px;
+            line-height: 100px;
+            text-align: center;
+            opacity: 0.5;
+        }
+        .scanner-line {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 3px;
-            background: var(--success-color);
-            box-shadow: 0 0 10px var(--success-color), 0 0 20px var(--success-color);
-            animation: scan 2s infinite linear;
-        }
-        .loader-text {
-            margin-top: 15px;
-            color: var(--text-color);
-            font-size: 14px;
-            letter-spacing: 1px;
+            background: var(--highlight-color);
+            box-shadow: 0 0 10px var(--highlight-color);
+            border-radius: 2px;
+            animation: scan 2.5s infinite linear;
         }
         @keyframes scan {
-            0% { transform: translateY(-10px); }
-            50% { transform: translateY(100px); }
-            100% { transform: translateY(-10px); }
+            0% { top: 0; }
+            50% { top: 100%; }
+            100% { top: 0; }
         }
-
 
         @media (max-width: 768px) {
             .container { flex-direction: column; padding: 10px; gap: 10px; }
@@ -743,10 +729,6 @@
             </div>
             <button id="monitor-copy-btn" class="monitor-copy-btn" title="Copiar Conteúdo"><i class="fas fa-copy"></i></button>
             <div class="terminal-content" id="monitor-content-wrapper">
-                <div id="processing-loader" class="loader-container">
-                    <div class="brain-scanner"></div>
-                    <div class="loader-text">PROCESSANDO...</div>
-                </div>
                 <div id="anamnesis-preview" class="monitor-view">
                     <div class="info">Aguardando início da anamnese...</div>
                 </div>
@@ -765,9 +747,9 @@
                                 <div class="terminal-btn close-btn" id="camera-close-btn"></div>
                             </div>
                         </div>
-                        <div class="terminal-content">
+                        <div class="terminal-content" style="padding: 10px;">
                             <div class="camera-video-wrapper">
-                                <video id="camera-video" class="camera-video" autoplay playsinline></video>
+                                <video id="camera-video" class="camera-video" autoplay playsinline muted></video>
                                 <div class="camera-action-buttons">
                                     <button id="flashlight-button" class="flashlight-button" style="display:none;"><i class="fas fa-lightbulb"></i> Lanterna</button>
                                     <button id="camera-switch-button" class="camera-switch-button" style="display:none;"><i class="fas fa-sync-alt"></i> Trocar Câmera</button>
@@ -951,7 +933,6 @@
         const logoutButton = document.getElementById('logout-button');
         const settingsButton = document.getElementById('settings-button');
         const themeToggleButton = document.getElementById('theme-toggle');
-        const processingLoader = document.getElementById('processing-loader');
         
         const cameraModal = document.getElementById('camera-modal');
         const cameraModalTitle = document.getElementById('camera-modal-title');
@@ -1899,13 +1880,24 @@
         const saveExamsResultsToFirestore = async (username, data) => { try { await setDoc(doc(db, "sessions", username), { examsResults: data, lastUpdated: new Date() }, { merge: true }); } catch (e) { console.error("Erro ao salvar exames: ", e); } };
         const saveAxonEyeResultsToFirestore = async (username, data) => { try { await setDoc(doc(db, "sessions", username), { axonEyeResults: data, lastUpdated: new Date() }, { merge: true }); } catch (e) { console.error("Erro ao salvar Axon Eye: ", e); } };
         const updateMonitorStateInFirestore = async (username, state) => { try { await setDoc(doc(db, "sessions", username), { monitorState: { ...state, lastUpdated: new Date() } }, { merge: true }); } catch (e) { console.error("Erro ao salvar estado do monitor: ", e); } };
+        
+        const objectsAreEqual = (obj1, obj2) => {
+            const keys1 = Object.keys(obj1);
+            const keys2 = Object.keys(obj2);
+            if (keys1.length !== keys2.length) return false;
+            for (let key of keys1) {
+                if (obj1[key] !== obj2[key]) return false;
+            }
+            return true;
+        };
+
         const setupFirebaseListener = (username) => {
             if (unsubscribeSnapshot) unsubscribeSnapshot();
             const docRef = doc(db, "sessions", username);
             unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    if (data.anamnesis && JSON.stringify(data.anamnesis) !== JSON.stringify(anamnesis)) { anamnesis = data.anamnesis; updateAnamnesisPreview(false); }
+                    if (data.anamnesis && !objectsAreEqual(data.anamnesis, anamnesis)) { anamnesis = data.anamnesis; updateAnamnesisPreview(false); }
                     if (data.examsResults && data.examsResults !== examsResults) { examsResults = data.examsResults; updateExamsResultsPreview(false); }
                     if (data.axonEyeResults && data.axonEyeResults !== axonEyeResults) { axonEyeResults = data.axonEyeResults; updateAxonEyeResultsPreview(false); }
                     if (data.monitorState && data.monitorState.activeView !== currentMonitorView) toggleMonitorView(data.monitorState.activeView, true);
@@ -2067,36 +2059,54 @@
             }
         };
 
-        const showLoader = () => { processingLoader.style.display = 'flex'; };
-        const hideLoader = () => { processingLoader.style.display = 'none'; };
 
         const startCamera = async (mode) => {
             cameraMode = mode;
             cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
             sendExamsButton.style.display = mode === 'exams' ? 'flex' : 'none';
             sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'flex' : 'none';
+            
             if (isMobile) {
                 cameraModal.classList.add('fullscreen-mobile');
                 document.body.style.overflow = 'hidden';
             }
+            
+            toggleMonitorView('camera');
+
             try {
-                if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                }
+
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentCameraFacingMode } });
+                
                 cameraVideo.srcObject = stream;
-                cameraVideo.play().catch(e => console.error("Video play failed:", e));
-                cameraStream = stream; 
-                toggleMonitorView('camera');
+                cameraStream = stream;
+                
+                cameraVideo.onloadedmetadata = () => {
+                    cameraVideo.play().catch(e => console.error("Play failed:", e));
+                };
+
                 cameraStatus.classList.remove('status-off');
                 appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}.`, "info");
                 updateAlbumCount();
+
                 const devices = await navigator.mediaDevices.enumerateDevices();
-                if (devices.filter(d => d.kind === 'videoinput').length > 1) cameraSwitchButton.style.display = 'block';
+                if (devices.filter(d => d.kind === 'videoinput').length > 1) {
+                    cameraSwitchButton.style.display = 'block';
+                }
+                
                 const track = stream.getVideoTracks()[0];
-                if (track && 'torch' in track.getCapabilities()) flashlightButton.style.display = 'block';
+                if (track && 'torch' in track.getCapabilities()) {
+                    flashlightButton.style.display = 'block';
+                }
+
             } catch (err) {
                 appendOutput(`Erro ao acessar a câmera: ${err.message}.`, "error");
+                stopCamera();
             }
         };
+
         const stopCameraStreamOnly = () => {
             if (cameraStream) {
                 if (isFlashlightOn) toggleFlashlight();
@@ -2148,11 +2158,16 @@
 
         const analyzeExams = async () => {
             if (capturedImages.length === 0) return appendOutput("Nenhuma imagem de exame para analisar.", "info");
-            examsResults = ""; 
-            updateExamsResultsPreview();
-            examsResultsPreview.innerHTML = ''; 
+            examsResults = "";
             toggleMonitorView('exams');
-            showLoader();
+            examsResultsPreview.innerHTML = `
+                <div class="ai-processing-animation">
+                    <div class="scanner-animation">
+                        <div class="brain-icon"><i class="fas fa-brain"></i></div>
+                        <div class="scanner-line"></div>
+                    </div>
+                    <span>Analisando Imagens...</span>
+                </div>`;
             try {
                 const prompt = `Analise as imagens de exames. Retorne os resultados em tópicos. Se houver alteração, adicione "(Alterado)" ou "(Anormal)". Exemplo: Glicose: 90 mg/dL (Alterado) Hemoglobina Glicada: 7.2%. Retorne apenas a lista de resultados.`;
                 const response = await callGeminiVisionAPI(capturedImages, prompt);
@@ -2161,15 +2176,9 @@
                 appendOutput("Análise de exames concluída.", "success");
             } catch (error) {
                 appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
-                updateExamsResultsPreview(); // Show empty state on error
+                updateExamsResultsPreview(); // Clear animation on error
             } finally {
-                hideLoader();
-                if (isMobile) {
-                    cameraModal.classList.remove('fullscreen-mobile');
-                    document.body.style.overflow = 'auto';
-                }
-                capturedImages = []; 
-                updateAlbumCount();
+                stopCamera(); capturedImages = []; updateAlbumCount();
             }
         };
 
@@ -2177,11 +2186,16 @@
             if (capturedImages.length === 0) return appendOutput("Nenhuma imagem para análise visual.", "info");
             
             await clearTemporaryUploads();
-            axonEyeResults = ""; 
-            updateAxonEyeResultsPreview();
-            axonEyeResultsPreview.innerHTML = '';
+            axonEyeResults = "";
             toggleMonitorView('axon-eye');
-            showLoader();
+            axonEyeResultsPreview.innerHTML = `
+                <div class="ai-processing-animation">
+                    <div class="scanner-animation">
+                        <div class="brain-icon"><i class="fas fa-brain"></i></div>
+                        <div class="scanner-line"></div>
+                    </div>
+                    <span>Analisando com Axon Eye...</span>
+                </div>`;
 
             try {
                 for (const imgBase64 of capturedImages) {
@@ -2201,16 +2215,10 @@
                 appendOutput("Análise Axon Eye concluída. Imagens prontas para salvar.", "success");
             } catch (error) {
                 appendOutput(`Erro com Axon Eye: ${error.message}`, "error");
-                updateAxonEyeResultsPreview();
                 await clearTemporaryUploads();
+                 updateAxonEyeResultsPreview(); // Clear animation on error
             } finally {
-                hideLoader();
-                if (isMobile) {
-                    cameraModal.classList.remove('fullscreen-mobile');
-                    document.body.style.overflow = 'auto';
-                }
-                capturedImages = []; 
-                updateAlbumCount();
+                stopCamera(); capturedImages = []; updateAlbumCount();
             }
         };
 
@@ -2430,7 +2438,7 @@
                 pdfDoc.setFontSize(12).setFont(undefined, 'bold').text(title, 14, y); y += 7;
         
                 const text = typeof content === 'object' ? Object.entries(content).map(([k, v]) => `${k.toUpperCase()}: ${v || 'Não informado'}`).join('\n') : content;
-                const splitText = doc.splitTextToSize(text, 180);
+                const splitText = pdfDoc.splitTextToSize(text, 180);
         
                 if (y + (splitText.length * 5) > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
                 pdfDoc.setFontSize(10).setFont(undefined, 'normal').text(splitText, 14, y);
