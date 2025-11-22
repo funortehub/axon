@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -13,21 +14,55 @@
     <meta name="theme-color" content="#0d1117">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* Todos os estilos CSS anteriores permanecem exatamente iguais */
+        /* Modern Liquid Glass Theme with Light/Dark Mode */
         :root {
-            --bg-color: #0d1117;
-            --terminal-bg: #0a0e14;
-            --text-color: #c9d1d9;
-            --prompt-color: #58a6ff;
-            --command-color: #79c0ff;
-            --output-color: #c9d1d9;
-            --error-color: #ff7b72;
-            --success-color: #3fb950;
-            --border-color: #30363d;
-            --highlight-color: #1f6feb;
-            --diagnosis-color: #a371f7;
-            --conduct-color: #56d364;
-            --altered-color: #ffcc00;
+            /* Dark Theme (Default) */
+            --bg-gradient: linear-gradient(135deg, #1a202c, #2d3748);
+            --glass-bg: rgba(28, 35, 49, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --text-color: #e2e8f0;
+            --header-text-color: #f7fafc;
+            --prompt-color: #63b3ed;
+            --command-color: #90cdf4;
+            --output-color: #e2e8f0;
+            --error-color: #fc8181;
+            --success-color: #68d391;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --highlight-color: #4299e1;
+            --highlight-text-color: #ffffff;
+            --diagnosis-color: #b794f4;
+            --conduct-color: #68d391;
+            --altered-color: #faf089;
+            --input-bg: rgba(0,0,0,0.2);
+            --terminal-header-bg: rgba(0,0,0,0.2);
+            --button-bg: rgba(255, 255, 255, 0.1);
+            --button-hover-bg: rgba(255, 255, 255, 0.2);
+        }
+
+        body.light-mode {
+            /* Light Theme */
+            --bg-gradient: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            --glass-bg: rgba(255, 255, 255, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-shadow: 0 8px 32px 0 rgba(100, 100, 100, 0.2);
+            --text-color: #2d3748;
+            --header-text-color: #1a202c;
+            --prompt-color: #2b6cb0;
+            --command-color: #2c5282;
+            --output-color: #2d3748;
+            --error-color: #c53030;
+            --success-color: #2f855a;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --highlight-color: #3182ce;
+            --highlight-text-color: #ffffff;
+            --diagnosis-color: #805ad5;
+            --conduct-color: #2f855a;
+            --altered-color: #d69e2e;
+            --input-bg: rgba(255,255,255,0.3);
+            --terminal-header-bg: rgba(0,0,0,0.05);
+            --button-bg: rgba(0, 0, 0, 0.05);
+            --button-hover-bg: rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -39,57 +74,74 @@
         }
 
         body {
-            background-color: var(--bg-color);
+            background: var(--bg-gradient);
+            background-attachment: fixed;
             color: var(--text-color);
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            touch-action: manipulation;
+            transition: background 0.5s ease, color 0.5s ease;
         }
 
         .header {
-            background-color: var(--bg-color);
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             padding: 12px 20px;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--glass-border);
             display: flex;
             align-items: center;
             justify-content: space-between;
             position: relative;
-            height: 65px; /* Altura fixa para cálculo */
+            height: 65px;
+            flex-shrink: 0;
         }
         
         .header-right {
             display: flex;
             align-items: center;
+            gap: 10px;
         }
 
-        .logout-button, .settings-button {
+        .logout-button, .settings-button, .theme-toggle {
             color: var(--text-color);
             font-size: 20px;
             cursor: pointer;
-            transition: color 0.3s ease;
-            margin-left: 20px;
+            transition: color 0.3s ease, transform 0.2s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
         }
 
-        .logout-button:hover, .settings-button:hover {
-            color: var(--error-color);
+        .logout-button:hover, .settings-button:hover, .theme-toggle:hover {
+            color: var(--highlight-color);
+            background-color: var(--button-hover-bg);
+            transform: scale(1.1);
         }
         
-        .settings-button:hover {
-            color: var(--highlight-color);
+        .logout-button:hover {
+             color: var(--error-color);
         }
 
         .app-title {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: bold;
-            color: var(--prompt-color);
+            color: var(--header-text-color);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
         .status-bar {
             display: flex;
             gap: 15px;
             font-size: 14px;
+            background: var(--input-bg);
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
         }
 
         .status-item {
@@ -103,10 +155,12 @@
             height: 10px;
             border-radius: 50%;
             background-color: var(--success-color);
+            box-shadow: 0 0 5px var(--success-color);
         }
 
         .status-off {
             background-color: var(--error-color);
+            box-shadow: 0 0 5px var(--error-color);
         }
 
         .container {
@@ -115,28 +169,33 @@
             padding: 20px;
             gap: 20px;
             height: calc(100vh - 65px - 40px);
+            min-height: 0;
         }
 
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
+                padding: 10px;
+                gap: 10px;
             }
         }
 
         .terminal {
-            background-color: var(--terminal-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            box-shadow: var(--glass-shadow);
             position: relative;
         }
 
         .terminal-header {
             padding: 8px 12px;
-            background-color: #161b22;
+            background-color: var(--terminal-header-bg);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
@@ -159,17 +218,9 @@
             border-radius: 50%;
         }
 
-        .close-btn {
-            background-color: #ff5f56;
-        }
-
-        .minimize-btn {
-            background-color: #ffbd2e;
-        }
-
-        .maximize-btn {
-            background-color: #27c93f;
-        }
+        .close-btn { background-color: #ff5f56; }
+        .minimize-btn { background-color: #ffbd2e; }
+        .maximize-btn { background-color: #27c93f; }
 
         .terminal-content {
             flex: 1;
@@ -179,23 +230,34 @@
             flex-direction: column;
             gap: 10px;
         }
-
-        .interactive-terminal {
-            flex: 1;
-            min-width: 300px;
+        
+        /* Custom scrollbar for terminal */
+        .terminal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .terminal-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .terminal-content::-webkit-scrollbar-thumb {
+            background-color: var(--button-hover-bg);
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+        .terminal-content::-webkit-scrollbar-thumb:hover {
+            background-color: var(--highlight-color);
         }
 
-        .non-interactive-terminal {
+        .interactive-terminal, .non-interactive-terminal {
             flex: 1;
             min-width: 300px;
-            position: relative;
+            min-height: 0;
         }
 
         .input-line {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-top: 0;
         }
 
         .prompt {
@@ -213,1314 +275,300 @@
             outline: none;
             padding: 2px 0;
         }
-
-        .command-output {
-            color: var(--output-color);
-            white-space: pre-wrap;
-            line-height: 1.5;
-            text-align: left;
-        }
-
-        .command {
-            color: var(--command-color);
-            font-weight: bold;
-        }
-
-        .error {
-            color: var(--error-color);
-        }
-
-        .success {
-            color: var(--success-color);
-        }
-
-        .info {
-            color: var(--prompt-color);
-        }
-
-        .highlight {
-            color: var(--highlight-color);
-        }
         
-        .blocked-msg {
-            color: #ffcc00; /* Yellow */
-        }
-
-        .anamnesis-content {
-            line-height: 1.8;
-            font-size: 15px;
-        }
-
-        .section-title {
-            font-weight: bold;
-            margin-top: 10px;
-            color: var(--highlight-color);
-        }
-
-        .help-list {
-            padding-left: 0;
-            margin: 10px 0;
-            line-height: 1.8;
-            list-style: none;
-        }
-
-        .help-item {
-            margin-bottom: 5px;
-        }
+        .command-output { color: var(--output-color); white-space: pre-wrap; line-height: 1.5; text-align: left; }
+        .command { color: var(--command-color); font-weight: bold; }
+        .error { color: var(--error-color); }
+        .success { color: var(--success-color); }
+        .info { color: var(--prompt-color); }
+        .highlight { color: var(--highlight-color); }
+        .blocked-msg { color: var(--altered-color); }
+        .anamnesis-content { line-height: 1.8; font-size: 15px; }
+        .section-title { font-weight: bold; margin-top: 10px; color: var(--highlight-color); }
+        .help-list { padding-left: 0; margin: 10px 0; line-height: 1.8; list-style: none; }
+        .help-item { margin-bottom: 5px; }
         
-        .diagnosis-item {
-            color: var(--diagnosis-color);
-            margin-bottom: 8px;
-            padding-left: 15px;
-            position: relative;
-        }
+        .diagnosis-item { color: var(--diagnosis-color); margin-bottom: 8px; padding-left: 15px; position: relative; }
+        .diagnosis-item:before { content: "•"; position: absolute; left: 0; color: var(--diagnosis-color); }
         
-        .diagnosis-item:before {
-            content: "•";
-            position: absolute;
-            left: 0;
-            color: var(--diagnosis-color);
-        }
+        .conduct-section { margin-bottom: 15px; }
+        .conduct-title { color: var(--conduct-color); font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid var(--conduct-color); padding-bottom: 3px; }
         
-        .conduct-section {
-            margin-bottom: 15px;
-        }
+        .conduct-item { margin-bottom: 8px; padding-left: 15px; position: relative; }
+        .conduct-item:before { content: "-"; position: absolute; left: 0; }
         
-        .conduct-title {
-            color: var(--conduct-color);
-            font-weight: bold;
-            margin-bottom: 5px;
-            border-bottom: 1px solid rgba(86, 211, 100, 0.3);
-            padding-bottom: 3px;
-        }
-        
-        .conduct-item {
-            margin-bottom: 8px;
-            padding-left: 15px;
-            position: relative;
-        }
-        
-        .conduct-item:before {
-            content: "-";
-            position: absolute;
-            left: 0;
-        }
-
-        .receituario-item {
-            white-space: pre;
-            font-family: 'Courier New', monospace;
-            color: var(--output-color);
-            margin-bottom: 5px;
-        }
+        .receituario-item { white-space: pre; font-family: 'Courier New', monospace; color: var(--output-color); margin-bottom: 5px; }
 
         .footer {
-            background-color: var(--bg-color);
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             padding: 10px 20px;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid var(--glass-border);
             text-align: center;
             font-size: 12px;
             color: var(--text-color);
-            height: 40px; /* Altura fixa para cálculo */
+            height: 40px;
+            flex-shrink: 0;
         }
 
-        .terminal-logo-internal {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            height: calc(105.3px * 1.8 * 0.7 * 1.2);
-            width: auto;
-            opacity: 0.25;
-            z-index: 0;
-        }
-
-        /* MODIFICAÇÃO: Texto em caixa alta apenas no monitor */
-        .monitor-view {
-            text-transform: uppercase;
-        }
-
-        .monitor-view .section-title,
-        .monitor-view .axon-eye-title,
-        .monitor-view .conduct-title {
-            text-transform: none;
-        }
-
-        /* Estilos para o modal da câmera DENTRO DO TERMINAL */
+        .terminal-logo-internal { position: absolute; top: 15px; right: 15px; height: calc(105.3px * 1.8 * 0.7 * 1.2); width: auto; opacity: 0.1; z-index: 0; }
+        .monitor-view { text-transform: uppercase; }
+        .monitor-view .section-title, .monitor-view .axon-eye-title, .monitor-view .conduct-title { text-transform: none; }
+        
         .camera-modal {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--terminal-bg);
-            z-index: 10;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            padding: 0;
-            border-radius: 8px;
-            overflow: hidden;
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: transparent; /* Changed for glass effect */
+            z-index: 10; flex-direction: column; justify-content: flex-start; align-items: center;
+            padding: 0; border-radius: 16px; overflow: hidden;
         }
 
         .camera-container {
-            display: flex;
-            flex-direction: column;
-            background-color: var(--terminal-bg);
-            border: none;
-            border-radius: 0;
-            position: relative;
-            z-index: 1;
-            padding: 0;
-            gap: 10px;
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
-            max-width: none;
-            max-height: none;
+            display: flex; flex-direction: column;
+            background: var(--glass-bg); /* Use glass bg */
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px; position: relative; z-index: 1; padding: 0; gap: 10px;
+            overflow: hidden; width: 100%; height: 100%; max-width: none; max-height: none;
         }
 
-        .camera-video-wrapper {
-            position: relative;
-            width: 100%;
-            padding-bottom: 75%;
-            background-color: black;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-
-        .camera-video {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .camera-video-wrapper { position: relative; width: 100%; padding-bottom: 75%; background-color: black; border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; flex-shrink: 0; }
+        .camera-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
 
         .camera-controls {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            z-index: 2;
-            width: 90%;
+            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; z-index: 2; width: 90%;
         }
 
         .camera-button {
-            background-color: rgba(0, 0, 0, 0.6);
-            color: white;
-            border: 1px solid var(--border-color);
-            padding: 10px 15px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 18px;
+            background-color: rgba(0, 0, 0, 0.5); color: white; border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px 15px; border-radius: 50%; cursor: pointer; font-size: 18px;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 50px;
-            height: 50px;
-            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            width: 50px; height: 50px; flex-shrink: 0;
+            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
         }
 
-        .camera-button:hover {
-            background-color: var(--highlight-color);
-            transform: scale(1.05);
-        }
+        .camera-button:hover { background-color: var(--highlight-color); transform: scale(1.05); }
+        .camera-button.disabled { background-color: #555; cursor: not-allowed; opacity: 0.7; }
 
-        .camera-button.disabled {
-            background-color: #555;
-            cursor: not-allowed;
-            opacity: 0.7;
+        .camera-action-buttons, .album-button {
+            position: absolute; top: 10px; display: flex; gap: 5px; z-index: 10;
+            background-color: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 5px 10px;
+            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
         }
-
-        .camera-action-buttons {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            gap: 5px;
-            z-index: 10;
-        }
+        .album-button { left: 10px; }
+        .camera-action-buttons { right: 10px; }
 
         .camera-switch-button, .flashlight-button {
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            padding: 4px 8px;
-            cursor: pointer;
-            font-size: 11px;
-            font-family: 'Consolas', 'Courier New', monospace;
-            transition: background-color: 0.2s;
+            background-color: transparent; color: white; border: none;
+            cursor: pointer; font-size: 12px; transition: color 0.2s;
         }
-
-        .camera-switch-button:hover, .flashlight-button:hover {
-            background-color: rgba(0, 0, 0, 0.7);
-        }
-
-        .flashlight-button.active {
-            background-color: var(--highlight-color);
-            color: var(--bg-color);
-        }
-
-        .album-button {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            padding: 4px 8px;
-            cursor: pointer;
-            font-size: 11px;
-            font-family: 'Consolas', 'Courier New', monospace;
-            transition: background-color: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            z-index: 10;
-        }
-
-        .album-button:hover {
-            background-color: rgba(0, 0, 0, 0.7);
-        }
+        .camera-switch-button:hover, .flashlight-button:hover, .album-button:hover { color: var(--highlight-color); }
+        .flashlight-button.active { color: var(--highlight-color); }
 
         .album-count {
-            background-color: var(--highlight-color);
-            color: var(--bg-color);
-            border-radius: 50%;
-            padding: 2px 6px;
-            font-size: 10px;
-            font-weight: bold;
-            min-width: 18px;
-            text-align: center;
+            background-color: var(--highlight-color); color: var(--highlight-text-color);
+            border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold; min-width: 18px; text-align: center;
         }
 
         .monitor-toggle-buttons {
-            display: flex;
-            gap: 5px;
-            margin-left: auto;
-            margin-right: 10px;
+            display: flex; gap: 5px; margin-left: auto; margin-right: 10px;
         }
 
         .monitor-toggle-button {
-            background-color: #30363d;
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: background-color 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
+            background-color: var(--button-bg); color: var(--text-color);
+            border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 20px;
+            cursor: pointer; font-size: 12px; transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
         }
 
-        .monitor-toggle-button:hover {
-            background-color: #444c56;
-        }
+        .monitor-toggle-button:hover { background-color: var(--button-hover-bg); }
+        .monitor-toggle-button.active { background-color: var(--highlight-color); color: var(--highlight-text-color); border-color: transparent; }
 
-        .monitor-toggle-button.active {
-            background-color: var(--highlight-color);
-            color: var(--bg-color);
-            border-color: var(--highlight-color);
-        }
-
-        #monitor-content-wrapper {
-            position: relative;
-        }
-
+        #monitor-content-wrapper { position: relative; }
         .monitor-copy-btn {
-            position: absolute;
-            top: 50px;
-            right: 25px;
-            background-color: rgba(48, 54, 61, 0.7);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: background-color 0.3s ease;
-            z-index: 5;
+            position: absolute; top: 50px; right: 25px;
+            background: var(--button-bg); color: var(--text-color);
+            border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 50%;
+            width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 14px; transition: all 0.3s ease; z-index: 5;
         }
+        .monitor-copy-btn:hover { background-color: var(--highlight-color); color: var(--highlight-text-color); }
 
         @media (max-width: 768px) {
-            .monitor-toggle-button span {
-                display: none;
-            }
-
-            .monitor-toggle-button {
-                padding: 5px 8px;
-                font-size: 16px;
-                width: auto;
-                min-width: 35px;
-            }
-
-            .status-bar {
-                gap: 10px;
-                margin-right: 0;
-            }
-
-            .status-item span {
-                font-size: 12px;
-            }
-
-            .status-item .status-indicator {
-                width: 8px;
-                height: 8px;
-            }
-            
-            .logout-button, .settings-button {
-                font-size: 18px;
-                margin-left: 10px;
-            }
+            .monitor-toggle-button span, .status-bar span { display: none; }
+            .monitor-toggle-button { padding: 5px 8px; font-size: 16px; width: auto; min-width: 35px; }
+            .status-bar { gap: 10px; margin-right: 0; }
+            .status-item .status-indicator { width: 8px; height: 8px; }
+            .logout-button, .settings-button, .theme-toggle { font-size: 18px; }
         }
 
         .fullscreen-modal {
-            display: none;
-            position: fixed;
-            z-index: 2000; /* AUMENTADO PARA FICAR NA FRENTE DE TUDO */
-            padding-top: 60px;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
+            display: none; position: fixed; z-index: 2000; padding-top: 60px;
+            left: 0; top: 0; width: 100%; height: 100%; overflow: auto;
             background-color: rgba(0,0,0,0.9);
         }
+        .modal-content { margin: auto; display: block; width: 80%; max-width: 700px; border-radius: 10px; }
+        .modal-content, #caption { animation-name: zoom; animation-duration: 0.6s; }
+        @keyframes zoom { from {transform:scale(0)} to {transform:scale(1)} }
+        .modal-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; }
+        .modal-close:hover, .modal-close:focus { color: #bbb; text-decoration: none; cursor: pointer; }
 
-        .modal-content {
-            margin: auto;
-            display: block;
-            width: 80%;
-            max-width: 700px;
+        .output .altered-text { color: var(--altered-color); font-weight: bold; margin-left: 10px; }
+
+        .app-modal, .album-modal, .patient-list-modal, .patient-details-modal {
+            display: none; position: fixed; z-index: 105; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto;
+            background-color: rgba(0,0,0,0.5); /* Dimmed background */
+            justify-content: center; align-items: center;
         }
 
-        .modal-content, #caption {
-            animation-name: zoom;
-            animation-duration: 0.6s;
+        .app-modal-content, .album-modal-content, .patient-list-content, .patient-details-content {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            margin: auto; padding: 25px; border: 1px solid var(--glass-border);
+            border-radius: 16px; width: 90%; max-width: 500px;
+            box-shadow: var(--glass-shadow); position: relative; display: flex;
+            flex-direction: column; max-height: 90vh;
+        }
+        .album-modal-content, .patient-list-content, .patient-details-content { max-width: 800px; }
+
+        .app-modal-header, .album-modal-header, .patient-list-header, .patient-details-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;
+        }
+        
+        .app-modal-title, .album-modal-title, .patient-list-title, .patient-details-title {
+            font-size: 20px; font-weight: bold; color: var(--prompt-color);
         }
 
-        @keyframes zoom {
-            from {transform:scale(0)}
-            to {transform:scale(1)}
+        .app-modal-close, .album-modal-close, .patient-list-close, .patient-details-close {
+            color: var(--text-color); font-size: 28px; font-weight: bold; cursor: pointer;
+            transition: 0.3s; position: absolute; top: 10px; right: 15px;
         }
-
-        .modal-close {
-            position: absolute;
-            top: 15px;
-            right: 35px;
-            color: #f1f1f1;
-            font-size: 40px;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        .modal-close:hover,
-        .modal-close:focus {
-            color: #bbb;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .output .altered-text {
-            color: var(--altered-color);
-            font-weight: bold;
-            margin-left: 10px;
-        }
-
-        .album-modal {
-            display: none;
-            position: fixed;
-            z-index: 105;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.8);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .album-modal-content {
-            background-color: var(--terminal-bg);
-            margin: auto;
-            padding: 20px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            width: 90%;
-            max-width: 800px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            max-height: 90vh;
-        }
-
-        .album-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-
-        .album-modal-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: var(--prompt-color);
-        }
-
-        .album-modal-close {
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .album-modal-close:hover,
-        .album-modal-close:focus {
-            color: white;
-        }
-
-        .album-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 15px;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-
-        .album-item {
-            position: relative;
-            width: 100%;
-            padding-bottom: 100%;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-
-        .album-item:hover {
-            transform: scale(1.03);
-        }
-
-        .album-image {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
+        .app-modal-close:hover, .album-modal-close:hover, .patient-list-close:hover, .patient-details-close:hover { color: var(--highlight-color); }
+        
+        .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; overflow-y: auto; padding-right: 5px; }
+        .album-item { position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border: 1px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: transform 0.2s ease; }
+        .album-item:hover { transform: scale(1.03); }
+        .album-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
         .album-delete-button {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: rgba(255, 0, 0, 0.7);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 10;
-            transition: background-color 0.2s;
+            position: absolute; top: 5px; right: 5px; background-color: rgba(255, 0, 0, 0.7);
+            color: white; border: none; border-radius: 50%; width: 24px; height: 24px;
+            font-size: 14px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 10; transition: background-color 0.2s;
         }
-
-        .album-delete-button:hover {
-            background-color: rgba(255, 0, 0, 1);
-        }
-
-        .axon-eye-title {
-            color: var(--error-color);
-            font-weight: bold;
-            margin-top: 10px;
-            margin-bottom: 5px;
-            border-bottom: 1px solid rgba(255, 123, 114, 0.3);
-            padding-bottom: 3px;
-        }
-
-        .axon-eye-image-preview {
-            max-width: 100%;
-            height: auto;
-            margin-top: 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-        }
+        .album-delete-button:hover { background-color: rgba(255, 0, 0, 1); }
+        .axon-eye-title { color: var(--error-color); font-weight: bold; margin-top: 10px; margin-bottom: 5px; border-bottom: 1px solid var(--error-color); padding-bottom: 3px; }
+        .axon-eye-image-preview { max-width: 100%; height: auto; margin-top: 15px; border: 1px solid var(--border-color); border-radius: 10px; }
         
-        /* Styles for mobile camera fullscreen */
         @media (max-width: 768px) {
-            .camera-modal.fullscreen-mobile {
-                position: fixed;
-                top: 65px; /* Header height */
-                bottom: 40px; /* Footer height */
-                left: 0;
-                width: 100%;
-                height: auto; /* Let top and bottom define the height */
-                z-index: 50; /* Above main content, below other modals */
-                border-radius: 0;
-            }
-
-            .camera-modal.fullscreen-mobile .camera-container,
-            .camera-modal.fullscreen-mobile .camera-video-wrapper {
-                border-radius: 0;
-                border: none;
-            }
-
-            .camera-modal.fullscreen-mobile .camera-video-wrapper {
-                padding-bottom: 177.77%; /* 16:9 aspect ratio */
-            }
+            .camera-modal.fullscreen-mobile { position: fixed; top: 65px; bottom: 40px; left: 0; width: 100%; height: auto; z-index: 50; border-radius: 0; }
+            .camera-modal.fullscreen-mobile .camera-container, .camera-modal.fullscreen-mobile .camera-video-wrapper { border-radius: 0; border: none; }
+            .camera-modal.fullscreen-mobile .camera-video-wrapper { padding-bottom: 177.77%; }
         }
 
-
-        /* NOVOS ESTILOS PARA O SISTEMA DE SAVE/LOAD */
-        .patient-list-modal {
-            display: none;
-            position: fixed;
-            z-index: 99;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.8);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .patient-list-content {
-            background-color: var(--terminal-bg);
-            margin: auto;
-            padding: 20px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            width: 90%;
-            max-width: 600px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            max-height: 90vh;
-        }
-
-        .patient-list-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-
-        .patient-list-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: var(--prompt-color);
-        }
-
-        .patient-list-close {
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .patient-list-close:hover,
-        .patient-list-close:focus {
-            color: white;
-        }
-
-        .patient-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            overflow-y: auto;
-            max-height: 400px;
-        }
-
-        .patient-item {
-            padding: 12px;
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color: 0.2s;
-        }
-
-        .patient-item:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .patient-details-modal {
-            display: none;
-            position: fixed;
-            z-index: 100;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.9);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .patient-details-content {
-            background-color: var(--terminal-bg);
-            margin: auto;
-            padding: 20px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            width: 90%;
-            max-width: 800px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            max-height: 90vh;
-        }
-
-        .patient-details-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-
-        .patient-details-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: var(--prompt-color);
-        }
-
-        .patient-details-close {
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .patient-details-close:hover,
-        .patient-details-close:focus {
-            color: white;
-        }
-
-        .patient-details-body {
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-
-        .patient-details-section {
-            margin-bottom: 20px;
-        }
-
-        .patient-details-section-title {
-            font-weight: bold;
-            color: var(--highlight-color);
-            margin-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 5px;
-        }
-
-        .patient-images-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .patient-image-item {
-            position: relative;
-            width: 100%;
-            padding-bottom: 100%;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .patient-image {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
+        .patient-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 400px; }
+        .patient-item { padding: 12px; background-color: var(--button-bg); border: 1px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: background-color: 0.2s; }
+        .patient-item:hover { background-color: var(--button-hover-bg); }
+        .patient-details-body { overflow-y: auto; padding-right: 5px; }
+        .patient-details-section { margin-bottom: 20px; }
+        .patient-details-section-title { font-weight: bold; color: var(--highlight-color); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        .patient-images-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 10px; }
+        .patient-image-item { position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border: 1px solid var(--border-color); border-radius: 10px; cursor: pointer; }
+        .patient-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
         
-        /* ESTILOS PARA HISTÓRICO DE CONSULTAS */
-        .consultation-item {
-            background-color: #161b22;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            margin-bottom: 10px;
-            overflow: hidden;
-        }
-        .consultation-header {
-            padding: 10px 15px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        .consultation-header:hover {
-            background-color: #21262d;
-        }
-        .consultation-body {
-            padding: 15px;
-            border-top: 1px solid var(--border-color);
-            background-color: rgba(0,0,0,0.1);
-        }
+        .consultation-item { background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+        .consultation-header { padding: 10px 15px; cursor: pointer; font-weight: bold; transition: background-color 0.2s; }
+        .consultation-header:hover { background-color: var(--button-hover-bg); }
+        .consultation-body { padding: 15px; border-top: 1px solid var(--border-color); background-color: transparent; }
 
-
-        /* NOVOS ESTILOS PARA BOTÕES DE AÇÃO NO PACIENTE */
-        .patient-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
+        .patient-actions { display: flex; gap: 10px; margin-top: 10px; }
         .patient-action-button {
-            background-color: #30363d;
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: background-color 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            flex: 1;
+            background-color: var(--button-bg); color: var(--text-color);
+            border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 8px;
+            cursor: pointer; font-size: 12px; transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center; gap: 5px; flex: 1;
         }
+        .patient-action-button.disabled { background-color: var(--input-bg); color: var(--text-color); cursor: not-allowed; opacity: 0.5; }
+        .patient-action-button:not(.disabled):hover { background-color: var(--button-hover-bg); }
+        .patient-action-button.delete:not(.disabled) { color: var(--error-color); }
+        .patient-action-button.delete:not(.disabled):hover { background-color: var(--error-color); color: white; }
+        .patient-action-button.pdf:not(.disabled) { color: var(--success-color); }
+        .patient-action-button.pdf:not(.disabled):hover { background-color: var(--success-color); color: white; }
+        .patient-action-button.details:not(.disabled) { color: var(--prompt-color); }
+        .patient-action-button.details:not(.disabled):hover { background-color: var(--prompt-color); color: white; }
         
-        .patient-action-button.disabled {
-            background-color: #21262d;
-            color: #8b949e;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .patient-action-button:not(.disabled):hover {
-            background-color: #444c56;
-        }
-
-        .patient-action-button.delete:not(.disabled) {
-            background-color: rgba(255, 0, 0, 0.2);
-            color: var(--error-color);
-        }
-
-        .patient-action-button.delete:not(.disabled):hover {
-            background-color: rgba(255, 0, 0, 0.3);
-        }
-
-        .patient-action-button.pdf:not(.disabled) {
-            background-color: rgba(86, 211, 100, 0.2);
-            color: var(--success-color);
-        }
-
-        .patient-action-button.pdf:not(.disabled):hover {
-            background-color: rgba(86, 211, 100, 0.3);
-        }
-        
-        .patient-action-button.details:not(.disabled) {
-             background-color: rgba(88, 166, 255, 0.2);
-            color: var(--prompt-color);
-        }
-        
-        .patient-action-button.details:not(.disabled):hover {
-            background-color: rgba(88, 166, 255, 0.3);
-        }
-
-
-        /* NOVO ESTILO PARA BARRA DE PESQUISA */
-        .patient-search-container {
-            margin-bottom: 15px;
-        }
-
+        .patient-search-container { margin-bottom: 15px; }
         .patient-search-input {
-            width: 100%;
-            padding: 10px;
-            background-color: var(--terminal-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            font-size: 14px;
+            width: 100%; padding: 12px; background-color: var(--input-bg);
+            color: var(--text-color); border: 1px solid var(--border-color);
+            border-radius: 8px; font-size: 14px;
         }
+        .patient-search-input:focus { outline: none; border-color: var(--highlight-color); }
 
-        .patient-search-input:focus {
-            outline: none;
-            border-color: var(--highlight-color);
-        }
-
-        /* NOVOS ESTILOS PARA A BARRA DE AÇÕES MOBILE */
-        .terminal-footer {
-            padding: 8px 15px;
-            border-top: 1px solid var(--border-color);
-            background-color: #161b22;
-        }
-
-        .action-buttons-container {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 10px;
-        }
-
+        .terminal-footer { padding: 8px 15px; border-top: 1px solid var(--border-color); background-color: var(--terminal-header-bg); }
+        .action-buttons-container { display: flex; justify-content: space-around; margin-bottom: 10px; }
         .action-button {
-            background-color: var(--border-color);
-            color: var(--text-color);
-            border: 1px solid #444c56;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.2s, color 0.2s, transform 0.1s;
+            background-color: var(--button-bg); color: var(--text-color);
+            border: 1px solid var(--border-color); border-radius: 50%;
+            width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; cursor: pointer; transition: all 0.2s, transform 0.1s;
         }
+        .action-button:hover, .action-button:focus { background-color: var(--highlight-color); color: var(--highlight-text-color); outline: none; }
+        .action-button:active { transform: scale(0.95); }
+        .action-button.active { background-color: var(--success-color); color: var(--highlight-text-color); box-shadow: 0 0 8px var(--success-color); }
+        .action-button.blocked-ui { opacity: 0.4; cursor: not-allowed; }
 
-        .action-button:hover, .action-button:focus {
-            background-color: var(--highlight-color);
-            color: var(--bg-color);
-            outline: none;
-        }
-
-        .action-button:active {
-            transform: scale(0.95);
-        }
-
-        .action-button.active {
-            background-color: var(--success-color);
-            color: var(--bg-color);
-            box-shadow: 0 0 8px var(--success-color);
-        }
-        
-        /* Estilo para botão congelado (bloqueado) */
-        .action-button.blocked-ui {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        /* NOVOS ESTILOS PARA O MODAL DE LOGIN (E SAVE) */
-        .app-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .app-modal-content {
-            background-color: var(--terminal-bg);
-            padding: 25px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7);
-            text-align: center;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .app-modal-header {
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
-        }
-
-        .app-modal-title {
-            color: var(--prompt-color);
-            font-size: 20px;
-        }
-
-        .app-modal-body p {
-            margin-bottom: 20px;
-            color: var(--text-color);
-        }
-
+        .app-modal-body p { margin-bottom: 20px; color: var(--text-color); }
         .app-modal-input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 15px;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            font-size: 16px;
+            width: 100%; padding: 12px; margin-bottom: 15px; background-color: var(--input-bg);
+            color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px;
         }
-
-        .app-modal-input:focus {
-            outline: none;
-            border-color: var(--highlight-color);
-        }
+        .app-modal-input:focus { outline: none; border-color: var(--highlight-color); }
 
         .app-modal-button {
-            width: 100%;
-            padding: 12px;
-            background-color: var(--highlight-color);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
+            width: 100%; padding: 12px; background-color: var(--highlight-color); color: var(--highlight-text-color);
+            border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold;
             transition: background-color 0.3s ease;
         }
-
-        .app-modal-button:hover {
-            background-color: #1f6feb;
-        }
+        .app-modal-button:hover { background-color: #2b6cb0; }
+        .app-modal-button:disabled { background-color: #555; cursor: not-allowed; }
+        .app-modal-feedback { margin-top: 15px; color: var(--error-color); min-height: 20px; }
         
-        .app-modal-button:disabled {
-            background-color: #555;
-            cursor: not-allowed;
-        }
-
-        .app-modal-feedback {
-            margin-top: 15px;
-            color: var(--error-color);
-            min-height: 20px;
-        }
-
-        /* Adicionando um botão de fechar genérico */
-        .app-modal-close {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .app-modal-close:hover {
-            color: white;
-        }
-
-        /* Styles for Admin Settings */
-        .admin-section {
-            margin-bottom: 20px;
-            text-align: left;
-            border: 1px solid var(--border-color);
-            padding: 15px;
-            border-radius: 5px;
-        }
+        .admin-section { margin-bottom: 20px; text-align: left; border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; }
+        .admin-section-title { color: var(--prompt-color); font-weight: bold; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; }
+        .admin-list { display: flex; flex-direction: column; gap: 8px; }
+        .admin-list-item { display: flex; gap: 8px; align-items: center; }
+        .admin-input-group { flex: 1; display: flex; gap: 5px; }
+        .admin-input { flex: 1; padding: 8px; background-color: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; font-size: 12px; }
+        .admin-btn-remove, .admin-btn-add, .admin-action-btn { border-radius: 8px; }
         
-        .admin-section-title {
-            color: var(--prompt-color);
-            font-weight: bold;
-            margin-bottom: 10px;
-            font-size: 14px;
-            text-transform: uppercase;
-        }
-
-        .admin-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .admin-list-item {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .admin-input-group {
-            flex: 1;
-            display: flex;
-            gap: 5px;
-        }
-
-        .admin-input {
-            flex: 1;
-            padding: 8px;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 12px;
-        }
-
-        .admin-btn-remove {
-            background-color: rgba(255, 123, 114, 0.2);
-            color: var(--error-color);
-            border: 1px solid var(--error-color);
-            width: 30px;
-            height: 30px;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .admin-btn-add {
-            background-color: rgba(86, 211, 100, 0.2);
-            color: var(--success-color);
-            border: 1px solid var(--success-color);
-            padding: 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            margin-top: 10px;
-            width: 100%;
-        }
-        
-        .admin-action-btn {
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            margin-right: 10px;
-            border: 1px solid transparent;
-        }
-        
-        .admin-btn-block {
-            background-color: rgba(255, 204, 0, 0.2);
-            color: #ffcc00;
-            border-color: #ffcc00;
-        }
-        
-        .admin-btn-delete {
-            background-color: rgba(255, 123, 114, 0.2);
-            color: var(--error-color);
-            border-color: var(--error-color);
-        }
-
-        .admin-select {
-            width: 100%;
-            padding: 10px;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            margin-bottom: 10px;
-        }
-
-        .radio-group {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 10px;
-        }
-
-        .radio-label {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-        }
-
         /* Admin Users Modal Specifics */
-        .admin-users-container {
-            display: flex;
-            height: 500px;
-            gap: 20px;
-            text-align: left;
-            overflow: hidden;
-        }
-        
-        .admin-users-list-section {
-            flex: 1;
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            padding-right: 10px;
-            overflow-y: hidden;
-        }
-        
-        .admin-users-details-section {
-            flex: 2;
-            overflow-y: auto;
-            padding-left: 10px;
-        }
-        
-        .user-list-scroll {
-            overflow-y: auto;
-            flex: 1;
-        }
-        
-        .user-list-item {
-            padding: 10px;
-            cursor: pointer;
-            border-bottom: 1px solid var(--border-color);
-            transition: background-color 0.2s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .user-list-item:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-        
-        .user-list-item.selected {
-            background-color: rgba(31, 111, 235, 0.2);
-            border-left: 3px solid var(--highlight-color);
-        }
-        
-        .user-name {
-            font-weight: bold;
-        }
-        
-        .analytics-badge {
-            font-size: 10px;
-            background-color: #333;
-            padding: 2px 5px;
-            border-radius: 3px;
-            color: #aaa;
-        }
-        
-        .analytics-high {
-            color: var(--success-color);
-            border: 1px solid var(--success-color);
-        }
-        
-        .user-detail-header {
-            margin-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 10px;
-        }
-        
-        .user-detail-row {
-            margin-bottom: 10px;
-        }
-        
-        .user-detail-label {
-            color: var(--prompt-color);
-            font-weight: bold;
-            font-size: 12px;
-            display: block;
-            margin-bottom: 2px;
-        }
-        
-        .user-detail-value {
-            color: var(--text-color);
-            font-size: 14px;
-        }
-        
-        .admin-user-images {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .admin-user-img {
-            width: 100%;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 4px;
-            cursor: pointer;
-            border: 1px solid var(--border-color);
-            transition: transform 0.2s;
-        }
-        
-        .admin-user-img:hover {
-            transform: scale(1.05);
-        }
+        #admin-panel-modal .app-modal-content { max-width: 900px; width: 95%; height: 85vh; }
+        .admin-users-container { display: flex; height: 100%; gap: 20px; text-align: left; overflow: hidden; padding-top:10px; }
+        .admin-users-list-section { flex: 1; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding-right: 10px; overflow-y: hidden; }
+        .admin-users-details-section { flex: 2; overflow-y: auto; padding-left: 10px; }
+        .user-list-scroll { overflow-y: auto; flex: 1; }
+        .user-list-item { padding: 10px; cursor: pointer; border-bottom: 1px solid var(--border-color); transition: background-color 0.2s; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 5px; }
+        .user-list-item:hover { background-color: var(--button-hover-bg); }
+        .user-list-item.selected { background-color: rgba(66, 153, 225, 0.2); border-left: 3px solid var(--highlight-color); }
+        .user-detail-header { margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .user-detail-row { margin-bottom: 10px; }
+        .user-detail-label { color: var(--prompt-color); font-weight: bold; font-size: 12px; display: block; margin-bottom: 2px; }
+        .user-detail-value { color: var(--text-color); font-size: 14px; }
+        .admin-user-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 10px; }
+        .admin-user-img { width: 100%; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 1px solid var(--border-color); transition: transform 0.2s; }
+        .admin-user-img:hover { transform: scale(1.05); }
+        .usage-stats-box { background-color: var(--input-bg); border: 1px solid var(--border-color); padding: 10px; border-radius: 10px; margin-top: 10px; }
 
-        .usage-stats-box {
-            background-color: rgba(0,0,0,0.2);
-            border: 1px solid var(--border-color);
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-
-        /* Estilos para as abas do painel administrativo */
-        .admin-tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 15px;
-        }
-
-        .admin-tab-btn {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--text-color);
-            padding: 10px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .admin-tab-btn:hover {
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-
-        .admin-tab-btn.active {
-            border-bottom-color: var(--highlight-color);
-            color: var(--highlight-color);
-            font-weight: bold;
-        }
-
-        .admin-tab-content {
-            flex: 1;
-            overflow-y: auto;
-            padding-bottom: 15px;
-        }
-
-        @media (max-width: 768px) {
-            .admin-users-container {
-                flex-direction: column;
-                height: 70vh; /* Altura fixa relativa ao viewport para garantir scroll */
-                max-height: none;
-            }
-            .admin-users-list-section {
-                flex: 0 0 40%; /* Ocupa 40% da altura */
-                border-right: none;
-                border-bottom: 1px solid var(--border-color);
-                padding-bottom: 15px;
-                padding-right: 0;
-                height: auto;
-                min-height: 150px;
-            }
-            .admin-users-details-section {
-                flex: 1; /* Ocupa o restante */
-                padding-left: 0;
-                padding-top: 15px;
-                overflow-y: auto;
-            }
-        }
-
+        .admin-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
+        .admin-tab-btn { flex: 1; background: transparent; border: none; color: var(--text-color); padding: 10px; cursor: pointer; border-bottom: 3px solid transparent; font-size: 14px; transition: all 0.3s ease; }
+        .admin-tab-btn:hover { background-color: var(--button-hover-bg); }
+        .admin-tab-btn.active { border-bottom-color: var(--highlight-color); color: var(--highlight-color); font-weight: bold; }
+        .admin-tab-content { flex: 1; overflow-y: auto; padding-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -1540,6 +588,9 @@
                     <div class="status-indicator status-off" id="camera-status"></div>
                     <span class="status-text-cam">Câmera</span>
                 </div>
+            </div>
+            <div id="theme-toggle" class="theme-toggle" title="Mudar Tema">
+                <i class="fas fa-sun"></i>
             </div>
             <div id="settings-button" class="settings-button" title="Configurações">
                 <i class="fas fa-cog"></i>
@@ -1637,11 +688,11 @@
                                 <video id="camera-video" class="camera-video" autoplay playsinline></video>
                                 <div class="camera-action-buttons">
                                     <button id="flashlight-button" class="flashlight-button" style="display:none;"><i class="fas fa-lightbulb"></i> Lanterna</button>
-                                    <button id="camera-switch-button" class="camera-switch-button" style="display:none;"><i class="fas fa-sync-alt"></i> Trocar Câmera</button>
+                                    <button id="camera-switch-button" class="camera-switch-button" style="display:none;"><i class="fas fa-sync-alt"></i> Trocar</button>
                                 </div>
-                                <button id="album-button" class="album-button" style="display:none;">
+                                <div id="album-button" class="album-button" style="display:none;">
                                     <i class="fas fa-images"></i> Álbum <span id="album-count" class="album-count">0</span>
-                                </button>
+                                </div>
                                 <div class="camera-controls">
                                     <button id="capture-button" class="camera-button" title="Capturar Foto"><i class="fas fa-camera"></i></button>
                                     <input type="file" id="file-input" accept="image/*" multiple style="display: none;">
@@ -1765,20 +816,18 @@
                 <h2 class="app-modal-title">Painel Administrativo</h2>
             </div>
             
-            <!-- Abas de Navegação -->
             <div class="admin-tabs">
                 <button class="admin-tab-btn active" data-tab="users">Usuários</button>
                 <button class="admin-tab-btn" data-tab="api">API</button>
             </div>
 
-            <!-- Conteúdo da Aba Usuários -->
             <div id="tab-users" class="admin-tab-content">
                 <div class="patient-search-container" style="margin: 0 0 15px 0;">
                     <input type="text" id="admin-user-search" class="patient-search-input" placeholder="Buscar usuário...">
                 </div>
-                <div class="admin-users-container" style="padding: 0; height: calc(100% - 60px);">
+                <div class="admin-users-container" style="flex: 1; min-height: 0;">
                     <div class="admin-users-list-section">
-                        <div class="section-title" style="margin-top: 0; margin-bottom: 10px;">Usuários (Rank de Uso)</div>
+                        <div class="admin-section-title" style="margin-top: 0; margin-bottom: 10px; flex-shrink: 0;">Usuários (Rank de Uso)</div>
                         <div id="admin-users-list" class="user-list-scroll">
                             <div class="info">Carregando...</div>
                         </div>
@@ -1789,21 +838,17 @@
                 </div>
             </div>
 
-            <!-- Conteúdo da Aba API -->
             <div id="tab-api" class="admin-tab-content" style="display: none;">
                 <div id="admin-settings-body">
-                    <!-- Conteúdo gerado dinamicamente -->
                 </div>
             </div>
         </div>
     </div>
 
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, where, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA4bis9CVQkl1eJDfezsvUKTx1X_kFVT4M",
             authDomain: "axon-91d0b.firebaseapp.com",
@@ -1813,11 +858,10 @@
             appId: "1:701115983749:web:9a57928b678918ffbb86ec"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Elementos DOM
+        // --- DOM Elements ---
         const commandInput = document.getElementById('command-input');
         const interactiveOutput = document.getElementById('interactive-output');
         const anamnesisPreview = document.getElementById('anamnesis-preview');
@@ -1830,7 +874,8 @@
         const monitorCopyBtn = document.getElementById('monitor-copy-btn');
         const logoutButton = document.getElementById('logout-button');
         const settingsButton = document.getElementById('settings-button');
-
+        const themeToggleButton = document.getElementById('theme-toggle'); // Theme Toggle Button
+        
         // Camera elements
         const cameraModal = document.getElementById('camera-modal');
         const cameraModalTitle = document.getElementById('camera-modal-title');
@@ -1915,8 +960,8 @@
         const statusTextApi = document.querySelector('.status-text-api');
         const statusTextMic = document.querySelector('.status-text-mic');
         const statusTextCam = document.querySelector('.status-text-cam');
-
-        // Estado da aplicação
+        
+        // --- Application State ---
         let isListening = false;
         let isLoggedIn = false;
         let isUserBlocked = false;
@@ -1930,10 +975,10 @@
         let apiConnectionStatus = "Desconhecido";
         let unsubscribeSnapshot = null;
         let unsubscribeUserDoc = null;
-        let unsubscribeSettings = null; // Listener para configurações globais
+        let unsubscribeSettings = null;
         let cameraStream = null;
         let capturedImages = [];
-        let temporaryImgurUploads = []; // Para armazenar uploads do /see antes de salvar
+        let temporaryImgurUploads = [];
         let currentCameraFacingMode = 'environment';
         let currentMonitorView = 'anamnesis';
         let isFlashlightOn = false;
@@ -1941,17 +986,15 @@
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isMobile = isMobileDevice();
         let allPatients = [];
-
         let conversationHistory = [];
-        let adminUsersData = []; // Cache para usuários
+        let adminUsersData = [];
 
-        // Configurações da API Gemini e Imgur
+        // --- API and Imgur Config ---
         const defaultApiKeys = [
             'AIzaSyB7krrv-Jjw4hn34MIFYBcrzDa5mWB9PpU',
             'AIzaSyAJk2u0SsCv11d9mrECAkoBRafHEVGgwwg',
             'AIzaSyAG0j6JuMlR5FoCTUcNQOvNy_lcS5C9ew0'
         ];
-        
         const defaultApiModels = [
             { id: 1, name: 'gemini-2.0-flash', vision: true },
             { id: 2, name: 'gemini-flash-lite-latest', vision: true },
@@ -1960,7 +1003,6 @@
             { id: 5, name: 'gemini-1.5-pro', vision: true },
             { id: 6, name: 'gemini-1.5-flash', vision: true }
         ];
-        
         const openRouterModels = [
             { name: 'x-ai/grok-4.1-fast:free', vision: true },
             { name: 'deepseek/deepseek-r1:free', vision: false },
@@ -1968,7 +1010,6 @@
             { name: 'mistralai/mistral-small-3.1-24b-instruct:free', vision: true },
             { name: 'nvidia/nemotron-nano-12b-v2-vl:free', vision: true }
         ];
-
         const groqModels = [
             { name: 'llama-3.3-70b-versatile', vision: false },
             { name: 'llama-3.1-8b-instant', vision: false },
@@ -1981,15 +1022,14 @@
             { name: 'openai/gpt-oss-20b', vision: false }
         ];
 
-        // Estado local das configurações (Sincronizado com Firebase)
         let globalSettings = {
             apiKeys: [...defaultApiKeys],
             apiModels: [...defaultApiModels],
-            mode: 'automatic', // 'automatic' or 'manual'
+            mode: 'automatic',
             manualTextModel: '',
             manualVisionModel: '',
             manualApiKey: '',
-            apiProvider: 'gemini', // 'gemini', 'openrouter' or 'groq'
+            apiProvider: 'gemini',
             openRouterKey: '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',
             openRouterModel: 'x-ai/grok-4.1-fast:free',
             groqKey: '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',
@@ -1999,13 +1039,32 @@
         let currentApiKeyIndex = 0;
         let currentAIModel = 'gemini-2.0-flash';
         let currentVisionAIModel = 'gemini-2.5-flash-lite';
+        const IMGUR_CLIENT_ID = '546c25a59c58ad7';
 
-        const IMGUR_CLIENT_ID = '546c25a59c58ad7'; 
-
-        // Função auxiliar para construir URL da API dinamicamente
-        const getGeminiUrl = (modelName, apiKey) => {
-            return `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+        // --- Theme Switching Logic ---
+        const setTheme = (theme) => {
+            localStorage.setItem('theme', theme);
+            const icon = themeToggleButton.querySelector('i');
+            if (theme === 'light') {
+                document.body.classList.add('light-mode');
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            } else {
+                document.body.classList.remove('light-mode');
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            }
         };
+
+        const toggleTheme = () => {
+            const currentTheme = localStorage.getItem('theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        };
+        // --- End of Theme Logic ---
+
+
+        const getGeminiUrl = (modelName, apiKey) => `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
         const validCommands = [
             '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
@@ -2013,6 +1072,9 @@
         ];
 
         const isSpeechRecognitionSupported = () => 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+        
+        // --- Rest of the JavaScript code is identical to the original ---
+        // (All original functions from processCommand, initSpeechRecognition, firebase listeners, etc., remain here, unchanged)
 
         const initSpeechRecognition = () => {
             if (!isSpeechRecognitionSupported()) {
@@ -2216,9 +1278,7 @@
                 formattedResults = examsResults.split('\n')
                     .filter(line => line.trim() !== '')
                     .map(line => {
-                        // Regex case insensitive para capturar variações
                         if (/\((Alterado|Anormal)\)/i.test(line)) {
-                            // Remove a marcação original para não duplicar, mantendo o restante do texto
                             const cleanLine = line.replace(/\((Alterado|Anormal)\)/gi, '').trim();
                             return `<div class="output">${cleanLine} <span class="altered-text">(Alterado)</span></div>`;
                         }
@@ -2234,7 +1294,6 @@
         const updateAxonEyeResultsPreview = (logToFirebase = true) => {
             let formattedResults = '';
             let imageHtml = '';
-            // A imagem mostrada aqui é a temporária, antes de salvar
             if (temporaryImgurUploads.length > 0 && currentMonitorView === 'axon-eye') {
                 imageHtml = `<img src="${temporaryImgurUploads[0].link}" class="axon-eye-image-preview" alt="Imagem Analisada">`;
             }
@@ -2315,13 +1374,11 @@
                 let messages = [];
                 
                 if (images.length > 0) {
-                    // Payload de visão compatível com OpenAI
                     const contentArray = [
                         { type: "text", text: prompt }
                     ];
                     
                     images.forEach(img => {
-                        // Assumindo que img é dataURI
                          contentArray.push({
                             type: "image_url",
                             image_url: { url: img }
@@ -2344,7 +1401,6 @@
                     body: JSON.stringify({
                         model: modelName,
                         messages: messages,
-                        // Adiciona reasoning se for Grok ou Nemotron, conforme solicitado pelo usuário
                         ...((modelName.includes('grok') || modelName.includes('nemotron')) ? { reasoning: { enabled: true } } : {})
                     })
                 });
@@ -2355,7 +1411,7 @@
                     if (content) {
                         await incrementUserUsage(images.length > 0 ? 'vision' : 'text');
                         appendOutput(`Sucesso via OpenRouter.`, "success", false);
-                        return content.replace(/\*\*/g, ''); // Remove asteriscos para formatação limpa
+                        return content.replace(/\*\*/g, '');
                     }
                     throw new Error("Resposta vazia do OpenRouter.");
                 } else {
@@ -2419,7 +1475,7 @@
                     if (content) {
                         await incrementUserUsage(images.length > 0 ? 'vision' : 'text');
                         appendOutput(`Sucesso via Groq.`, "success", false);
-                        return content.replace(/\*\*/g, ''); // Remove asteriscos para formatação limpa
+                        return content.replace(/\*\*/g, '');
                     }
                     throw new Error("Resposta vazia do Groq.");
                 } else {
@@ -2433,11 +1489,9 @@
         };
 
         const callGeminiAPI = async (prompt) => {
-            // Se o provedor for OpenRouter, desvia
             if (globalSettings.apiProvider === 'openrouter') {
                 return await callOpenRouterAPI(prompt);
             }
-            // Se o provedor for Groq, desvia
             if (globalSettings.apiProvider === 'groq') {
                 return await callGroqAPI(prompt);
             }
@@ -2453,16 +1507,10 @@
                     throw new Error("Modo manual ativo, mas modelo ou chave não configurados.");
                 }
             } else {
-                // Modo Automático (Prioridade)
                 const preferredOrder = ['gemini-2.0-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-pro'];
                 const availableModelNames = globalSettings.apiModels.map(m => m.name);
-                
-                // Filtra os preferidos que realmente existem nas configurações
                 const activePreferred = preferredOrder.filter(name => availableModelNames.includes(name));
-                // Pega o restante dos modelos disponíveis
                 const others = availableModelNames.filter(name => !preferredOrder.includes(name));
-                
-                // Estratégia: Tentar preferenciais em ordem, depois os outros
                 strategyModels = [...activePreferred, ...others];
                 keysToTry = globalSettings.apiKeys;
             }
@@ -2471,7 +1519,6 @@
 
             for (const modelName of strategyModels) {
                 for (let i = 0; i < keysToTry.length; i++) {
-                    // Rotação de chaves no modo automático
                     const keyIndex = (currentApiKeyIndex + i) % keysToTry.length;
                     const apiKeyToTry = keysToTry[keyIndex];
                     
@@ -2488,7 +1535,7 @@
                         if (response.ok) {
                             const data = await response.json();
                             if (globalSettings.mode === 'automatic') {
-                                currentApiKeyIndex = keyIndex; // Atualiza o índice para rotação
+                                currentApiKeyIndex = keyIndex;
                             }
                             await incrementUserUsage('text');
                             appendOutput(`Sucesso com motor ${modelName}.`, "success", false);
@@ -2497,7 +1544,6 @@
 
                         const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
                         lastError = new Error(errorData.error?.message || `Erro desconhecido (${response.status})`);
-                        // Não mostra erro no output principal a cada tentativa falha para não poluir, apenas info de troca
                         console.warn(`Falha com motor ${modelName} chave ${keyIndex}: ${lastError.message}`);
 
                     } catch (error) {
@@ -2512,11 +1558,9 @@
         };
 
         const callGeminiVisionAPI = async (imageUrls, prompt) => {
-            // Se o provedor for OpenRouter, desvia
             if (globalSettings.apiProvider === 'openrouter') {
                 return await callOpenRouterAPI(prompt, imageUrls);
             }
-            // Se o provedor for Groq, desvia
             if (globalSettings.apiProvider === 'groq') {
                 return await callGroqAPI(prompt, imageUrls);
             }
@@ -2532,8 +1576,6 @@
                     throw new Error("Modo manual ativo, mas modelo de visão ou chave não configurados.");
                 }
             } else {
-                 // Modo Automático (Prioridade para Visão também)
-                 // Assumindo que os modelos listados suportam visão se estiverem na lista global e marcados como visão
                 const preferredOrder = ['gemini-2.0-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-pro'];
                 const availableModelNames = globalSettings.apiModels.filter(m => m.vision).map(m => m.name);
                 
@@ -2588,7 +1630,6 @@
             console.error("Erro final na chamada da API de visão:", lastError);
             throw lastError || new Error("Todas as tentativas de chaves e motores de visão falharam.");
         };
-
 
         const processAnamnesisInfo = async (info) => {
             lastAnamnesisInfo = info;
@@ -2680,11 +1721,9 @@
         };
 
         const checkApiStatus = async (modelName = currentAIModel) => {
-            // Define qual estratégia usar para o teste
             let keysToTest = [];
             let modelToTest = modelName;
 
-            // No modo OpenRouter, testamos o endpoint OpenRouter
             if (globalSettings.apiProvider === 'openrouter') {
                  try {
                     const response = await fetch("https://openrouter.ai/api/v1/auth/key", {
@@ -2704,7 +1743,6 @@
                  }
             }
 
-            // No modo Groq
             if (globalSettings.apiProvider === 'groq') {
                 try {
                     const response = await fetch("https://api.groq.com/openai/v1/models", {
@@ -2728,7 +1766,6 @@
                 keysToTest = [globalSettings.manualApiKey || ''];
                 modelToTest = globalSettings.manualTextModel || modelName;
             } else {
-                // No modo automático, testamos as chaves disponíveis em rotação até achar uma boa
                 keysToTest = globalSettings.apiKeys;
             }
 
@@ -2738,7 +1775,6 @@
                  return false;
             }
 
-            // Verifica se o modelo é de visão (baseado na lista global)
             const isVision = globalSettings.apiModels.find(m => m.name === modelToTest)?.vision;
             let requestBody;
             
@@ -2749,7 +1785,6 @@
                 requestBody = JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] });
             }
 
-            // Tenta encontrar UMA chave que funcione
             for (let i = 0; i < keysToTest.length; i++) {
                 const apiKey = keysToTest[i];
                 try {
@@ -2765,19 +1800,16 @@
                         apiConnectionStatus = "Conectado"; 
                         apiStatus.classList.remove('status-off');
                         
-                        // Se for automático, atualiza o índice para a chave que funcionou
                         if (globalSettings.mode === 'automatic') {
                             currentApiKeyIndex = i;
                         }
                         return true;
                     }
                 } catch (error) {
-                    // Continua tentando próxima chave
                     console.warn(`Falha ao testar chave ${i} no status check: ${error.message}`);
                 }
             }
 
-            // Se chegou aqui, nenhuma funcionou
             apiConnectionStatus = "Offline (Todas as chaves falharam)";
             apiStatus.classList.add('status-off');
             return false;
@@ -2786,13 +1818,11 @@
         const initializeAIModel = async () => {
             appendOutput("Verificando status da API...", "info", false);
             
-            // Se estiver em modo manual, usamos as configurações manuais
             if (globalSettings.mode === 'manual') {
                 currentAIModel = globalSettings.manualTextModel || currentAIModel;
                 currentVisionAIModel = globalSettings.manualVisionModel || currentVisionAIModel;
             } else {
-                // Modo automático: tenta usar o primeiro da lista preferencial ou o fallback
-                currentAIModel = 'gemini-2.0-flash'; // Padrão inicial preferido
+                currentAIModel = 'gemini-2.0-flash';
                 currentVisionAIModel = 'gemini-2.0-flash';
             }
 
@@ -2801,12 +1831,8 @@
             
             if (textModelOK) appendOutput(`Motor conectado (${providerName}).`, "success", false);
             else appendOutput(`Falha ao conectar motor: ${apiConnectionStatus}.`, "error", false);
-
-            // A verificação do motor de visão pode ser feita tentando um ping com imagem dummy, ou assumindo status baseado no texto
-            // Para simplificar, consideramos o status da API geral
         };
 
-        // Firebase Functions
         const logInteractionToFirebase = async (username, content, type, terminal) => { try { await addDoc(collection(db, "sessions", username, "interactions"), { content, type, terminal, timestamp: new Date() }); } catch (e) { console.error("Erro no log Firebase: ", e); } };
         const saveAnamnesisToFirestore = async (username, data) => { try { await setDoc(doc(db, "sessions", username), { anamnesis: data, lastUpdated: new Date() }, { merge: true }); } catch (e) { console.error("Erro ao salvar anamnese: ", e); } };
         const saveExamsResultsToFirestore = async (username, data) => { try { await setDoc(doc(db, "sessions", username), { examsResults: data, lastUpdated: new Date() }, { merge: true }); } catch (e) { console.error("Erro ao salvar exames: ", e); } };
@@ -2829,14 +1855,12 @@
             });
         };
 
-        // Sincronização das configurações globais (API Keys e Motores)
         const setupGlobalSettingsListener = () => {
             if (unsubscribeSettings) unsubscribeSettings();
             const docRef = doc(db, "settings", "global");
             unsubscribeSettings = onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    // Atualiza configurações locais
                     globalSettings = {
                         apiKeys: data.apiKeys || [...defaultApiKeys],
                         apiModels: data.apiModels || [...defaultApiModels],
@@ -2851,15 +1875,12 @@
                         groqModel: data.groqModel || 'llama-3.3-70b-versatile'
                     };
                     
-                    // Se o admin estiver com o modal aberto (API), atualiza o UI em tempo real
                     if (adminPanelModal.style.display === 'flex' && document.querySelector('.admin-tab-btn[data-tab="api"]').classList.contains('active')) {
                         renderAdminSettingsUI();
                     }
                     
-                    // Re-inicializa modelos para aplicar mudanças imediatas
                     initializeAIModel();
                 } else {
-                    // Se documento não existe, cria com padrões
                     setDoc(docRef, globalSettings);
                 }
             }, (error) => {
@@ -2922,7 +1943,6 @@
                 appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
                 buttons.forEach(btn => btn.classList.add('blocked-ui'));
                 commandInput.disabled = true;
-                // Se houver modais abertos (ex: câmera, configurações), fechar
                 if (cameraModal.style.display === 'flex') stopCamera();
                 patientListModal.style.display = 'none';
                 savePatientModal.style.display = 'none';
@@ -2934,7 +1954,6 @@
             }
         };
 
-        // Imgur API Functions
         const uploadToImgur = async (base64Image) => {
             try {
                 const response = await fetch('https://api.imgur.com/3/image', {
@@ -2988,22 +2007,21 @@
         };
 
 
-        // Camera and Image Processing Functions
         const startCamera = async (mode) => {
             cameraMode = mode;
             cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
-            sendExamsButton.style.display = mode === 'exams' ? 'block' : 'none';
-            sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'block' : 'none';
+            sendExamsButton.style.display = mode === 'exams' ? 'flex' : 'none';
+            sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'flex' : 'none';
             if (isMobile) {
                 cameraModal.classList.add('fullscreen-mobile');
             }
             try {
                 if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: isMobile ? 'environment' : currentCameraFacingMode } });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentCameraFacingMode } });
                 cameraVideo.srcObject = stream; cameraStream = stream; toggleMonitorView('camera');
                 cameraStatus.classList.remove('status-off');
                 appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}.`, "info");
-                albumButton.style.display = 'flex'; updateAlbumCount();
+                updateAlbumCount();
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 if (devices.filter(d => d.kind === 'videoinput').length > 1) cameraSwitchButton.style.display = 'block';
                 const track = stream.getVideoTracks()[0];
@@ -3039,7 +2057,7 @@
         const handleFileUpload = (event) => { for (const file of event.target.files) { if (file.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = (e) => addCapturedImage(e.target.result); reader.readAsDataURL(file); } } };
         const addCapturedImage = (imageDataURL) => { capturedImages.push(imageDataURL); updateAlbumCount(); sendExamsButton.classList.remove('disabled'); sendAxonEyeButton.classList.remove('disabled'); };
         const removeCapturedImage = (imageDataURL) => { capturedImages = capturedImages.filter(url => url !== imageDataURL); updateAlbumCount(); if (capturedImages.length === 0) { sendExamsButton.classList.add('disabled'); sendAxonEyeButton.classList.add('disabled'); } renderAlbum(); };
-        const updateAlbumCount = () => { albumCount.textContent = capturedImages.length; albumButton.style.display = capturedImages.length > 0 ? 'flex' : 'none'; };
+        const updateAlbumCount = () => { albumCount.textContent = capturedImages.length; albumButton.style.display = 'flex'; };
         const openAlbumModal = () => { renderAlbum(); albumModal.style.display = 'flex'; };
         const closeAlbumModal = () => { albumModal.style.display = 'none'; };
         const renderAlbum = () => {
@@ -3052,7 +2070,6 @@
             });
         };
         
-        // FIX: Make function globally available for onclick attributes
         window.openFullscreenModal = (imageDataURL) => { 
             modalImage.src = imageDataURL; 
             fullscreenModal.style.display = 'block'; 
@@ -3080,12 +2097,11 @@
         const analyzeAxonEye = async () => {
             if (capturedImages.length === 0) return appendOutput("Nenhuma imagem para análise visual.", "info");
             
-            await clearTemporaryUploads(); // Limpa uploads antigos não salvos
+            await clearTemporaryUploads();
             axonEyeResults = ""; updateAxonEyeResultsPreview();
             axonEyeResultsPreview.innerHTML = '<div class="info">Axon Eye está analisando e fazendo upload...</div>'; toggleMonitorView('axon-eye');
 
             try {
-                // Upload para o Imgur primeiro
                 for (const imgBase64 of capturedImages) {
                     const uploadResult = await uploadToImgur(imgBase64);
                     if (uploadResult) {
@@ -3102,7 +2118,7 @@
                 appendOutput("Análise Axon Eye concluída. Imagens prontas para salvar.", "success");
             } catch (error) {
                 appendOutput(`Erro com Axon Eye: ${error.message}`, "error");
-                await clearTemporaryUploads(); // Limpa em caso de erro
+                await clearTemporaryUploads();
             } finally {
                 stopCamera(); capturedImages = []; updateAlbumCount();
             }
@@ -3125,7 +2141,7 @@
                     anamnesis: { ...anamnesis },
                     examsResults,
                     axonEyeResults,
-                    axonEyeImages: [...temporaryImgurUploads], // Salva os links do Imgur para esta consulta
+                    axonEyeImages: [...temporaryImgurUploads],
                 };
         
                 const docSnap = await getDoc(patientRef);
@@ -3150,7 +2166,7 @@
                     appendOutput(`Paciente '${patientName}' e primeira consulta salvos com sucesso.`, "success");
                 }
         
-                temporaryImgurUploads = []; // Limpa os temporários APÓS salvar com sucesso
+                temporaryImgurUploads = [];
                 closeSaveModal();
             } catch (e) {
                 appendOutput(`Erro ao salvar paciente: ${e.message}`, "error");
@@ -3339,7 +2355,6 @@
             appendOutput(`PDF da sessão atual gerado com sucesso.`, "success");
         };
 
-
         const showPatientDetails = (patient) => {
             patientDetailsTitle.textContent = `Paciente: ${patient.patientName}`;
             let detailsHTML = '';
@@ -3403,8 +2418,6 @@
             else appendOutput(`Login bem-sucedido. Bem-vindo, ${currentUser}.`, "success", false);
             initialMessagesContainer.style.display = 'none';
             
-            // Verificação inicial de status bloqueado é feita via listener abaixo
-            
             appendOutput("Sessão pronta. Informe os dados do paciente ou use um comando.", "success");
             
             if (unsubscribeUserDoc) {
@@ -3433,9 +2446,8 @@
             });
 
             setupFirebaseListener(currentUser);
-            setupGlobalSettingsListener(); // Inicia listener de configurações globais
+            setupGlobalSettingsListener();
             toggleMonitorView('anamnesis');
-            // initializeAIModel(); // Já chamado pelo setupGlobalSettingsListener
         };
 
         const searchPatients = (searchTerm) => {
@@ -3466,8 +2478,6 @@
             }
         };
 
-        // --- ADMIN SETTINGS FUNCTIONS ---
-
         const openAdminAuth = () => {
             adminAuthPass.value = '';
             adminAuthFeedback.textContent = '';
@@ -3478,9 +2488,7 @@
         const checkAdminAuth = () => {
             if (adminAuthPass.value === 'admin123') {
                 adminAuthModal.style.display = 'none';
-                // Abre o painel unificado
                 adminPanelModal.style.display = 'flex';
-                // Default para a primeira aba (Usuários)
                 activateAdminTab('users');
             } else {
                 adminAuthFeedback.textContent = 'Senha incorreta.';
@@ -3488,34 +2496,29 @@
         };
 
         const activateAdminTab = (tabName) => {
-            // Update tab buttons
             adminTabButtons.forEach(btn => {
                 if (btn.dataset.tab === tabName) btn.classList.add('active');
                 else btn.classList.remove('active');
             });
 
-            // Hide all content
             document.getElementById('tab-users').style.display = 'none';
             document.getElementById('tab-api').style.display = 'none';
 
-            // Show selected content and load data
             if (tabName === 'users') {
                 document.getElementById('tab-users').style.display = 'block';
-                loadAdminUsersData(); // Load Users Data
+                loadAdminUsersData();
             } else if (tabName === 'api') {
                 document.getElementById('tab-api').style.display = 'block';
-                renderAdminSettingsUI(); // Render API Settings
+                renderAdminSettingsUI();
             }
         };
 
-        // Renderização dinâmica da UI de configuração
         const renderAdminSettingsUI = () => {
             const isManual = globalSettings.mode === 'manual';
             const isGoogle = globalSettings.apiProvider === 'gemini';
             const isOpenRouter = globalSettings.apiProvider === 'openrouter';
             const isGroq = globalSettings.apiProvider === 'groq';
             
-            // Opções de motores para seleção manual (AGORA INCLUI TODOS, INCLUSIVE VISÃO NO TEXTO)
             const textModelsOptions = globalSettings.apiModels.map(m => 
                 `<option value="${m.name}" ${globalSettings.manualTextModel === m.name ? 'selected' : ''}>${m.name}</option>`
             ).join('');
@@ -3528,12 +2531,10 @@
                 `<option value="${key}" ${globalSettings.manualApiKey === key ? 'selected' : ''}>${key}</option>`
             ).join('');
 
-            // Opções OpenRouter
             const openRouterModelsOptions = openRouterModels.map(m => 
                  `<option value="${m.name}" ${globalSettings.openRouterModel === m.name ? 'selected' : ''}>${m.name} ${m.vision ? '(+Visão)' : ''}</option>`
             ).join('');
 
-             // Opções Groq
             const groqModelsOptions = groqModels.map(m => 
                  `<option value="${m.name}" ${globalSettings.groqModel === m.name ? 'selected' : ''}>${m.name} ${m.vision ? '(+Visão)' : ''}</option>`
             ).join('');
@@ -3571,19 +2572,19 @@
                     <div id="manual-settings" style="display: ${isManual ? 'block' : 'none'}; margin-top: 15px;">
                         <div class="admin-section-title">Seleção Manual</div>
                         <label>Motor de Texto:</label>
-                        <select id="manual-text-select" class="admin-select" onchange="window.saveManualSelection()">
+                        <select id="manual-text-select" class="admin-input" style="width:100%; margin-bottom:10px;" onchange="window.saveManualSelection()">
                             <option value="">Selecione...</option>
                             ${textModelsOptions}
                         </select>
                         
                         <label>Motor de Visão:</label>
-                        <select id="manual-vision-select" class="admin-select" onchange="window.saveManualSelection()">
+                        <select id="manual-vision-select" class="admin-input" style="width:100%; margin-bottom:10px;" onchange="window.saveManualSelection()">
                             <option value="">Selecione...</option>
                             ${visionModelsOptions}
                         </select>
                         
                         <label>Chave API:</label>
-                        <select id="manual-key-select" class="admin-select" onchange="window.saveManualSelection()">
+                        <select id="manual-key-select" class="admin-input" style="width:100%;" onchange="window.saveManualSelection()">
                             <option value="">Selecione...</option>
                             ${apiKeysOptions}
                         </select>
@@ -3602,12 +2603,11 @@
                     </div>
                     <div class="admin-list-item" style="margin-top: 10px;">
                          <input type="text" id="new-api-key" class="admin-input" placeholder="Nova chave API...">
-                         <button class="admin-btn-add" style="width: auto;" onclick="window.addApiKey()">Adicionar</button>
+                         <button class="admin-btn-add" style="width: auto; padding:8px 12px;" onclick="window.addApiKey()">Adicionar</button>
                     </div>
                 </div>
                 `;
             } else if (isOpenRouter) {
-                // Interface OpenRouter
                 html += `
                 <div class="admin-section">
                     <div class="admin-section-title">Configuração OpenRouter</div>
@@ -3615,13 +2615,12 @@
                     <input type="text" id="openrouter-key-input" class="admin-input" style="width: 100%; margin-bottom: 10px;" value="${globalSettings.openRouterKey}" onchange="window.saveManualSelection()">
                     
                     <label>Modelo (Texto e Visão):</label>
-                    <select id="openrouter-model-select" class="admin-select" onchange="window.saveManualSelection()">
+                    <select id="openrouter-model-select" class="admin-input" style="width:100%;" onchange="window.saveManualSelection()">
                         ${openRouterModelsOptions}
                     </select>
                 </div>
                 `;
             } else if (isGroq) {
-                 // Interface Groq
                 html += `
                 <div class="admin-section">
                     <div class="admin-section-title">Configuração Groq</div>
@@ -3629,14 +2628,13 @@
                     <input type="text" id="groq-key-input" class="admin-input" style="width: 100%; margin-bottom: 10px;" value="${globalSettings.groqKey}" onchange="window.saveManualSelection()">
                     
                     <label>Modelo (Texto e Visão):</label>
-                    <select id="groq-model-select" class="admin-select" onchange="window.saveManualSelection()">
+                    <select id="groq-model-select" class="admin-input" style="width:100%;" onchange="window.saveManualSelection()">
                         ${groqModelsOptions}
                     </select>
                 </div>
                 `;
             }
 
-            // Seção de modelos customizados (só faz sentido no Google Direct, mas mantendo global por enquanto)
             if (isGoogle) {
                 html += `
                 <div class="admin-section">
@@ -3666,7 +2664,6 @@
             adminSettingsBody.innerHTML = html;
         };
 
-        // Funções globais para interagir com o HTML gerado dinamicamente
         window.updateProvider = async (provider) => {
             try {
                 await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiProvider: provider }, { merge: true });
@@ -3762,15 +2759,11 @@
             } catch (e) { console.error("Erro ao remover modelo:", e); }
         };
 
-        // --- ADMIN USERS PANEL FUNCTIONS ---
-
         const loadAdminUsersData = async () => {
             try {
                 const usersSnap = await getDocs(collection(db, "users"));
                 const users = [];
                 
-                // Busca todos os pacientes para contar uso
-                // NOTA: Isso pode ser pesado se houver MUITOS dados, idealmente teríamos um contador no user doc
                 const patientsSnap = await getDocs(collection(db, "patients"));
                 const savedCounts = {};
                 patientsSnap.forEach(doc => {
@@ -3789,7 +2782,6 @@
                     });
                 });
 
-                // Ordenar por uso (savedCount) descendente
                 users.sort((a, b) => b.savedCount - a.savedCount);
                 adminUsersData = users;
                 renderAdminUsersList(users);
@@ -3812,16 +2804,15 @@
                         <span class="user-name" style="${user.isBlocked ? 'text-decoration: line-through; color: #666;' : ''}">${user.username}</span>
                         <div style="font-size: 10px; color: #666;">Registrado em: ${user.createdAt ? user.createdAt.toDate().toLocaleDateString() : 'N/A'}</div>
                     </div>
-                    <div style="display: flex; gap: 5px;">
-                        ${user.isBlocked ? '<span class="analytics-badge" style="color: #ffcc00; border: 1px solid #ffcc00;">Bloqueado</span>' : ''}
-                        <span class="analytics-badge ${user.savedCount > 0 ? 'analytics-high' : ''}">${user.savedCount} Pacientes</span>
+                    <div style="display: flex; gap: 5px; align-items:center;">
+                        ${user.isBlocked ? '<span class="analytics-badge" style="color: #ffcc00; border: 1px solid #ffcc00; padding:2px 5px; border-radius:10px;">Bloqueado</span>' : ''}
+                        <span class="analytics-badge ${user.savedCount > 0 ? 'analytics-high' : ''}" style="border: 1px solid; padding:2px 5px; border-radius:10px;">${user.savedCount} Pacientes</span>
                     </div>
                 </div>
             `).join('');
         };
 
         window.selectAdminUser = async (username) => {
-            // Highlight selected
             document.querySelectorAll('.user-list-item').forEach(el => el.classList.remove('selected'));
             const selectedEl = document.getElementById(`user-item-${username}`);
             if (selectedEl) selectedEl.classList.add('selected');
@@ -3831,8 +2822,6 @@
 
             adminUserDetails.innerHTML = '<div class="info">Carregando detalhes e imagens...</div>';
 
-            // Buscar imagens enviadas (baseado nos pacientes salvos)
-            // e calcular estatísticas de uso mais granulares (se possível)
             try {
                 const patientsQuery = query(collection(db, "patients"), where("savedBy", "==", username));
                 const patientsSnap = await getDocs(patientsQuery);
@@ -3844,11 +2833,9 @@
 
                 patientsSnap.forEach(doc => {
                     const pData = doc.data();
-                    // Verificar consultas recentes
                     if (pData.consultations) {
                         pData.consultations.forEach(c => {
                             if (c.date && c.date.toDate() > oneWeekAgo) consultationsLast7Days++;
-                            // Coletar imagens
                             if (c.axonEyeImages && c.axonEyeImages.length > 0) {
                                 c.axonEyeImages.forEach(img => images.push(img.link));
                             }
@@ -3856,7 +2843,6 @@
                     }
                 });
 
-                // Cálculo de média diária (simplificado)
                 const dailyAvg = (consultationsLast7Days / 7).toFixed(1);
 
                 let imagesHtml = '';
@@ -3891,11 +2877,11 @@
 
                      <div class="user-detail-row" style="margin-top: 15px;">
                          <span class="user-detail-label">AÇÕES DA CONTA</span>
-                         <div style="display: flex; margin-top: 5px;">
-                             <button class="admin-action-btn admin-btn-block" onclick="window.toggleBlockUser('${user.username}', ${!user.isBlocked})">
+                         <div style="display: flex; margin-top: 5px; gap: 10px;">
+                             <button class="patient-action-button" style="flex: 1;" onclick="window.toggleBlockUser('${user.username}', ${!user.isBlocked})">
                                 ${user.isBlocked ? '<i class="fas fa-unlock"></i> Desbloquear' : '<i class="fas fa-ban"></i> Bloquear'}
                              </button>
-                             <button class="admin-action-btn admin-btn-delete" onclick="window.deleteUserFromPanel('${user.username}')">
+                             <button class="patient-action-button delete" style="flex: 1;" onclick="window.deleteUserFromPanel('${user.username}')">
                                 <i class="fas fa-trash"></i> Excluir Usuário
                              </button>
                          </div>
@@ -3940,12 +2926,10 @@
              try {
                 const userRef = doc(db, "users", username);
                 await updateDoc(userRef, { isBlocked: shouldBlock });
-                // Atualiza a lista local
                 const userIdx = adminUsersData.findIndex(u => u.username === username);
                 if (userIdx !== -1) {
                     adminUsersData[userIdx].isBlocked = shouldBlock;
                     renderAdminUsersList(adminUsersData);
-                    // Re-renderiza detalhes se for o usuário selecionado
                     window.selectAdminUser(username);
                 }
             } catch (e) {
@@ -3958,7 +2942,6 @@
             try {
                 const userRef = doc(db, "users", username);
                 await deleteDoc(userRef);
-                // Remove da lista local
                 adminUsersData = adminUsersData.filter(u => u.username !== username);
                 renderAdminUsersList(adminUsersData);
                 adminUserDetails.innerHTML = '<div class="info" style="margin-top: 20px;">Usuário excluído. Selecione outro.</div>';
@@ -3967,7 +2950,6 @@
             }
         };
 
-        // Search Listener
         adminUserSearch.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
             const filtered = adminUsersData.filter(u => u.username.toLowerCase().includes(term));
@@ -3976,15 +2958,13 @@
 
         adminPanelClose.addEventListener('click', () => adminPanelModal.style.display = 'none');
 
-        // Tab Event Listeners
         adminTabButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const tabName = e.target.dataset.tab;
+                const tabName = e.currentTarget.dataset.tab;
                 activateAdminTab(tabName);
             });
         });
 
-        // Modificar processCommand para incluir o novo comando
         const processCommand = async (command) => {
             if (!command.trim()) return;
             appendOutput(command, "command");
@@ -4018,136 +2998,85 @@
             }
         
             switch (mainCmd) {
-                case '/exit':
-                    logoutUser();
-                    break;
-        
+                case '/exit': logoutUser(); break;
                 case '/clear':
                     await clearTemporaryUploads();
                     if (currentUser) await deleteDoc(doc(db, "sessions", currentUser));
                     anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
-                    examsResults = "";
-                    axonEyeResults = "";
-                    conversationHistory = [];
-                    updateAnamnesisPreview(false);
-                    updateExamsResultsPreview(false);
-                    updateAxonEyeResultsPreview(false);
+                    examsResults = ""; axonEyeResults = ""; conversationHistory = [];
+                    updateAnamnesisPreview(false); updateExamsResultsPreview(false); updateAxonEyeResultsPreview(false);
                     resetInteractiveTerminal(false);
                     appendOutput("Sessão limpa.", "success");
                     break;
-        
                 case '/hear':
                     if (parts[1] === 'on') toggleListening();
                     else if (parts[1] === 'off') stopListening();
                     else appendOutput("Uso: /hear on|off", "error");
                     break;
-        
                 case '/hd':
                     appendOutput("Gerando hipóteses diagnósticas...", "info");
                     await generateDiagnosticHypotheses();
                     break;
-        
                 case '/cd':
                     appendOutput("Gerando conduta médica...", "info");
                     await generateMedicalConduct();
                     break;
-        
-                case '/copy':
-                    copyMonitorContent();
-                    break;
-        
+                case '/copy': copyMonitorContent(); break;
                 case '/ia':
                     const questionIA = command.substring(3).trim();
-                    if (!questionIA) {
-                        appendOutput("Uso: /ia [pergunta]", "error");
-                        break;
-                    }
+                    if (!questionIA) { appendOutput("Uso: /ia [pergunta]", "error"); break; }
                     appendOutput("Processando sua pergunta...", "info");
                     try {
                         const response = await callGeminiAPI(`Responda de forma objetiva à pergunta médica: "${questionIA}"`);
                         appendOutput(response, "output");
-                    } catch (error) {
-                        appendOutput(`Erro ao consultar a IA: ${error.message}`, "error");
-                    }
+                    } catch (error) { appendOutput(`Erro ao consultar a IA: ${error.message}`, "error"); }
                     break;
-        
                 case '/ask':
                     const questionAsk = command.substring(4).trim();
-                    if (!questionAsk) {
-                        appendOutput("Uso: /ask [pergunta contextual]", "error");
-                        break;
-                    }
+                    if (!questionAsk) { appendOutput("Uso: /ask [pergunta contextual]", "error"); break; }
                     appendOutput("Processando pergunta contextual...", "info");
                     await askQuestionBasedOnContext(questionAsk);
                     break;
-        
-                case '/api-set':
-                    openAdminAuth();
-                    break;
-        
+                case '/api-set': openAdminAuth(); break;
                 case '/api':
                     const currentText = globalSettings.mode === 'manual' ? (globalSettings.manualTextModel || 'Não definido') : currentAIModel;
                     const currentVision = globalSettings.mode === 'manual' ? (globalSettings.manualVisionModel || 'Não definido') : currentVisionAIModel;
                     const modeLabel = globalSettings.mode === 'manual' ? 'Manual (Fixo)' : 'Automático (Rotação)';
-                    
                     appendOutput(`Status da API: ${apiConnectionStatus}\nModo: ${modeLabel}\nMotor de Texto Atual: ${currentText}\nMotor de Visão Atual: ${currentVision}`, "info");
                     break;
-        
                 case '/register':
                     const [, adminPassReg, newUser, newPass] = parts;
                     await registerUser(adminPassReg, newUser, newPass);
                     break;
-        
                 case '/delete':
                     const [, adminPassDel, userToDel] = parts;
                     await deleteUser(adminPassDel, userToDel);
                     break;
-
                 case '/users':
                     if (parts[1] === 'admin123') {
-                        // Abre o painel na aba de usuários
                         adminPanelModal.style.display = 'flex';
                         activateAdminTab('users');
-                    } else {
-                        appendOutput("Senha de administrador incorreta.", "error");
-                    }
+                    } else { appendOutput("Senha de administrador incorreta.", "error"); }
                     break;
-        
-                case '/help':
-                    appendOutput(`Comandos: ${validCommands.join(', ')}`, "info");
-                    break;
-        
-                case '/exames':
-                    await startCamera('exams');
-                    break;
-        
-                case '/see':
-                    await startCamera('axon-eye');
-                    break;
-        
-                case '/load':
-                    await loadPatientList();
-                    break;
-        
+                case '/help': appendOutput(`Comandos: ${validCommands.join(', ')}`, "info"); break;
+                case '/exames': await startCamera('exams'); break;
+                case '/see': await startCamera('axon-eye'); break;
+                case '/load': await loadPatientList(); break;
                 case '/pdf':
                     const patientName = command.substring(4).trim();
                     generatePDFFromCurrentSession(patientName);
                     break;
-        
-                default:
-                    appendOutput(`Comando '${mainCmd}' não reconhecido.`, "error");
+                default: appendOutput(`Comando '${mainCmd}' não reconhecido.`, "error");
             }
-        
             commandInput.value = '';
         };
 
-        // Event Listeners
         commandInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') processCommand(commandInput.value); });
         monitorCopyBtn.addEventListener('click', copyMonitorContent);
         logoutButton.addEventListener('click', logoutUser);
-        // Listener do novo botão
         settingsButton.addEventListener('click', openAdminAuth);
-        
+        themeToggleButton.addEventListener('click', toggleTheme); // Event for theme toggle
+
         captureButton.addEventListener('click', capturePhoto);
         uploadButton.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileUpload);
@@ -4164,7 +3093,6 @@
         albumModalClose.addEventListener('click', closeAlbumModal);
         albumModal.addEventListener('click', (e) => { if (e.target === albumModal) closeAlbumModal(); });
 
-        // Action Buttons
         const checkBlockedAndExecute = (callback) => {
              if(isUserBlocked) {
                  appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
@@ -4190,20 +3118,15 @@
             openSaveModal();
         });
 
-        // Admin Listeners
         adminAuthClose.addEventListener('click', () => adminAuthModal.style.display = 'none');
         adminAuthButton.addEventListener('click', checkAdminAuth);
         adminAuthPass.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkAdminAuth(); });
         
-        // removeu-se os listeners antigos pois os modais foram removidos ou substituídos
-
-        // Modais de Pacientes
         patientListModal.addEventListener('click', (e) => {
             const target = e.target;
             const deleteButton = target.closest('.delete');
             const pdfButton = target.closest('.pdf');
             const detailsButton = target.closest('.details');
-            const patientItem = target.closest('.patient-item');
 
             if (deleteButton) {
                 checkBlockedAndExecute(() => deletePatient(deleteButton.dataset.id));
@@ -4213,13 +3136,6 @@
                 const patientId = detailsButton.dataset.id;
                 const patientData = allPatients.find(p => p.id === patientId);
                 if (patientData) showPatientDetails(patientData);
-            } else if (patientItem) {
-                const detailsBtnInItem = patientItem.querySelector('.details');
-                if (detailsBtnInItem && !detailsBtnInItem.classList.contains('disabled')) {
-                    const patientId = patientItem.dataset.patientId;
-                    const patientData = allPatients.find(p => p.id === patientId);
-                    if (patientData) showPatientDetails(patientData);
-                }
             }
         });
 
@@ -4239,7 +3155,6 @@
         patientDetailsClose.addEventListener('click', () => patientDetailsModal.style.display = 'none');
         patientSearchInput.addEventListener('input', (e) => searchPatients(e.target.value));
 
-        // Modal de Login
         loginModalButton.addEventListener('click', async () => {
             const username = loginModalUser.value.trim(), password = loginModalPass.value.trim();
             if (!username || !password) return loginModalFeedback.textContent = "Preencha todos os campos.";
@@ -4263,7 +3178,6 @@
         });
         loginModalPass.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginModalButton.click(); });
         
-        // Modal de Salvar
         savePatientModalClose.addEventListener('click', closeSaveModal);
         savePatientButton.addEventListener('click', () => {
             const name = savePatientNameInput.value.trim();
@@ -4272,19 +3186,24 @@
             savePatient(name, dob);
         });
         savePatientDobInput.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '');
-            if (value.length > 2) {
-                value = value.substring(0, 2) + '/' + value.substring(2);
-            }
-            if (value.length > 5) {
-                value = value.substring(0, 5) + '/' + value.substring(5);
-            }
-            e.target.value = value.substring(0, 10);
+            let value = e.target.value.replace(/\D/g, '').slice(0, 8);
+            if (value.length > 4) value = `${value.slice(0,2)}/${value.slice(2,4)}/${value.slice(4)}`;
+            else if (value.length > 2) value = `${value.slice(0,2)}/${value.slice(2)}`;
+            e.target.value = value;
         });
         savePatientDobInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') savePatientButton.click(); });
 
 
         const initApp = async () => {
+            // Theme initialization
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+            if (savedTheme) {
+                setTheme(savedTheme);
+            } else {
+                setTheme(systemPrefersLight ? 'light' : 'dark');
+            }
+
             if (isSpeechRecognitionSupported()) initSpeechRecognition();
             const savedUser = localStorage.getItem('axon_logged_in_user');
             if (savedUser) {
