@@ -7,10 +7,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="manifest" href="/manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" id="status-bar-style-meta" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Axon A.I">
     <link rel="apple-touch-icon" href="https://i.imgur.com/ZsfZEh2.png">
-    <meta name="theme-color" content="#1a202c">
+    <meta name="theme-color" id="theme-color-meta" content="#1a202c">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         /* Modern Liquid Glass Theme with Light/Dark Mode */
@@ -1097,14 +1097,21 @@
         const setTheme = (theme) => {
             localStorage.setItem('theme', theme);
             const icon = themeToggleButton.querySelector('i');
+            const themeColorMeta = document.getElementById('theme-color-meta');
+            const statusBarStyleMeta = document.getElementById('status-bar-style-meta');
+
             if (theme === 'light') {
                 document.body.classList.add('light-mode');
                 icon.classList.remove('fa-sun');
                 icon.classList.add('fa-moon');
-            } else {
+                if (themeColorMeta) themeColorMeta.setAttribute('content', '#f0f9ff');
+                if (statusBarStyleMeta) statusBarStyleMeta.setAttribute('content', 'default');
+            } else { // dark mode
                 document.body.classList.remove('light-mode');
                 icon.classList.remove('fa-moon');
                 icon.classList.add('fa-sun');
+                if (themeColorMeta) themeColorMeta.setAttribute('content', '#1a202c');
+                if (statusBarStyleMeta) statusBarStyleMeta.setAttribute('content', 'black-translucent');
             }
         };
 
