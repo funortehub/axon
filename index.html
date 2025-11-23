@@ -2165,6 +2165,7 @@
             if (capturedImages.length === 0) return appendOutput("Nenhuma imagem de exame para analisar.", "info");
             examsResults = "";
             toggleMonitorView('exams');
+            examsResultsPreview.innerHTML = '';
             examsResultsPreview.innerHTML = `
                 <div class="ai-processing-animation">
                     <div class="scanner-animation">
@@ -2193,6 +2194,7 @@
             await clearTemporaryUploads();
             axonEyeResults = "";
             toggleMonitorView('axon-eye');
+            axonEyeResultsPreview.innerHTML = '';
             axonEyeResultsPreview.innerHTML = `
                 <div class="ai-processing-animation">
                     <div class="scanner-animation">
@@ -2443,7 +2445,7 @@
                 pdfDoc.setFontSize(12).setFont(undefined, 'bold').text(title, 14, y); y += 7;
         
                 const text = typeof content === 'object' ? Object.entries(content).map(([k, v]) => `${k.toUpperCase()}: ${v || 'Não informado'}`).join('\n') : content;
-                const splitText = pdfDoc.splitTextToSize(text, 180);
+                const splitText = doc.splitTextToSize(text, 180);
         
                 if (y + (splitText.length * 5) > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
                 pdfDoc.setFontSize(10).setFont(undefined, 'normal').text(splitText, 14, y);
