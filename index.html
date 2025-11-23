@@ -2073,6 +2073,12 @@
 
 
         const startCamera = async (mode) => {
+            // Limpa os resultados anteriores ao iniciar a câmera para uma nova análise
+            examsResults = "";
+            axonEyeResults = "";
+            examsResultsPreview.innerHTML = '<div class="info">Nenhum exame analisado ainda.</div>';
+            axonEyeResultsPreview.innerHTML = '<div class="info">Nenhuma análise visual feita ainda.</div>';
+            
             cameraMode = mode;
             cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
             sendExamsButton.style.display = mode === 'exams' ? 'flex' : 'none';
@@ -2170,11 +2176,6 @@
 
         const analyzeExams = async () => {
             if (capturedImages.length === 0) return appendOutput("Nenhuma imagem de exame para analisar.", "info");
-            examsResults = "";
-            
-            // Limpa ambos os painéis do monitor ANTES de mostrar a view para garantir que a animação seja exibida corretamente
-            examsResultsPreview.innerHTML = '';
-            axonEyeResultsPreview.innerHTML = '';
             
             toggleMonitorView('exams');
 
@@ -2204,12 +2205,7 @@
             if (capturedImages.length === 0) return appendOutput("Nenhuma imagem para análise visual.", "info");
             
             await clearTemporaryUploads();
-            axonEyeResults = "";
             
-            // Limpa ambos os painéis do monitor ANTES de mostrar a view para garantir que a animação seja exibida corretamente
-            examsResultsPreview.innerHTML = '';
-            axonEyeResultsPreview.innerHTML = '';
-
             toggleMonitorView('axon-eye');
             
             axonEyeResultsPreview.innerHTML = `
@@ -2235,7 +2231,7 @@
                 const prompt = `Analise as imagens e forneça uma opinião clínica detalhada. Descreva achados, lesões, ou sintomas. Ao final, inclua uma seção "Impressão Diagnóstica:" ou "Interpretação Clínica:" com sua conclusão. Seja descritivo e clinicamente relevante.`;
                 const response = await callGeminiVisionAPI(capturedImages, prompt);
                 axonEyeResults = response; 
-                updateAxonEyeResultsPreview();
+                updateExamsResultsPreview();
                 appendOutput("Análise Axon Eye concluída. Imagens prontas para salvar.", "success");
             } catch (error) {
                 appendOutput(`Erro com Axon Eye: ${error.message}`, "error");
