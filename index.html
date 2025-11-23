@@ -2238,25 +2238,25 @@
             toggleMonitorView('exams');
             await setAnalyzingStateInFirestore(true, 'exams');
 
-            examsResultsPreview.innerHTML = `
-                <div class="ai-processing-animation">
-                    <div class="scanner-animation">
-                        <div class="brain-icon"><i class="fas fa-brain"></i></div>
-                        <div class="scanner-line"></div>
-                    </div>
-                    <span>Analisando Imagens...</span>
-                </div>`;
             try {
                 const prompt = `Analise as imagens de exames. Retorne os resultados em tópicos. Se houver alteração, adicione "(Alterado)" ou "(Anormal)". Exemplo: Glicose: 90 mg/dL (Alterado) Hemoglobina Glicada: 7.2%. Retorne apenas a lista de resultados.`;
                 const response = await callGeminiVisionAPI(capturedImages, prompt);
-                examsResults = response; 
-                updateExamsResultsPreview();
+                
+                await setDoc(doc(db, "sessions", currentUser), {
+                    examsResults: response,
+                    isAnalyzing: { status: false, type: null }
+                }, { merge: true });
+
                 appendOutput("Análise de exames concluída.", "success");
             } catch (error) {
                 appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
-                updateExamsResultsPreview(); // Clear animation on error
+
+                await setDoc(doc(db, "sessions", currentUser), {
+                    examsResults: "",
+                    isAnalyzing: { status: false, type: null }
+                }, { merge: true });
+
             } finally {
-                await setAnalyzingStateInFirestore(false);
                 stopCamera(); capturedImages = []; updateAlbumCount();
             }
         };
@@ -2269,15 +2269,6 @@
             toggleMonitorView('axon-eye');
             await setAnalyzingStateInFirestore(true, 'axon-eye');
             
-            axonEyeResultsPreview.innerHTML = `
-                <div class="ai-processing-animation">
-                    <div class="scanner-animation">
-                        <div class="brain-icon"><i class="fas fa-brain"></i></div>
-                        <div class="scanner-line"></div>
-                    </div>
-                    <span>Analisando com Axon Eye...</span>
-                </div>`;
-
             try {
                 for (const imgBase64 of capturedImages) {
                     const uploadResult = await uploadToImgur(imgBase64);
@@ -2296,15 +2287,23 @@
                     : temporaryImgurUploads.map(upload => upload.link);
 
                 const response = await callGeminiVisionAPI(imagesForApiCall, prompt);
-                axonEyeResults = response; 
-                updateAxonEyeResultsPreview();
+                
+                await setDoc(doc(db, "sessions", currentUser), {
+                    axonEyeResults: response,
+                    isAnalyzing: { status: false, type: null }
+                }, { merge: true });
+
                 appendOutput("Análise Axon Eye concluída. Imagens prontas para salvar.", "success");
             } catch (error) {
                 appendOutput(`Erro com Axon Eye: ${error.message}`, "error");
                 await clearTemporaryUploads();
-                 updateAxonEyeResultsPreview(); // Clear animation on error
+                 
+                await setDoc(doc(db, "sessions", currentUser), {
+                    axonEyeResults: "",
+                    isAnalyzing: { status: false, type: null }
+                }, { merge: true });
+
             } finally {
-                await setAnalyzingStateInFirestore(false);
                 stopCamera(); capturedImages = []; updateAlbumCount();
             }
         };
