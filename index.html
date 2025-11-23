@@ -282,8 +282,20 @@
         .diagnosis-item:before { content: "•"; position: absolute; left: 0; color: var(--diagnosis-color); }
         
         .conduct-section { margin-bottom: 15px; }
-        .conduct-title { color: var(--conduct-color); font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid var(--conduct-color); padding-bottom: 3px; }
-        
+        .conduct-title {
+            color: var(--conduct-color);
+            font-weight: bold;
+            margin-bottom: 5px;
+            border-bottom: 1px solid var(--conduct-color);
+            padding-bottom: 3px;
+            cursor: pointer;
+            transition: color 0.2s, border-bottom-color 0.2s;
+        }
+        .conduct-title:hover {
+            color: var(--highlight-color);
+            border-bottom-color: var(--highlight-color);
+        }
+
         .conduct-item { margin-bottom: 8px; padding-left: 15px; position: relative; }
         .conduct-item:before { content: "-"; position: absolute; left: 0; }
         
@@ -598,6 +610,48 @@
             100% { top: 0; }
         }
 
+        /* Prescription Helper Modal Styles */
+        .prescription-template-item {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 15px;
+        }
+        .prescription-template-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .prescription-template-title {
+            font-weight: bold;
+            color: var(--prompt-color);
+        }
+        .prescription-template-copy-btn {
+            background-color: var(--button-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .prescription-template-copy-btn:hover {
+            background-color: var(--highlight-color);
+            color: var(--highlight-text-color);
+        }
+        .prescription-template-text {
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: var(--output-color);
+            background: rgba(0,0,0,0.1);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
         @media (max-width: 768px) {
             .container { flex-direction: column; padding: 10px; gap: 10px; }
             .monitor-toggle-button span, .status-bar span { display: none; }
@@ -909,6 +963,18 @@
         </div>
     </div>
 
+    <div id="prescription-helper-modal" class="app-modal">
+        <div class="app-modal-content" style="max-width: 600px;">
+            <span class="app-modal-close">&times;</span>
+            <div class="app-modal-header">
+                <h2 class="app-modal-title" id="prescription-helper-title">Assistente de Prescrição</h2>
+            </div>
+            <div class="app-modal-body" id="prescription-helper-body" style="text-align: left; overflow-y: auto;">
+                <!-- Templates will be injected here -->
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, where, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -1011,6 +1077,11 @@
         const adminUserDetails = document.getElementById('admin-user-details');
         const adminUserSearch = document.getElementById('admin-user-search');
         const adminTabButtons = document.querySelectorAll('.admin-tab-btn');
+
+        const prescriptionHelperModal = document.getElementById('prescription-helper-modal');
+        const prescriptionHelperTitle = document.getElementById('prescription-helper-title');
+        const prescriptionHelperBody = document.getElementById('prescription-helper-body');
+        const prescriptionHelperClose = prescriptionHelperModal.querySelector('.app-modal-close');
 
         const statusTextApi = document.querySelector('.status-text-api');
         const statusTextMic = document.querySelector('.status-text-mic');
@@ -1736,17 +1807,24 @@
         };
 
         const generateMedicalConduct = async () => {
-            const prompt = `Com base na anamnese: ${JSON.stringify(anamnesis)}, exames: ${examsResults || "Nenhum"}, e análise visual: ${axonEyeResults || "Nenhuma"}, proponha uma conduta médica completa, dividida em: 1. Medicações (SUS), 2. Exames complementares (SUS), 3. Condutas não farmacológicas, 4. Recomendações. Seja técnico e resumido.`;
+            const prompt = `Com base na anamnese: ${JSON.stringify(anamnesis)}, exames: ${examsResults || "Nenhum"}, e análise visual: ${axonEyeResults || "Nenhuma"}, proponha uma conduta médica completa. 
+Use EXATAMENTE os seguintes títulos para cada seção, na ordem apresentada, mesmo que a seção não tenha conteúdo: 
+1. CONDUTA FARMACOLÓGICA (SUS):
+2. EXAMES COMPLEMENTARES (SUS):
+3. CONDUTAS NÃO FARMACOLÓGICAS (SUS):
+4. RECOMENDAÇÕES:
+Seja técnico, objetivo e resumido.`;
             try {
                 const response = await callGeminiAPI(prompt);
                 const formattedConduct = response
-                    .replace(/Medicações:|Medicamentos:/gi, '<div class="conduct-title">MEDICAÇÕES (SUS):</div>')
-                    .replace(/Exames complementares|Exames:/gi, '<div class="conduct-title">EXAMES COMPLEMENTAREs (SUS):</div>')
-                    .replace(/Condutas não farmacológicas|Condutas não-farmacológicas:/gi, '<div class="conduct-title">CONDUTAS NÃO FARMACOLÓGICAS:</div>')
-                    .replace(/Recomendações ao paciente|Recomendações:/gi, '<div class="conduct-title">RECOMENDAÇÕES:</div>')
+                    .replace(/CONDUTA FARMACOLÓGICA \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTA FARMACOLÓGICA (SUS)">CONDUTA FARMACOLÓGICA (SUS):</div>')
+                    .replace(/EXAMES COMPLEMENTARES \(SUS\):/gi, '<div class="conduct-title" data-category="EXAMES COMPLEMENTARES (SUS)">EXAMES COMPLEMENTARES (SUS):</div>')
+                    .replace(/CONDUTAS NÃO FARMACOLÓGICAS \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTAS NÃO FARMACOLÓGICAS (SUS)">CONDUTAS NÃO FARMACOLÓGICAS (SUS):</div>')
+                    .replace(/^RECOMENDAÇÕES:/gim, '<div class="conduct-title" data-category="RECOMENDAÇÕES">RECOMENDAÇÕES:</div>')
                     .split('\n').map(line => {
-                        if (line.trim() === '' || line.includes('<div')) return line;
-                        return `<div class="conduct-item">${line.trim()}</div>`;
+                        const cleanedLine = line.trim().replace(/^\d+\.\s*/, '');
+                        if (cleanedLine === '' || line.includes('<div')) return line;
+                        return `<div class="conduct-item">${cleanedLine}</div>`;
                     }).join('');
                 appendOutput(formattedConduct, "output");
             } catch (error) {
@@ -3149,6 +3227,116 @@
             }
         };
 
+        const openPrescriptionHelper = async (category) => {
+            prescriptionHelperTitle.textContent = `Assistente de Prescrição: ${category}`;
+            prescriptionHelperBody.innerHTML = `<div class="info">Gerando sugestões personalizadas para o paciente...</div>`;
+            prescriptionHelperModal.style.display = 'flex';
+
+            try {
+                const templates = await generateContextualTemplates(category);
+                
+                let contentHTML = '';
+                if (templates && templates.length > 0) {
+                    templates.forEach((template, index) => {
+                        const templateId = `template-${category.replace(/\s/g, '-')}-${index}`;
+                        contentHTML += `
+                            <div class="prescription-template-item">
+                                <div class="prescription-template-header">
+                                    <div class="prescription-template-title">${template.title}</div>
+                                    <button class="prescription-template-copy-btn" data-template-id="${templateId}">
+                                        <i class="fas fa-copy"></i> Copiar
+                                    </button>
+                                </div>
+                                <div class="prescription-template-text" id="${templateId}">${template.text}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    contentHTML = `<div class="info">Nenhuma sugestão relevante encontrada para o quadro clínico atual.</div>`;
+                }
+
+                prescriptionHelperBody.innerHTML = contentHTML;
+
+            } catch (error) {
+                console.error(`Error generating contextual templates for ${category}:`, error);
+                prescriptionHelperBody.innerHTML = `<div class="error">Erro ao gerar sugestões: ${error.message}</div>`;
+            }
+        };
+
+        const generateContextualTemplates = async (category) => {
+            let instruction = '';
+            let format_example = '';
+            switch(category) {
+                case 'CONDUTA FARMACOLÓGICA (SUS)':
+                    instruction = "Gere até 3 prescrições de medicamentos (padrão SUS) pertinentes ao quadro clínico.";
+                    format_example = `O texto ('text') de cada prescrição deve seguir EXATAMENTE este formato multi-linha:
+USO ORAL:
+[NOME DO MEDICAMENTO] [DOSAGEM] ---------------- [QUANTIDADE/DURAÇÃO]
+[INSTRUÇÕES DE USO (ex: TOMAR 01 COMPRIMIDO AO DIA)]`;
+                    break;
+                case 'EXAMES COMPLEMENTARES (SUS)':
+                    instruction = "Gere até 3 solicitações de exames (padrão SUS) pertinentes, com justificativa clínica.";
+                    format_example = `O texto ('text') de cada solicitação deve seguir EXATAMENTE este formato multi-linha:
+SOLICITO:
+- [NOME DO EXAME 1]
+- [NOME DO EXAME 2]
+JUSTIFICATIVA: [Justificativa clínica concisa]`;
+                    break;
+                case 'CONDUTAS NÃO FARMACOLÓGICAS (SUS)':
+                    instruction = "Gere até 3 condutas não farmacológicas pertinentes, focando em encaminhamentos para especialistas.";
+                     format_example = `O texto ('text') de cada encaminhamento deve seguir EXATAMENTE este formato multi-linha:
+À [ESPECIALIDADE]:
+ENCAMINHO O PACIENTE [NOME DO PACIENTE AQUI], COM [DIAGNÓSTICO/SINTOMAS PRINCIPAIS].
+GRATO.`;
+                    break;
+                case 'RECOMENDAÇÕES':
+                     instruction = "Gere até 3 recomendações ou atestados pertinentes para a situação do paciente.";
+                     format_example = `O texto ('text') deve ser claro, objetivo e pronto para uso, como um atestado ou uma recomendação formal.`;
+                    break;
+                default:
+                    return [];
+            }
+            
+            const prompt = `Você é um assistente médico especialista em gerar documentos clínicos. Com base no quadro clínico do paciente, siga a instrução fornecida.
+
+**Quadro Clínico do Paciente:**
+- Anamnese: ${JSON.stringify(anamnesis)}
+- Resultados de Exames Prévios: ${examsResults || "Nenhum"}
+- Análise Visual (Axon Eye): ${axonEyeResults || "Nenhum"}
+
+**Instrução Específica:**
+${instruction}
+
+**Regras de Formatação (Obrigatório):**
+1. Crie solicitações que façam sentido clínico com o quadro apresentado.
+2. Formate a resposta como um array JSON de objetos. Cada objeto deve ter as chaves 'title' e 'text'.
+3. O 'title' deve ser um resumo curto da sugestão (ex: "Metformina para DM2", "Encaminhamento à Cardiologia").
+4. ${format_example}
+5. Se nenhuma sugestão for clinicamente justificável, retorne um array JSON vazio: [].
+
+**Retorne APENAS o array JSON, sem nenhum texto ou formatação adicional.**`;
+
+            try {
+                const response = await callGeminiAPI(prompt);
+                const jsonStart = response.indexOf('[');
+                const jsonEnd = response.lastIndexOf(']') + 1;
+                if (jsonStart === -1 || jsonEnd === 0) {
+                     console.error("No JSON array found in response:", response);
+                     return [];
+                }
+                const jsonString = response.substring(jsonStart, jsonEnd);
+                return JSON.parse(jsonString);
+            } catch (error) {
+                console.error("Failed to parse AI response for templates:", error);
+                throw new Error("A IA retornou uma resposta em formato inválido.");
+            }
+        };
+
+
+        const closePrescriptionHelper = () => {
+            prescriptionHelperModal.style.display = 'none';
+        };
+
         adminUserSearch.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
             const filtered = adminUsersData.filter(u => u.username.toLowerCase().includes(term));
@@ -3392,6 +3580,39 @@
         });
         savePatientDobInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') savePatientButton.click(); });
 
+        prescriptionHelperClose.addEventListener('click', closePrescriptionHelper);
+        prescriptionHelperModal.addEventListener('click', (e) => {
+            if (e.target === prescriptionHelperModal) {
+                closePrescriptionHelper();
+            }
+        });
+
+        prescriptionHelperBody.addEventListener('click', (e) => {
+            const copyBtn = e.target.closest('.prescription-template-copy-btn');
+            if (copyBtn) {
+                const templateId = copyBtn.dataset.templateId;
+                const templateTextElement = document.getElementById(templateId);
+                if (templateTextElement) {
+                    const templateText = templateTextElement.textContent;
+                    navigator.clipboard.writeText(templateText).then(() => {
+                        const originalText = copyBtn.innerHTML;
+                        copyBtn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+                        copyBtn.style.backgroundColor = 'var(--success-color)';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = originalText;
+                            copyBtn.style.backgroundColor = '';
+                        }, 2000);
+                    });
+                }
+            }
+        });
+
+        interactiveOutput.addEventListener('click', (e) => {
+            const conductTitle = e.target.closest('.conduct-title');
+            if (conductTitle && conductTitle.dataset.category) {
+                openPrescriptionHelper(conductTitle.dataset.category);
+            }
+        });
 
         const initApp = async () => {
             const savedTheme = localStorage.getItem('theme');
