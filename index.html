@@ -2229,9 +2229,14 @@
                 }
 
                 const prompt = `Analise as imagens e forneça uma opinião clínica detalhada. Descreva achados, lesões, ou sintomas. Ao final, inclua uma seção "Impressão Diagnóstica:" ou "Interpretação Clínica:" com sua conclusão. Seja descritivo e clinicamente relevante.`;
-                const response = await callGeminiVisionAPI(capturedImages, prompt);
+                
+                const imagesForApiCall = globalSettings.apiProvider === 'gemini' 
+                    ? capturedImages 
+                    : temporaryImgurUploads.map(upload => upload.link);
+
+                const response = await callGeminiVisionAPI(imagesForApiCall, prompt);
                 axonEyeResults = response; 
-                updateExamsResultsPreview();
+                updateAxonEyeResultsPreview();
                 appendOutput("Análise Axon Eye concluída. Imagens prontas para salvar.", "success");
             } catch (error) {
                 appendOutput(`Erro com Axon Eye: ${error.message}`, "error");
