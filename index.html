@@ -2171,10 +2171,13 @@
         const analyzeExams = async () => {
             if (capturedImages.length === 0) return appendOutput("Nenhuma imagem de exame para analisar.", "info");
             examsResults = "";
-            toggleMonitorView('exams');
-            // Limpa ambos os painéis do monitor para garantir que a animação seja exibida corretamente
+            
+            // Limpa ambos os painéis do monitor ANTES de mostrar a view para garantir que a animação seja exibida corretamente
             examsResultsPreview.innerHTML = '';
             axonEyeResultsPreview.innerHTML = '';
+            
+            toggleMonitorView('exams');
+
             examsResultsPreview.innerHTML = `
                 <div class="ai-processing-animation">
                     <div class="scanner-animation">
@@ -2202,10 +2205,13 @@
             
             await clearTemporaryUploads();
             axonEyeResults = "";
-            toggleMonitorView('axon-eye');
-            // Limpa ambos os painéis do monitor para garantir que a animação seja exibida corretamente
+            
+            // Limpa ambos os painéis do monitor ANTES de mostrar a view para garantir que a animação seja exibida corretamente
             examsResultsPreview.innerHTML = '';
             axonEyeResultsPreview.innerHTML = '';
+
+            toggleMonitorView('axon-eye');
+            
             axonEyeResultsPreview.innerHTML = `
                 <div class="ai-processing-animation">
                     <div class="scanner-animation">
