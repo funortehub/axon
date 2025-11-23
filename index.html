@@ -2172,7 +2172,7 @@
             if (capturedImages.length === 0) return appendOutput("Nenhuma imagem de exame para analisar.", "info");
             examsResults = "";
             toggleMonitorView('exams');
-            examsResultsPreview.innerHTML = '';
+            axonEyeResultsPreview.innerHTML = ''; // Garante que a outra aba esteja limpa
             examsResultsPreview.innerHTML = `
                 <div class="ai-processing-animation">
                     <div class="scanner-animation">
@@ -2201,7 +2201,7 @@
             await clearTemporaryUploads();
             axonEyeResults = "";
             toggleMonitorView('axon-eye');
-            axonEyeResultsPreview.innerHTML = '';
+            examsResultsPreview.innerHTML = ''; // Garante que a outra aba esteja limpa
             axonEyeResultsPreview.innerHTML = `
                 <div class="ai-processing-animation">
                     <div class="scanner-animation">
