@@ -1893,6 +1893,17 @@
         const saveAxonEyeResultsToFirestore = async (username, data) => { try { await setDoc(doc(db, "sessions", username), { axonEyeResults: data, lastUpdated: new Date() }, { merge: true }); } catch (e) { console.error("Erro ao salvar Axon Eye: ", e); } };
         const updateMonitorStateInFirestore = async (username, state) => { try { await setDoc(doc(db, "sessions", username), { monitorState: { ...state, lastUpdated: new Date() } }, { merge: true }); } catch (e) { console.error("Erro ao salvar estado do monitor: ", e); } };
         
+        const setAnalyzingStateInFirestore = async (isAnalyzing, analysisType = null) => {
+            if (!isLoggedIn || !currentUser) return;
+            try {
+                await setDoc(doc(db, "sessions", currentUser), {
+                    isAnalyzing: { status: isAnalyzing, type: analysisType }
+                }, { merge: true });
+            } catch (e) {
+                console.error("Erro ao atualizar estado de análise:", e);
+            }
+        };
+        
         const objectsAreEqual = (obj1, obj2) => {
             const keys1 = Object.keys(obj1);
             const keys2 = Object.keys(obj2);
@@ -1909,13 +1920,60 @@
             unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    if (data.anamnesis && !objectsAreEqual(data.anamnesis, anamnesis)) { anamnesis = data.anamnesis; updateAnamnesisPreview(false); }
-                    if (data.examsResults && data.examsResults !== examsResults) { examsResults = data.examsResults; updateExamsResultsPreview(false); }
-                    if (data.axonEyeResults && data.axonEyeResults !== axonEyeResults) { axonEyeResults = data.axonEyeResults; updateAxonEyeResultsPreview(false); }
-                    if (data.monitorState && data.monitorState.activeView !== currentMonitorView) toggleMonitorView(data.monitorState.activeView, true);
+
+                    // Handle analysis state synchronization
+                    if (data.isAnalyzing && data.isAnalyzing.status) {
+                        const type = data.isAnalyzing.type;
+                        const animationHTML = `
+                            <div class="ai-processing-animation">
+                                <div class="scanner-animation">
+                                    <div class="brain-icon"><i class="fas fa-brain"></i></div>
+                                    <div class="scanner-line"></div>
+                                </div>
+                                <span>Analisando Imagens...</span>
+                            </div>`;
+                        
+                        if (type === 'exams') {
+                            if (currentMonitorView !== 'exams') toggleMonitorView('exams', true);
+                            if (!examsResultsPreview.querySelector('.ai-processing-animation')) {
+                                examsResultsPreview.innerHTML = animationHTML;
+                            }
+                        } else if (type === 'axon-eye') {
+                            if (currentMonitorView !== 'axon-eye') toggleMonitorView('axon-eye', true);
+                            if (!axonEyeResultsPreview.querySelector('.ai-processing-animation')) {
+                                axonEyeResultsPreview.innerHTML = animationHTML;
+                            }
+                        }
+                    }
+
+                    // Always process content updates. This will replace the animation when results are ready.
+                    if (data.anamnesis && !objectsAreEqual(data.anamnesis, anamnesis)) {
+                        anamnesis = data.anamnesis;
+                        updateAnamnesisPreview(false);
+                    }
+                    if (data.examsResults !== undefined && data.examsResults !== examsResults) {
+                        examsResults = data.examsResults;
+                        updateExamsResultsPreview(false);
+                    }
+                    if (data.axonEyeResults !== undefined && data.axonEyeResults !== axonEyeResults) {
+                        axonEyeResults = data.axonEyeResults;
+                        updateAxonEyeResultsPreview(false);
+                    }
+                    if (data.monitorState && data.monitorState.activeView !== currentMonitorView) {
+                        // Avoid view switching if an analysis is active, as it's already handled by the logic above
+                        if (!data.isAnalyzing || !data.isAnalyzing.status) {
+                            toggleMonitorView(data.monitorState.activeView, true);
+                        }
+                    }
+
                 } else {
-                    anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" }; examsResults = ""; axonEyeResults = "";
-                    updateAnamnesisPreview(false); updateExamsResultsPreview(false); updateAxonEyeResultsPreview(false);
+                    // Reset local state if session document is deleted
+                    anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+                    examsResults = "";
+                    axonEyeResults = "";
+                    updateAnamnesisPreview(false);
+                    updateExamsResultsPreview(false);
+                    updateAxonEyeResultsPreview(false);
                 }
             });
         };
@@ -2178,6 +2236,7 @@
             if (capturedImages.length === 0) return appendOutput("Nenhuma imagem de exame para analisar.", "info");
             
             toggleMonitorView('exams');
+            await setAnalyzingStateInFirestore(true, 'exams');
 
             examsResultsPreview.innerHTML = `
                 <div class="ai-processing-animation">
@@ -2197,6 +2256,7 @@
                 appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
                 updateExamsResultsPreview(); // Clear animation on error
             } finally {
+                await setAnalyzingStateInFirestore(false);
                 stopCamera(); capturedImages = []; updateAlbumCount();
             }
         };
@@ -2207,6 +2267,7 @@
             await clearTemporaryUploads();
             
             toggleMonitorView('axon-eye');
+            await setAnalyzingStateInFirestore(true, 'axon-eye');
             
             axonEyeResultsPreview.innerHTML = `
                 <div class="ai-processing-animation">
@@ -2243,6 +2304,7 @@
                 await clearTemporaryUploads();
                  updateAxonEyeResultsPreview(); // Clear animation on error
             } finally {
+                await setAnalyzingStateInFirestore(false);
                 stopCamera(); capturedImages = []; updateAlbumCount();
             }
         };
