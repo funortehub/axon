@@ -2317,7 +2317,7 @@ Seja técnico, objetivo e resumido.`;
             await setAnalyzingStateInFirestore(true, 'exams');
 
             try {
-                const prompt = `Analise as imagens de exames. Retorne os resultados em tópicos. Se houver alteração, adicione "(Alterado)" ou "(Anormal)". Exemplo: Glicose: 90 mg/dL (Alterado) Hemoglobina Glicada: 7.2%. Retorne apenas a lista de resultados.`;
+                const prompt = `Você é um assistente especialista em análise de exames médicos. Sua tarefa é extrair e transcrever os dados dos exames fornecidos nas imagens. Siga estas regras ESTRITAMENTE:\n\n1. **Resultados Laboratoriais:** Transcreva os resultados em formato de lista (tópicos). Se um valor estiver alterado, adicione "(Alterado)" ou "(Anormal)" ao final da linha. Exemplo: Glicose: 90 mg/dL (Alterado).\n2. **Laudos de Imagem (Tomografia, Ressonância, etc.):** Se a imagem for um laudo de texto, você DEVE transcrever o texto do laudo completo, palavra por palavra, sem fazer NENHUMA alteração ou resumo. Mantenha a formatação original do laudo o máximo possível.\n3. **Sem Frases Introdutórias:** NUNCA comece sua resposta com frases como "Aqui estão os resultados...", "Analisando os exames...", ou qualquer outra introdução. Retorne APENAS a lista de resultados ou o texto do laudo diretamente.`;
                 const response = await callGeminiVisionAPI(capturedImages, prompt);
                 
                 await setDoc(doc(db, "sessions", currentUser), {
