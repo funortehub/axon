@@ -650,6 +650,159 @@
             padding: 10px;
             border-radius: 5px;
         }
+        
+        /* Mobile 2.0 Mode Styles */
+        .mobile-2-0-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            gap: 20px;
+            height: calc(100vh - 65px - 40px);
+        }
+
+        .mobile-btn {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--text-color);
+            text-decoration: none;
+            text-align: center;
+            box-shadow: var(--glass-shadow);
+            transition: transform 0.2s ease, background-color 0.3s ease;
+        }
+        .mobile-btn:active {
+            transform: scale(0.97);
+            background-color: var(--button-hover-bg);
+        }
+        .mobile-btn i {
+            font-size: 36px;
+            color: var(--prompt-color);
+        }
+        .mobile-btn span {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        /* Chatbox Modal Styles */
+        .chatbox-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--bg-gradient);
+            z-index: 1000;
+            flex-direction: column;
+        }
+        .chatbox-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--glass-border);
+            height: 65px;
+            flex-shrink: 0;
+        }
+        .chatbox-title { font-size: 20px; font-weight: bold; color: var(--header-text-color); }
+        .chatbox-close-btn { font-size: 24px; cursor: pointer; color: var(--text-color); }
+        .chatbox-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .chat-message {
+            display: flex;
+            max-width: 80%;
+            animation: fadeIn 0.5s ease;
+        }
+        .chat-message.user { align-self: flex-end; }
+        .chat-message.ai { align-self: flex-start; }
+        .message-bubble {
+            padding: 10px 15px;
+            border-radius: 18px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .chat-message.user .message-bubble {
+            background-color: var(--highlight-color);
+            color: var(--highlight-text-color);
+            border-bottom-right-radius: 4px;
+        }
+        .chat-message.ai .message-bubble {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-color);
+            border-bottom-left-radius: 4px;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .typing-indicator span {
+            height: 8px; width: 8px;
+            margin: 0 1px;
+            background-color: var(--prompt-color);
+            display: inline-block;
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: bob 1s infinite;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+        .chatbox-input-area {
+            padding: 15px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .chatbox-input {
+            flex: 1;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 12px 15px;
+            color: var(--text-color);
+            font-size: 16px;
+        }
+        .chatbox-input:focus { outline: none; border-color: var(--highlight-color); }
+        .chatbox-send-btn {
+            background-color: var(--highlight-color);
+            color: var(--highlight-text-color);
+            border: none;
+            border-radius: 50%;
+            width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .chatbox-send-btn:active { transform: scale(0.9); }
+        
+        /* Admin Debug Toggle Switch */
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--button-bg); transition: .4s; border-radius: 28px; border: 1px solid var(--border-color); }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--highlight-color); }
+        input:checked + .slider:before { transform: translateX(22px); }
 
         @media (max-width: 768px) {
             .container { flex-direction: column-reverse; padding: 10px; gap: 10px; }
@@ -831,6 +984,25 @@
             </div>
         </div>
     </div>
+    
+    <div id="mobile-2-0-container" class="mobile-2-0-container" style="display: none;">
+        <button id="mobile-btn-exames" class="mobile-btn">
+            <i class="fas fa-file-medical-alt"></i>
+            <span>Analisar Exames</span>
+        </button>
+        <button id="mobile-btn-see" class="mobile-btn">
+            <i class="fas fa-eye"></i>
+            <span>Análise Axon Eye</span>
+        </button>
+        <button id="mobile-btn-records" class="mobile-btn">
+            <i class="fas fa-book-medical"></i>
+            <span>Prontuários</span>
+        </button>
+        <button id="mobile-btn-chat" class="mobile-btn">
+            <i class="fas fa-brain"></i>
+            <span>Axon AI Chat</span>
+        </button>
+    </div>
 
     <div class="footer">
         <span>AXON | Sistema médico inteligente desenvolvido por Ian Bastos</span>
@@ -936,6 +1108,7 @@
             <div class="admin-tabs">
                 <button class="admin-tab-btn active" data-tab="users">Usuários</button>
                 <button class="admin-tab-btn" data-tab="api">API</button>
+                <button class="admin-tab-btn" data-tab="debug">Debug</button>
             </div>
 
             <div id="tab-users" class="admin-tab-content">
@@ -959,6 +1132,10 @@
                 <div id="admin-settings-body">
                 </div>
             </div>
+            
+            <div id="tab-debug" class="admin-tab-content" style="display: none;">
+                <div id="admin-debug-body"></div>
+            </div>
         </div>
     </div>
 
@@ -973,6 +1150,20 @@
             </div>
         </div>
     </div>
+    
+    <div id="chatbox-modal" class="chatbox-modal">
+        <div class="chatbox-header">
+            <span class="chatbox-title">Axon AI Chat</span>
+            <i id="chatbox-close-btn" class="fas fa-times chatbox-close-btn"></i>
+        </div>
+        <div class="chatbox-messages" id="chatbox-messages">
+        </div>
+        <div class="chatbox-input-area">
+            <input type="text" id="chatbox-input" class="chatbox-input" placeholder="Faça uma pergunta...">
+            <button id="chatbox-send-btn" class="chatbox-send-btn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1072,6 +1263,7 @@
         const adminPanelModal = document.getElementById('admin-panel-modal');
         const adminPanelClose = adminPanelModal.querySelector('.app-modal-close');
         const adminSettingsBody = document.getElementById('admin-settings-body');
+        const adminDebugBody = document.getElementById('admin-debug-body');
         const adminUsersList = document.getElementById('admin-users-list');
         const adminUserDetails = document.getElementById('admin-user-details');
         const adminUserSearch = document.getElementById('admin-user-search');
@@ -1085,6 +1277,18 @@
         const statusTextApi = document.querySelector('.status-text-api');
         const statusTextMic = document.querySelector('.status-text-mic');
         const statusTextCam = document.querySelector('.status-text-cam');
+        
+        // Mobile 2.0 Elements
+        const mobile2_0_container = document.getElementById('mobile-2-0-container');
+        const mobileBtnExames = document.getElementById('mobile-btn-exames');
+        const mobileBtnSee = document.getElementById('mobile-btn-see');
+        const mobileBtnRecords = document.getElementById('mobile-btn-records');
+        const mobileBtnChat = document.getElementById('mobile-btn-chat');
+        const chatboxModal = document.getElementById('chatbox-modal');
+        const chatboxCloseBtn = document.getElementById('chatbox-close-btn');
+        const chatboxMessages = document.getElementById('chatbox-messages');
+        const chatboxInput = document.getElementById('chatbox-input');
+        const chatboxSendBtn = document.getElementById('chatbox-send-btn');
         
         let isListening = false;
         let isLoggedIn = false;
@@ -1156,7 +1360,8 @@
             openRouterKey: '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',
             openRouterModel: 'x-ai/grok-4.1-fast:free',
             groqKey: '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',
-            groqModel: 'llama-3.3-70b-versatile'
+            groqModel: 'llama-3.3-70b-versatile',
+            mobile2_0_enabled: false
         };
 
         let currentApiKeyIndex = 0;
@@ -1864,9 +2069,10 @@ Seja técnico, objetivo e resumido.`;
             try {
                 const response = await callGeminiAPI(prompt);
                 conversationHistory.push({ role: 'assistant', content: response });
-                appendOutput(`Pergunta: ${question}\nResposta: ${response}`, "output");
+                return response;
             } catch (error) {
-                appendOutput(`Erro ao processar pergunta: ${error.message}`, "error");
+                console.error(`Erro ao processar pergunta: ${error.message}`);
+                throw error;
             }
         };
         
@@ -2081,6 +2287,17 @@ Seja técnico, objetivo e resumido.`;
                 }
             });
         };
+        
+        const applySettings = () => {
+             if (isMobile && globalSettings.mobile2_0_enabled) {
+                document.querySelector('.container').style.display = 'none';
+                mobile2_0_container.style.display = 'flex';
+            } else {
+                document.querySelector('.container').style.display = 'flex';
+                mobile2_0_container.style.display = 'none';
+            }
+            initializeAIModel();
+        };
 
         const setupGlobalSettingsListener = () => {
             if (unsubscribeSettings) unsubscribeSettings();
@@ -2099,14 +2316,20 @@ Seja técnico, objetivo e resumido.`;
                         openRouterKey: data.openRouterKey || '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',
                         openRouterModel: data.openRouterModel || 'x-ai/grok-4.1-fast:free',
                         groqKey: data.groqKey || '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',
-                        groqModel: data.groqModel || 'llama-3.3-70b-versatile'
+                        groqModel: data.groqModel || 'llama-3.3-70b-versatile',
+                        mobile2_0_enabled: data.mobile2_0_enabled || false
                     };
                     
-                    if (adminPanelModal.style.display === 'flex' && document.querySelector('.admin-tab-btn[data-tab="api"]').classList.contains('active')) {
-                        renderAdminSettingsUI();
+                    if (adminPanelModal.style.display === 'flex') {
+                       if (document.querySelector('.admin-tab-btn[data-tab="api"]').classList.contains('active')) {
+                           renderAdminSettingsUI();
+                       }
+                       if (document.querySelector('.admin-tab-btn[data-tab="debug"]').classList.contains('active')) {
+                           renderAdminDebugUI();
+                       }
                     }
                     
-                    initializeAIModel();
+                    applySettings();
                 } else {
                     setDoc(docRef, globalSettings);
                 }
@@ -2165,7 +2388,7 @@ Seja técnico, objetivo e resumido.`;
         };
         
         const updateBlockedUI = () => {
-            const buttons = document.querySelectorAll('.action-button');
+            const buttons = document.querySelectorAll('.action-button, .mobile-btn');
             if (isUserBlocked) {
                 appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
                 buttons.forEach(btn => btn.classList.add('blocked-ui'));
@@ -2174,6 +2397,7 @@ Seja técnico, objetivo e resumido.`;
                 patientListModal.style.display = 'none';
                 savePatientModal.style.display = 'none';
                 adminPanelModal.style.display = 'none';
+                chatboxModal.style.display = 'none';
             } else {
                  appendOutput("Sua conta foi desbloqueada.", "success");
                  buttons.forEach(btn => btn.classList.remove('blocked-ui'));
@@ -2849,19 +3073,22 @@ Seja técnico, objetivo e resumido.`;
 
         const activateAdminTab = (tabName) => {
             adminTabButtons.forEach(btn => {
-                if (btn.dataset.tab === tabName) btn.classList.add('active');
-                else btn.classList.remove('active');
+                btn.dataset.tab === tabName ? btn.classList.add('active') : btn.classList.remove('active');
             });
 
             document.getElementById('tab-users').style.display = 'none';
             document.getElementById('tab-api').style.display = 'none';
+            document.getElementById('tab-debug').style.display = 'none';
+            
+            const tabContent = document.getElementById(`tab-${tabName}`);
+            if(tabContent) tabContent.style.display = 'flex';
 
             if (tabName === 'users') {
-                document.getElementById('tab-users').style.display = 'flex';
                 loadAdminUsersData();
             } else if (tabName === 'api') {
-                document.getElementById('tab-api').style.display = 'flex';
                 renderAdminSettingsUI();
+            } else if (tabName === 'debug') {
+                renderAdminDebugUI();
             }
         };
 
@@ -3014,6 +3241,28 @@ Seja técnico, objetivo e resumido.`;
             }
 
             adminSettingsBody.innerHTML = html;
+        };
+
+        const renderAdminDebugUI = () => {
+            adminDebugBody.innerHTML = `
+                <div class="admin-section">
+                    <div class="admin-section-title">Layout</div>
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span>Modo Mobile 2.0 (Interface simplificada)</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="mobile-2-0-toggle" ${globalSettings.mobile2_0_enabled ? 'checked' : ''}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            `;
+            document.getElementById('mobile-2-0-toggle').addEventListener('change', async (e) => {
+                try {
+                    await setDoc(doc(db, "settings", "global"), { mobile2_0_enabled: e.target.checked }, { merge: true });
+                } catch (err) {
+                    console.error("Erro ao salvar modo Mobile 2.0:", err);
+                }
+            });
         };
 
         window.updateProvider = async (provider) => {
@@ -3409,9 +3658,70 @@ ${instruction}
             }
         };
 
-
         const closePrescriptionHelper = () => {
             prescriptionHelperModal.style.display = 'none';
+        };
+
+        const openChatbox = () => {
+            chatboxMessages.innerHTML = '';
+            // Populate with existing history
+            conversationHistory.forEach(msg => {
+                appendChatMessage(msg.content, msg.role);
+            });
+            chatboxModal.style.display = 'flex';
+            chatboxInput.focus();
+        };
+
+        const closeChatbox = () => {
+            chatboxModal.style.display = 'none';
+        };
+
+        const appendChatMessage = (message, sender, isTyping = false) => {
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = `chat-message ${sender}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+
+            if (isTyping) {
+                bubble.innerHTML = `<div class="typing-indicator"><span></span><span></span><span></span></div>`;
+                messageWrapper.id = 'typing-indicator-message';
+            } else {
+                bubble.textContent = message;
+            }
+            
+            messageWrapper.appendChild(bubble);
+            chatboxMessages.appendChild(messageWrapper);
+            chatboxMessages.scrollTop = chatboxMessages.scrollHeight;
+        };
+
+        const updateLastChatMessage = (newMessage) => {
+            const typingIndicator = document.getElementById('typing-indicator-message');
+            if (typingIndicator) {
+                const bubble = typingIndicator.querySelector('.message-bubble');
+                bubble.innerHTML = ''; // Clear typing dots
+                bubble.textContent = newMessage;
+                typingIndicator.id = ''; // Remove ID to prevent it from being targeted again
+            }
+             chatboxMessages.scrollTop = chatboxMessages.scrollHeight;
+        };
+        
+        const sendChatMessage = async () => {
+            const question = chatboxInput.value.trim();
+            if (!question) return;
+
+            appendChatMessage(question, 'user');
+            chatboxInput.value = '';
+            chatboxInput.focus();
+            
+            appendChatMessage('', 'ai', true);
+
+            try {
+                const response = await askQuestionBasedOnContext(question);
+                updateLastChatMessage(response);
+            } catch (error) {
+                updateLastChatMessage(`Ocorreu um erro: ${error.message}`);
+            }
         };
 
         adminUserSearch.addEventListener('input', (e) => {
@@ -3499,7 +3809,12 @@ ${instruction}
                     const questionAsk = command.substring(4).trim();
                     if (!questionAsk) { appendOutput("Uso: /ask [pergunta contextual]", "error"); break; }
                     appendOutput("Processando pergunta contextual...", "info");
-                    await askQuestionBasedOnContext(questionAsk);
+                    try {
+                        const response = await askQuestionBasedOnContext(questionAsk);
+                        appendOutput(`Pergunta: ${questionAsk}\nResposta: ${response}`, "output");
+                    } catch (error) {
+                         appendOutput(`Erro ao processar pergunta: ${error.message}`, "error");
+                    }
                     break;
                 case '/api-set': openAdminAuth(); break;
                 case '/api':
@@ -3581,6 +3896,15 @@ ${instruction}
             patientListModal.style.display = 'none';
             openSaveModal();
         });
+        
+        // Mobile 2.0 Button Listeners
+        mobileBtnExames.addEventListener('click', () => checkBlockedAndExecute(() => startCamera('exams')));
+        mobileBtnSee.addEventListener('click', () => checkBlockedAndExecute(() => startCamera('axon-eye')));
+        mobileBtnRecords.addEventListener('click', () => checkBlockedAndExecute(loadPatientList));
+        mobileBtnChat.addEventListener('click', () => checkBlockedAndExecute(openChatbox));
+        chatboxCloseBtn.addEventListener('click', closeChatbox);
+        chatboxSendBtn.addEventListener('click', sendChatMessage);
+        chatboxInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChatMessage(); });
 
         adminAuthClose.addEventListener('click', () => adminAuthModal.style.display = 'none');
         adminAuthButton.addEventListener('click', checkAdminAuth);
@@ -3702,7 +4026,9 @@ ${instruction}
 
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
-                    if (fullscreenModal.style.display === 'block') {
+                    if (chatboxModal.style.display === 'flex') {
+                        closeChatbox();
+                    } else if (fullscreenModal.style.display === 'block') {
                         fullscreenModal.style.display = 'none';
                     } else if (albumModal.style.display === 'flex') {
                         closeAlbumModal();
@@ -3748,4 +4074,3 @@ ${instruction}
         
     </script>
 </body>
-</html>
