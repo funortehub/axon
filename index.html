@@ -2416,12 +2416,23 @@ Seja técnico, objetivo e resumido.`;
                 const prompt = `Analise as imagens e forneça uma opinião clínica detalhada. Descreva achados, lesões, ou sintomas. Ao final, inclua uma seção "Impressão Diagnóstica:" ou "Interpretação Clínica:" com sua conclusão. Seja descritivo e clinicamente relevante.`;
                 
                 let fullResponse = "";
+                let imagesForApiCall;
 
-                if (globalSettings.apiProvider === 'groq' && capturedImages.length > 5) {
-                    appendOutput(`Groq: Detectadas ${capturedImages.length} imagens. Enviando em lotes de até 5...`, "info", false);
+                // Decide the image source based on provider
+                if (globalSettings.apiProvider === 'openrouter') {
+                    // OpenRouter needs URLs, which we have from Imgur
+                    imagesForApiCall = temporaryImgurUploads.map(upload => upload.link);
+                } else {
+                    // Gemini and Groq need base64 data
+                    imagesForApiCall = capturedImages;
+                }
+
+                // Decide on batching
+                if (globalSettings.apiProvider === 'groq' && imagesForApiCall.length > 5) {
+                    appendOutput(`Groq: Detectadas ${imagesForApiCall.length} imagens. Enviando em lotes de até 5...`, "info", false);
                     const chunks = [];
-                    for (let i = 0; i < capturedImages.length; i += 5) {
-                        chunks.push(capturedImages.slice(i, i + 5));
+                    for (let i = 0; i < imagesForApiCall.length; i += 5) {
+                        chunks.push(imagesForApiCall.slice(i, i + 5));
                     }
                     for (let i = 0; i < chunks.length; i++) {
                         appendOutput(`Enviando lote ${i + 1}/${chunks.length}...`, "info", false);
@@ -2429,12 +2440,10 @@ Seja técnico, objetivo e resumido.`;
                         fullResponse += chunkResponse + "\n\n";
                     }
                 } else {
-                    const imagesForApiCall = globalSettings.apiProvider === 'gemini' 
-                        ? capturedImages 
-                        : temporaryImgurUploads.map(upload => upload.link);
+                    // No batching needed
                     fullResponse = await callGeminiVisionAPI(imagesForApiCall, prompt);
                 }
-
+                
                 await setDoc(doc(db, "sessions", currentUser), {
                     axonEyeResults: fullResponse.trim(),
                     isAnalyzing: { status: false, type: null }
