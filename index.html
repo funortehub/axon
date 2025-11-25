@@ -2234,13 +2234,16 @@ Seja técnico, objetivo e resumido.`;
             }
         };
 
-
         const startCamera = async (mode) => {
-            // Limpa os resultados anteriores ao iniciar a câmera para uma nova análise
+            // Limpa estado anterior para uma nova análise
             examsResults = "";
             axonEyeResults = "";
+            capturedImages = [];
             examsResultsPreview.innerHTML = '<div class="info">Nenhum exame analisado ainda.</div>';
             axonEyeResultsPreview.innerHTML = '<div class="info">Nenhuma análise visual feita ainda.</div>';
+            updateAlbumCount();
+            sendExamsButton.classList.add('disabled');
+            sendAxonEyeButton.classList.add('disabled');
             
             cameraMode = mode;
             cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
@@ -2270,7 +2273,6 @@ Seja técnico, objetivo e resumido.`;
 
                 cameraStatus.classList.remove('status-off');
                 appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}.`, "info");
-                updateAlbumCount();
 
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 if (devices.filter(d => d.kind === 'videoinput').length > 1) {
@@ -2295,6 +2297,7 @@ Seja técnico, objetivo e resumido.`;
             }
             cameraStatus.classList.add('status-off');
         };
+
         const stopCamera = () => {
             stopCameraStreamOnly();
             cameraModal.style.display = 'none';
@@ -2304,6 +2307,15 @@ Seja técnico, objetivo e resumido.`;
             }
             toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView);
         };
+
+        const cancelCamera = () => {
+            stopCamera();
+            capturedImages = [];
+            updateAlbumCount();
+            sendExamsButton.classList.add('disabled');
+            sendAxonEyeButton.classList.add('disabled');
+        };
+
         const switchCamera = async () => { currentCameraFacingMode = (currentCameraFacingMode === 'user') ? 'environment' : 'user'; await startCamera(cameraMode); };
         const toggleFlashlight = async () => {
             if (!cameraStream) return;
@@ -2316,7 +2328,7 @@ Seja técnico, objetivo e resumido.`;
         const handleFileUpload = (event) => { for (const file of event.target.files) { if (file.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = (e) => addCapturedImage(e.target.result); reader.readAsDataURL(file); } } };
         const addCapturedImage = (imageDataURL) => { capturedImages.push(imageDataURL); updateAlbumCount(); sendExamsButton.classList.remove('disabled'); sendAxonEyeButton.classList.remove('disabled'); };
         const removeCapturedImage = (imageDataURL) => { capturedImages = capturedImages.filter(url => url !== imageDataURL); updateAlbumCount(); if (capturedImages.length === 0) { sendExamsButton.classList.add('disabled'); sendAxonEyeButton.classList.add('disabled'); } renderAlbum(); };
-        const updateAlbumCount = () => { albumCount.textContent = capturedImages.length; albumButton.style.display = 'flex'; };
+        const updateAlbumCount = () => { albumCount.textContent = capturedImages.length; albumButton.style.display = capturedImages.length > 0 ? 'flex' : 'none'; };
         const openAlbumModal = () => { renderAlbum(); albumModal.style.display = 'flex'; };
         const closeAlbumModal = () => { albumModal.style.display = 'none'; };
         const renderAlbum = () => {
@@ -2344,11 +2356,27 @@ Seja técnico, objetivo e resumido.`;
             await setAnalyzingStateInFirestore(true, 'exams');
 
             try {
-                const prompt = `Você é um assistente especialista em análise de exames médicos. Sua tarefa é extrair e transcrever os dados dos exames fornecidos nas imagens. Siga estas regras ESTRITAMENTE:\n\n1. **Resultados Laboratoriais:** Transcreva os resultados em formato de lista (tópicos). Se um valor estiver alterado, adicione "(Alterado)" ou "(Anormal)" ao final da linha. Exemplo: Glicose: 90 mg/dL (Alterado).\n2. **Laudos de Imagem (Tomografia, Ressonância, etc.):** Se a imagem for um laudo de texto, você DEVE transcrever o texto do laudo completo, palavra por palavra, sem fazer NENHUMA alteração ou resumo. Mantenha a formatação original do laudo o máximo possível.\n3. **Sem Frases Introdutórias:** NUNCA comece sua resposta com frases como "Aqui estão os resultados...", "Analisando os exames...", ou qualquer outra introdução. Retorne APENAS a lista de resultados ou o texto do laudo diretamente.`;
-                const response = await callGeminiVisionAPI(capturedImages, prompt);
+                const prompt = `Você é um assistente especialista em análise de exames médicos. Sua tarefa é extrair e transcrever os dados dos exames fornecidos. Siga estas regras ESTRITAMENTE:\n\n1. **Resultados Laboratoriais:** Transcreva os resultados em formato de lista. Se um valor estiver alterado, adicione "(Alterado)" ao final da linha. Exemplo: Glicose: 90 mg/dL (Alterado).\n2. **Laudos de Imagem:** Se for um laudo de texto, transcreva o texto completo, palavra por palavra, sem NENHUMA alteração ou resumo.\n3. **Formato Rígido:** NUNCA comece sua resposta com frases como "Aqui estão os resultados...", "Analisando os exames...", etc. Sua resposta DEVE começar DIRETAMENTE com o primeiro item do resultado. Retorne APENAS a lista de resultados ou o texto do laudo.`;
+                
+                let fullResponse = "";
+
+                if (globalSettings.apiProvider === 'groq' && capturedImages.length > 5) {
+                    appendOutput(`Groq: Detectadas ${capturedImages.length} imagens. Enviando em lotes de até 5...`, "info", false);
+                    const chunks = [];
+                    for (let i = 0; i < capturedImages.length; i += 5) {
+                        chunks.push(capturedImages.slice(i, i + 5));
+                    }
+                    for (let i = 0; i < chunks.length; i++) {
+                        appendOutput(`Enviando lote ${i + 1}/${chunks.length}...`, "info", false);
+                        const chunkResponse = await callGeminiVisionAPI(chunks[i], prompt);
+                        fullResponse += chunkResponse + "\n";
+                    }
+                } else {
+                    fullResponse = await callGeminiVisionAPI(capturedImages, prompt);
+                }
                 
                 await setDoc(doc(db, "sessions", currentUser), {
-                    examsResults: response,
+                    examsResults: fullResponse.trim(),
                     isAnalyzing: { status: false, type: null }
                 }, { merge: true });
 
@@ -2387,14 +2415,28 @@ Seja técnico, objetivo e resumido.`;
 
                 const prompt = `Analise as imagens e forneça uma opinião clínica detalhada. Descreva achados, lesões, ou sintomas. Ao final, inclua uma seção "Impressão Diagnóstica:" ou "Interpretação Clínica:" com sua conclusão. Seja descritivo e clinicamente relevante.`;
                 
-                const imagesForApiCall = globalSettings.apiProvider === 'gemini' 
-                    ? capturedImages 
-                    : temporaryImgurUploads.map(upload => upload.link);
+                let fullResponse = "";
 
-                const response = await callGeminiVisionAPI(imagesForApiCall, prompt);
-                
+                if (globalSettings.apiProvider === 'groq' && capturedImages.length > 5) {
+                    appendOutput(`Groq: Detectadas ${capturedImages.length} imagens. Enviando em lotes de até 5...`, "info", false);
+                    const chunks = [];
+                    for (let i = 0; i < capturedImages.length; i += 5) {
+                        chunks.push(capturedImages.slice(i, i + 5));
+                    }
+                    for (let i = 0; i < chunks.length; i++) {
+                        appendOutput(`Enviando lote ${i + 1}/${chunks.length}...`, "info", false);
+                        const chunkResponse = await callGeminiVisionAPI(chunks[i], prompt);
+                        fullResponse += chunkResponse + "\n\n";
+                    }
+                } else {
+                    const imagesForApiCall = globalSettings.apiProvider === 'gemini' 
+                        ? capturedImages 
+                        : temporaryImgurUploads.map(upload => upload.link);
+                    fullResponse = await callGeminiVisionAPI(imagesForApiCall, prompt);
+                }
+
                 await setDoc(doc(db, "sessions", currentUser), {
-                    axonEyeResults: response,
+                    axonEyeResults: fullResponse.trim(),
                     isAnalyzing: { status: false, type: null }
                 }, { merge: true });
 
@@ -3496,10 +3538,10 @@ ${instruction}
         fileInput.addEventListener('change', handleFileUpload);
         sendExamsButton.addEventListener('click', analyzeExams);
         sendAxonEyeButton.addEventListener('click', analyzeAxonEye);
-        cancelCameraButton.addEventListener('click', stopCamera);
+        cancelCameraButton.addEventListener('click', cancelCamera);
         cameraSwitchButton.addEventListener('click', switchCamera);
         flashlightButton.addEventListener('click', toggleFlashlight);
-        cameraCloseBtn.addEventListener('click', stopCamera);
+        cameraCloseBtn.addEventListener('click', cancelCamera);
         toggleAnamnesisButton.addEventListener('click', () => toggleMonitorView('anamnesis'));
         toggleExamsButton.addEventListener('click', () => toggleMonitorView('exams'));
         toggleAxonEyeButton.addEventListener('click', () => toggleMonitorView('axon-eye'));
