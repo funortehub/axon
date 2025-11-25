@@ -1489,6 +1489,31 @@
             }
         };
 
+        const compressImage = (dataUrl, quality = 0.7, maxWidth = 1024) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    let { width, height } = img;
+
+                    if (width > maxWidth) {
+                        height = (maxWidth / width) * height;
+                        width = maxWidth;
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                    resolve(compressedDataUrl);
+                };
+                img.onerror = (err) => reject(err);
+                img.src = dataUrl;
+            });
+        };
+
         const callOpenRouterAPI = async (prompt, images = []) => {
             const modelName = globalSettings.openRouterModel || 'x-ai/grok-4.1-fast:free';
             const apiKey = globalSettings.openRouterKey;
@@ -1556,70 +1581,17 @@
             appendOutput(`Conectando via Groq (${modelName})...`, "info", false);
 
             try {
-                // Special handling for multiple images to avoid 413 Payload Too Large error from Groq
-                if (images.length > 1) {
-                    appendOutput(`Groq: Analisando ${images.length} imagens sequencialmente...`, "info", false);
-                    let combinedResponse = "";
-
-                    for (let i = 0; i < images.length; i++) {
-                        const image = images[i];
-                        await updateAnalysisProgressInFirestore(`${i + 1}/${images.length}`);
-                        
-                        const sequentialPrompt = `TAREFA CRÍTICA: Transcreva o texto visível na imagem fornecida. NADA MAIS. Siga estas regras:\n1. Se for um laudo, copie o texto EXATAMENTE como está.\n2. Se forem resultados de laboratório, liste-os. Adicione "(Alterado)" se aplicável.\n3. NÃO adicione introduções, conclusões, valores de referência ou qualquer texto que não esteja na imagem. Sua resposta deve ser apenas a transcrição direta. Esta é a imagem ${i + 1} de ${images.length}.`;
-                        
-                        const messages = [{
-                            role: "user",
-                            content: [
-                                { type: "text", text: sequentialPrompt },
-                                { type: "image_url", image_url: { url: image } }
-                            ]
-                        }];
-
-                        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                            method: "POST",
-                            headers: {
-                                "Authorization": `Bearer ${apiKey}`,
-                                "Content-Type": "application/json"
-                            },
-                            body: JSON.stringify({
-                                model: modelName,
-                                messages: messages,
-                                temperature: 1,
-                                max_tokens: 8192,
-                                top_p: 1,
-                                stream: false,
-                                stop: null
-                            })
-                        });
-
-                        if (response.ok) {
-                            const data = await response.json();
-                            const content = data.choices?.[0]?.message?.content;
-                            if (content) {
-                                combinedResponse += (i > 0 ? `\n` : '') + content.trim();
-                            } else {
-                                combinedResponse += `\n\n--- Imagem ${i + 1} ---\n(Resposta vazia da IA)`;
-                            }
-                        } else {
-                             const errorData = await response.json().catch(() => ({}));
-                             const errorMessage = errorData.error?.message || `Erro na imagem ${i + 1}: ${response.status}`;
-                             combinedResponse += `\n\n--- Imagem ${i + 1} ---\nErro: ${errorMessage}`;
-                        }
-                    }
-
-                    await incrementUserUsage('vision'); // Increment once for the whole multi-image operation
-                    appendOutput(`Sucesso via Groq (processamento sequencial).`, "success", false);
-                    return combinedResponse.replace(/\*\*/g, '');
-                }
-
-                // Original logic for single image or no image
                 let messages = [];
+
                 if (images.length > 0) {
+                    appendOutput(`Comprimindo ${images.length} imagem(ns) para envio...`, "info", false);
                     const contentArray = [
                         { type: "text", text: prompt }
                     ];
 
-                    images.forEach(img => {
+                    const compressedImages = await Promise.all(images.map(img => compressImage(img, 0.7, 1024)));
+
+                    compressedImages.forEach(img => {
                         contentArray.push({
                             type: "image_url",
                             image_url: {
@@ -2031,21 +2003,10 @@ Seja técnico, objetivo e resumido.`;
             if (!isLoggedIn || !currentUser) return;
             try {
                 await setDoc(doc(db, "sessions", currentUser), {
-                    isAnalyzing: { status: isAnalyzing, type: analysisType, progress: '' }
+                    isAnalyzing: { status: isAnalyzing, type: analysisType }
                 }, { merge: true });
             } catch (e) {
                 console.error("Erro ao atualizar estado de análise:", e);
-            }
-        };
-
-        const updateAnalysisProgressInFirestore = async (progress) => {
-            if (!isLoggedIn || !currentUser) return;
-            try {
-                await setDoc(doc(db, "sessions", currentUser), {
-                    isAnalyzing: { progress: progress }
-                }, { merge: true });
-            } catch (e) {
-                console.error("Erro ao atualizar progresso da análise:", e);
             }
         };
         
@@ -2069,24 +2030,25 @@ Seja técnico, objetivo e resumido.`;
                     // Handle analysis state synchronization
                     if (data.isAnalyzing && data.isAnalyzing.status) {
                         const type = data.isAnalyzing.type;
-                        const progress = data.isAnalyzing.progress;
-                        const progressText = progress ? `Imagem ${progress}` : 'Analisando Imagens...';
-                        
                         const animationHTML = `
                             <div class="ai-processing-animation">
                                 <div class="scanner-animation">
                                     <div class="brain-icon"><i class="fas fa-brain"></i></div>
                                     <div class="scanner-line"></div>
                                 </div>
-                                <span>${progressText}</span>
+                                <span>Analisando Imagens...</span>
                             </div>`;
                         
                         if (type === 'exams') {
                             if (currentMonitorView !== 'exams') toggleMonitorView('exams', true);
-                            examsResultsPreview.innerHTML = animationHTML;
+                            if (!examsResultsPreview.querySelector('.ai-processing-animation')) {
+                                examsResultsPreview.innerHTML = animationHTML;
+                            }
                         } else if (type === 'axon-eye') {
                             if (currentMonitorView !== 'axon-eye') toggleMonitorView('axon-eye', true);
-                            axonEyeResultsPreview.innerHTML = animationHTML;
+                            if (!axonEyeResultsPreview.querySelector('.ai-processing-animation')) {
+                                axonEyeResultsPreview.innerHTML = animationHTML;
+                            }
                         }
                     }
 
