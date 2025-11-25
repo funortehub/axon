@@ -1565,10 +1565,13 @@
                         const image = images[i];
                         appendOutput(`Processando imagem ${i + 1} de ${images.length}...`, "info", false);
                         
+                        // Create a specific, contextual prompt for this image
+                        const sequentialPrompt = `Esta é a imagem ${i + 1} de um total de ${images.length}.\n\nSiga a instrução original ESTRITAMENTE para ESTA imagem específica:\n\n---\n${prompt}\n---\n\nLembre-se: transcreva APENAS o conteúdo desta imagem, conforme solicitado. Não adicione nenhum texto extra, como valores de referência, diagnósticos ou resumos que não estejam visíveis na imagem.`;
+                        
                         const messages = [{
                             role: "user",
                             content: [
-                                { type: "text", text: prompt },
+                                { type: "text", text: sequentialPrompt },
                                 { type: "image_url", image_url: { url: image } }
                             ]
                         }];
