@@ -438,9 +438,8 @@
         .album-modal-content, .patient-list-content, .patient-details-content { max-width: 800px; }
 
         .app-modal-header, .album-modal-header, .patient-list-header, .patient-details-header {
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex; align-items: center;
             border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;
-            position: relative;
         }
         
         .app-modal-title, .album-modal-title, .patient-list-title, .patient-details-title {
@@ -449,7 +448,7 @@
 
         .app-modal-close, .album-modal-close, .patient-list-close, .patient-details-close {
             color: var(--text-color); font-size: 28px; font-weight: bold; cursor: pointer;
-            transition: 0.3s; position: absolute; top: -5px; right: -5px;
+            transition: 0.3s; position: absolute; top: 15px; right: 20px;
         }
         .app-modal-close:hover, .album-modal-close:hover, .patient-list-close:hover, .patient-details-close:hover { color: var(--highlight-color); }
         
@@ -844,9 +843,9 @@
 
     <div id="album-modal" class="album-modal">
         <div class="album-modal-content">
+            <span class="album-modal-close">&times;</span>
             <div class="album-modal-header">
                 <div class="album-modal-title">Álbum de Exames</div>
-                <span class="album-modal-close">&times;</span>
             </div>
             <div id="album-grid" class="album-grid">
             </div>
@@ -855,9 +854,9 @@
 
     <div id="patient-list-modal" class="patient-list-modal">
         <div class="patient-list-content">
+            <span class="patient-list-close">&times;</span>
             <div class="patient-list-header">
                 <div class="patient-list-title">Pacientes Salvos</div>
-                <span class="patient-list-close">&times;</span>
             </div>
             <div class="patient-search-container">
                 <input type="text" id="patient-search-input" class="patient-search-input" placeholder="Pesquisar paciente...">
@@ -872,9 +871,9 @@
 
     <div id="patient-details-modal" class="patient-details-modal">
         <div class="patient-details-content">
+            <span class="patient-details-close">&times;</span>
             <div class="patient-details-header">
                 <div class="patient-details-title" id="patient-details-title">Detalhes do Paciente</div>
-                <span class="patient-details-close">&times;</span>
             </div>
             <div id="patient-details-body" class="patient-details-body">
             </div>
@@ -3700,6 +3699,30 @@ ${instruction}
             } else {
                 setTheme(systemPrefersLight ? 'light' : 'dark');
             }
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    if (fullscreenModal.style.display === 'block') {
+                        fullscreenModal.style.display = 'none';
+                    } else if (albumModal.style.display === 'flex') {
+                        closeAlbumModal();
+                    } else if (patientListModal.style.display === 'flex') {
+                        patientListModal.style.display = 'none';
+                    } else if (patientDetailsModal.style.display === 'flex') {
+                        patientDetailsModal.style.display = 'none';
+                    } else if (savePatientModal.style.display === 'flex') {
+                        closeSaveModal();
+                    } else if (adminAuthModal.style.display === 'flex') {
+                        adminAuthModal.style.display = 'none';
+                    } else if (adminPanelModal.style.display === 'flex') {
+                        adminPanelModal.style.display = 'none';
+                    } else if (prescriptionHelperModal.style.display === 'flex') {
+                        closePrescriptionHelper();
+                    } else if (cameraModal.style.display === 'flex') {
+                        cancelCamera();
+                    }
+                }
+            });
 
             if (isSpeechRecognitionSupported()) initSpeechRecognition();
             const savedUser = localStorage.getItem('axon_logged_in_user');
