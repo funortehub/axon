@@ -418,7 +418,7 @@
         .modal-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; }
         .modal-close:hover, .modal-close:focus { color: #bbb; text-decoration: none; cursor: pointer; }
 
-        .output .altered-text { color: var(--altered-color); font-weight: bold; margin-left: 10px; }
+        .output .altered-text { color: var(--altered-color); font-weight: bold; }
 
         .app-modal, .album-modal, .patient-list-modal, .patient-details-modal {
             display: none; position: fixed; z-index: 105; left: 0; top: 0;
@@ -1403,9 +1403,9 @@
                 formattedResults = examsResults.split('\n')
                     .filter(line => line.trim() !== '')
                     .map(line => {
-                        if (/\((Alterado|Anormal)\)/i.test(line)) {
-                            const cleanLine = line.replace(/\((Alterado|Anormal)\)/gi, '').trim();
-                            return `<div class="output">${cleanLine} <span class="altered-text">(Alterado)</span></div>`;
+                        if (/\(Alterado\)/i.test(line)) {
+                            // Use a regex replace to wrap only the "(Alterado)" part in a span
+                            return `<div class="output">${line.replace(/(\(Alterado\))/gi, '<span class="altered-text">$1</span>')}</div>`;
                         }
                         return `<div class="output">${line.trim()}</div>`;
                     }).join('');
@@ -1558,14 +1558,13 @@
             try {
                 // Special handling for multiple images to avoid 413 Payload Too Large error from Groq
                 if (images.length > 1) {
-                    appendOutput(`Groq: Analisando ${images.length} imagens sequencialmente...`, "info", false);
                     let combinedResponse = "";
 
                     for (let i = 0; i < images.length; i++) {
                         const image = images[i];
                         await updateAnalysisProgressInFirestore(`${i + 1}/${images.length}`);
                         
-                        const sequentialPrompt = `TAREFA CRÍTICA: Transcreva o texto visível na imagem fornecida. NADA MAIS. Siga estas regras:\n1. Se for um laudo, copie o texto EXATAMENTE como está.\n2. Se forem resultados de laboratório, liste-os. Adicione "(Alterado)" se aplicável.\n3. NÃO adicione introduções, conclusões, valores de referência ou qualquer texto que não esteja na imagem. Sua resposta deve ser apenas a transcrição direta. Esta é a imagem ${i + 1} de ${images.length}.`;
+                        const sequentialPrompt = `${prompt} Esta é a imagem ${i + 1} de ${images.length}. Lembre-se de seguir TODAS as regras da tarefa original para esta imagem específica.`;
                         
                         const messages = [{
                             role: "user",
@@ -1596,14 +1595,14 @@
                             const data = await response.json();
                             const content = data.choices?.[0]?.message?.content;
                             if (content) {
-                                combinedResponse += (i > 0 ? `\n` : '') + content.trim();
+                                combinedResponse += (i > 0 ? `\n\n---EXAM_BREAK---\n\n` : '') + content.trim();
                             } else {
-                                combinedResponse += `\n\n--- Imagem ${i + 1} ---\n(Resposta vazia da IA)`;
+                                combinedResponse += `\n\n---EXAM_BREAK---\n\n(Imagem ${i + 1}: Resposta vazia da IA)`;
                             }
                         } else {
                              const errorData = await response.json().catch(() => ({}));
                              const errorMessage = errorData.error?.message || `Erro na imagem ${i + 1}: ${response.status}`;
-                             combinedResponse += `\n\n--- Imagem ${i + 1} ---\nErro: ${errorMessage}`;
+                             combinedResponse += `\n\n---EXAM_BREAK---\n\n(Imagem ${i + 1}: Erro - ${errorMessage})`;
                         }
                     }
 
@@ -2383,11 +2382,31 @@ Seja técnico, objetivo e resumido.`;
             await setAnalyzingStateInFirestore(true, 'exams');
 
             try {
-                const prompt = `Você é um assistente especialista em análise de exames médicos. Sua tarefa é extrair e transcrever os dados dos exames fornecidos nas imagens. Siga estas regras ESTRITAMENTE:\n\n1. **Resultados Laboratoriais:** Transcreva os resultados em formato de lista (tópicos). Se um valor estiver alterado, adicione "(Alterado)" ou "(Anormal)" ao final da linha. Exemplo: Glicose: 90 mg/dL (Alterado).\n2. **Laudos de Imagem (Tomografia, Ressonância, etc.):** Se a imagem for um laudo de texto, você DEVE transcrever o texto do laudo completo, palavra por palavra, sem fazer NENHUMA alteração ou resumo. Mantenha a formatação original do laudo o máximo possível.\n3. **Sem Frases Introdutórias:** NUNCA comece sua resposta com frases como "Aqui estão os resultados...", "Analisando os exames...", ou qualquer outra introdução. Retorne APENAS a lista de resultados ou o texto do laudo diretamente.`;
-                const response = await callGeminiVisionAPI(capturedImages, prompt);
+                // STEP 1: Get raw text from images with a strict transcription prompt.
+                const transcriptionPrompt = `TAREFA CRÍTICA: Transcreva o texto visível na imagem. NADA MAIS. Siga estas regras:\n1. Copie o texto EXATAMENTE como está.\n2. NÃO adicione introduções, conclusões, valores de referência ou qualquer texto que não esteja na imagem. Sua resposta deve ser apenas a transcrição direta.`;
+                
+                const rawTranscription = await callGeminiVisionAPI(capturedImages, transcriptionPrompt);
+
+                appendOutput("Transcrição concluída. Formatando resultados...", "info", false);
+
+                // STEP 2: Format the raw text with a second, dedicated AI call.
+                const formattingPrompt = `Você é um assistente especialista em formatação de exames médicos. O texto a seguir contém transcrições brutas de um ou mais exames. Sua tarefa é formatar este texto em um relatório limpo e profissional.
+
+**REGRAS ESTRITAS:**
+1.  **Combine e Organize:** Junte todas as informações em uma única lista coesa. Se houver vários laudos, separe-os com um título claro (ex: "LAUDO DE RESSONÂNCIA MAGNÉTICA:").
+2.  **Identifique Alterações:** Analise os resultados laboratoriais. Para qualquer valor que pareça clinicamente alterado (fora do normal), você DEVE adicionar a tag de texto literal \`(Alterado)\` ao final da linha correspondente.
+3.  **Limpeza:** Remova quaisquer separadores artificiais como "---EXAM_BREAK---".
+4.  **Sem Fluff:** NÃO adicione NENHUMA frase introdutória ("Aqui estão os resultados...") ou conclusiva. Sua saída deve começar DIRETAMENTE com o primeiro resultado do exame.
+
+**TEXTO BRUTO PARA FORMATAR:**
+---
+${rawTranscription}
+---
+`;
+                const finalFormattedResponse = await callGeminiAPI(formattingPrompt);
                 
                 await setDoc(doc(db, "sessions", currentUser), {
-                    examsResults: response,
+                    examsResults: finalFormattedResponse,
                     isAnalyzing: { status: false, type: null }
                 }, { merge: true });
 
