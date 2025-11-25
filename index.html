@@ -740,11 +740,12 @@
         }
         .chatbox-title { font-size: 20px; font-weight: bold; color: var(--header-text-color); }
         .chatbox-close-btn { 
-            font-size: 24px; 
-            cursor: pointer; 
-            color: var(--text-color); 
-            position: absolute;
-            right: 20px;
+            font-size: 24px; cursor: pointer; color: var(--text-color); 
+            position: absolute; right: 20px;
+        }
+        .chatbox-new-chat-btn {
+            font-size: 22px; cursor: pointer; color: var(--text-color);
+            position: absolute; left: 20px;
         }
         .chatbox-messages {
             flex: 1;
@@ -761,14 +762,19 @@
             align-items: flex-start;
             gap: 10px;
             max-width: 85%;
-            animation: fadeIn 0.5s ease;
         }
         .chat-message.user { 
             align-self: flex-end; 
             flex-direction: row-reverse;
+            animation: slideInFromRight 0.4s ease-out;
+        }
+        @keyframes slideInFromRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
         .chat-message.model { 
             align-self: flex-start;
+            animation: fadeIn 0.5s ease;
         }
         .chat-avatar {
             width: 36px;
@@ -807,7 +813,6 @@
             color: var(--text-color);
             border-bottom-left-radius: 5px;
         }
-
         .message-bubble.typing {
             display: flex;
             align-items: center;
@@ -822,26 +827,23 @@
             opacity: 0.7;
             animation: typing-blink 1.4s infinite both;
         }
-        .message-bubble.typing .dot:nth-child(2) {
-            animation-delay: .2s;
-        }
-        .message-bubble.typing .dot:nth-child(3) {
-            animation-delay: .4s;
-        }
-        @keyframes typing-blink {
-            0% { opacity: .2; }
-            20% { opacity: 1; }
-            100% { opacity: .2; }
-        }
-
+        .message-bubble.typing .dot:nth-child(2) { animation-delay: .2s; }
+        .message-bubble.typing .dot:nth-child(3) { animation-delay: .4s; }
+        @keyframes typing-blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .chatbox-input-area {
-            padding: 15px;
+            padding: 10px 15px;
             background: var(--glass-bg);
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-top: 1px solid var(--glass-border);
             display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-input-row {
+            display: flex;
+            width: 100%;
             gap: 10px;
             align-items: center;
         }
@@ -855,7 +857,7 @@
             font-size: 16px;
         }
         .chatbox-input:focus { outline: none; border-color: var(--highlight-color); }
-        .chatbox-send-btn {
+        .chatbox-send-btn, .chatbox-upload-btn {
             background-color: var(--highlight-color);
             color: var(--highlight-text-color);
             border: none;
@@ -864,8 +866,77 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 18px; cursor: pointer;
             transition: transform 0.2s;
+            flex-shrink: 0;
         }
-        .chatbox-send-btn:active { transform: scale(0.9); }
+        .chatbox-upload-btn { background-color: var(--button-bg); color: var(--text-color); }
+        .chatbox-send-btn:active, .chatbox-upload-btn:active { transform: scale(0.9); }
+        
+        .chat-image-previews {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            width: 100%;
+            padding: 5px 0;
+        }
+        .chat-preview-item {
+            position: relative;
+            flex-shrink: 0;
+        }
+        .chat-preview-item img {
+            width: 60px; height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid var(--border-color);
+        }
+        .chat-preview-delete {
+            position: absolute;
+            top: -5px; right: -5px;
+            width: 20px; height: 20px;
+            background-color: rgba(255, 0, 0, 0.8);
+            color: white;
+            border: none; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .message-bubble .chat-image-attachment {
+             width: 100%; max-width: 200px;
+             height: auto;
+             border-radius: 10px;
+             margin-top: 10px;
+             display: block;
+        }
+
+        /* Custom Confirm Modal */
+        .confirm-modal {
+            display: none; position: fixed; z-index: 3000; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.6);
+            justify-content: center; align-items: center;
+        }
+        .confirm-modal-content {
+             background: var(--glass-bg);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: 30px; border: 1px solid var(--glass-border);
+            border-radius: 16px; width: 90%; max-width: 400px;
+            box-shadow: var(--glass-shadow); text-align: center;
+        }
+        #confirm-modal-text { margin-bottom: 25px; font-size: 16px; line-height: 1.6; }
+        .confirm-modal-buttons { display: flex; gap: 15px; justify-content: center; }
+        .confirm-btn {
+            padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;
+            font-weight: bold; font-size: 14px; transition: background-color 0.2s, transform 0.1s;
+        }
+        .confirm-btn:active { transform: scale(0.97); }
+        #confirm-btn-yes { background-color: var(--error-color); color: white; }
+        #confirm-btn-no { background-color: var(--button-bg); color: var(--text-color); border: 1px solid var(--border-color); }
+
+        /* Mobile Analysis Loader */
+        .mobile-loader {
+            display: none; position: fixed; z-index: 2500; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--bg-gradient);
+            justify-content: center; align-items: center;
+        }
         
         /* Admin Debug Toggle Switch */
         .toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
@@ -1230,14 +1301,40 @@
     
     <div id="chatbox-modal" class="chatbox-modal">
         <div class="chatbox-header">
+            <i id="chatbox-new-chat-btn" class="fas fa-plus-circle chatbox-new-chat-btn" title="Nova Conversa"></i>
             <span class="chatbox-title">Axon AI Chat</span>
             <i id="chatbox-close-btn" class="fas fa-times chatbox-close-btn"></i>
         </div>
         <div class="chatbox-messages" id="chatbox-messages">
         </div>
         <div class="chatbox-input-area">
-            <input type="text" id="chatbox-input" class="chatbox-input" placeholder="Faça uma pergunta...">
-            <button id="chatbox-send-btn" class="chatbox-send-btn"><i class="fas fa-paper-plane"></i></button>
+             <div id="chat-image-previews" class="chat-image-previews"></div>
+             <div class="chat-input-row">
+                <input type="file" id="chat-file-input" accept="image/*" multiple style="display: none;">
+                <button id="chatbox-upload-btn" class="chatbox-upload-btn"><i class="fas fa-camera"></i></button>
+                <input type="text" id="chatbox-input" class="chatbox-input" placeholder="Faça uma pergunta...">
+                <button id="chatbox-send-btn" class="chatbox-send-btn"><i class="fas fa-paper-plane"></i></button>
+             </div>
+        </div>
+    </div>
+    
+    <div id="custom-confirm-modal" class="confirm-modal">
+        <div class="confirm-modal-content">
+            <p id="confirm-modal-text"></p>
+            <div class="confirm-modal-buttons">
+                <button id="confirm-btn-no" class="confirm-btn">Cancelar</button>
+                <button id="confirm-btn-yes" class="confirm-btn">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mobile-analysis-loader" class="mobile-loader">
+        <div class="ai-processing-animation">
+            <div class="scanner-animation">
+                <div class="brain-icon"><i class="fas fa-brain"></i></div>
+                <div class="scanner-line"></div>
+            </div>
+            <span>Analisando Imagens...</span>
         </div>
     </div>
 
@@ -1364,9 +1461,16 @@
         const mobileBtnChat = document.getElementById('mobile-btn-chat');
         const chatboxModal = document.getElementById('chatbox-modal');
         const chatboxCloseBtn = document.getElementById('chatbox-close-btn');
+        const chatboxNewChatBtn = document.getElementById('chatbox-new-chat-btn');
         const chatboxMessages = document.getElementById('chatbox-messages');
         const chatboxInput = document.getElementById('chatbox-input');
         const chatboxSendBtn = document.getElementById('chatbox-send-btn');
+        const chatboxUploadBtn = document.getElementById('chatbox-upload-btn');
+        const chatFileInput = document.getElementById('chat-file-input');
+        const chatImagePreviews = document.getElementById('chat-image-previews');
+        
+        const customConfirmModal = document.getElementById('custom-confirm-modal');
+        const mobileAnalysisLoader = document.getElementById('mobile-analysis-loader');
         
         let isListening = false;
         let isLoggedIn = false;
@@ -1394,6 +1498,7 @@
         let allPatients = [];
         let conversationHistory = [];
         let adminUsersData = [];
+        let chatImagesToSend = [];
 
         const defaultApiKeys = [
             'AIzaSyB7krrv-Jjw4hn34MIFYBcrzDa5mWB9PpU',
@@ -1731,12 +1836,17 @@
             anamnesisPreview.style.display = 'none';
             examsResultsPreview.style.display = 'none';
             axonEyeResultsPreview.style.display = 'none';
-            if (view === 'camera' && !fromRemote) {
-                cameraModal.style.display = 'flex';
-            } else {
-                cameraModal.style.display = 'none';
-                stopCameraStreamOnly();
+            
+            // This logic is for classic mode only
+            if (!isMobile || !globalSettings.mobile2_0_enabled) {
+                if (view === 'camera' && !fromRemote) {
+                    cameraModal.style.display = 'flex';
+                } else {
+                    cameraModal.style.display = 'none';
+                    stopCameraStreamOnly();
+                }
             }
+
             toggleAnamnesisButton.classList.remove('active');
             toggleExamsButton.classList.remove('active');
             toggleAxonEyeButton.classList.remove('active');
@@ -1864,7 +1974,7 @@
                 let messages = [];
 
                 if (images.length > 0) {
-                    appendOutput(`Comprimindo ${images.length} imagem(ns) para envio...`, "info", false);
+                    appendOutput(`Comprimindo ${images.length} imagem(ns) для envio...`, "info", false);
                     const compressedImages = await Promise.all(images.map(img => compressImage(img, 1024, 0.7)));
 
                     const contentArray = [
@@ -2171,6 +2281,38 @@ Responda diretamente à pergunta.`;
                 return response;
             } catch (error) {
                 console.error("Erro em askQuestionBasedOnContext:", error);
+                throw error;
+            }
+        };
+        
+        const askVisionQuestionBasedOnContext = async (question, images) => {
+             const imageParts = images.map(url => ({ inlineData: { mimeType: 'image/jpeg', data: url.split(',')[1] } }));
+             conversationHistory.push({ role: 'user', parts: [{ text: question }, ...imageParts] });
+             
+             const simplifiedHistory = conversationHistory.map(item => {
+                const textPart = item.parts.find(p => p.text);
+                return `${item.role}: ${textPart ? textPart.text : '[Imagem enviada]'}`;
+            }).join('\n');
+            
+             const prompt = `**Instrução de Persona:** Você é o AXON, um assistente médico de IA. Seu usuário é um médico qualificado. Ele enviou ${images.length} imagem(ns) junto com uma pergunta. Analise as imagens e responda de forma concisa, direta e técnica, sem usar frases de cautela. Use o contexto clínico se for relevante. Formate palavras importantes com asteriscos (ex: *Lesão sugestiva de...*).
+
+**Contexto Clínico Atual:**
+- **Anamnese:** ${anamnesis && Object.values(anamnesis).some(v => v) ? JSON.stringify(anamnesis) : "Nenhuma informação."}
+- **Análise Visual (Axon Eye) Prévia:** ${axonEyeResults || "Nenhuma informação."}
+
+**Histórico da Conversa:**
+${simplifiedHistory}
+
+**Pergunta do Médico (referente à(s) imagem(ns) enviada(s) agora):** "${question}"
+
+Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
+
+            try {
+                const response = await callVisionAPI(images, prompt);
+                conversationHistory.push({ role: 'model', parts: [{ text: response }] });
+                return response;
+            } catch (error) {
+                console.error("Erro em askVisionQuestionBasedOnContext:", error);
                 throw error;
             }
         };
@@ -2579,10 +2721,7 @@ Responda diretamente à pergunta.`;
                 document.body.style.overflow = 'hidden';
             }
             
-            // This call is simplified for mobile 2.0. In classic mode, it switches monitor view.
-            if (!isMobile || !globalSettings.mobile2_0_enabled) {
-                toggleMonitorView('camera');
-            }
+            updateMonitorStateInFirestore(currentUser, { activeView: mode === 'exams' ? 'exams' : 'axon-eye' });
 
             try {
                 if (cameraStream) {
@@ -2617,7 +2756,7 @@ Responda diretamente à pergunta.`;
                  if(!isMobile || !globalSettings.mobile2_0_enabled) {
                     appendOutput(`Erro ao acessar a câmera: ${err.message}.`, "error");
                 } else {
-                    alert(`Erro ao acessar a câmera: ${err.message}.`);
+                    showConfirmModal(`Erro ao acessar a câmera: ${err.message}. Tente novamente.`, () => {});
                 }
                 stopCamera();
             }
@@ -2644,6 +2783,7 @@ Responda diretamente à pergunta.`;
         };
 
         const cancelCamera = () => {
+            updateMonitorStateInFirestore(currentUser, { activeView: 'anamnesis' });
             stopCamera();
             capturedImages = [];
             updateAlbumCount();
@@ -2683,12 +2823,18 @@ Responda diretamente à pergunta.`;
         
         modalClose.onclick = () => fullscreenModal.style.display = 'none';
         fullscreenModal.onclick = (e) => { if (e.target === fullscreenModal) fullscreenModal.style.display = 'none'; };
+        
+        const showMobileLoader = () => { if (isMobile && globalSettings.mobile2_0_enabled) mobileAnalysisLoader.style.display = 'flex'; };
+        const hideMobileLoader = () => { if (isMobile && globalSettings.mobile2_0_enabled) mobileAnalysisLoader.style.display = 'none'; };
+
 
         const analyzeExams = async () => {
             if (capturedImages.length === 0) return appendOutput("Nenhuma imagem de exame para analisar.", "info");
             
             if(!isMobile || !globalSettings.mobile2_0_enabled) {
                 toggleMonitorView('exams');
+            } else {
+                showMobileLoader();
             }
             await setAnalyzingStateInFirestore(true, 'exams');
 
@@ -2718,14 +2864,14 @@ Responda diretamente à pergunta.`;
                 }, { merge: true });
                 
                 if (isMobile && globalSettings.mobile2_0_enabled) {
-                    alert('Análise de exames concluída!');
+                    showConfirmModal('Análise de exames concluída!', () => {}, true);
                 } else {
                     appendOutput("Análise de exames concluída.", "success");
                 }
 
             } catch (error) {
                  if (isMobile && globalSettings.mobile2_0_enabled) {
-                    alert(`Erro ao analisar exames: ${error.message}`);
+                    showConfirmModal(`Erro ao analisar exames: ${error.message}`, () => {}, true);
                 } else {
                     appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
                 }
@@ -2736,6 +2882,7 @@ Responda diretamente à pergunta.`;
                 }, { merge: true });
 
             } finally {
+                hideMobileLoader();
                 stopCamera(); capturedImages = []; updateAlbumCount();
             }
         };
@@ -2747,6 +2894,8 @@ Responda diretamente à pergunta.`;
             
             if(!isMobile || !globalSettings.mobile2_0_enabled) {
                 toggleMonitorView('axon-eye');
+            } else {
+                showMobileLoader();
             }
             await setAnalyzingStateInFirestore(true, 'axon-eye');
             
@@ -2798,14 +2947,14 @@ Responda diretamente à pergunta.`;
                 }, { merge: true });
                 
                 if (isMobile && globalSettings.mobile2_0_enabled) {
-                    alert('Análise Axon Eye concluída. Imagens prontas para salvar em um prontuário.');
+                    showConfirmModal('Análise Axon Eye concluída. Imagens prontas para salvar em um prontuário.', () => {}, true);
                 } else {
                     appendOutput("Análise Axon Eye concluída. Imagens prontas para salvar.", "success");
                 }
 
             } catch (error) {
                  if (isMobile && globalSettings.mobile2_0_enabled) {
-                    alert(`Erro com Axon Eye: ${error.message}`);
+                    showConfirmModal(`Erro com Axon Eye: ${error.message}`, () => {}, true);
                 } else {
                     appendOutput(`Erro com Axon Eye: ${error.message}`, "error");
                 }
@@ -2817,6 +2966,7 @@ Responda diretamente à pergunta.`;
                 }, { merge: true });
 
             } finally {
+                hideMobileLoader();
                 stopCamera(); capturedImages = []; updateAlbumCount();
             }
         };
@@ -2938,31 +3088,32 @@ Responda diretamente à pergunta.`;
         };
 
         const deletePatient = async (patientId) => {
-            if (!confirm("Tem certeza que deseja excluir este paciente e TODAS as suas consultas? A ação é irreversível.")) return;
-            try {
-                const patientRef = doc(db, "patients", patientId);
-                const docSnap = await getDoc(patientRef);
+            showConfirmModal("Tem certeza que deseja excluir este paciente e TODAS as suas consultas? A ação é irreversível.", async () => {
+                try {
+                    const patientRef = doc(db, "patients", patientId);
+                    const docSnap = await getDoc(patientRef);
 
-                if (docSnap.exists()) {
-                    const patientData = docSnap.data();
-                    if (patientData.consultations && patientData.consultations.length > 0) {
-                        appendOutput("Excluindo imagens associadas do Imgur...", "info");
-                        for (const consult of patientData.consultations) {
-                            if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
-                                for (const img of consult.axonEyeImages) {
-                                    await deleteFromImgur(img.deleteHash); 
+                    if (docSnap.exists()) {
+                        const patientData = docSnap.data();
+                        if (patientData.consultations && patientData.consultations.length > 0) {
+                            appendOutput("Excluindo imagens associadas do Imgur...", "info");
+                            for (const consult of patientData.consultations) {
+                                if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
+                                    for (const img of consult.axonEyeImages) {
+                                        await deleteFromImgur(img.deleteHash); 
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                await deleteDoc(patientRef);
-                appendOutput("Paciente e todos os registros foram excluídos com sucesso.", "success");
-                await loadPatientList();
-            } catch (e) {
-                appendOutput(`Erro ao excluir paciente: ${e.message}`, "error");
-            }
+                    await deleteDoc(patientRef);
+                    appendOutput("Paciente e todos os registros foram excluídos com sucesso.", "success");
+                    await loadPatientList();
+                } catch (e) {
+                    appendOutput(`Erro ao excluir paciente: ${e.message}`, "error");
+                }
+            });
         };
 
         const generatePatientPDF = async (patientId) => {
@@ -3687,16 +3838,17 @@ Responda diretamente à pergunta.`;
         };
 
         window.deleteUserFromPanel = async (username) => {
-            if (!confirm(`Tem certeza que deseja excluir o usuário '${username}' permanentemente?`)) return;
-            try {
-                const userRef = doc(db, "users", username);
-                await deleteDoc(userRef);
-                adminUsersData = adminUsersData.filter(u => u.username !== username);
-                renderAdminUsersList(adminUsersData);
-                adminUserDetails.innerHTML = '<div class="info" style="margin-top: 20px;">Usuário excluído. Selecione outro.</div>';
-            } catch (e) {
-                 alert(`Erro ao excluir usuário: ${e.message}`);
-            }
+            showConfirmModal(`Tem certeza que deseja excluir o usuário '${username}' permanentemente?`, async () => {
+                 try {
+                    const userRef = doc(db, "users", username);
+                    await deleteDoc(userRef);
+                    adminUsersData = adminUsersData.filter(u => u.username !== username);
+                    renderAdminUsersList(adminUsersData);
+                    adminUserDetails.innerHTML = '<div class="info" style="margin-top: 20px;">Usuário excluído. Selecione outro.</div>';
+                } catch (e) {
+                     alert(`Erro ao excluir usuário: ${e.message}`);
+                }
+            });
         };
 
         const openPrescriptionHelper = async (category) => {
@@ -3812,8 +3964,15 @@ ${instruction}
             chatboxMessages.innerHTML = '';
             // Populate with existing history
             conversationHistory.forEach(msg => {
-                appendChatMessage(msg.parts[0].text, msg.role);
+                const textPart = msg.parts.find(p => p.text);
+                const imageParts = msg.parts.filter(p => p.inlineData);
+                appendChatMessage(textPart.text, msg.role, false, imageParts.map(p => `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`));
             });
+
+            if (conversationHistory.length === 0) {
+                 appendChatMessage(`Olá Dr(a). ${currentUser}! Como posso te ajudar hoje?`, 'model');
+            }
+
             chatboxModal.style.display = 'flex';
             chatboxInput.focus();
         };
@@ -3821,8 +3980,39 @@ ${instruction}
         const closeChatbox = () => {
             chatboxModal.style.display = 'none';
         };
+        
+        const showConfirmModal = (message, onConfirm, isAlert = false) => {
+            const modal = document.getElementById('custom-confirm-modal');
+            const text = document.getElementById('confirm-modal-text');
+            const btnYes = document.getElementById('confirm-btn-yes');
+            const btnNo = document.getElementById('confirm-btn-no');
 
-        const appendChatMessage = (message, sender, isTyping = false) => {
+            text.textContent = message;
+            
+            if (isAlert) {
+                btnYes.style.display = 'none';
+                btnNo.textContent = 'OK';
+            } else {
+                btnYes.style.display = 'inline-block';
+                btnNo.textContent = 'Cancelar';
+            }
+            
+            modal.style.display = 'flex';
+
+            return new Promise((resolve) => {
+                btnYes.onclick = () => {
+                    modal.style.display = 'none';
+                    if (onConfirm) onConfirm();
+                    resolve(true);
+                };
+                btnNo.onclick = () => {
+                    modal.style.display = 'none';
+                    resolve(false);
+                };
+            });
+        };
+
+        const appendChatMessage = (message, sender, isTyping = false, images = []) => {
             const messageWrapper = document.createElement('div');
             messageWrapper.className = `chat-message ${sender}`;
             
@@ -3837,7 +4027,13 @@ ${instruction}
                 bubble.classList.add('typing');
                 bubble.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
             } else {
-                bubble.innerHTML = message; // Use innerHTML to support bold tags
+                let contentHTML = message.replace(/\*(.*?)\*/g, '<b>$1</b>');
+                if (images.length > 0) {
+                    images.forEach(imgSrc => {
+                        contentHTML += `<img src="${imgSrc}" class="chat-image-attachment" onclick="window.openFullscreenModal('${imgSrc}')">`;
+                    });
+                }
+                bubble.innerHTML = contentHTML;
             }
 
             messageWrapper.appendChild(avatar);
@@ -3848,19 +4044,69 @@ ${instruction}
             return bubble; 
         };
         
+        const handleChatImageUpload = (event) => {
+            chatImagePreviews.innerHTML = '';
+            chatImagesToSend = [];
+            const files = Array.from(event.target.files);
+
+            files.forEach((file, index) => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const imageDataURL = e.target.result;
+                        chatImagesToSend.push(imageDataURL);
+
+                        const previewItem = document.createElement('div');
+                        previewItem.className = 'chat-preview-item';
+                        previewItem.innerHTML = `
+                            <img src="${imageDataURL}" alt="Preview">
+                            <button class="chat-preview-delete" onclick="window.removeChatPreviewImage(${index})">&times;</button>
+                        `;
+                        chatImagePreviews.appendChild(previewItem);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            event.target.value = ''; // Reset input
+        };
+
+        window.removeChatPreviewImage = (indexToRemove) => {
+            chatImagesToSend.splice(indexToRemove, 1);
+            chatImagePreviews.innerHTML = ''; // Re-render
+            chatImagesToSend.forEach((imageDataURL, index) => {
+                 const previewItem = document.createElement('div');
+                previewItem.className = 'chat-preview-item';
+                previewItem.innerHTML = `
+                    <img src="${imageDataURL}" alt="Preview">
+                    <button class="chat-preview-delete" onclick="window.removeChatPreviewImage(${index})">&times;</button>
+                `;
+                chatImagePreviews.appendChild(previewItem);
+            });
+        };
+        
         const sendChatMessage = async () => {
             const question = chatboxInput.value.trim();
-            if (!question) return;
+            if (!question && chatImagesToSend.length === 0) return;
 
-            appendChatMessage(question, 'user');
+            appendChatMessage(question, 'user', false, chatImagesToSend);
             chatboxInput.value = '';
             chatboxInput.disabled = true;
             chatboxSendBtn.disabled = true;
+            chatboxUploadBtn.disabled = true;
+            chatImagePreviews.innerHTML = '';
+
+            const images = [...chatImagesToSend];
+            chatImagesToSend = [];
 
             const typingBubble = appendChatMessage('', 'model', true);
 
             try {
-                const response = await askQuestionBasedOnContext(question);
+                let response;
+                if (images.length > 0) {
+                    response = await askVisionQuestionBasedOnContext(question || "Analise esta(s) imagem(ns).", images);
+                } else {
+                    response = await askQuestionBasedOnContext(question);
+                }
                 
                 const formattedResponse = response.replace(/\*(.*?)\*/g, '<b>$1</b>');
 
@@ -3870,10 +4116,11 @@ ${instruction}
             } catch (error) {
                 typingBubble.innerHTML = `Desculpe, ocorreu um erro: ${error.message}`;
                 typingBubble.style.color = 'var(--error-color)';
-                 typingBubble.classList.remove('typing');
+                typingBubble.classList.remove('typing');
             } finally {
                 chatboxInput.disabled = false;
                 chatboxSendBtn.disabled = false;
+                chatboxUploadBtn.disabled = false;
                 chatboxInput.focus();
             }
         };
@@ -4060,6 +4307,15 @@ ${instruction}
         chatboxCloseBtn.addEventListener('click', closeChatbox);
         chatboxSendBtn.addEventListener('click', sendChatMessage);
         chatboxInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChatMessage(); });
+        chatboxUploadBtn.addEventListener('click', () => chatFileInput.click());
+        chatFileInput.addEventListener('change', handleChatImageUpload);
+        chatboxNewChatBtn.addEventListener('click', () => {
+            showConfirmModal("Deseja iniciar uma nova conversa? O histórico atual será perdido.", () => {
+                conversationHistory = [];
+                chatboxMessages.innerHTML = '';
+                openChatbox();
+            });
+        });
 
         adminAuthClose.addEventListener('click', () => adminAuthModal.style.display = 'none');
         adminAuthButton.addEventListener('click', checkAdminAuth);
