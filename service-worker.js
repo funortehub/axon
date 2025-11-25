@@ -1,47 +1,3735 @@
-const CACHE_NAME = 'axon-ai-cache-v2.2'; // Incremente a versão para forçar a atualização do cache
-const urlsToCache = [
-  '/',
-  '/index.html', // Ou o nome do seu arquivo HTML principal, se for diferente
-  '/appicon.png', // Adicionado o novo ícone para pré-cache
-  '/axon.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css',
-  // Adicione outros arquivos estáticos que seu aplicativo usa (CSS, JS, etc.)
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
-  );
-});
-
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Axon A.I</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" id="status-bar-style-meta" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Axon A.I">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/ZsfZEh2.png">
+    <meta name="theme-color" id="theme-color-meta" content="#1a202c">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* Modern Liquid Glass Theme with Light/Dark Mode */
+        :root {
+            /* Dark Theme (Default) */
+            --bg-gradient: linear-gradient(135deg, #1a202c, #2d3748);
+            --glass-bg: rgba(28, 35, 49, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --text-color: #e2e8f0;
+            --header-text-color: #f7fafc;
+            --prompt-color: #63b3ed;
+            --command-color: #90cdf4;
+            --output-color: #e2e8f0;
+            --error-color: #fc8181;
+            --success-color: #68d391;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --highlight-color: #4299e1;
+            --highlight-text-color: #ffffff;
+            --diagnosis-color: #b794f4;
+            --conduct-color: #68d391;
+            --altered-color: #faf089;
+            --input-bg: rgba(0,0,0,0.2);
+            --terminal-header-bg: rgba(0,0,0,0.2);
+            --button-bg: rgba(255, 255, 255, 0.1);
+            --button-hover-bg: rgba(255, 255, 255, 0.2);
         }
-        return fetch(event.request);
-      })
-  );
-});
 
-self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-});
+        body.light-mode {
+            /* Light Theme */
+            --bg-gradient: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            --glass-bg: rgba(255, 255, 255, 0.5);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --glass-shadow: 0 8px 32px 0 rgba(100, 100, 100, 0.2);
+            --text-color: #2d3748;
+            --header-text-color: #1a202c;
+            --prompt-color: #2b6cb0;
+            --command-color: #2c5282;
+            --output-color: #2d3748;
+            --error-color: #c53030;
+            --success-color: #2f855a;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --highlight-color: #3182ce;
+            --highlight-text-color: #ffffff;
+            --diagnosis-color: #805ad5;
+            --conduct-color: #2f855a;
+            --altered-color: #d69e2e;
+            --input-bg: rgba(0,0,0,0.05);
+            --terminal-header-bg: rgba(0,0,0,0.05);
+            --button-bg: rgba(0, 0, 0, 0.05);
+            --button-hover-bg: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Consolas', 'Courier New', monospace;
+            touch-action: manipulation;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        .header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            height: 65px;
+            flex-shrink: 0;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logout-button, .settings-button, .theme-toggle {
+            color: var(--text-color);
+            font-size: 20px;
+            cursor: pointer;
+            transition: color 0.3s ease, transform 0.2s ease, background-color 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .logout-button:hover, .settings-button:hover, .theme-toggle:hover {
+            color: var(--highlight-color);
+            background-color: var(--button-hover-bg);
+            transform: scale(1.1);
+        }
+        
+        .logout-button:hover {
+             color: var(--error-color);
+        }
+
+        .app-title {
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--header-text-color);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+            background: var(--input-bg);
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success-color);
+            box-shadow: 0 0 5px var(--success-color);
+        }
+
+        .status-off {
+            background-color: var(--error-color);
+            box-shadow: 0 0 5px var(--error-color);
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+            gap: 20px;
+            height: calc(100vh - 65px - 40px);
+            min-height: 0;
+        }
+
+        .terminal {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--glass-shadow);
+            position: relative;
+        }
+
+        .terminal-header {
+            padding: 8px 12px;
+            background-color: var(--terminal-header-bg);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .terminal-title {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .terminal-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .terminal-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .close-btn { background-color: #ff5f56; }
+        .minimize-btn { background-color: #ffbd2e; }
+        .maximize-btn { background-color: #27c93f; }
+
+        .terminal-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .terminal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .terminal-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .terminal-content::-webkit-scrollbar-thumb {
+            background-color: var(--button-hover-bg);
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+        .terminal-content::-webkit-scrollbar-thumb:hover {
+            background-color: var(--highlight-color);
+        }
+
+        .interactive-terminal, .non-interactive-terminal {
+            flex: 1;
+            min-width: 300px;
+            min-height: 0;
+        }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .prompt {
+            color: var(--prompt-color);
+            white-space: nowrap;
+        }
+
+        .command-input {
+            background: transparent;
+            border: none;
+            color: var(--command-color);
+            width: 100%;
+            font-size: 16px;
+            caret-color: var(--command-color);
+            outline: none;
+            padding: 2px 0;
+        }
+        
+        .command-output { color: var(--output-color); white-space: pre-wrap; line-height: 1.5; text-align: left; }
+        .command { color: var(--command-color); font-weight: bold; }
+        .error { color: var(--error-color); }
+        .success { color: var(--success-color); }
+        .info { color: var(--prompt-color); }
+        .highlight { color: var(--highlight-color); }
+        .blocked-msg { color: var(--altered-color); }
+        .anamnesis-content { line-height: 1.8; font-size: 15px; }
+        .section-title { font-weight: bold; margin-top: 10px; color: var(--highlight-color); }
+        .help-list { padding-left: 0; margin: 10px 0; line-height: 1.8; list-style: none; }
+        .help-item { margin-bottom: 5px; }
+        
+        .diagnosis-item { color: var(--diagnosis-color); margin-bottom: 8px; padding-left: 15px; position: relative; }
+        .diagnosis-item:before { content: "•"; position: absolute; left: 0; color: var(--diagnosis-color); }
+        
+        .conduct-section { margin-bottom: 15px; }
+        .conduct-title {
+            color: var(--conduct-color);
+            font-weight: bold;
+            margin-bottom: 5px;
+            border-bottom: 1px solid var(--conduct-color);
+            padding-bottom: 3px;
+            cursor: pointer;
+            transition: color 0.2s, border-bottom-color 0.2s;
+        }
+        .conduct-title:hover {
+            color: var(--highlight-color);
+            border-bottom-color: var(--highlight-color);
+        }
+
+        .conduct-item { margin-bottom: 8px; padding-left: 15px; position: relative; }
+        .conduct-item:before { content: "-"; position: absolute; left: 0; }
+        
+        .receituario-item { white-space: pre; font-family: 'Courier New', monospace; color: var(--output-color); margin-bottom: 5px; }
+
+        .footer {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 10px 20px;
+            border-top: 1px solid var(--glass-border);
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-color);
+            height: 40px;
+            flex-shrink: 0;
+        }
+
+        .terminal-logo-internal { position: absolute; top: 15px; right: 15px; height: calc(105.3px * 1.8 * 0.7 * 1.2); width: auto; opacity: 0.1; z-index: 0; }
+        .monitor-view { text-transform: uppercase; height: 100%; }
+        .monitor-view .section-title, .monitor-view .axon-eye-title, .monitor-view .conduct-title { text-transform: none; }
+        
+        .camera-modal {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: transparent;
+            z-index: 10; flex-direction: column; justify-content: flex-start; align-items: center;
+            padding: 0; border-radius: 16px; overflow: hidden;
+        }
+
+        .camera-container {
+            display: flex; flex-direction: column;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px; position: relative; z-index: 1; padding: 0; gap: 10px;
+            overflow: hidden; width: 100%; height: 100%; max-width: none; max-height: none;
+        }
+
+        .camera-video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 177.77%; /* 9:16 Aspect Ratio */
+            background-color: black;
+            border-radius: 10px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .camera-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+
+        .camera-controls {
+            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; z-index: 2; width: 90%;
+        }
+
+        .camera-button {
+            background-color: rgba(0, 0, 0, 0.5); color: white; border: 1px solid rgba(255,255,255,0.2);
+            padding: 10px 15px; border-radius: 50%; cursor: pointer; font-size: 18px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: flex; align-items: center; justify-content: center;
+            width: 50px; height: 50px; flex-shrink: 0;
+            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+        }
+
+        .camera-button:hover { background-color: var(--highlight-color); transform: scale(1.05); }
+        .camera-button.disabled { background-color: #555; cursor: not-allowed; opacity: 0.7; }
+
+        .camera-action-buttons, .album-button {
+            position: absolute; top: 10px; display: flex; gap: 5px; z-index: 10;
+            background-color: rgba(0, 0, 0, 0.4); border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 5px 10px;
+            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+        }
+        .album-button { left: 10px; }
+        .camera-action-buttons { right: 10px; }
+
+        .camera-switch-button, .flashlight-button {
+            background-color: transparent; color: white; border: none;
+            cursor: pointer; font-size: 12px; transition: color 0.2s;
+        }
+        .camera-switch-button:hover, .flashlight-button:hover, .album-button:hover { color: var(--highlight-color); }
+        .flashlight-button.active { color: var(--highlight-color); }
+
+        .album-count {
+            background-color: var(--highlight-color); color: var(--highlight-text-color);
+            border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold; min-width: 18px; text-align: center;
+        }
+
+        .monitor-toggle-buttons {
+            display: flex; gap: 5px; margin-left: auto; margin-right: 10px;
+        }
+
+        .monitor-toggle-button {
+            background-color: var(--button-bg); color: var(--text-color);
+            border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 20px;
+            cursor: pointer; font-size: 12px; transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+        }
+
+        .monitor-toggle-button:hover { background-color: var(--button-hover-bg); }
+        .monitor-toggle-button.active { background-color: var(--highlight-color); color: var(--highlight-text-color); border-color: transparent; }
+
+        #monitor-content-wrapper { position: relative; }
+        .monitor-copy-btn {
+            position: absolute; top: 50px; right: 25px;
+            background: var(--button-bg); color: var(--text-color);
+            border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 50%;
+            width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 14px; transition: all 0.3s ease; z-index: 5;
+        }
+        .monitor-copy-btn:hover { background-color: var(--highlight-color); color: var(--highlight-text-color); }
+
+        .fullscreen-modal {
+            display: none; position: fixed; z-index: 2000; padding-top: 60px;
+            left: 0; top: 0; width: 100%; height: 100%; overflow: auto;
+            background-color: rgba(0,0,0,0.9);
+        }
+        .modal-content { margin: auto; display: block; width: 80%; max-width: 700px; border-radius: 10px; }
+        .modal-content, #caption { animation-name: zoom; animation-duration: 0.6s; }
+        @keyframes zoom { from {transform:scale(0)} to {transform:scale(1)} }
+        .modal-close { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; transition: 0.3s; }
+        .modal-close:hover, .modal-close:focus { color: #bbb; text-decoration: none; cursor: pointer; }
+
+        .output .altered-text { color: var(--altered-color); font-weight: bold; }
+
+        .app-modal, .album-modal, .patient-list-modal, .patient-details-modal {
+            display: none; position: fixed; z-index: 105; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center; align-items: center;
+        }
+
+        .app-modal-content, .album-modal-content, .patient-list-content, .patient-details-content {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            margin: auto; padding: 25px; border: 1px solid var(--glass-border);
+            border-radius: 16px; width: 90%; max-width: 500px;
+            box-shadow: var(--glass-shadow); position: relative; display: flex;
+            flex-direction: column; max-height: 90vh;
+        }
+        .album-modal-content, .patient-list-content, .patient-details-content { max-width: 800px; }
+
+        .app-modal-header, .album-modal-header, .patient-list-header, .patient-details-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .app-modal-title, .album-modal-title, .patient-list-title, .patient-details-title {
+            font-size: 20px; font-weight: bold; color: var(--prompt-color);
+        }
+
+        .app-modal-close, .album-modal-close, .patient-list-close, .patient-details-close {
+            color: var(--text-color); font-size: 28px; font-weight: bold; cursor: pointer;
+            transition: 0.3s; position: absolute; top: -5px; right: -5px;
+        }
+        .app-modal-close:hover, .album-modal-close:hover, .patient-list-close:hover, .patient-details-close:hover { color: var(--highlight-color); }
+        
+        .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; overflow-y: auto; padding-right: 5px; }
+        .album-item { position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border: 1px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: transform 0.2s ease; }
+        .album-item:hover { transform: scale(1.03); }
+        .album-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+        .album-delete-button {
+            position: absolute; top: 5px; right: 5px; background-color: rgba(255, 0, 0, 0.7);
+            color: white; border: none; border-radius: 50%; width: 24px; height: 24px;
+            font-size: 14px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 10; transition: background-color 0.2s;
+        }
+        .album-delete-button:hover { background-color: rgba(255, 0, 0, 1); }
+        .axon-eye-title { color: var(--error-color); font-weight: bold; margin-top: 10px; margin-bottom: 5px; border-bottom: 1px solid var(--error-color); padding-bottom: 3px; }
+        .axon-eye-image-preview { max-width: 100%; height: auto; margin-top: 15px; border: 1px solid var(--border-color); border-radius: 10px; }
+        
+        .patient-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 400px; }
+        .patient-item { padding: 12px; background-color: var(--button-bg); border: 1px solid var(--border-color); border-radius: 10px; cursor: pointer; transition: background-color: 0.2s; }
+        .patient-item:hover { background-color: var(--button-hover-bg); }
+        .patient-details-body { overflow-y: auto; padding-right: 5px; }
+        .patient-details-section { margin-bottom: 20px; }
+        .patient-details-section-title { font-weight: bold; color: var(--highlight-color); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        .patient-images-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 10px; }
+        .patient-image-item { position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border: 1px solid var(--border-color); border-radius: 10px; cursor: pointer; }
+        .patient-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+        
+        .consultation-item { background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+        .consultation-header { padding: 10px 15px; cursor: pointer; font-weight: bold; transition: background-color 0.2s; }
+        .consultation-header:hover { background-color: var(--button-hover-bg); }
+        .consultation-body { padding: 15px; border-top: 1px solid var(--border-color); background-color: transparent; }
+
+        .patient-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .patient-action-button {
+            background-color: var(--button-bg); color: var(--text-color);
+            border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 8px;
+            cursor: pointer; font-size: 12px; transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center; gap: 5px; flex: 1;
+        }
+        .patient-action-button.disabled { background-color: var(--input-bg); color: var(--text-color); cursor: not-allowed; opacity: 0.5; }
+        .patient-action-button:not(.disabled):hover { background-color: var(--button-hover-bg); }
+        .patient-action-button.delete:not(.disabled) { color: var(--error-color); }
+        .patient-action-button.delete:not(.disabled):hover { background-color: var(--error-color); color: white; }
+        .patient-action-button.pdf:not(.disabled) { color: var(--success-color); }
+        .patient-action-button.pdf:not(.disabled):hover { background-color: var(--success-color); color: white; }
+        .patient-action-button.details:not(.disabled) { color: var(--prompt-color); }
+        .patient-action-button.details:not(.disabled):hover { background-color: var(--prompt-color); color: white; }
+        
+        .patient-search-container { margin-bottom: 15px; }
+        .patient-search-input {
+            width: 100%; padding: 12px; background-color: var(--input-bg);
+            color: var(--text-color); border: 1px solid var(--border-color);
+            border-radius: 8px; font-size: 14px;
+        }
+        .patient-search-input:focus { outline: none; border-color: var(--highlight-color); }
+
+        .terminal-footer { padding: 8px 15px; border-top: 1px solid var(--border-color); background-color: var(--terminal-header-bg); }
+        .action-buttons-container { display: flex; justify-content: space-around; margin-bottom: 10px; }
+        .action-button {
+            background-color: var(--button-bg); color: var(--text-color);
+            border: 1px solid var(--border-color); border-radius: 50%;
+            width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; cursor: pointer; transition: all 0.2s, transform 0.1s;
+        }
+        .action-button:hover, .action-button:focus { background-color: var(--highlight-color); color: var(--highlight-text-color); outline: none; }
+        .action-button:active { transform: scale(0.95); }
+        .action-button.active { background-color: var(--success-color); color: var(--highlight-text-color); box-shadow: 0 0 8px var(--success-color); }
+        .action-button.blocked-ui { opacity: 0.4; cursor: not-allowed; }
+
+        .app-modal-body p { margin-bottom: 20px; color: var(--text-color); }
+        .app-modal-input {
+            width: 100%; padding: 12px; margin-bottom: 15px; background-color: var(--input-bg);
+            color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px;
+        }
+        .app-modal-input:focus { outline: none; border-color: var(--highlight-color); }
+
+        .app-modal-button {
+            width: 100%; padding: 12px; background-color: var(--highlight-color); color: var(--highlight-text-color);
+            border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        body.light-mode .app-modal-button:hover { background-color: #2b6cb0; }
+        body:not(.light-mode) .app-modal-button:hover { background-color: #63b3ed; }
+        .app-modal-button:disabled { background-color: #555; cursor: not-allowed; }
+        .app-modal-feedback { margin-top: 15px; color: var(--error-color); min-height: 20px; }
+        
+        .admin-section { margin-bottom: 20px; text-align: left; border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; }
+        .admin-section-title { color: var(--prompt-color); font-weight: bold; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; }
+        .admin-list { display: flex; flex-direction: column; gap: 8px; }
+        .admin-list-item { display: flex; gap: 8px; align-items: center; }
+        .admin-input-group { flex: 1; display: flex; gap: 5px; }
+        .admin-input { flex: 1; padding: 8px; background-color: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; font-size: 12px; }
+        .admin-btn-remove, .admin-btn-add, .admin-action-btn { border-radius: 8px; }
+        
+        #admin-panel-modal .app-modal-content { max-width: 900px; width: 95%; height: 85vh; display: flex; flex-direction: column; }
+        .admin-tab-content { flex: 1; overflow-y: auto; padding-bottom: 15px; display: flex; flex-direction: column; }
+        .admin-users-container { display: flex; flex: 1; min-height: 0; gap: 20px; text-align: left; overflow: hidden; }
+        .admin-users-list-section { flex: 1; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding-right: 10px; }
+        .admin-users-details-section { flex: 2; overflow-y: auto; padding-left: 10px; }
+        .user-list-scroll { overflow-y: auto; flex: 1; }
+        .user-list-item { padding: 10px; cursor: pointer; border-bottom: 1px solid var(--border-color); transition: background-color 0.2s; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; margin-bottom: 5px; }
+        .user-list-item:hover { background-color: var(--button-hover-bg); }
+        .user-list-item.selected { background-color: rgba(66, 153, 225, 0.2); border-left: 3px solid var(--highlight-color); }
+        .user-detail-header { margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .user-detail-row { margin-bottom: 10px; }
+        .user-detail-label { color: var(--prompt-color); font-weight: bold; font-size: 12px; display: block; margin-bottom: 2px; }
+        .user-detail-value { color: var(--text-color); font-size: 14px; }
+        .admin-user-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 10px; }
+        .admin-user-img { width: 100%; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 1px solid var(--border-color); transition: transform 0.2s; }
+        .admin-user-img:hover { transform: scale(1.05); }
+        .usage-stats-box { background-color: var(--input-bg); border: 1px solid var(--border-color); padding: 10px; border-radius: 10px; margin-top: 10px; }
+
+        .admin-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
+        .admin-tab-btn { flex: 1; background: transparent; border: none; color: var(--text-color); padding: 10px; cursor: pointer; border-bottom: 3px solid transparent; font-size: 14px; transition: all 0.3s ease; }
+        .admin-tab-btn:hover { background-color: var(--button-hover-bg); }
+        .admin-tab-btn.active { border-bottom-color: var(--highlight-color); color: var(--highlight-color); font-weight: bold; }
+        
+        .radio-group { display: flex; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; }
+        .radio-label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+
+        /* AI Processing Animation */
+        .ai-processing-animation {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--prompt-color);
+        }
+        .scanner-animation {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            margin-bottom: 15px;
+        }
+        .scanner-animation .brain-icon {
+            width: 100%;
+            height: 100%;
+            font-size: 80px;
+            line-height: 100px;
+            text-align: center;
+            opacity: 0.5;
+        }
+        .scanner-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--highlight-color);
+            box-shadow: 0 0 10px var(--highlight-color);
+            border-radius: 2px;
+            animation: scan 2.5s infinite linear;
+        }
+        @keyframes scan {
+            0% { top: 0; }
+            50% { top: 100%; }
+            100% { top: 0; }
+        }
+
+        /* Prescription Helper Modal Styles */
+        .prescription-template-item {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 15px;
+        }
+        .prescription-template-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .prescription-template-title {
+            font-weight: bold;
+            color: var(--prompt-color);
+        }
+        .prescription-template-copy-btn {
+            background-color: var(--button-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .prescription-template-copy-btn:hover {
+            background-color: var(--highlight-color);
+            color: var(--highlight-text-color);
+        }
+        .prescription-template-text {
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: var(--output-color);
+            background: rgba(0,0,0,0.1);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; padding: 10px; gap: 10px; }
+            .monitor-toggle-button span, .status-bar span { display: none; }
+            .monitor-toggle-button { padding: 5px 8px; font-size: 16px; width: auto; min-width: 35px; }
+            .status-bar { gap: 10px; margin-right: 0; }
+            .status-item .status-indicator { width: 8px; height: 8px; }
+            .logout-button, .settings-button, .theme-toggle { font-size: 18px; }
+            .camera-modal.fullscreen-mobile { position: fixed; top: 65px; bottom: 40px; left: 0; width: 100%; height: auto; z-index: 50; border-radius: 0; }
+            .camera-modal.fullscreen-mobile .camera-container { border-radius: 0; border: none; }
+
+            /* Admin Panel Mobile Fixes */
+            .radio-group {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .admin-users-container {
+                flex-direction: column;
+            }
+            .admin-users-list-section {
+                flex: 0 0 45%;
+                min-height: 220px;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 15px;
+                padding-right: 0;
+            }
+            .admin-users-details-section {
+                flex: 1;
+                min-height: 0;
+                padding-left: 0;
+                padding-top: 15px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .camera-video-wrapper {
+                padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="app-title">AXON A.I</div>
+        <div class="header-right">
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-indicator" id="api-status"></div>
+                    <span class="status-text-api">API</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-indicator status-off" id="mic-status"></div>
+                    <span class="status-text-mic">Microfone</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-indicator status-off" id="camera-status"></div>
+                    <span class="status-text-cam">Câmera</span>
+                </div>
+            </div>
+            <div id="theme-toggle" class="theme-toggle" title="Mudar Tema">
+                <i class="fas fa-sun"></i>
+            </div>
+            <div id="settings-button" class="settings-button" title="Configurações">
+                <i class="fas fa-cog"></i>
+            </div>
+            <div id="logout-button" class="logout-button" title="Sair">
+                <i class="fas fa-sign-out-alt"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="terminal interactive-terminal">
+            <div class="terminal-header">
+                <div class="terminal-title">Terminal Interativo</div>
+                <div class="terminal-actions">
+                    <div class="terminal-btn close-btn"></div>
+                    <div class="terminal-btn minimize-btn"></div>
+                    <div class="terminal-btn maximize-btn"></div>
+                </div>
+            </div>
+            <div class="terminal-content" id="interactive-output">
+                <img src="axon.png" alt="Axon Logo Terminal" class="terminal-logo-internal">
+                <div id="initial-messages" style="position: relative; z-index: 1;">
+                    <pre class="info">
+ █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
+██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
+███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
+██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
+██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                    </pre>
+                    <span class="info">Axon - Assistente Médico v1.0</span><br>
+                    <span class="info">Aguardando autenticação...</span><br><br>
+                </div>
+            </div>
+            <div class="terminal-footer">
+                <div class="action-buttons-container">
+                    <button id="btn-exames" class="action-button" title="Analisar Exames (/exames)"><i class="fas fa-file-medical-alt"></i></button>
+                    <button id="btn-see" class="action-button" title="Análise Visual Axon Eye (/see)"><i class="fas fa-eye"></i></button>
+                    <button id="btn-hd" class="action-button" title="Gerar Hipóteses Diagnósticas (/hd)"><i class="fas fa-lightbulb"></i></button>
+                    <button id="btn-cd" class="action-button" title="Gerar Conduta Médica (/cd)"><i class="fas fa-pills"></i></button>
+                    <button id="btn-records" class="action-button" title="Prontuários"><i class="fas fa-book-medical"></i></button>
+                    <button id="btn-clear" class="action-button" title="Limpar Sessão (/clear)"><i class="fas fa-eraser"></i></button>
+                    <button id="btn-mic" class="action-button" title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button>
+                </div>
+                <div class="input-line">
+                    <span class="prompt">></span>
+                    <input type="text" class="command-input" id="command-input" autocomplete="off" autofocus>
+                </div>
+            </div>
+        </div>
+
+        <div class="terminal non-interactive-terminal">
+            <div class="terminal-header">
+                <div class="terminal-title">Monitor</div>
+                <div class="monitor-toggle-buttons">
+                    <button id="toggle-anamnesis" class="monitor-toggle-button active">
+                        <i class="fas fa-notes-medical"></i><span>Anamnese</span>
+                    </button>
+                    <button id="toggle-exams" class="monitor-toggle-button">
+                        <i class="fas fa-file-medical-alt"></i><span>Exames</span>
+                    </button>
+                    <button id="toggle-axon-eye" class="monitor-toggle-button">
+                        <i class="fas fa-eye"></i><span>Axon Eye</span>
+                    </button>
+                </div>
+                <div class="terminal-actions">
+                    <div class="terminal-btn close-btn"></div>
+                    <div class="terminal-btn minimize-btn"></div>
+                    <div class="terminal-btn maximize-btn"></div>
+                </div>
+            </div>
+            <button id="monitor-copy-btn" class="monitor-copy-btn" title="Copiar Conteúdo"><i class="fas fa-copy"></i></button>
+            <div class="terminal-content" id="monitor-content-wrapper">
+                <div id="anamnesis-preview" class="monitor-view">
+                    <div class="info">Aguardando início da anamnese...</div>
+                </div>
+                <div id="exams-results-preview" class="monitor-view" style="display: none;">
+                    <div class="info">Nenhum exame analisado ainda.</div>
+                </div>
+                <div id="axon-eye-results-preview" class="monitor-view" style="display: none;">
+                    <div class="info">Nenhuma análise visual feita ainda.</div>
+                </div>
+
+                <div id="camera-modal" class="camera-modal">
+                    <div class="camera-container">
+                        <div class="terminal-header">
+                            <div class="terminal-title" id="camera-modal-title">Câmera de Exames</div>
+                            <div class="terminal-actions">
+                                <div class="terminal-btn close-btn" id="camera-close-btn"></div>
+                            </div>
+                        </div>
+                        <div class="terminal-content" style="padding: 10px;">
+                            <div class="camera-video-wrapper">
+                                <video id="camera-video" class="camera-video" autoplay playsinline muted></video>
+                                <div class="camera-action-buttons">
+                                    <button id="flashlight-button" class="flashlight-button" style="display:none;"><i class="fas fa-lightbulb"></i> Lanterna</button>
+                                    <button id="camera-switch-button" class="camera-switch-button" style="display:none;"><i class="fas fa-sync-alt"></i> Trocar Câmera</button>
+                                </div>
+                                <div id="album-button" class="album-button" style="display:none;">
+                                    <i class="fas fa-images"></i> Álbum <span id="album-count" class="album-count">0</span>
+                                </div>
+                                <div class="camera-controls">
+                                    <button id="capture-button" class="camera-button" title="Capturar Foto"><i class="fas fa-camera"></i></button>
+                                    <input type="file" id="file-input" accept="image/*" multiple style="display: none;">
+                                    <button id="upload-button" class="camera-button" title="Carregar Arquivo"><i class="fas fa-upload"></i></button>
+                                    <button id="send-exams-button" class="camera-button disabled" title="Enviar Exames"><i class="fas fa-paper-plane"></i></button>
+                                    <button id="send-axon-eye-button" class="camera-button disabled" title="Analisar com Axon Eye" style="display:none;"><i class="fas fa-eye"></i></button>
+                                    <button id="cancel-camera-button" class="camera-button" title="Cancelar"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                            <canvas id="camera-canvas" style="display:none;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <span>AXON | Sistema médico inteligente desenvolvido por Ian Bastos</span>
+    </div>
+
+    <div id="fullscreen-modal" class="fullscreen-modal">
+        <span class="modal-close">&times;</span>
+        <img class="modal-content" id="modal-image">
+    </div>
+
+    <div id="album-modal" class="album-modal">
+        <div class="album-modal-content">
+            <div class="album-modal-header">
+                <div class="album-modal-title">Álbum de Exames</div>
+                <span class="album-modal-close">&times;</span>
+            </div>
+            <div id="album-grid" class="album-grid">
+            </div>
+        </div>
+    </div>
+
+    <div id="patient-list-modal" class="patient-list-modal">
+        <div class="patient-list-content">
+            <div class="patient-list-header">
+                <div class="patient-list-title">Pacientes Salvos</div>
+                <span class="patient-list-close">&times;</span>
+            </div>
+            <div class="patient-search-container">
+                <input type="text" id="patient-search-input" class="patient-search-input" placeholder="Pesquisar paciente...">
+            </div>
+            <div id="patient-list" class="patient-list">
+            </div>
+            <div class="patient-list-footer" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <button id="btn-save-from-list" class="app-modal-button" style="width: 100%;">Salvar Consulta Atual</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="patient-details-modal" class="patient-details-modal">
+        <div class="patient-details-content">
+            <div class="patient-details-header">
+                <div class="patient-details-title" id="patient-details-title">Detalhes do Paciente</div>
+                <span class="patient-details-close">&times;</span>
+            </div>
+            <div id="patient-details-body" class="patient-details-body">
+            </div>
+        </div>
+    </div>
+
+    <div id="login-modal" class="app-modal">
+        <div class="app-modal-content">
+            <div class="app-modal-header">
+                <h2 class="app-modal-title">AXON A.I - Login</h2>
+            </div>
+            <div class="app-modal-body">
+                <p>Por favor, faça login para continuar.</p>
+                <input type="text" id="login-modal-user" placeholder="Usuário" class="app-modal-input" autocomplete="username">
+                <input type="password" id="login-modal-pass" placeholder="Senha" class="app-modal-input" autocomplete="current-password">
+                <button id="login-modal-button" class="app-modal-button">Entrar</button>
+                <div id="login-modal-feedback" class="app-modal-feedback"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="save-patient-modal" class="app-modal">
+        <div class="app-modal-content">
+            <span class="app-modal-close">&times;</span>
+            <div class="app-modal-header">
+                <h2 class="app-modal-title">Salvar Paciente</h2>
+            </div>
+            <div class="app-modal-body">
+                <p>Insira os dados do paciente para salvar a sessão atual.</p>
+                <input type="text" id="save-patient-name" placeholder="Nome Completo do Paciente" class="app-modal-input">
+                <input type="text" id="save-patient-dob" placeholder="Data de Nascimento (DD/MM/AAAA)" class="app-modal-input">
+                <button id="save-patient-button" class="app-modal-button">Salvar</button>
+                <div id="save-patient-feedback" class="app-modal-feedback"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-auth-modal" class="app-modal">
+        <div class="app-modal-content">
+            <span class="app-modal-close">&times;</span>
+            <div class="app-modal-header">
+                <h2 class="app-modal-title">Administração</h2>
+            </div>
+            <div class="app-modal-body">
+                <p>Insira a senha de administrador.</p>
+                <input type="password" id="admin-auth-pass" placeholder="Senha" class="app-modal-input">
+                <button id="admin-auth-button" class="app-modal-button">Acessar</button>
+                <div id="admin-auth-feedback" class="app-modal-feedback"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-panel-modal" class="app-modal">
+        <div class="app-modal-content">
+            <span class="app-modal-close">&times;</span>
+            <div class="app-modal-header">
+                <h2 class="app-modal-title">Painel Administrativo</h2>
+            </div>
+            
+            <div class="admin-tabs">
+                <button class="admin-tab-btn active" data-tab="users">Usuários</button>
+                <button class="admin-tab-btn" data-tab="api">API</button>
+            </div>
+
+            <div id="tab-users" class="admin-tab-content">
+                <div class="patient-search-container" style="margin: 0 0 15px 0;">
+                    <input type="text" id="admin-user-search" class="patient-search-input" placeholder="Buscar usuário...">
+                </div>
+                <div class="admin-users-container">
+                    <div class="admin-users-list-section">
+                        <div class="admin-section-title" style="margin-top: 0; margin-bottom: 10px; flex-shrink: 0;">Usuários (Rank de Uso)</div>
+                        <div id="admin-users-list" class="user-list-scroll">
+                            <div class="info">Carregando...</div>
+                        </div>
+                    </div>
+                    <div class="admin-users-details-section" id="admin-user-details">
+                        <div class="info" style="margin-top: 20px;">Selecione um usuário para ver detalhes.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-api" class="admin-tab-content" style="display: none;">
+                <div id="admin-settings-body">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="prescription-helper-modal" class="app-modal">
+        <div class="app-modal-content" style="max-width: 600px;">
+            <span class="app-modal-close">&times;</span>
+            <div class="app-modal-header">
+                <h2 class="app-modal-title" id="prescription-helper-title">Assistente de Prescrição</h2>
+            </div>
+            <div class="app-modal-body" id="prescription-helper-body" style="text-align: left; overflow-y: auto;">
+                <!-- Templates will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, where, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA4bis9CVQkl1eJDfezsvUKTx1X_kFVT4M",
+            authDomain: "axon-91d0b.firebaseapp.com",
+            projectId: "axon-91d0b",
+            storageBucket: "axon-91d0b.firebasestorage.app",
+            messagingSenderId: "701115983749",
+            appId: "1:701115983749:web:9a57928b678918ffbb86ec"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const commandInput = document.getElementById('command-input');
+        const interactiveOutput = document.getElementById('interactive-output');
+        const anamnesisPreview = document.getElementById('anamnesis-preview');
+        const examsResultsPreview = document.getElementById('exams-results-preview');
+        const axonEyeResultsPreview = document.getElementById('axon-eye-results-preview');
+        const apiStatus = document.getElementById('api-status');
+        const micStatus = document.getElementById('mic-status');
+        const cameraStatus = document.getElementById('camera-status');
+        const initialMessagesContainer = document.getElementById('initial-messages');
+        const monitorCopyBtn = document.getElementById('monitor-copy-btn');
+        const logoutButton = document.getElementById('logout-button');
+        const settingsButton = document.getElementById('settings-button');
+        const themeToggleButton = document.getElementById('theme-toggle');
+        
+        const cameraModal = document.getElementById('camera-modal');
+        const cameraModalTitle = document.getElementById('camera-modal-title');
+        const cameraVideo = document.getElementById('camera-video');
+        const cameraCanvas = document.getElementById('camera-canvas');
+        const captureButton = document.getElementById('capture-button');
+        const fileInput = document.getElementById('file-input');
+        const uploadButton = document.getElementById('upload-button');
+        const sendExamsButton = document.getElementById('send-exams-button');
+        const sendAxonEyeButton = document.getElementById('send-axon-eye-button');
+        const cancelCameraButton = document.getElementById('cancel-camera-button');
+        const cameraSwitchButton = document.getElementById('camera-switch-button');
+        const flashlightButton = document.getElementById('flashlight-button');
+        const cameraCloseBtn = document.getElementById('camera-close-btn');
+
+        const toggleAnamnesisButton = document.getElementById('toggle-anamnesis');
+        const toggleExamsButton = document.getElementById('toggle-exams');
+        const toggleAxonEyeButton = document.getElementById('toggle-axon-eye');
+
+        const fullscreenModal = document.getElementById('fullscreen-modal');
+        const modalImage = document.getElementById('modal-image');
+        const modalClose = document.getElementsByClassName('modal-close')[0];
+
+        const albumButton = document.getElementById('album-button');
+        const albumCount = document.getElementById('album-count');
+        const albumModal = document.getElementById('album-modal');
+        const albumModalClose = albumModal.querySelector('.album-modal-close');
+        const albumGrid = document.getElementById('album-grid');
+
+        const btnExames = document.getElementById('btn-exames');
+        const btnSee = document.getElementById('btn-see');
+        const btnHd = document.getElementById('btn-hd');
+        const btnCd = document.getElementById('btn-cd');
+        const btnMic = document.getElementById('btn-mic');
+        const btnRecords = document.getElementById('btn-records');
+        const btnClear = document.getElementById('btn-clear');
+
+        const patientListModal = document.getElementById('patient-list-modal');
+        const patientList = document.getElementById('patient-list');
+        const patientListClose = patientListModal.querySelector('.patient-list-close');
+        const patientDetailsModal = document.getElementById('patient-details-modal');
+        const patientDetailsTitle = document.getElementById('patient-details-title');
+        const patientDetailsBody = document.getElementById('patient-details-body');
+        const patientDetailsClose = patientDetailsModal.querySelector('.patient-details-close');
+        const patientSearchInput = document.getElementById('patient-search-input');
+        const btnSaveFromList = document.getElementById('btn-save-from-list');
+        
+        const loginModal = document.getElementById('login-modal');
+        const loginModalUser = document.getElementById('login-modal-user');
+        const loginModalPass = document.getElementById('login-modal-pass');
+        const loginModalButton = document.getElementById('login-modal-button');
+        const loginModalFeedback = document.getElementById('login-modal-feedback');
+
+        const savePatientModal = document.getElementById('save-patient-modal');
+        const savePatientNameInput = document.getElementById('save-patient-name');
+        const savePatientDobInput = document.getElementById('save-patient-dob');
+        const savePatientButton = document.getElementById('save-patient-button');
+        const savePatientFeedback = document.getElementById('save-patient-feedback');
+        const savePatientModalClose = savePatientModal.querySelector('.app-modal-close');
+
+        const adminAuthModal = document.getElementById('admin-auth-modal');
+        const adminAuthPass = document.getElementById('admin-auth-pass');
+        const adminAuthButton = document.getElementById('admin-auth-button');
+        const adminAuthFeedback = document.getElementById('admin-auth-feedback');
+        const adminAuthClose = adminAuthModal.querySelector('.app-modal-close');
+
+        const adminPanelModal = document.getElementById('admin-panel-modal');
+        const adminPanelClose = adminPanelModal.querySelector('.app-modal-close');
+        const adminSettingsBody = document.getElementById('admin-settings-body');
+        const adminUsersList = document.getElementById('admin-users-list');
+        const adminUserDetails = document.getElementById('admin-user-details');
+        const adminUserSearch = document.getElementById('admin-user-search');
+        const adminTabButtons = document.querySelectorAll('.admin-tab-btn');
+
+        const prescriptionHelperModal = document.getElementById('prescription-helper-modal');
+        const prescriptionHelperTitle = document.getElementById('prescription-helper-title');
+        const prescriptionHelperBody = document.getElementById('prescription-helper-body');
+        const prescriptionHelperClose = prescriptionHelperModal.querySelector('.app-modal-close');
+
+        const statusTextApi = document.querySelector('.status-text-api');
+        const statusTextMic = document.querySelector('.status-text-mic');
+        const statusTextCam = document.querySelector('.status-text-cam');
+        
+        let isListening = false;
+        let isLoggedIn = false;
+        let isUserBlocked = false;
+        let currentUser = null;
+        let recognition = null;
+        let audioStream = null; 
+        let anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+        let examsResults = "";
+        let axonEyeResults = "";
+        let lastAnamnesisInfo = "";
+        let apiConnectionStatus = "Desconhecido";
+        let unsubscribeSnapshot = null;
+        let unsubscribeUserDoc = null;
+        let unsubscribeSettings = null;
+        let cameraStream = null;
+        let capturedImages = [];
+        let temporaryImgurUploads = [];
+        let currentCameraFacingMode = 'environment';
+        let currentMonitorView = 'anamnesis';
+        let isFlashlightOn = false;
+        let cameraMode = 'exams';
+        const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isMobile = isMobileDevice();
+        let allPatients = [];
+        let conversationHistory = [];
+        let adminUsersData = [];
+
+        const defaultApiKeys = [
+            'AIzaSyB7krrv-Jjw4hn34MIFYBcrzDa5mWB9PpU',
+            'AIzaSyAJk2u0SsCv11d9mrECAkoBRafHEVGgwwg',
+            'AIzaSyAG0j6JuMlR5FoCTUcNQOvNy_lcS5C9ew0'
+        ];
+        const defaultApiModels = [
+            { id: 1, name: 'gemini-2.0-flash', vision: true },
+            { id: 2, name: 'gemini-flash-lite-latest', vision: true },
+            { id: 3, name: 'gemini-2.5-flash', vision: true },
+            { id: 4, name: 'gemini-2.5-pro', vision: true },
+            { id: 5, name: 'gemini-1.5-pro', vision: true },
+            { id: 6, name: 'gemini-1.5-flash', vision: true }
+        ];
+        const openRouterModels = [
+            { name: 'x-ai/grok-4.1-fast:free', vision: true },
+            { name: 'deepseek/deepseek-r1:free', vision: false },
+            { name: 'google/gemini-2.0-flash-exp:free', vision: true },
+            { name: 'mistralai/mistral-small-3.1-24b-instruct:free', vision: true },
+            { name: 'nvidia/nemotron-nano-12b-v2-vl:free', vision: true }
+        ];
+        const groqModels = [
+            { name: 'llama-3.3-70b-versatile', vision: false },
+            { name: 'llama-3.1-8b-instant', vision: false },
+            { name: 'llama-3.2-90b-vision-preview', vision: true },
+            { name: 'llama-3.2-11b-vision-preview', vision: true },
+            { name: 'deepseek-r1-distill-llama-70b', vision: false },
+            { name: 'mixtral-8x7b-32768', vision: false },
+            { name: 'gemma2-9b-it', vision: false },
+            { name: 'meta-llama/llama-4-scout-17b-16e-instruct', vision: true },
+            { name: 'openai/gpt-oss-20b', vision: false }
+        ];
+
+        let globalSettings = {
+            apiKeys: [...defaultApiKeys],
+            apiModels: [...defaultApiModels],
+            mode: 'automatic',
+            manualTextModel: '',
+            manualVisionModel: '',
+            manualApiKey: '',
+            apiProvider: 'gemini',
+            openRouterKey: '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',
+            openRouterModel: 'x-ai/grok-4.1-fast:free',
+            groqKey: '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',
+            groqModel: 'llama-3.3-70b-versatile'
+        };
+
+        let currentApiKeyIndex = 0;
+        let currentAIModel = 'gemini-2.0-flash';
+        let currentVisionAIModel = 'gemini-2.5-flash-lite';
+        const IMGUR_CLIENT_ID = '546c25a59c58ad7';
+
+        const setTheme = (theme) => {
+            localStorage.setItem('theme', theme);
+            const icon = themeToggleButton.querySelector('i');
+            const themeColorMeta = document.getElementById('theme-color-meta');
+            const statusBarStyleMeta = document.getElementById('status-bar-style-meta');
+
+            if (theme === 'light') {
+                document.body.classList.add('light-mode');
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                if (themeColorMeta) themeColorMeta.setAttribute('content', '#f0f9ff');
+                if (statusBarStyleMeta) statusBarStyleMeta.setAttribute('content', 'default');
+            } else { // dark mode
+                document.body.classList.remove('light-mode');
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                if (themeColorMeta) themeColorMeta.setAttribute('content', '#1a202c');
+                if (statusBarStyleMeta) statusBarStyleMeta.setAttribute('content', 'black-translucent');
+            }
+        };
+
+        const toggleTheme = () => {
+            const currentTheme = localStorage.getItem('theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        };
+
+        const getGeminiUrl = (modelName, apiKey) => `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+        const validCommands = [
+            '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
+            '/ia', '/help', '/clear', '/api', '/api-set', '/register', '/exames', '/see', '/ask', '/delete', '/pdf', '/load', '/users'
+        ];
+
+        const isSpeechRecognitionSupported = () => 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+        
+        const initSpeechRecognition = () => {
+            if (!isSpeechRecognitionSupported()) {
+                appendOutput("Reconhecimento de voz não suportado neste navegador.", "error");
+                return;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = false;
+            recognition.lang = 'pt-BR';
+
+            recognition.onstart = () => {
+                isListening = true;
+                micStatus.classList.remove('status-off');
+                btnMic.classList.add('active');
+                btnMic.innerHTML = '<i class="fas fa-microphone"></i>';
+                appendOutput("Microfone ativado. Gravando consulta...", "success");
+                if (isLoggedIn && currentUser) {
+                    updateMonitorStateInFirestore(currentUser, { activeView: 'anamnesis' });
+                }
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[event.results.length - 1][0].transcript;
+                
+                if (transcript.trim()) {
+                    appendOutput(`[Voz] ${transcript}`, "info");
+                    processAnamnesisInfo(transcript);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                appendOutput(`Erro no reconhecimento de voz: ${event.error}`, "error");
+                stopListening();
+            };
+
+            recognition.onend = () => {
+                if (isListening) {
+                    recognition.start();
+                }
+            };
+        };
+
+        const toggleListening = () => {
+            if (!isListening) {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        audioStream = stream;
+                        recognition.start();
+                    })
+                    .catch(err => {
+                        appendOutput(`Permissão de microfone negada: ${err.message}`, "error");
+                    });
+            } else {
+                stopListening();
+            }
+        };
+
+        const stopListening = () => {
+            if (recognition) {
+                recognition.stop();
+            }
+            if (audioStream) {
+                audioStream.getTracks().forEach(track => track.stop());
+                audioStream = null;
+            }
+            isListening = false;
+            micStatus.classList.add('status-off');
+            btnMic.classList.remove('active');
+            btnMic.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+            appendOutput("Microfone desativado.", "info");
+        };
+
+        const appendOutput = (text, type = "output", logToFirebase = true) => {
+            const outputElement = document.createElement('div');
+            
+            if (type === "command") {
+                outputElement.innerHTML = `<span class="prompt">></span> <span class="command">${text}</span>`;
+            } else if (type === "error") {
+                outputElement.innerHTML = `<span class="error">${text}</span>`;
+            } else if (type === "success") {
+                outputElement.innerHTML = `<span class="success">${text}</span>`;
+            } else if (type === "info") {
+                outputElement.innerHTML = `<span class="info">${text}</span>`;
+            } else if (type === "receituario") {
+                outputElement.classList.add('receituario-item');
+                outputElement.textContent = text;
+            } else if (type === "highlight") {
+                outputElement.classList.add('blocked-msg');
+                outputElement.textContent = text;
+            }
+            else {
+                outputElement.innerHTML = `<span class="${type}">${text}</span>`;
+            }
+            
+            interactiveOutput.appendChild(outputElement);
+            interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
+
+            if (logToFirebase && isLoggedIn && currentUser) {
+                logInteractionToFirebase(currentUser, text, type, 'interactive');
+            }
+        };
+
+        const resetInteractiveTerminal = (requireLogin = false) => {
+            const elementsToKeep = [initialMessagesContainer];
+            Array.from(interactiveOutput.children).forEach(child => {
+                if (!elementsToKeep.includes(child) && !child.classList.contains('terminal-logo-internal')) {
+                    child.remove();
+                }
+            });
+
+            initialMessagesContainer.style.display = 'block';
+            
+            if (requireLogin) {
+                isLoggedIn = false;
+                isUserBlocked = false;
+                currentUser = null;
+                localStorage.removeItem('axon_logged_in_user');
+                if (unsubscribeSnapshot) {
+                    unsubscribeSnapshot();
+                    unsubscribeSnapshot = null;
+                }
+                if (unsubscribeUserDoc) {
+                    unsubscribeUserDoc();
+                    unsubscribeUserDoc = null;
+                }
+                initialMessagesContainer.innerHTML = `
+                    <pre class="info">
+ █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
+██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
+███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
+██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
+██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                    </pre>
+                    <span class="info">Axon - Assistente Médico v1.0</span><br>
+                    <span class="info">Aguardando autenticação...</span><br><br>
+                `;
+                loginModal.style.display = 'flex';
+                loginModalUser.focus();
+            } else {
+                initialMessagesContainer.innerHTML = `
+                    <pre class="info">
+ █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
+██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
+███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
+██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
+██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                    </pre>
+                    <span class="info">Axon - Assistente Médico v1.0</span><br>
+                    <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
+                `;
+            }
+            interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
+        };
+        
+        const logoutUser = async () => {
+            appendOutput("Fazendo logout...", "info", false);
+            await clearTemporaryUploads();
+            if (currentUser) {
+                try {
+                    await deleteDoc(doc(db, "sessions", currentUser));
+                } catch (e) {
+                    console.error("Could not delete session doc on logout:", e);
+                }
+            }
+            if (unsubscribeUserDoc) {
+                unsubscribeUserDoc();
+                unsubscribeUserDoc = null;
+            }
+            stopListening();
+            resetInteractiveTerminal(true);
+        };
+
+        const updateAnamnesisPreview = (logToFirebase = true) => {
+            let previewHTML = `
+                <div class="anamnesis-content">
+                    <div class="section-title">Queixa Principal (QP):</div>
+                    <div>${anamnesis.qp || "Ainda não informado."}</div><br>
+                    <div class="section-title">História da Moléstia Atual (HMA):</div>
+                    <div>${anamnesis.hma || "Ainda não informado."}</div><br>
+                    <div class="section-title">História Patológica (HP):</div>
+                    <div>${anamnesis.hp || "Ainda não informado."}</div><br>
+                    <div class="section-title">História Familiar (HF):</div>
+                    <div>${anamnesis.hf || "Ainda não informado."}</div><br>
+                    <div class="section-title">História Psicossocial (HPS):</div>
+                    <div>${anamnesis.hps || "Ainda não informado."}</div>
+                </div>`;
+            anamnesisPreview.innerHTML = previewHTML;
+            if (logToFirebase && isLoggedIn && currentUser) {
+                saveAnamnesisToFirestore(currentUser, anamnesis);
+            }
+        };
+
+        const updateExamsResultsPreview = (logToFirebase = true) => {
+            let formattedResults = '';
+            if (examsResults) {
+                formattedResults = examsResults.split('\n')
+                    .filter(line => line.trim() !== '')
+                    .map(line => {
+                        if (/\(Alterado\)/i.test(line)) {
+                            // Use a regex replace to wrap only the "(Alterado)" part in a span
+                            return `<div class="output">${line.replace(/(\(Alterado\))/gi, '<span class="altered-text">$1</span>')}</div>`;
+                        }
+                        return `<div class="output">${line.trim()}</div>`;
+                    }).join('');
+            }
+            examsResultsPreview.innerHTML = `<div class="section-title">RESULTADOS DOS EXAMES:</div>${formattedResults || '<div class="info">Nenhum exame analisado ainda.</div>'}`;
+            if (logToFirebase && isLoggedIn && currentUser) {
+                saveExamsResultsToFirestore(currentUser, examsResults);
+            }
+        };
+
+        const updateAxonEyeResultsPreview = (logToFirebase = true) => {
+            let formattedResults = '';
+            let imageHtml = '';
+            if (temporaryImgurUploads.length > 0 && currentMonitorView === 'axon-eye') {
+                imageHtml = `<img src="${temporaryImgurUploads[0].link}" class="axon-eye-image-preview" alt="Imagem Analisada">`;
+            }
+            if (axonEyeResults) {
+                const impressionRegex = /(Impressão Diagnóstica|Interpretação Clínica|Diagnósticos Diferenciais):\s*(.*)/i;
+                let match = axonEyeResults.match(impressionRegex);
+                if (match) {
+                    const title = match[1];
+                    const content = match[2].trim();
+                    const preText = axonEyeResults.substring(0, match.index).trim();
+                    const postText = axonEyeResults.substring(match.index + match[0].length).trim();
+                    formattedResults += `<div class="output">${preText.split('\n').map(line => line.trim()).filter(line => line).join('<br>')}</div>`;
+                    formattedResults += `<div class="axon-eye-title">${title}</div>`;
+                    formattedResults += `<div class="output">${content}</div>`;
+                    formattedResults += `<div class="output">${postText.split('\n').map(line => line.trim()).filter(line => line).join('<br>')}</div>`;
+                } else {
+                    formattedResults = axonEyeResults.split('\n').filter(line => line.trim() !== '').map(line => `<div class="output">${line.trim()}</div>`).join('');
+                }
+            }
+            axonEyeResultsPreview.innerHTML = `<div class="section-title">ANÁLISE AXON EYE:</div>${formattedResults || '<div class="info">Nenhuma análise visual feita ainda.</div>'}${imageHtml}`;
+            if (logToFirebase && isLoggedIn && currentUser) {
+                saveAxonEyeResultsToFirestore(currentUser, axonEyeResults);
+            }
+        };
+
+        const toggleMonitorView = (view, fromRemote = false) => {
+            currentMonitorView = view;
+            anamnesisPreview.style.display = 'none';
+            examsResultsPreview.style.display = 'none';
+            axonEyeResultsPreview.style.display = 'none';
+            if (view === 'camera' && !fromRemote) {
+                cameraModal.style.display = 'flex';
+            } else {
+                cameraModal.style.display = 'none';
+                stopCameraStreamOnly();
+            }
+            toggleAnamnesisButton.classList.remove('active');
+            toggleExamsButton.classList.remove('active');
+            toggleAxonEyeButton.classList.remove('active');
+            if (view === 'anamnesis') {
+                anamnesisPreview.style.display = 'block';
+                toggleAnamnesisButton.classList.add('active');
+            } else if (view === 'exams') {
+                examsResultsPreview.style.display = 'block';
+                toggleExamsButton.classList.add('active');
+            } else if (view === 'axon-eye') {
+                axonEyeResultsPreview.style.display = 'block';
+                toggleAxonEyeButton.classList.add('active');
+            }
+            if (!fromRemote && isLoggedIn && currentUser) {
+                updateMonitorStateInFirestore(currentUser, { activeView: view });
+            }
+        };
+
+        const incrementUserUsage = async (type) => {
+            if (!currentUser || !isLoggedIn) return;
+            const userRef = doc(db, "users", currentUser);
+            try {
+                const updateData = {};
+                if (type === 'text') {
+                    updateData.textRequests = increment(1);
+                } else if (type === 'vision') {
+                    updateData.visionRequests = increment(1);
+                }
+                await updateDoc(userRef, updateData);
+            } catch (e) {
+                console.error("Erro ao incrementar uso do usuário:", e);
+            }
+        };
+
+        const callOpenRouterAPI = async (prompt, images = []) => {
+            const modelName = globalSettings.openRouterModel || 'x-ai/grok-4.1-fast:free';
+            const apiKey = globalSettings.openRouterKey;
+            
+            appendOutput(`Conectando via OpenRouter (${modelName})...`, "info", false);
+
+            try {
+                let messages = [];
+                
+                if (images.length > 0) {
+                    const contentArray = [
+                        { type: "text", text: prompt }
+                    ];
+                    
+                    images.forEach(img => {
+                         contentArray.push({
+                            type: "image_url",
+                            image_url: { url: img }
+                        });
+                    });
+                    
+                    messages = [{ role: "user", content: contentArray }];
+                } else {
+                    messages = [{ role: "user", content: prompt }];
+                }
+
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${apiKey}`,
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": window.location.href,
+                        "X-Title": "Axon A.I"
+                    },
+                    body: JSON.stringify({
+                        model: modelName,
+                        messages: messages,
+                        ...((modelName.includes('grok') || modelName.includes('nemotron')) ? { reasoning: { enabled: true } } : {})
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const content = data.choices?.[0]?.message?.content;
+                    if (content) {
+                        await incrementUserUsage(images.length > 0 ? 'vision' : 'text');
+                        appendOutput(`Sucesso via OpenRouter.`, "success", false);
+                        return content.replace(/\*\*/g, '');
+                    }
+                    throw new Error("Resposta vazia do OpenRouter.");
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error?.message || `Erro OpenRouter: ${response.status}`);
+                }
+            } catch (e) {
+                console.error("Erro na chamada OpenRouter:", e);
+                throw e;
+            }
+        };
+
+        const callGroqAPI = async (prompt, images = []) => {
+            const modelName = globalSettings.groqModel || 'llama-3.3-70b-versatile';
+            const apiKey = globalSettings.groqKey;
+
+            appendOutput(`Conectando via Groq (${modelName})...`, "info", false);
+
+            try {
+                if (images.length > 1) {
+                    let combinedResponse = "";
+                    const transcriptionPrompt = `Sua única tarefa é transcrever TODO o texto visível na imagem. Retorne APENAS o texto que você vê. Não adicione absolutamente nada mais.`;
+
+                    for (let i = 0; i < images.length; i++) {
+                        const image = images[i];
+                        await updateAnalysisProgressInFirestore(`${i + 1}/${images.length}`);
+                        
+                        const messages = [{
+                            role: "user",
+                            content: [
+                                { type: "text", text: transcriptionPrompt },
+                                { type: "image_url", image_url: { url: image } }
+                            ]
+                        }];
+
+                        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                            method: "POST",
+                            headers: {
+                                "Authorization": `Bearer ${apiKey}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                model: modelName,
+                                messages: messages,
+                                temperature: 0,
+                                max_tokens: 4096,
+                                top_p: 1,
+                                stream: false,
+                                stop: null
+                            })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            const content = data.choices?.[0]?.message?.content;
+                            if (content) {
+                                combinedResponse += (i > 0 ? `\n\n[---NEXT-IMAGE---]\n\n` : '') + content.trim();
+                            } else {
+                                combinedResponse += `\n\n[---NEXT-IMAGE---]\n\n(Imagem ${i + 1}: Resposta vazia da IA)`;
+                            }
+                        } else {
+                             const errorData = await response.json().catch(() => ({}));
+                             const errorMessage = errorData.error?.message || `Erro na imagem ${i + 1}: ${response.status}`;
+                             combinedResponse += `\n\n[---NEXT-IMAGE---]\n\n(Imagem ${i + 1}: Erro - ${errorMessage})`;
+                        }
+                    }
+
+                    await incrementUserUsage('vision');
+                    appendOutput(`Sucesso via Groq (processamento sequencial).`, "success", false);
+                    return combinedResponse.replace(/\*\*/g, '');
+                }
+
+                let messages = [];
+                if (images.length > 0) {
+                    messages = [{
+                        role: "user",
+                        content: [
+                            { type: "text", text: prompt },
+                            { type: "image_url", image_url: { url: images[0] } }
+                        ]
+                    }];
+                } else {
+                    messages = [{ role: "user", content: prompt }];
+                }
+
+                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${apiKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: modelName,
+                        messages: messages,
+                        temperature: 1,
+                        max_tokens: 8192,
+                        top_p: 1,
+                        stream: false,
+                        stop: null
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const content = data.choices?.[0]?.message?.content;
+                    if (content) {
+                        await incrementUserUsage(images.length > 0 ? 'vision' : 'text');
+                        appendOutput(`Sucesso via Groq.`, "success", false);
+                        return content.replace(/\*\*/g, '');
+                    }
+                    throw new Error("Resposta vazia do Groq.");
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error?.message || `Erro Groq: ${response.status}`);
+                }
+            } catch (e) {
+                console.error("Erro na chamada Groq:", e);
+                throw e;
+            }
+        };
+
+        const callGeminiAPI = async (prompt) => {
+            if (globalSettings.apiProvider === 'openrouter') {
+                return await callOpenRouterAPI(prompt);
+            }
+            if (globalSettings.apiProvider === 'groq') {
+                return await callGroqAPI(prompt);
+            }
+
+            let strategyModels = [];
+            let keysToTry = [];
+
+            if (globalSettings.mode === 'manual') {
+                if (globalSettings.manualTextModel && globalSettings.manualApiKey) {
+                    strategyModels = [globalSettings.manualTextModel];
+                    keysToTry = [globalSettings.manualApiKey];
+                } else {
+                    throw new Error("Modo manual ativo, mas modelo ou chave não configurados.");
+                }
+            } else {
+                const preferredOrder = ['gemini-2.0-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+                const availableModelNames = globalSettings.apiModels.map(m => m.name);
+                const activePreferred = preferredOrder.filter(name => availableModelNames.includes(name));
+                const others = availableModelNames.filter(name => !preferredOrder.includes(name));
+                strategyModels = [...activePreferred, ...others];
+                keysToTry = globalSettings.apiKeys;
+            }
+
+            let lastError = null;
+
+            for (const modelName of strategyModels) {
+                for (let i = 0; i < keysToTry.length; i++) {
+                    const keyIndex = (currentApiKeyIndex + i) % keysToTry.length;
+                    const apiKeyToTry = keysToTry[keyIndex];
+                    
+                    appendOutput(`Tentando motor ${modelName} (Chave #${keyIndex + 1})...`, "info", false);
+
+                    try {
+                        const url = getGeminiUrl(modelName, apiKeyToTry);
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (globalSettings.mode === 'automatic') {
+                                currentApiKeyIndex = keyIndex;
+                            }
+                            await incrementUserUsage('text');
+                            appendOutput(`Sucesso com motor ${modelName}.`, "success", false);
+                            return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta.";
+                        }
+
+                        const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
+                        lastError = new Error(errorData.error?.message || `Erro desconhecido (${response.status})`);
+                        console.warn(`Falha com motor ${modelName} chave ${keyIndex}: ${lastError.message}`);
+
+                    } catch (error) {
+                        lastError = error;
+                        console.warn(`Falha de rede motor ${modelName} chave ${keyIndex}: ${error.message}`);
+                    }
+                }
+            }
+
+            console.error("Erro final na chamada da API de texto:", lastError);
+            throw lastError || new Error("Todas as tentativas de chaves e motores falharam.");
+        };
+
+        const callGeminiVisionAPI = async (imageUrls, prompt) => {
+            if (globalSettings.apiProvider === 'openrouter') {
+                return await callOpenRouterAPI(prompt, imageUrls);
+            }
+            if (globalSettings.apiProvider === 'groq') {
+                return await callGroqAPI(prompt, imageUrls);
+            }
+
+            let strategyModels = [];
+            let keysToTry = [];
+
+            if (globalSettings.mode === 'manual') {
+                 if (globalSettings.manualVisionModel && globalSettings.manualApiKey) {
+                    strategyModels = [globalSettings.manualVisionModel];
+                    keysToTry = [globalSettings.manualApiKey];
+                } else {
+                    throw new Error("Modo manual ativo, mas modelo de visão ou chave não configurados.");
+                }
+            } else {
+                const preferredOrder = ['gemini-2.0-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+                const availableModelNames = globalSettings.apiModels.filter(m => m.vision).map(m => m.name);
+                
+                const activePreferred = preferredOrder.filter(name => availableModelNames.includes(name));
+                const others = availableModelNames.filter(name => !preferredOrder.includes(name));
+                
+                strategyModels = [...activePreferred, ...others];
+                keysToTry = globalSettings.apiKeys;
+            }
+            
+            let lastError = null;
+        
+            for (const modelName of strategyModels) {
+                const imageParts = imageUrls.map(url => ({ inlineData: { mimeType: 'image/jpeg', data: url.split(',')[1] } }));
+                const textPart = { text: prompt };
+
+                for (let i = 0; i < keysToTry.length; i++) {
+                    const keyIndex = (currentApiKeyIndex + i) % keysToTry.length;
+                    const apiKeyToTry = keysToTry[keyIndex];
+                    
+                    appendOutput(`Tentando motor de visão ${modelName} (Chave #${keyIndex + 1})...`, "info", false);
+
+                    try {
+                        const url = getGeminiUrl(modelName, apiKeyToTry);
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [...imageParts, textPart] }] })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (globalSettings.mode === 'automatic') {
+                                currentApiKeyIndex = keyIndex;
+                            }
+                            await incrementUserUsage('vision');
+                            appendOutput(`Sucesso com motor de visão ${modelName}.`, "success", false);
+                            return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta da análise de imagem.";
+                        }
+
+                        const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
+                        lastError = new Error(errorData.error?.message || `Erro desconhecido na API de Visão (${response.status})`);
+                        console.warn(`Falha visão motor ${modelName} chave ${keyIndex}: ${lastError.message}`);
+
+                    } catch (error) {
+                        lastError = error;
+                        console.warn(`Falha de rede visão motor ${modelName} chave ${keyIndex}: ${error.message}`);
+                    }
+                }
+            }
+            
+            console.error("Erro final na chamada da API de visão:", lastError);
+            throw lastError || new Error("Todas as tentativas de chaves e motores de visão falharam.");
+        };
+
+        const processAnamnesisInfo = async (info) => {
+            lastAnamnesisInfo = info;
+            const prompt = `Você é um assistente médico especialista em semiologia. Sua tarefa é redigir uma anamnese médica profissional, organizando as informações fornecidas em seções adequadas. A anamnese deve ser bem redigida, coesa e utilizar termos médicos apropriados.
+            Contexto da consulta atual (informações existentes):
+            - QP (Queixa Principal): "${anamnesis.qp || "Nenhuma"}"
+            - HMA (História da Moléstia Atual): "${anamnesis.hma || "Nenhuma"}"
+            - HP (História Patológica): "${anamnesis.hp || "Nenhuma"}"
+            - HF (História Familiar): "${anamnesis.hf || "Nenhuma"}"
+            - HPS (História Psicossocial): "${anamnesis.hps || "Nenhuma"}"
+
+            Nova informação recebida (diálogo médico-paciente): "${info}"
+
+            Instruções cruciais:
+            1.  **Analise o contexto completo**: Considere tanto as informações existentes quanto a "nova informação recebida" para construir a anamnese mais precisa.
+            2.  **Ordene logicamente**: Mesmo que as informações sejam fornecidas fora de ordem, organize-as de forma coerente dentro da seção correta (QP, HMA, HP, HF, HPS).
+            3.  **Seja Fiel ao Conteúdo**: NÃO adicione, invente ou presuma informações que não foram explicitamente ditas. Frases como "Paciente não relata outros sintomas" ou "Paciente não sabe especificar" só devem ser incluídas se o médico ou paciente as tiverem mencionado.
+            4.  **Distinga os interlocutores e filtre as perguntas**: Sua tarefa é extrair APENAS as respostas e relatos do paciente. IGNORE completamente as perguntas diretas feitas pelo médico. Por exemplo, se o diálogo for "Médico: Você tem febre? Paciente: Sim, desde ontem.", a informação a ser registrada é "Paciente relata febre desde o dia anterior". A pergunta "Você tem febre?" NÃO DEVE ser incluída no texto da anamnese.
+            5.  **Atualize, não substitua**: Integre a nova informação à seção apropriada, complementando o que já existe. Mantenha o conteúdo das outras seções inalterado.
+            6.  **Filtro Rigoroso de Relevância Clínica**: Ignore A-B-S-O-L-U-T-A-M-E-N-T-E qualquer parte da conversa que não seja estritamente sobre a saúde do paciente. Isso inclui, mas não se limita a: saudações (bom dia, olá), cumprimentos, despedidas, comentários sobre o tempo, trânsito, amenidades sociais ou qualquer diálogo que não descreva um sintoma, um histórico médico, um hábito de vida relevante (fumo, álcool) ou uma queixa. Seu foco é 100% clínico.
+
+            Formato da Resposta: Retorne EXCLUSIVAMENTE um objeto JSON, contendo TODAS as chaves (qp, hma, hp, hf, hps) com os textos atualizados.`;
+            try {
+                const response = await callGeminiAPI(prompt);
+                const jsonStart = response.indexOf('{');
+                const jsonEnd = response.lastIndexOf('}') + 1;
+                const jsonString = response.substring(jsonStart, jsonEnd);
+                const updatedAnamnesis = JSON.parse(jsonString);
+                anamnesis = {
+                    qp: updatedAnamnesis.qp || "", hma: updatedAnamnesis.hma || "",
+                    hp: updatedAnamnesis.hp || "", hf: updatedAnamnesis.hf || "",
+                    hps: updatedAnamnesis.hps || ""
+                };
+                updateAnamnesisPreview();
+                appendOutput("Anamnese atualizada com sucesso.", "success");
+            } catch (error) {
+                appendOutput(`Erro ao atualizar a anamnese: ${error.message}.`, "error");
+            }
+        };
+
+        const generateDiagnosticHypotheses = async () => {
+            const prompt = `Com base na anamnese: ${JSON.stringify(anamnesis)}, nos exames: ${examsResults || "Nenhum"}, e na análise visual: ${axonEyeResults || "Nenhuma"}, liste as hipóteses diagnósticas em ordem de probabilidade. Seja técnico e resumido. Retorne apenas a lista.`;
+            try {
+                const response = await callGeminiAPI(prompt);
+                const formattedDiagnosis = response.split('\n').filter(item => item.trim()).map(item => `<div class="diagnosis-item">${item.trim()}</div>`).join('');
+                appendOutput(`<div class="conduct-title">HIPÓTESES DIAGNÓSTICAS:</div>${formattedDiagnosis}`, "output");
+            } catch (error) {
+                appendOutput(`Erro ao gerar hipóteses: ${error.message}`, "error");
+            }
+        };
+
+        const generateMedicalConduct = async () => {
+            const prompt = `Com base na anamnese: ${JSON.stringify(anamnesis)}, exames: ${examsResults || "Nenhum"}, e análise visual: ${axonEyeResults || "Nenhuma"}, proponha uma conduta médica completa. 
+Use EXATAMENTE os seguintes títulos para cada seção, na ordem apresentada, mesmo que a seção não tenha conteúdo: 
+1. CONDUTA FARMACOLÓGICA (SUS):
+2. EXAMES COMPLEMENTARES (SUS):
+3. CONDUTAS NÃO FARMACOLÓGICAS (SUS):
+4. RECOMENDAÇÕES:
+Seja técnico, objetivo e resumido.`;
+            try {
+                const response = await callGeminiAPI(prompt);
+                const formattedConduct = response
+                    .replace(/CONDUTA FARMACOLÓGICA \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTA FARMACOLÓGICA (SUS)">CONDUTA FARMACOLÓGICA (SUS):</div>')
+                    .replace(/EXAMES COMPLEMENTARES \(SUS\):/gi, '<div class="conduct-title" data-category="EXAMES COMPLEMENTARES (SUS)">EXAMES COMPLEMENTARES (SUS):</div>')
+                    .replace(/CONDUTAS NÃO FARMACOLÓGICAS \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTAS NÃO FARMACOLÓGICAS (SUS)">CONDUTAS NÃO FARMACOLÓGICAS (SUS):</div>')
+                    .replace(/^RECOMENDAÇÕES:/gim, '<div class="conduct-title" data-category="RECOMENDAÇÕES">RECOMENDAÇÕES:</div>')
+                    .split('\n').map(line => {
+                        const cleanedLine = line.trim().replace(/^\d+\.\s*/, '');
+                        if (cleanedLine === '' || line.includes('<div')) return line;
+                        return `<div class="conduct-item">${cleanedLine}</div>`;
+                    }).join('');
+                appendOutput(formattedConduct, "output");
+            } catch (error) {
+                appendOutput(`Erro ao gerar conduta: ${error.message}`, "error");
+            }
+        };
+
+        const askQuestionBasedOnContext = async (question) => {
+            conversationHistory.push({ role: 'user', content: question });
+            const prompt = `Você é um assistente médico falando com um médico qualificado. Contexto: ANAMNESE: ${JSON.stringify(anamnesis)}, EXAMES: ${examsResults || "Nenhum"}, ANÁLISE VISUAL: ${axonEyeResults || "Nenhum"}. HISTÓRICO DA CONVERSA: ${conversationHistory.map(e => `${e.role}: ${e.content}`).join('\n')}. PERGUNTA ATUAL: "${question}". Responda de forma técnica, detalhada e objetiva, obedecendo fielmente ao pedido do médico.`;
+            try {
+                const response = await callGeminiAPI(prompt);
+                conversationHistory.push({ role: 'assistant', content: response });
+                appendOutput(`Pergunta: ${question}\nResposta: ${response}`, "output");
+            } catch (error) {
+                appendOutput(`Erro ao processar pergunta: ${error.message}`, "error");
+            }
+        };
+        
+        const copyMonitorContent = () => {
+            let contentToCopy = "";
+            if (currentMonitorView === 'anamnesis') contentToCopy = anamnesisPreview.innerText;
+            else if (currentMonitorView === 'exams') contentToCopy = examsResultsPreview.innerText.replace("RESULTADOS DOS EXAMES:", "").trim();
+            else if (currentMonitorView === 'axon-eye') contentToCopy = axonEyeResultsPreview.innerText.replace("ANÁLISE AXON EYE:", "").trim();
+            navigator.clipboard.writeText(contentToCopy).then(() => appendOutput("Conteúdo copiado.", "success"), () => appendOutput("Erro ao copiar.", "error"));
+        };
+
+        const checkApiStatus = async (modelName = currentAIModel) => {
+            let keysToTest = [];
+            let modelToTest = modelName;
+
+            if (globalSettings.apiProvider === 'openrouter') {
+                 try {
+                    const response = await fetch("https://openrouter.ai/api/v1/auth/key", {
+                        method: "GET",
+                        headers: { "Authorization": `Bearer ${globalSettings.openRouterKey}` }
+                    });
+                    if (response.ok) {
+                         apiConnectionStatus = "Conectado (OpenRouter)";
+                         apiStatus.classList.remove('status-off');
+                         return true;
+                    }
+                    throw new Error("Chave OpenRouter inválida");
+                 } catch (e) {
+                     apiConnectionStatus = "Offline (OpenRouter)";
+                     apiStatus.classList.add('status-off');
+                     return false;
+                 }
+            }
+
+            if (globalSettings.apiProvider === 'groq') {
+                try {
+                    const response = await fetch("https://api.groq.com/openai/v1/models", {
+                        method: "GET",
+                        headers: { "Authorization": `Bearer ${globalSettings.groqKey}` }
+                    });
+                    if (response.ok) {
+                         apiConnectionStatus = "Conectado (Groq)";
+                         apiStatus.classList.remove('status-off');
+                         return true;
+                    }
+                    throw new Error("Chave Groq inválida");
+                 } catch (e) {
+                     apiConnectionStatus = "Offline (Groq)";
+                     apiStatus.classList.add('status-off');
+                     return false;
+                 }
+            }
+
+            if (globalSettings.mode === 'manual') {
+                keysToTest = [globalSettings.manualApiKey || ''];
+                modelToTest = globalSettings.manualTextModel || modelName;
+            } else {
+                keysToTest = globalSettings.apiKeys;
+            }
+
+            if (keysToTest.length === 0 || !keysToTest[0]) {
+                 apiConnectionStatus = "Sem chaves configuradas";
+                 apiStatus.classList.add('status-off');
+                 return false;
+            }
+
+            const isVision = globalSettings.apiModels.find(m => m.name === modelToTest)?.vision;
+            let requestBody;
+            
+            if (isVision) {
+                const dummyImagePart = { inlineData: { mimeType: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' } };
+                requestBody = JSON.stringify({ contents: [{ parts: [dummyImagePart, { text: "ping" }] }] });
+            } else {
+                requestBody = JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] });
+            }
+
+            for (let i = 0; i < keysToTest.length; i++) {
+                const apiKey = keysToTest[i];
+                try {
+                    const url = getGeminiUrl(modelToTest, apiKey);
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: requestBody,
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    
+                    if (response.ok) {
+                        apiConnectionStatus = "Conectado"; 
+                        apiStatus.classList.remove('status-off');
+                        
+                        if (globalSettings.mode === 'automatic') {
+                            currentApiKeyIndex = i;
+                        }
+                        return true;
+                    }
+                } catch (error) {
+                    console.warn(`Falha ao testar chave ${i} no status check: ${error.message}`);
+                }
+            }
+
+            apiConnectionStatus = "Offline (Todas as chaves falharam)";
+            apiStatus.classList.add('status-off');
+            return false;
+        };
+
+        const initializeAIModel = async () => {
+            appendOutput("Verificando status da API...", "info", false);
+            
+            if (globalSettings.mode === 'manual') {
+                currentAIModel = globalSettings.manualTextModel || currentAIModel;
+                currentVisionAIModel = globalSettings.manualVisionModel || currentVisionAIModel;
+            } else {
+                currentAIModel = 'gemini-2.0-flash';
+                currentVisionAIModel = 'gemini-2.0-flash';
+            }
+
+            let textModelOK = await checkApiStatus(currentAIModel);
+            let providerName = globalSettings.apiProvider === 'openrouter' ? 'OpenRouter' : (globalSettings.apiProvider === 'groq' ? 'Groq' : currentAIModel);
+            
+            if (textModelOK) appendOutput(`Motor conectado (${providerName}).`, "success", false);
+            else appendOutput(`Falha ao conectar motor: ${apiConnectionStatus}.`, "error", false);
+        };
+
+        const logInteractionToFirebase = async (username, content, type, terminal) => { try { await addDoc(collection(db, "sessions", username, "interactions"), { content, type, terminal, timestamp: new Date() }); } catch (e) { console.error("Erro no log Firebase: ", e); } };
+        const saveAnamnesisToFirestore = async (username, data) => { try { await setDoc(doc(db, "sessions", username), { anamnesis: data, lastUpdated: new Date() }, { merge: true }); } catch (e) { console.error("Erro ao salvar anamnese: ", e); } };
+        const saveExamsResultsToFirestore = async (username, data) => { try { await setDoc(doc(db, "sessions", username), { examsResults: data, lastUpdated: new Date() }, { merge: true }); } catch (e) { console.error("Erro ao salvar exames: ", e); } };
+        const saveAxonEyeResultsToFirestore = async (username, data) => { try { await setDoc(doc(db, "sessions", username), { axonEyeResults: data, lastUpdated: new Date() }, { merge: true }); } catch (e) { console.error("Erro ao salvar Axon Eye: ", e); } };
+        const updateMonitorStateInFirestore = async (username, state) => { try { await setDoc(doc(db, "sessions", username), { monitorState: { ...state, lastUpdated: new Date() } }, { merge: true }); } catch (e) { console.error("Erro ao salvar estado do monitor: ", e); } };
+        
+        const setAnalyzingStateInFirestore = async (isAnalyzing, analysisType = null) => {
+            if (!isLoggedIn || !currentUser) return;
+            try {
+                await setDoc(doc(db, "sessions", currentUser), {
+                    isAnalyzing: { status: isAnalyzing, type: analysisType, progress: '' }
+                }, { merge: true });
+            } catch (e) {
+                console.error("Erro ao atualizar estado de análise:", e);
+            }
+        };
+
+        const updateAnalysisProgressInFirestore = async (progress) => {
+            if (!isLoggedIn || !currentUser) return;
+            try {
+                await setDoc(doc(db, "sessions", currentUser), {
+                    isAnalyzing: { progress: progress }
+                }, { merge: true });
+            } catch (e) {
+                console.error("Erro ao atualizar progresso da análise:", e);
+            }
+        };
+        
+        const objectsAreEqual = (obj1, obj2) => {
+            const keys1 = Object.keys(obj1);
+            const keys2 = Object.keys(obj2);
+            if (keys1.length !== keys2.length) return false;
+            for (let key of keys1) {
+                if (obj1[key] !== obj2[key]) return false;
+            }
+            return true;
+        };
+
+        const setupFirebaseListener = (username) => {
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
+            const docRef = doc(db, "sessions", username);
+            unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+
+                    // Handle analysis state synchronization
+                    if (data.isAnalyzing && data.isAnalyzing.status) {
+                        const type = data.isAnalyzing.type;
+                        const progress = data.isAnalyzing.progress;
+                        const progressText = progress ? `Imagem ${progress}` : 'Analisando Imagens...';
+                        
+                        const animationHTML = `
+                            <div class="ai-processing-animation">
+                                <div class="scanner-animation">
+                                    <div class="brain-icon"><i class="fas fa-brain"></i></div>
+                                    <div class="scanner-line"></div>
+                                </div>
+                                <span>${progressText}</span>
+                            </div>`;
+                        
+                        if (type === 'exams') {
+                            if (currentMonitorView !== 'exams') toggleMonitorView('exams', true);
+                            examsResultsPreview.innerHTML = animationHTML;
+                        } else if (type === 'axon-eye') {
+                            if (currentMonitorView !== 'axon-eye') toggleMonitorView('axon-eye', true);
+                            axonEyeResultsPreview.innerHTML = animationHTML;
+                        }
+                    }
+
+                    // Always process content updates. This will replace the animation when results are ready.
+                    if (data.anamnesis && !objectsAreEqual(data.anamnesis, anamnesis)) {
+                        anamnesis = data.anamnesis;
+                        updateAnamnesisPreview(false);
+                    }
+                    if (data.examsResults !== undefined && data.examsResults !== examsResults) {
+                        examsResults = data.examsResults;
+                        updateExamsResultsPreview(false);
+                    }
+                    if (data.axonEyeResults !== undefined && data.axonEyeResults !== axonEyeResults) {
+                        axonEyeResults = data.axonEyeResults;
+                        updateAxonEyeResultsPreview(false);
+                    }
+                    if (data.monitorState && data.monitorState.activeView !== currentMonitorView) {
+                        // Avoid view switching if an analysis is active, as it's already handled by the logic above
+                        if (!data.isAnalyzing || !data.isAnalyzing.status) {
+                            toggleMonitorView(data.monitorState.activeView, true);
+                        }
+                    }
+
+                } else {
+                    // Reset local state if session document is deleted
+                    anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+                    examsResults = "";
+                    axonEyeResults = "";
+                    updateAnamnesisPreview(false);
+                    updateExamsResultsPreview(false);
+                    updateAxonEyeResultsPreview(false);
+                }
+            });
+        };
+
+        const setupGlobalSettingsListener = () => {
+            if (unsubscribeSettings) unsubscribeSettings();
+            const docRef = doc(db, "settings", "global");
+            unsubscribeSettings = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    globalSettings = {
+                        apiKeys: data.apiKeys || [...defaultApiKeys],
+                        apiModels: data.apiModels || [...defaultApiModels],
+                        mode: data.mode || 'automatic',
+                        manualTextModel: data.manualTextModel || '',
+                        manualVisionModel: data.manualVisionModel || '',
+                        manualApiKey: data.manualApiKey || '',
+                        apiProvider: data.apiProvider || 'gemini',
+                        openRouterKey: data.openRouterKey || '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',
+                        openRouterModel: data.openRouterModel || 'x-ai/grok-4.1-fast:free',
+                        groqKey: data.groqKey || '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',
+                        groqModel: data.groqModel || 'llama-3.3-70b-versatile'
+                    };
+                    
+                    if (adminPanelModal.style.display === 'flex' && document.querySelector('.admin-tab-btn[data-tab="api"]').classList.contains('active')) {
+                        renderAdminSettingsUI();
+                    }
+                    
+                    initializeAIModel();
+                } else {
+                    setDoc(docRef, globalSettings);
+                }
+            }, (error) => {
+                console.error("Erro ao sincronizar configurações globais:", error);
+            });
+        };
+
+        const registerUser = async (adminPassword, username, password) => {
+            if (adminPassword !== 'admin123') return appendOutput("Senha de administrador incorreta.", "error");
+            if (!username || !password) return appendOutput("Uso: /register [senha_admin] [usuário] [senha]", "error");
+            try {
+                const userRef = doc(db, "users", username);
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists()) appendOutput(`Usuário '${username}' já existe.`, "error");
+                else { await setDoc(userRef, { password, createdAt: new Date(), textRequests: 0, visionRequests: 0, isBlocked: false }); appendOutput(`Usuário '${username}' registrado com sucesso.`, "success"); }
+            } catch (e) { appendOutput(`Erro ao registrar: ${e.message}`, "error"); }
+        };
+        const deleteUser = async (adminPassword, username) => {
+            if (adminPassword !== 'admin123') return appendOutput("Senha de administrador incorreta.", "error");
+            if (!username) return appendOutput("Uso: /delete [senha_admin] [usuário]", "error");
+            try {
+                const userRef = doc(db, "users", username);
+                await deleteDoc(userRef);
+                appendOutput(`Usuário '${username}' deletado.`, "success");
+                if (currentUser === username) { 
+                    appendOutput("Você foi desconectado.", "info");
+                    logoutUser();
+                }
+            } catch (e) { appendOutput(`Erro ao deletar: ${e.message}`, "error"); }
+        };
+        const authenticateUser = async (username, password) => {
+            if (username === 'ian' && password === 'ian123') return { success: true, isBlocked: false };
+            try {
+                const userRef = doc(db, "users", username);
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists()) {
+                    const userData = docSnap.data();
+                    if (userData.password === password) {
+                        return { success: true, isBlocked: userData.isBlocked || false };
+                    }
+                }
+                return { success: false };
+            } catch (e) { return { success: false }; }
+        };
+
+        const isUserValid = async (username) => {
+            try {
+                const userRef = doc(db, "users", username);
+                const docSnap = await getDoc(userRef);
+                return docSnap.exists();
+            } catch (e) {
+                console.error("Error checking user validity:", e);
+                return false;
+            }
+        };
+        
+        const updateBlockedUI = () => {
+            const buttons = document.querySelectorAll('.action-button');
+            if (isUserBlocked) {
+                appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
+                buttons.forEach(btn => btn.classList.add('blocked-ui'));
+                commandInput.disabled = true;
+                if (cameraModal.style.display === 'flex') stopCamera();
+                patientListModal.style.display = 'none';
+                savePatientModal.style.display = 'none';
+                adminPanelModal.style.display = 'none';
+            } else {
+                 appendOutput("Sua conta foi desbloqueada.", "success");
+                 buttons.forEach(btn => btn.classList.remove('blocked-ui'));
+                 commandInput.disabled = false;
+            }
+        };
+
+        const uploadToImgur = async (base64Image) => {
+            try {
+                const response = await fetch('https://api.imgur.com/3/image', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image: base64Image.split(',')[1],
+                        type: 'base64',
+                        title: 'Axon Eye Analysis',
+                        description: `Image uploaded by Axon A.I for user ${currentUser}`
+                    }),
+                });
+                const data = await response.json();
+                if (data.success) {
+                    return { link: data.data.link, deleteHash: data.data.deletehash };
+                } else {
+                    throw new Error(data.data.error || 'Imgur upload failed');
+                }
+            } catch (error) {
+                console.error("Imgur upload error:", error);
+                appendOutput(`Erro ao fazer upload da imagem para o Imgur: ${error.message}`, 'error');
+                return null;
+            }
+        };
+
+        const deleteFromImgur = async (deleteHash) => {
+            if (!deleteHash) return;
+            try {
+                await fetch(`https://api.imgur.com/3/image/${deleteHash}`, {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
+                    },
+                });
+            } catch (error) {
+                console.error("Imgur delete error:", error);
+            }
+        };
+        
+        const clearTemporaryUploads = async () => {
+            if (temporaryImgurUploads.length > 0) {
+                appendOutput('Limpando imagens temporárias não salvas...', 'info');
+                for (const upload of temporaryImgurUploads) {
+                    await deleteFromImgur(upload.deleteHash);
+                }
+                temporaryImgurUploads = [];
+            }
+        };
+
+
+        const startCamera = async (mode) => {
+            // Limpa os resultados anteriores ao iniciar a câmera para uma nova análise
+            examsResults = "";
+            axonEyeResults = "";
+            examsResultsPreview.innerHTML = '<div class="info">Nenhum exame analisado ainda.</div>';
+            axonEyeResultsPreview.innerHTML = '<div class="info">Nenhuma análise visual feita ainda.</div>';
+            
+            cameraMode = mode;
+            cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
+            sendExamsButton.style.display = mode === 'exams' ? 'flex' : 'none';
+            sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'flex' : 'none';
+            
+            if (isMobile) {
+                cameraModal.classList.add('fullscreen-mobile');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            toggleMonitorView('camera');
+
+            try {
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentCameraFacingMode } });
+                
+                cameraVideo.srcObject = stream;
+                cameraStream = stream;
+                
+                cameraVideo.onloadedmetadata = () => {
+                    cameraVideo.play().catch(e => console.error("Play failed:", e));
+                };
+
+                cameraStatus.classList.remove('status-off');
+                appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}.`, "info");
+                updateAlbumCount();
+
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                if (devices.filter(d => d.kind === 'videoinput').length > 1) {
+                    cameraSwitchButton.style.display = 'block';
+                }
+                
+                const track = stream.getVideoTracks()[0];
+                if (track && 'torch' in track.getCapabilities()) {
+                    flashlightButton.style.display = 'block';
+                }
+
+            } catch (err) {
+                appendOutput(`Erro ao acessar a câmera: ${err.message}.`, "error");
+                stopCamera();
+            }
+        };
+
+        const stopCameraStreamOnly = () => {
+            if (cameraStream) {
+                if (isFlashlightOn) toggleFlashlight();
+                cameraStream.getTracks().forEach(track => track.stop()); cameraVideo.srcObject = null; cameraStream = null;
+            }
+            cameraStatus.classList.add('status-off');
+        };
+        const stopCamera = () => {
+            stopCameraStreamOnly();
+            cameraModal.style.display = 'none';
+            if (isMobile) {
+                cameraModal.classList.remove('fullscreen-mobile');
+                document.body.style.overflow = 'auto';
+            }
+            toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView);
+        };
+        const switchCamera = async () => { currentCameraFacingMode = (currentCameraFacingMode === 'user') ? 'environment' : 'user'; await startCamera(cameraMode); };
+        const toggleFlashlight = async () => {
+            if (!cameraStream) return;
+            const track = cameraStream.getVideoTracks()[0];
+            if (track && 'torch' in track.getCapabilities()) {
+                try { await track.applyConstraints({ advanced: [{ torch: !isFlashlightOn }] }); isFlashlightOn = !isFlashlightOn; flashlightButton.classList.toggle('active', isFlashlightOn); } catch (err) { appendOutput("Erro ao controlar a lanterna.", "error"); }
+            }
+        };
+        const capturePhoto = () => { if (!cameraStream) return; cameraCanvas.width = cameraVideo.videoWidth; cameraCanvas.height = cameraVideo.videoHeight; cameraCanvas.getContext('2d').drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height); addCapturedImage(cameraCanvas.toDataURL('image/jpeg')); };
+        const handleFileUpload = (event) => { for (const file of event.target.files) { if (file.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = (e) => addCapturedImage(e.target.result); reader.readAsDataURL(file); } } };
+        const addCapturedImage = (imageDataURL) => { capturedImages.push(imageDataURL); updateAlbumCount(); sendExamsButton.classList.remove('disabled'); sendAxonEyeButton.classList.remove('disabled'); };
+        const removeCapturedImage = (imageDataURL) => { capturedImages = capturedImages.filter(url => url !== imageDataURL); updateAlbumCount(); if (capturedImages.length === 0) { sendExamsButton.classList.add('disabled'); sendAxonEyeButton.classList.add('disabled'); } renderAlbum(); };
+        const updateAlbumCount = () => { albumCount.textContent = capturedImages.length; albumButton.style.display = 'flex'; };
+        const openAlbumModal = () => { renderAlbum(); albumModal.style.display = 'flex'; };
+        const closeAlbumModal = () => { albumModal.style.display = 'none'; };
+        const renderAlbum = () => {
+            albumGrid.innerHTML = capturedImages.length === 0 ? '<div class="info" style="grid-column: 1 / -1; text-align: center;">Nenhuma imagem no álbum.</div>' : '';
+            capturedImages.forEach(url => {
+                const item = document.createElement('div'); item.className = 'album-item';
+                const img = document.createElement('img'); img.src = url; img.className = 'album-image'; img.onclick = () => openFullscreenModal(url);
+                const delBtn = document.createElement('button'); delBtn.className = 'album-delete-button'; delBtn.innerHTML = '&times;'; delBtn.onclick = (e) => { e.stopPropagation(); removeCapturedImage(url); };
+                item.append(img, delBtn); albumGrid.appendChild(item);
+            });
+        };
+        
+        window.openFullscreenModal = (imageDataURL) => { 
+            modalImage.src = imageDataURL; 
+            fullscreenModal.style.display = 'block'; 
+        };
+        
+        modalClose.onclick = () => fullscreenModal.style.display = 'none';
+        fullscreenModal.onclick = (e) => { if (e.target === fullscreenModal) fullscreenModal.style.display = 'none'; };
+
+        const analyzeExams = async () => {
+            if (capturedImages.length === 0) return appendOutput("Nenhuma imagem de exame para analisar.", "info");
+            
+            toggleMonitorView('exams');
+            await setAnalyzingStateInFirestore(true, 'exams');
+
+            try {
+                // STEP 1: Get raw text from images with a strict transcription prompt.
+                const transcriptionPrompt = `Sua única tarefa é transcrever TODO o texto visível na imagem. Retorne APENAS o texto que você vê. Não adicione absolutamente nada mais.`;
+                
+                const rawTranscription = await callGeminiVisionAPI(capturedImages, transcriptionPrompt);
+
+                appendOutput("Transcrição concluída. Formatando resultados...", "info", false);
+
+                // STEP 2: Format the raw text with a second, dedicated AI call.
+                const formattingPrompt = `Você é um motor de formatação de texto. Sua única tarefa é processar o TEXTO BRUTO abaixo e seguir estas regras INQUEBRÁVEIS:
+
+**REGRAS:**
+1.  **Junte os Textos:** Combine todos os textos de diferentes imagens em um único relatório contínuo.
+2.  **Remova Separadores:** ELIMINE completamente quaisquer separadores como '[---NEXT-IMAGE---]'.
+3.  **Identifique e Marque Alterações:** Para resultados de exames laboratoriais, se um valor estiver fora da normalidade, anexe a tag de texto EXATA \`(Alterado)\` ao final da linha. Para laudos de imagem (tomografia, ressonância, etc.), copie o texto do laudo exatamente como está, sem adicionar \`(Alterado)\`.
+4.  **SAÍDA DIRETA:** Sua resposta deve começar IMEDIATAMENTE com o primeiro resultado do exame. NÃO inclua NENHUMA introdução, explicação, título ou comentário seu. A saída deve ser apenas o texto final formatado.
+
+**EXEMPLO:**
+Se o TEXTO BRUTO for:
+"Hemoglobina: 15.0\\nGlicose: 150 mg/dL\\n[---NEXT-IMAGE---]\\nLAUDO DE TOMOGRAFIA\\nSem alterações significativas."
+
+Sua SAÍDA OBRIGATÓRIA deve ser:
+"Hemoglobina: 15.0
+Glicose: 150 mg/dL (Alterado)
+LAUDO DE TOMOGRAFIA
+Sem alterações significativas."
+
+**TEXTO BRUTO PARA PROCESSAR:**
+---
+${rawTranscription}
+---
+`;
+                const finalFormattedResponse = await callGeminiAPI(formattingPrompt);
+                
+                await setDoc(doc(db, "sessions", currentUser), {
+                    examsResults: finalFormattedResponse,
+                    isAnalyzing: { status: false, type: null }
+                }, { merge: true });
+
+                appendOutput("Análise de exames concluída.", "success");
+            } catch (error) {
+                appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
+
+                await setDoc(doc(db, "sessions", currentUser), {
+                    examsResults: "",
+                    isAnalyzing: { status: false, type: null }
+                }, { merge: true });
+
+            } finally {
+                stopCamera(); capturedImages = []; updateAlbumCount();
+            }
+        };
+
+        const analyzeAxonEye = async () => {
+            if (capturedImages.length === 0) return appendOutput("Nenhuma imagem para análise visual.", "info");
+            
+            await clearTemporaryUploads();
+            
+            toggleMonitorView('axon-eye');
+            await setAnalyzingStateInFirestore(true, 'axon-eye');
+            
+            try {
+                for (const imgBase64 of capturedImages) {
+                    const uploadResult = await uploadToImgur(imgBase64);
+                    if (uploadResult) {
+                        temporaryImgurUploads.push(uploadResult);
+                    }
+                }
+                if (temporaryImgurUploads.length !== capturedImages.length) {
+                    throw new Error("Falha no upload de uma ou mais imagens.");
+                }
+
+                const prompt = `Analise as imagens e forneça uma opinião clínica detalhada. Descreva achados, lesões, ou sintomas. Ao final, inclua uma seção "Impressão Diagnóstica:" ou "Interpretação Clínica:" com sua conclusão. Seja descritivo e clinicamente relevante.`;
+                
+                const imagesForApiCall = globalSettings.apiProvider === 'gemini' 
+                    ? capturedImages 
+                    : temporaryImgurUploads.map(upload => upload.link);
+
+                const response = await callGeminiVisionAPI(imagesForApiCall, prompt);
+                
+                await setDoc(doc(db, "sessions", currentUser), {
+                    axonEyeResults: response,
+                    isAnalyzing: { status: false, type: null }
+                }, { merge: true });
+
+                appendOutput("Análise Axon Eye concluída. Imagens prontas para salvar.", "success");
+            } catch (error) {
+                appendOutput(`Erro com Axon Eye: ${error.message}`, "error");
+                await clearTemporaryUploads();
+                 
+                await setDoc(doc(db, "sessions", currentUser), {
+                    axonEyeResults: "",
+                    isAnalyzing: { status: false, type: null }
+                }, { merge: true });
+
+            } finally {
+                stopCamera(); capturedImages = []; updateAlbumCount();
+            }
+        };
+
+        const savePatient = async (patientName, birthDate) => {
+            if (!isLoggedIn) {
+                appendOutput("Você precisa estar logado.", "error");
+                return;
+            }
+            savePatientButton.disabled = true;
+            savePatientFeedback.textContent = 'Salvando...';
+        
+            try {
+                const patientId = `${currentUser}_${patientName.replace(/\s+/g, '_').toLowerCase()}_${birthDate.replace(/\//g, '')}`;
+                const patientRef = doc(db, "patients", patientId);
+        
+                const newConsultation = {
+                    date: new Date(),
+                    anamnesis: { ...anamnesis },
+                    examsResults,
+                    axonEyeResults,
+                    axonEyeImages: [...temporaryImgurUploads],
+                };
+        
+                const docSnap = await getDoc(patientRef);
+        
+                if (docSnap.exists()) {
+                    const existingData = docSnap.data();
+                    const updatedConsultations = existingData.consultations ? [...existingData.consultations, newConsultation] : [newConsultation];
+                    await updateDoc(patientRef, {
+                        consultations: updatedConsultations,
+                        lastUpdated: new Date()
+                    });
+                    appendOutput(`Nova consulta salva para '${patientName}'.`, "success");
+                } else {
+                    await setDoc(patientRef, {
+                        patientName,
+                        birthDate,
+                        savedBy: currentUser,
+                        createdAt: new Date(),
+                        consultations: [newConsultation],
+                        lastUpdated: new Date()
+                    });
+                    appendOutput(`Paciente '${patientName}' e primeira consulta salvos com sucesso.`, "success");
+                }
+        
+                temporaryImgurUploads = [];
+                closeSaveModal();
+            } catch (e) {
+                appendOutput(`Erro ao salvar paciente: ${e.message}`, "error");
+                savePatientFeedback.textContent = `Erro: ${e.message}`;
+            } finally {
+                savePatientButton.disabled = false;
+            }
+        };
+
+        const loadPatientList = async () => {
+            if (!isLoggedIn) return appendOutput("Você precisa estar logado.", "error");
+            try {
+                const q = query(collection(db, "patients"), where("savedBy", "==", currentUser));
+                const querySnapshot = await getDocs(q);
+                
+                allPatients = [];
+                querySnapshot.forEach((doc) => {
+                    allPatients.push({ id: doc.id, ...doc.data() });
+                });
+
+                allPatients.sort((a, b) => {
+                    const dateA = a.lastUpdated?.toDate() || a.createdAt?.toDate() || 0;
+                    const dateB = b.lastUpdated?.toDate() || b.createdAt?.toDate() || 0;
+                    return dateB - dateA;
+                });
+
+                patientList.innerHTML = '';
+                if (allPatients.length === 0) {
+                    patientList.innerHTML = '<div class="info">Nenhum paciente salvo.</div>';
+                } else {
+                    allPatients.forEach(p => {
+                        const hasConsultations = p.consultations && p.consultations.length > 0;
+                        
+                        let lastConsultDateStr = 'Nenhuma consulta registrada';
+                        if (hasConsultations) {
+                            const mostRecentConsult = p.consultations
+                                .filter(c => c.date && c.date.toDate) 
+                                .sort((a, b) => b.date.toDate() - a.date.toDate())[0];
+                            if (mostRecentConsult) {
+                                lastConsultDateStr = mostRecentConsult.date.toDate().toLocaleString();
+                            }
+                        }
+
+                        const item = document.createElement('div'); 
+                        item.className = 'patient-item';
+                        item.dataset.patientId = p.id;
+                        item.innerHTML = `<div><strong>${p.patientName}</strong> - ${p.birthDate || 'N/A'}</div>
+                                          <div style="font-size: 12px; color: var(--text-color); opacity: 0.7;">Última consulta: ${lastConsultDateStr}</div>
+                                          <div class="patient-actions">
+                                            <button class="patient-action-button delete" data-id="${p.id}"><i class="fas fa-trash"></i> Excluir</button>
+                                            <button class="patient-action-button details ${!hasConsultations ? 'disabled' : ''}" data-id="${p.id}"><i class="fas fa-eye"></i> Detalhes</button>
+                                            <button class="patient-action-button pdf ${!hasConsultations ? 'disabled' : ''}" data-id="${p.id}"><i class="fas fa-file-pdf"></i> PDF</button>
+                                          </div>`;
+                        patientList.appendChild(item);
+                    });
+                }
+                patientListModal.style.display = 'flex';
+            } catch (e) {
+                appendOutput(`Erro ao carregar pacientes: ${e.message}`, "error");
+                console.error("Erro em loadPatientList:", e);
+            }
+        };
+
+        const deletePatient = async (patientId) => {
+            if (!confirm("Tem certeza que deseja excluir este paciente e TODAS as suas consultas? A ação é irreversível.")) return;
+            try {
+                const patientRef = doc(db, "patients", patientId);
+                const docSnap = await getDoc(patientRef);
+
+                if (docSnap.exists()) {
+                    const patientData = docSnap.data();
+                    if (patientData.consultations && patientData.consultations.length > 0) {
+                        appendOutput("Excluindo imagens associadas do Imgur...", "info");
+                        for (const consult of patientData.consultations) {
+                            if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
+                                for (const img of consult.axonEyeImages) {
+                                    await deleteFromImgur(img.deleteHash); 
+                                }
+                            }
+                        }
+                    }
+                }
+
+                await deleteDoc(patientRef);
+                appendOutput("Paciente e todos os registros foram excluídos com sucesso.", "success");
+                await loadPatientList();
+            } catch (e) {
+                appendOutput(`Erro ao excluir paciente: ${e.message}`, "error");
+            }
+        };
+
+        const generatePatientPDF = async (patientId) => {
+            try {
+                const patientSnap = await getDoc(doc(db, "patients", patientId));
+                if (!patientSnap.exists()) return appendOutput("Paciente não encontrado.", "error");
+                
+                const patient = patientSnap.data();
+                if (!patient.consultations || patient.consultations.length === 0) {
+                    return appendOutput("Nenhuma consulta registrada para gerar PDF.", "info");
+                }
+
+                const { jsPDF } = window.jspdf; 
+                const pdfDoc = new jsPDF();
+                
+                pdfDoc.setFontSize(18).text('AXON A.I - Prontuário Médico Completo', 105, 20, { align: 'center' });
+                pdfDoc.setFontSize(14).text(`Paciente: ${patient.patientName}`, 14, 35);
+                pdfDoc.setFontSize(12).text(`Data de Nascimento: ${patient.birthDate || 'N/A'}`, 14, 42);
+                pdfDoc.line(14, 45, 196, 45);
+
+                let y = 55;
+                const pageHeight = pdfDoc.internal.pageSize.height;
+                const addSection = (title, content, doc) => {
+                    if (!content || (typeof content === 'string' && !content.trim()) || (typeof content === 'object' && Object.values(content).every(v => !v))) return;
+                    
+                    if (y + 15 > pageHeight - 20) { doc.addPage(); y = 20; }
+                    doc.setFontSize(12).setFont(undefined, 'bold').text(title, 14, y); y += 7;
+                    
+                    const text = typeof content === 'object' ? Object.entries(content).map(([k, v]) => `${k.toUpperCase()}: ${v || 'Não informado'}`).join('\n') : content;
+                    const splitText = doc.splitTextToSize(text, 180);
+                    
+                    if (y + (splitText.length * 5) > pageHeight - 20) { doc.addPage(); y = 20; }
+                    doc.setFontSize(10).setFont(undefined, 'normal').text(splitText, 14, y);
+                    y += splitText.length * 5 + 5;
+                };
+
+                const sortedConsultations = [...patient.consultations]
+                    .filter(c => c.date && c.date.toDate)
+                    .sort((a, b) => (a.date.toDate()) - (b.date.toDate()));
+
+                sortedConsultations.forEach((consult, index) => {
+                    if (y + 20 > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
+                    
+                    const consultDate = consult.date ? consult.date.toDate().toLocaleString() : 'Data indisponível';
+                    pdfDoc.setFontSize(14).setFont(undefined, 'bold').text(`Consulta ${index + 1}: ${consultDate}`, 105, y, { align: 'center' });
+                    y += 5;
+                    pdfDoc.line(14, y, 196, y);
+                    y += 10;
+                    
+                    addSection('Anamnese', consult.anamnesis, pdfDoc);
+                    addSection('Resultados dos Exames', consult.examsResults, pdfDoc);
+                    addSection('Análise Visual (Axon Eye)', consult.axonEyeResults, pdfDoc);
+                });
+                
+                pdfDoc.save(`prontuario_${patient.patientName.replace(/\s+/g, '_')}.pdf`);
+                appendOutput(`PDF do prontuário completo gerado com sucesso.`, "success");
+
+            } catch (e) { appendOutput(`Erro ao gerar PDF: ${e.message}`, "error"); console.error(e); }
+        };
+        
+        const generatePDFFromCurrentSession = (patientName) => {
+            if (!patientName) {
+                appendOutput("Uso: /pdf [nome_do_paciente]", "error");
+                return;
+            }
+        
+            const { jsPDF } = window.jspdf;
+            const pdfDoc = new jsPDF();
+        
+            pdfDoc.setFontSize(18).text('AXON A.I - Prontuário Médico', 105, 20, { align: 'center' });
+            pdfDoc.setFontSize(14).text(`Paciente: ${patientName}`, 14, 35);
+            pdfDoc.setFontSize(12).text(`Gerado em: ${new Date().toLocaleString()}`, 14, 42);
+            pdfDoc.line(14, 45, 196, 45);
+        
+            let y = 55;
+            const pageHeight = pdfDoc.internal.pageSize.height;
+        
+            const addSection = (title, content) => {
+                if (!content || (typeof content === 'string' && !content.trim()) || (typeof content === 'object' && Object.values(content).every(v => !v))) return;
+        
+                if (y + 15 > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
+                pdfDoc.setFontSize(12).setFont(undefined, 'bold').text(title, 14, y); y += 7;
+        
+                const text = typeof content === 'object' ? Object.entries(content).map(([k, v]) => `${k.toUpperCase()}: ${v || 'Não informado'}`).join('\n') : content;
+                const splitText = doc.splitTextToSize(text, 180);
+        
+                if (y + (splitText.length * 5) > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
+                pdfDoc.setFontSize(10).setFont(undefined, 'normal').text(splitText, 14, y);
+                y += splitText.length * 5 + 5;
+            };
+        
+            addSection('Anamnese', anamnesis);
+            addSection('Resultados dos Exames', examsResults);
+            addSection('Análise Visual (Axon Eye)', axonEyeResults);
+        
+            pdfDoc.save(`prontuario_atual_${patientName.replace(/\s+/g, '_')}.pdf`);
+            appendOutput(`PDF da sessão atual gerado com sucesso.`, "success");
+        };
+
+        const showPatientDetails = (patient) => {
+            patientDetailsTitle.textContent = `Paciente: ${patient.patientName}`;
+            let detailsHTML = '';
+            
+            const addDetailSection = (title, content) => {
+                if (!content || (typeof content === 'string' && !content.trim()) || (typeof content === 'object' && Object.values(content).every(v => !v))) return '';
+                let body = '';
+                if (title === 'ANAMNESE' && typeof content === 'object') {
+                    const order = ['qp', 'hma', 'hp', 'hf', 'hps'];
+                    body = order
+                        .map(key => {
+                            if (content.hasOwnProperty(key)) {
+                                return `<strong>${key.toUpperCase()}:</strong> ${content[key] || "Não informado"}<br>`;
+                            }
+                            return '';
+                        })
+                        .join('');
+                } else if (typeof content === 'object') {
+                    body = Object.entries(content).map(([k, v]) => `<strong>${k.toUpperCase()}:</strong> ${v || "Não informado"}<br>`).join('');
+                } else {
+                    body = content.replace(/\n/g, '<br>');
+                }
+                return `<div class="patient-details-section"><div class="patient-details-section-title">${title}</div><div>${body}</div></div>`;
+            };
+
+            if (patient.consultations && patient.consultations.length > 0) {
+                const sortedConsultations = [...patient.consultations]
+                    .filter(c => c.date && c.date.toDate)
+                    .sort((a, b) => b.date.toDate() - a.date.toDate());
+                detailsHTML += `<div class="consultation-list">`;
+                sortedConsultations.forEach((consult, index) => {
+                    const consultDate = consult.date ? consult.date.toDate().toLocaleString() : 'Data indisponível';
+                    detailsHTML += `<div class="consultation-item">
+                                        <div class="consultation-header">
+                                            <i class="fas fa-chevron-right"></i> Consulta de ${consultDate}
+                                        </div>
+                                        <div class="consultation-body" style="display: none;">
+                                            ${addDetailSection('ANAMNESE', consult.anamnesis)}
+                                            ${addDetailSection('RESULTADOS DOS EXAMES', consult.examsResults)}
+                                            ${addDetailSection('ANÁLISE VISUAL (AXON EYE)', consult.axonEyeResults)}`;
+                    if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
+                        detailsHTML += `<div class="patient-details-section"><div class="patient-details-section-title">IMAGENS (${consult.axonEyeImages.length})</div><div class="patient-images-grid">`;
+                        consult.axonEyeImages.forEach(img => {
+                            detailsHTML += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" onclick="openFullscreenModal('${img.link}')" alt="Imagem do paciente"></div>`;
+                        });
+                        detailsHTML += `</div></div>`;
+                    }
+                    detailsHTML += `</div></div>`;
+                });
+                detailsHTML += `</div>`;
+            } else {
+                 detailsHTML = '<div class="info">Nenhuma consulta registrada para este paciente.</div>';
+            }
+            patientDetailsBody.innerHTML = detailsHTML;
+            patientDetailsModal.style.display = 'flex';
+        };
+
+        const openSaveModal = () => {
+            savePatientNameInput.value = '';
+            savePatientDobInput.value = '';
+            savePatientFeedback.textContent = '';
+            savePatientModal.style.display = 'flex';
+            savePatientNameInput.focus();
+        };
+
+        const closeSaveModal = () => {
+            savePatientModal.style.display = 'none';
+        };
+
+        const handleSuccessfulLogin = (username, isRestoredSession = false) => {
+            isLoggedIn = true; currentUser = username; localStorage.setItem('axon_logged_in_user', username);
+            loginModal.style.display = 'none';
+            if (isRestoredSession) appendOutput(`Sessão restaurada para: ${currentUser}`, "success", false);
+            else appendOutput(`Login bem-sucedido. Bem-vindo, ${currentUser}.`, "success", false);
+            initialMessagesContainer.style.display = 'none';
+            
+            appendOutput("Sessão pronta. Informe os dados do paciente ou use um comando.", "success");
+            
+            if (unsubscribeUserDoc) {
+                unsubscribeUserDoc();
+            }
+            const userRef = doc(db, "users", username);
+            unsubscribeUserDoc = onSnapshot(userRef, (docSnap) => {
+                if (!docSnap.exists() && isLoggedIn && currentUser === username) {
+                    appendOutput("Sua conta de usuário foi removida. Desconectando automaticamente...", "error");
+                    setTimeout(() => {
+                        logoutUser();
+                    }, 3000);
+                } else if (docSnap.exists()) {
+                    const userData = docSnap.data();
+                    if (userData.isBlocked !== isUserBlocked) {
+                        isUserBlocked = userData.isBlocked;
+                        updateBlockedUI();
+                    }
+                }
+            }, (error) => {
+                console.error("Listener error for user document:", error);
+                appendOutput("Erro de conexão ao verificar sua conta. Desconectando por segurança.", "error");
+                setTimeout(() => {
+                    logoutUser();
+                }, 3000);
+            });
+
+            setupFirebaseListener(currentUser);
+            setupGlobalSettingsListener();
+            toggleMonitorView('anamnesis');
+        };
+
+        const searchPatients = (searchTerm) => {
+            const lowerCaseSearchTerm = searchTerm.toLowerCase();
+            const patientItems = patientList.querySelectorAll('.patient-item');
+            let visibleCount = 0;
+
+            patientItems.forEach(item => {
+                const patientName = item.querySelector('strong')?.textContent.toLowerCase();
+                if (patientName && patientName.includes(lowerCaseSearchTerm)) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            const noResultsMessage = patientList.querySelector('.info');
+            if (noResultsMessage) {
+                noResultsMessage.remove();
+            }
+
+            if (visibleCount === 0 && patientItems.length > 0) {
+                const noResults = document.createElement('div');
+                noResults.className = 'info';
+                noResults.textContent = 'Nenhum paciente encontrado.';
+                patientList.appendChild(noResults);
+            }
+        };
+
+        const openAdminAuth = () => {
+            adminAuthPass.value = '';
+            adminAuthFeedback.textContent = '';
+            adminAuthModal.style.display = 'flex';
+            adminAuthPass.focus();
+        };
+
+        const checkAdminAuth = () => {
+            if (adminAuthPass.value === 'admin123') {
+                adminAuthModal.style.display = 'none';
+                adminPanelModal.style.display = 'flex';
+                activateAdminTab('users');
+            } else {
+                adminAuthFeedback.textContent = 'Senha incorreta.';
+            }
+        };
+
+        const activateAdminTab = (tabName) => {
+            adminTabButtons.forEach(btn => {
+                if (btn.dataset.tab === tabName) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+
+            document.getElementById('tab-users').style.display = 'none';
+            document.getElementById('tab-api').style.display = 'none';
+
+            if (tabName === 'users') {
+                document.getElementById('tab-users').style.display = 'flex';
+                loadAdminUsersData();
+            } else if (tabName === 'api') {
+                document.getElementById('tab-api').style.display = 'flex';
+                renderAdminSettingsUI();
+            }
+        };
+
+        const renderAdminSettingsUI = () => {
+            const isManual = globalSettings.mode === 'manual';
+            const isGoogle = globalSettings.apiProvider === 'gemini';
+            const isOpenRouter = globalSettings.apiProvider === 'openrouter';
+            const isGroq = globalSettings.apiProvider === 'groq';
+            
+            const textModelsOptions = globalSettings.apiModels.map(m => 
+                `<option value="${m.name}" ${globalSettings.manualTextModel === m.name ? 'selected' : ''}>${m.name}</option>`
+            ).join('');
+
+            const visionModelsOptions = globalSettings.apiModels.filter(m => m.vision).map(m => 
+                `<option value="${m.name}" ${globalSettings.manualVisionModel === m.name ? 'selected' : ''}>${m.name}</option>`
+            ).join('');
+
+            const apiKeysOptions = globalSettings.apiKeys.map(key => 
+                `<option value="${key}" ${globalSettings.manualApiKey === key ? 'selected' : ''}>${key}</option>`
+            ).join('');
+
+            const openRouterModelsOptions = openRouterModels.map(m => 
+                 `<option value="${m.name}" ${globalSettings.openRouterModel === m.name ? 'selected' : ''}>${m.name} ${m.vision ? '(+Visão)' : ''}</option>`
+            ).join('');
+
+            const groqModelsOptions = groqModels.map(m => 
+                 `<option value="${m.name}" ${globalSettings.groqModel === m.name ? 'selected' : ''}>${m.name} ${m.vision ? '(+Visão)' : ''}</option>`
+            ).join('');
+
+            let html = `
+                <div class="admin-section">
+                    <div class="admin-section-title">Provedor da API</div>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="apiProvider" value="gemini" ${isGoogle ? 'checked' : ''} onchange="window.updateProvider('gemini')"> Google Gemini (Direto)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="apiProvider" value="openrouter" ${isOpenRouter ? 'checked' : ''} onchange="window.updateProvider('openrouter')"> OpenRouter (Universal)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="apiProvider" value="groq" ${isGroq ? 'checked' : ''} onchange="window.updateProvider('groq')"> Groq (Ultra Rápido)
+                        </label>
+                    </div>
+                </div>
+            `;
+
+            if (isGoogle) {
+                html += `
+                <div class="admin-section">
+                    <div class="admin-section-title">Modo Google (Direto)</div>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="apiMode" value="automatic" ${!isManual ? 'checked' : ''} onchange="window.updateMode('automatic')"> Automático (Rotação)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="apiMode" value="manual" ${isManual ? 'checked' : ''} onchange="window.updateMode('manual')"> Manual (Fixo)
+                        </label>
+                    </div>
+
+                    <div id="manual-settings" style="display: ${isManual ? 'block' : 'none'}; margin-top: 15px;">
+                        <div class="admin-section-title">Seleção Manual</div>
+                        <label>Motor de Texto:</label>
+                        <select id="manual-text-select" class="admin-input" style="width:100%; margin-bottom:10px;" onchange="window.saveManualSelection()">
+                            <option value="">Selecione...</option>
+                            ${textModelsOptions}
+                        </select>
+                        
+                        <label>Motor de Visão:</label>
+                        <select id="manual-vision-select" class="admin-input" style="width:100%; margin-bottom:10px;" onchange="window.saveManualSelection()">
+                            <option value="">Selecione...</option>
+                            ${visionModelsOptions}
+                        </select>
+                        
+                        <label>Chave API:</label>
+                        <select id="manual-key-select" class="admin-input" style="width:100%;" onchange="window.saveManualSelection()">
+                            <option value="">Selecione...</option>
+                            ${apiKeysOptions}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="admin-section-title">Chaves de API (Google)</div>
+                    <div class="admin-list" id="api-keys-list">
+                        ${globalSettings.apiKeys.map((key, index) => `
+                            <div class="admin-list-item">
+                                <input type="text" class="admin-input" value="${key}" readonly>
+                                <button class="patient-action-button delete" style="flex:0;" onclick="window.removeApiKey(${index})"><i class="fas fa-trash"></i></button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="admin-list-item" style="margin-top: 10px;">
+                         <input type="text" id="new-api-key" class="admin-input" placeholder="Nova chave API...">
+                         <button class="patient-action-button pdf" style="flex:0;" onclick="window.addApiKey()">Adicionar</button>
+                    </div>
+                </div>
+                `;
+            } else if (isOpenRouter) {
+                html += `
+                <div class="admin-section">
+                    <div class="admin-section-title">Configuração OpenRouter</div>
+                    <label>Chave de API OpenRouter:</label>
+                    <input type="text" id="openrouter-key-input" class="admin-input" style="width: 100%; margin-bottom: 10px;" value="${globalSettings.openRouterKey}" onchange="window.saveManualSelection()">
+                    
+                    <label>Modelo (Texto e Visão):</label>
+                    <select id="openrouter-model-select" class="admin-input" style="width:100%;" onchange="window.saveManualSelection()">
+                        ${openRouterModelsOptions}
+                    </select>
+                </div>
+                `;
+            } else if (isGroq) {
+                html += `
+                <div class="admin-section">
+                    <div class="admin-section-title">Configuração Groq</div>
+                    <label>Chave de API Groq:</label>
+                    <input type="text" id="groq-key-input" class="admin-input" style="width: 100%; margin-bottom: 10px;" value="${globalSettings.groqKey}" onchange="window.saveManualSelection()">
+                    
+                    <label>Modelo (Texto e Visão):</label>
+                    <select id="groq-model-select" class="admin-input" style="width:100%;" onchange="window.saveManualSelection()">
+                        ${groqModelsOptions}
+                    </select>
+                </div>
+                `;
+            }
+
+            if (isGoogle) {
+                html += `
+                <div class="admin-section">
+                    <div class="admin-section-title">Motores de IA (Google)</div>
+                    <div class="admin-list" id="api-models-list">
+                         ${globalSettings.apiModels.map((model, index) => `
+                            <div class="admin-list-item">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 12px; font-weight: bold;">${model.name}</div>
+                                    <div style="font-size: 10px; color: #888;">${model.vision ? 'Visão' : 'Texto'}</div>
+                                </div>
+                                <button class="patient-action-button delete" style="flex:0;" onclick="window.removeApiModel(${index})"><i class="fas fa-trash"></i></button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                        <input type="text" id="new-model-name" class="admin-input" placeholder="Nome do modelo (ex: gemini-1.5-pro)" style="width: 100%; margin-bottom: 5px;">
+                        <label class="radio-label" style="font-size: 12px; margin-bottom: 10px;">
+                            <input type="checkbox" id="new-model-vision"> Suporta Visão?
+                        </label>
+                        <button class="app-modal-button" onclick="window.addApiModel()">Adicionar Modelo</button>
+                    </div>
+                </div>
+                `;
+            }
+
+            adminSettingsBody.innerHTML = html;
+        };
+
+        window.updateProvider = async (provider) => {
+            try {
+                await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiProvider: provider }, { merge: true });
+            } catch (e) { console.error("Erro ao atualizar provedor:", e); }
+        };
+
+        window.updateMode = async (mode) => {
+            try {
+                await setDoc(doc(db, "settings", "global"), { ...globalSettings, mode }, { merge: true });
+            } catch (e) { console.error("Erro ao atualizar modo:", e); }
+        };
+
+        window.saveManualSelection = async () => {
+            let updates = {};
+            
+            if (globalSettings.apiProvider === 'gemini') {
+                const textModel = document.getElementById('manual-text-select')?.value;
+                const visionModel = document.getElementById('manual-vision-select')?.value;
+                const apiKey = document.getElementById('manual-key-select')?.value;
+                updates = {
+                    manualTextModel: textModel,
+                    manualVisionModel: visionModel,
+                    manualApiKey: apiKey
+                };
+            } else if (globalSettings.apiProvider === 'openrouter') {
+                const orKey = document.getElementById('openrouter-key-input')?.value;
+                const orModel = document.getElementById('openrouter-model-select')?.value;
+                updates = {
+                    openRouterKey: orKey,
+                    openRouterModel: orModel
+                };
+            } else if (globalSettings.apiProvider === 'groq') {
+                const groqKey = document.getElementById('groq-key-input')?.value;
+                const groqModel = document.getElementById('groq-model-select')?.value;
+                updates = {
+                    groqKey: groqKey,
+                    groqModel: groqModel
+                };
+            }
+            
+            try {
+                await setDoc(doc(db, "settings", "global"), {
+                    ...globalSettings,
+                    ...updates
+                }, { merge: true });
+            } catch (e) { console.error("Erro ao salvar seleção manual:", e); }
+        };
+
+        window.addApiKey = async () => {
+            const input = document.getElementById('new-api-key');
+            const newKey = input.value.trim();
+            if (newKey) {
+                const newKeys = [...globalSettings.apiKeys, newKey];
+                try {
+                    await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiKeys: newKeys }, { merge: true });
+                    input.value = '';
+                } catch (e) { console.error("Erro ao adicionar chave:", e); }
+            }
+        };
+
+        window.removeApiKey = async (index) => {
+            if (globalSettings.apiKeys.length <= 1) {
+                alert("É necessário ter pelo menos uma chave de API.");
+                return;
+            }
+            const newKeys = globalSettings.apiKeys.filter((_, i) => i !== index);
+            try {
+                await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiKeys: newKeys }, { merge: true });
+            } catch (e) { console.error("Erro ao remover chave:", e); }
+        };
+
+        window.addApiModel = async () => {
+            const nameInput = document.getElementById('new-model-name');
+            const visionInput = document.getElementById('new-model-vision');
+            const name = nameInput.value.trim();
+            if (name) {
+                const newModel = { id: Date.now(), name, vision: visionInput.checked };
+                const newModels = [...globalSettings.apiModels, newModel];
+                try {
+                    await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiModels: newModels }, { merge: true });
+                    nameInput.value = '';
+                    visionInput.checked = false;
+                } catch (e) { console.error("Erro ao adicionar modelo:", e); }
+            }
+        };
+
+        window.removeApiModel = async (index) => {
+             if (globalSettings.apiModels.length <= 1) {
+                alert("É necessário ter pelo menos um modelo.");
+                return;
+            }
+            const newModels = globalSettings.apiModels.filter((_, i) => i !== index);
+             try {
+                await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiModels: newModels }, { merge: true });
+            } catch (e) { console.error("Erro ao remover modelo:", e); }
+        };
+
+        const loadAdminUsersData = async () => {
+            try {
+                const usersSnap = await getDocs(collection(db, "users"));
+                const users = [];
+                
+                const patientsSnap = await getDocs(collection(db, "patients"));
+                const savedCounts = {};
+                patientsSnap.forEach(doc => {
+                    const data = doc.data();
+                    if (data.savedBy) {
+                        savedCounts[data.savedBy] = (savedCounts[data.savedBy] || 0) + 1;
+                    }
+                });
+
+                usersSnap.forEach(doc => {
+                    const userData = doc.data();
+                    users.push({
+                        username: doc.id,
+                        ...userData,
+                        savedCount: savedCounts[doc.id] || 0
+                    });
+                });
+
+                users.sort((a, b) => b.savedCount - a.savedCount);
+                adminUsersData = users;
+                renderAdminUsersList(users);
+
+            } catch (e) {
+                console.error("Erro ao carregar usuários:", e);
+                adminUsersList.innerHTML = `<div class="error">Erro ao carregar dados: ${e.message}</div>`;
+            }
+        };
+
+        const renderAdminUsersList = (users) => {
+            if (users.length === 0) {
+                adminUsersList.innerHTML = '<div class="info">Nenhum usuário encontrado.</div>';
+                return;
+            }
+
+            adminUsersList.innerHTML = users.map(user => `
+                <div class="user-list-item" onclick="window.selectAdminUser('${user.username}')" id="user-item-${user.username}">
+                    <div>
+                        <span class="user-name" style="${user.isBlocked ? 'text-decoration: line-through; color: #666;' : ''}">${user.username}</span>
+                        <div style="font-size: 10px; color: #666;">Registrado em: ${user.createdAt ? user.createdAt.toDate().toLocaleDateString() : 'N/A'}</div>
+                    </div>
+                    <div style="display: flex; gap: 5px; align-items:center;">
+                        ${user.isBlocked ? '<span class="analytics-badge" style="color: #ffcc00; border: 1px solid #ffcc00; padding:2px 5px; border-radius:10px;">Bloqueado</span>' : ''}
+                        <span class="analytics-badge ${user.savedCount > 0 ? 'analytics-high' : ''}" style="border: 1px solid; padding:2px 5px; border-radius:10px;">${user.savedCount} Pacientes</span>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        window.selectAdminUser = async (username) => {
+            document.querySelectorAll('.user-list-item').forEach(el => el.classList.remove('selected'));
+            const selectedEl = document.getElementById(`user-item-${username}`);
+            if (selectedEl) selectedEl.classList.add('selected');
+
+            const user = adminUsersData.find(u => u.username === username);
+            if (!user) return;
+
+            adminUserDetails.innerHTML = '<div class="info">Carregando detalhes e imagens...</div>';
+
+            try {
+                const patientsQuery = query(collection(db, "patients"), where("savedBy", "==", username));
+                const patientsSnap = await getDocs(patientsQuery);
+                
+                let images = [];
+                let consultationsLast7Days = 0;
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+                patientsSnap.forEach(doc => {
+                    const pData = doc.data();
+                    if (pData.consultations) {
+                        pData.consultations.forEach(c => {
+                            if (c.date && c.date.toDate() > oneWeekAgo) consultationsLast7Days++;
+                            if (c.axonEyeImages && c.axonEyeImages.length > 0) {
+                                c.axonEyeImages.forEach(img => images.push(img.link));
+                            }
+                        });
+                    }
+                });
+
+                const dailyAvg = (consultationsLast7Days / 7).toFixed(1);
+
+                let imagesHtml = '';
+                if (images.length > 0) {
+                    imagesHtml = `
+                        <div class="user-detail-header" style="margin-top: 20px;">
+                            <div class="user-detail-label">IMAGENS ENVIADAS À IA (Histórico)</div>
+                        </div>
+                        <div class="admin-user-images">
+                            ${images.map(src => `<img src="${src}" class="admin-user-img" onclick="window.openFullscreenModal('${src}')">`).join('')}
+                        </div>
+                    `;
+                } else {
+                    imagesHtml = '<div class="info" style="margin-top: 15px;">Nenhuma imagem salva encontrada.</div>';
+                }
+
+                adminUserDetails.innerHTML = `
+                    <div class="user-detail-header">
+                        <h3 style="color: var(--prompt-color); margin-bottom: 5px;">${user.username} ${user.isBlocked ? '(BLOQUEADO)' : ''}</h3>
+                        <span style="font-size: 12px; color: #888;">ID: ${user.username}</span>
+                    </div>
+                    
+                    <div class="user-detail-row">
+                        <span class="user-detail-label">SENHA</span>
+                        <span class="user-detail-value" style="font-family: monospace;">${user.password || '****'}</span>
+                    </div>
+
+                    <div class="user-detail-row">
+                        <span class="user-detail-label">DATA DE REGISTRO</span>
+                        <span class="user-detail-value">${user.createdAt ? user.createdAt.toDate().toLocaleString() : 'Desconhecida'}</span>
+                    </div>
+
+                     <div class="user-detail-row" style="margin-top: 15px;">
+                         <span class="user-detail-label">AÇÕES DA CONTA</span>
+                         <div style="display: flex; margin-top: 5px; gap: 10px;">
+                             <button class="patient-action-button" style="flex: 1;" onclick="window.toggleBlockUser('${user.username}', ${!user.isBlocked})">
+                                ${user.isBlocked ? '<i class="fas fa-unlock"></i> Desbloquear' : '<i class="fas fa-ban"></i> Bloquear'}
+                             </button>
+                             <button class="patient-action-button delete" style="flex: 1;" onclick="window.deleteUserFromPanel('${user.username}')">
+                                <i class="fas fa-trash"></i> Excluir Usuário
+                             </button>
+                         </div>
+                    </div>
+
+                    <div class="usage-stats-box">
+                        <div class="user-detail-label" style="color: var(--highlight-color);">ESTATÍSTICAS DE USO (API)</div>
+                        <div style="display: flex; gap: 20px; margin-top: 5px; flex-wrap: wrap;">
+                            <div>
+                                <div style="font-size: 20px; font-weight: bold;">${user.textRequests || 0}</div>
+                                <div style="font-size: 10px;">Requisições de Texto</div>
+                            </div>
+                             <div>
+                                <div style="font-size: 20px; font-weight: bold;">${user.visionRequests || 0}</div>
+                                <div style="font-size: 10px;">Requisições de Visão</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 20px; font-weight: bold;">${user.savedCount}</div>
+                                <div style="font-size: 10px;">Total Pacientes Salvos</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 20px; font-weight: bold;">${consultationsLast7Days}</div>
+                                <div style="font-size: 10px;">Consultas (Últ. 7 dias)</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 20px; font-weight: bold;">${dailyAvg}</div>
+                                <div style="font-size: 10px;">Média Diária (Semana)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${imagesHtml}
+                `;
+
+            } catch (e) {
+                console.error("Erro ao carregar detalhes do usuário:", e);
+                adminUserDetails.innerHTML = `<div class="error">Erro ao carregar detalhes: ${e.message}</div>`;
+            }
+        };
+        
+        window.toggleBlockUser = async (username, shouldBlock) => {
+             try {
+                const userRef = doc(db, "users", username);
+                await updateDoc(userRef, { isBlocked: shouldBlock });
+                const userIdx = adminUsersData.findIndex(u => u.username === username);
+                if (userIdx !== -1) {
+                    adminUsersData[userIdx].isBlocked = shouldBlock;
+                    renderAdminUsersList(adminUsersData);
+                    window.selectAdminUser(username);
+                }
+            } catch (e) {
+                alert(`Erro ao alterar status de bloqueio: ${e.message}`);
+            }
+        };
+
+        window.deleteUserFromPanel = async (username) => {
+            if (!confirm(`Tem certeza que deseja excluir o usuário '${username}' permanentemente?`)) return;
+            try {
+                const userRef = doc(db, "users", username);
+                await deleteDoc(userRef);
+                adminUsersData = adminUsersData.filter(u => u.username !== username);
+                renderAdminUsersList(adminUsersData);
+                adminUserDetails.innerHTML = '<div class="info" style="margin-top: 20px;">Usuário excluído. Selecione outro.</div>';
+            } catch (e) {
+                 alert(`Erro ao excluir usuário: ${e.message}`);
+            }
+        };
+
+        const openPrescriptionHelper = async (category) => {
+            prescriptionHelperTitle.textContent = `Assistente de Prescrição: ${category}`;
+            prescriptionHelperBody.innerHTML = `<div class="info">Gerando sugestões personalizadas para o paciente...</div>`;
+            prescriptionHelperModal.style.display = 'flex';
+
+            try {
+                const templates = await generateContextualTemplates(category);
+                
+                let contentHTML = '';
+                if (templates && templates.length > 0) {
+                    templates.forEach((template, index) => {
+                        const templateId = `template-${category.replace(/\s/g, '-')}-${index}`;
+                        contentHTML += `
+                            <div class="prescription-template-item">
+                                <div class="prescription-template-header">
+                                    <div class="prescription-template-title">${template.title}</div>
+                                    <button class="prescription-template-copy-btn" data-template-id="${templateId}">
+                                        <i class="fas fa-copy"></i> Copiar
+                                    </button>
+                                </div>
+                                <div class="prescription-template-text" id="${templateId}">${template.text}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    contentHTML = `<div class="info">Nenhuma sugestão relevante encontrada para o quadro clínico atual.</div>`;
+                }
+
+                prescriptionHelperBody.innerHTML = contentHTML;
+
+            } catch (error) {
+                console.error(`Error generating contextual templates for ${category}:`, error);
+                prescriptionHelperBody.innerHTML = `<div class="error">Erro ao gerar sugestões: ${error.message}</div>`;
+            }
+        };
+
+        const generateContextualTemplates = async (category) => {
+            let instruction = '';
+            let format_example = '';
+            switch(category) {
+                case 'CONDUTA FARMACOLÓGICA (SUS)':
+                    instruction = "Gere até 3 prescrições de medicamentos (padrão SUS) pertinentes ao quadro clínico.";
+                    format_example = `O texto ('text') de cada prescrição deve seguir EXATAMENTE este formato multi-linha:
+USO ORAL:
+[NOME DO MEDICAMENTO] [DOSAGEM] ---------------- [QUANTIDADE/DURAÇÃO]
+[INSTRUÇÕES DE USO (ex: TOMAR 01 COMPRIMIDO AO DIA)]`;
+                    break;
+                case 'EXAMES COMPLEMENTARES (SUS)':
+                    instruction = "Gere até 3 solicitações de exames (padrão SUS) pertinentes, com justificativa clínica.";
+                    format_example = `O texto ('text') de cada solicitação deve seguir EXATAMENTE este formato multi-linha:
+SOLICITO:
+- [NOME DO EXAME 1]
+- [NOME DO EXAME 2]
+JUSTIFICATIVA: [Justificativa clínica concisa]`;
+                    break;
+                case 'CONDUTAS NÃO FARMACOLÓGICAS (SUS)':
+                    instruction = "Gere até 3 condutas não farmacológicas pertinentes, focando em encaminhamentos para especialistas.";
+                     format_example = `O texto ('text') de cada encaminhamento deve seguir EXATAMENTE este formato multi-linha:
+À [ESPECIALIDADE]:
+ENCAMINHO O PACIENTE [NOME DO PACIENTE AQUI], COM [DIAGNÓSTICO/SINTOMAS PRINCIPAIS].
+GRATO.`;
+                    break;
+                case 'RECOMENDAÇÕES':
+                     instruction = "Gere até 3 recomendações ou atestados pertinentes para a situação do paciente.";
+                     format_example = `O texto ('text') deve ser claro, objetivo e pronto para uso, como um atestado ou uma recomendação formal.`;
+                    break;
+                default:
+                    return [];
+            }
+            
+            const prompt = `Você é um assistente médico especialista em gerar documentos clínicos. Com base no quadro clínico do paciente, siga a instrução fornecida.
+
+**Quadro Clínico do Paciente:**
+- Anamnese: ${JSON.stringify(anamnesis)}
+- Resultados de Exames Prévios: ${examsResults || "Nenhum"}
+- Análise Visual (Axon Eye): ${axonEyeResults || "Nenhum"}
+
+**Instrução Específica:**
+${instruction}
+
+**Regras de Formatação (Obrigatório):**
+1. Crie solicitações que façam sentido clínico com o quadro apresentado.
+2. Formate a resposta como um array JSON de objetos. Cada objeto deve ter as chaves 'title' e 'text'.
+3. O 'title' deve ser um resumo curto da sugestão (ex: "Metformina para DM2", "Encaminhamento à Cardiologia").
+4. ${format_example}
+5. Se nenhuma sugestão for clinicamente justificável, retorne um array JSON vazio: [].
+
+**Retorne APENAS o array JSON, sem nenhum texto ou formatação adicional.**`;
+
+            try {
+                const response = await callGeminiAPI(prompt);
+                const jsonStart = response.indexOf('[');
+                const jsonEnd = response.lastIndexOf(']') + 1;
+                if (jsonStart === -1 || jsonEnd === 0) {
+                     console.error("No JSON array found in response:", response);
+                     return [];
+                }
+                const jsonString = response.substring(jsonStart, jsonEnd);
+                return JSON.parse(jsonString);
+            } catch (error) {
+                console.error("Failed to parse AI response for templates:", error);
+                throw new Error("A IA retornou uma resposta em formato inválido.");
+            }
+        };
+
+
+        const closePrescriptionHelper = () => {
+            prescriptionHelperModal.style.display = 'none';
+        };
+
+        adminUserSearch.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = adminUsersData.filter(u => u.username.toLowerCase().includes(term));
+            renderAdminUsersList(filtered);
+        });
+
+        adminPanelClose.addEventListener('click', () => adminPanelModal.style.display = 'none');
+
+        adminTabButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tabName = e.currentTarget.dataset.tab;
+                activateAdminTab(tabName);
+            });
+        });
+
+        const processCommand = async (command) => {
+            if (!command.trim()) return;
+            appendOutput(command, "command");
+
+            if (isUserBlocked) {
+                appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
+                commandInput.value = '';
+                return;
+            }
+        
+            const parts = command.trim().split(' ');
+            const mainCmd = parts[0].toLowerCase();
+            const isCommand = mainCmd.startsWith('/');
+        
+            if (!isLoggedIn) {
+                appendOutput("Por favor, faça o login para continuar.", "error");
+                commandInput.value = '';
+                return;
+            }
+        
+            if (!isCommand) {
+                await processAnamnesisInfo(command);
+                commandInput.value = '';
+                return;
+            }
+        
+            if (!validCommands.some(vc => mainCmd === vc.split(' ')[0])) {
+                appendOutput(`Comando '${mainCmd}' não existe. Digite /help para ver os comandos disponíveis.`, "error");
+                commandInput.value = '';
+                return;
+            }
+        
+            switch (mainCmd) {
+                case '/exit': logoutUser(); break;
+                case '/clear':
+                    await clearTemporaryUploads();
+                    if (currentUser) await deleteDoc(doc(db, "sessions", currentUser));
+                    anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+                    examsResults = ""; axonEyeResults = ""; conversationHistory = [];
+                    updateAnamnesisPreview(false); updateExamsResultsPreview(false); updateAxonEyeResultsPreview(false);
+                    resetInteractiveTerminal(false);
+                    appendOutput("Sessão limpa.", "success");
+                    break;
+                case '/hear':
+                    if (parts[1] === 'on') toggleListening();
+                    else if (parts[1] === 'off') stopListening();
+                    else appendOutput("Uso: /hear on|off", "error");
+                    break;
+                case '/hd':
+                    appendOutput("Gerando hipóteses diagnósticas...", "info");
+                    await generateDiagnosticHypotheses();
+                    break;
+                case '/cd':
+                    appendOutput("Gerando conduta médica...", "info");
+                    await generateMedicalConduct();
+                    break;
+                case '/copy': copyMonitorContent(); break;
+                case '/ia':
+                    const questionIA = command.substring(3).trim();
+                    if (!questionIA) { appendOutput("Uso: /ia [pergunta]", "error"); break; }
+                    appendOutput("Processando sua pergunta...", "info");
+                    try {
+                        const response = await callGeminiAPI(`Responda de forma objetiva à pergunta médica: "${questionIA}"`);
+                        appendOutput(response, "output");
+                    } catch (error) { appendOutput(`Erro ao consultar a IA: ${error.message}`, "error"); }
+                    break;
+                case '/ask':
+                    const questionAsk = command.substring(4).trim();
+                    if (!questionAsk) { appendOutput("Uso: /ask [pergunta contextual]", "error"); break; }
+                    appendOutput("Processando pergunta contextual...", "info");
+                    await askQuestionBasedOnContext(questionAsk);
+                    break;
+                case '/api-set': openAdminAuth(); break;
+                case '/api':
+                    const currentText = globalSettings.mode === 'manual' ? (globalSettings.manualTextModel || 'Não definido') : currentAIModel;
+                    const currentVision = globalSettings.mode === 'manual' ? (globalSettings.manualVisionModel || 'Não definido') : currentVisionAIModel;
+                    const modeLabel = globalSettings.mode === 'manual' ? 'Manual (Fixo)' : 'Automático (Rotação)';
+                    appendOutput(`Status da API: ${apiConnectionStatus}\nModo: ${modeLabel}\nMotor de Texto Atual: ${currentText}\nMotor de Visão Atual: ${currentVision}`, "info");
+                    break;
+                case '/register':
+                    const [, adminPassReg, newUser, newPass] = parts;
+                    await registerUser(adminPassReg, newUser, newPass);
+                    break;
+                case '/delete':
+                    const [, adminPassDel, userToDel] = parts;
+                    await deleteUser(adminPassDel, userToDel);
+                    break;
+                case '/users':
+                    if (parts[1] === 'admin123') {
+                        adminPanelModal.style.display = 'flex';
+                        activateAdminTab('users');
+                    } else { appendOutput("Senha de administrador incorreta.", "error"); }
+                    break;
+                case '/help': appendOutput(`Comandos: ${validCommands.join(', ')}`, "info"); break;
+                case '/exames': await startCamera('exams'); break;
+                case '/see': await startCamera('axon-eye'); break;
+                case '/load': await loadPatientList(); break;
+                case '/pdf':
+                    const patientName = command.substring(4).trim();
+                    generatePDFFromCurrentSession(patientName);
+                    break;
+                default: appendOutput(`Comando '${mainCmd}' não reconhecido.`, "error");
+            }
+            commandInput.value = '';
+        };
+
+        commandInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') processCommand(commandInput.value); });
+        monitorCopyBtn.addEventListener('click', copyMonitorContent);
+        logoutButton.addEventListener('click', logoutUser);
+        settingsButton.addEventListener('click', openAdminAuth);
+        themeToggleButton.addEventListener('click', toggleTheme);
+
+        captureButton.addEventListener('click', capturePhoto);
+        uploadButton.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileUpload);
+        sendExamsButton.addEventListener('click', analyzeExams);
+        sendAxonEyeButton.addEventListener('click', analyzeAxonEye);
+        cancelCameraButton.addEventListener('click', stopCamera);
+        cameraSwitchButton.addEventListener('click', switchCamera);
+        flashlightButton.addEventListener('click', toggleFlashlight);
+        cameraCloseBtn.addEventListener('click', stopCamera);
+        toggleAnamnesisButton.addEventListener('click', () => toggleMonitorView('anamnesis'));
+        toggleExamsButton.addEventListener('click', () => toggleMonitorView('exams'));
+        toggleAxonEyeButton.addEventListener('click', () => toggleMonitorView('axon-eye'));
+        albumButton.addEventListener('click', openAlbumModal);
+        albumModalClose.addEventListener('click', closeAlbumModal);
+        albumModal.addEventListener('click', (e) => { if (e.target === albumModal) closeAlbumModal(); });
+
+        const checkBlockedAndExecute = (callback) => {
+             if(isUserBlocked) {
+                 appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
+             } else {
+                 callback();
+             }
+        }
+
+        btnExames.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/exames')));
+        btnSee.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/see')));
+        btnHd.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/hd')));
+        btnCd.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/cd')));
+        btnRecords.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/load')));
+        btnClear.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/clear')));
+        btnMic.addEventListener('click', () => checkBlockedAndExecute(() => processCommand(isListening ? '/hear off' : '/hear on')));
+        btnSaveFromList.addEventListener('click', () => {
+            if(isUserBlocked) {
+                appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
+                patientListModal.style.display = 'none';
+                return;
+            }
+            patientListModal.style.display = 'none';
+            openSaveModal();
+        });
+
+        adminAuthClose.addEventListener('click', () => adminAuthModal.style.display = 'none');
+        adminAuthButton.addEventListener('click', checkAdminAuth);
+        adminAuthPass.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkAdminAuth(); });
+        
+        patientListModal.addEventListener('click', (e) => {
+            const target = e.target;
+            const deleteButton = target.closest('.delete');
+            const pdfButton = target.closest('.pdf');
+            const detailsButton = target.closest('.details');
+
+            if (deleteButton) {
+                checkBlockedAndExecute(() => deletePatient(deleteButton.dataset.id));
+            } else if (pdfButton && !pdfButton.classList.contains('disabled')) {
+                 checkBlockedAndExecute(() => generatePatientPDF(pdfButton.dataset.id));
+            } else if (detailsButton && !detailsButton.classList.contains('disabled')) {
+                const patientId = detailsButton.dataset.id;
+                const patientData = allPatients.find(p => p.id === patientId);
+                if (patientData) showPatientDetails(patientData);
+            }
+        });
+
+        patientDetailsModal.addEventListener('click', (e) => {
+            const header = e.target.closest('.consultation-header');
+            if (header) {
+                const body = header.nextElementSibling;
+                const icon = header.querySelector('i');
+                const isVisible = body.style.display === 'block';
+                body.style.display = isVisible ? 'none' : 'block';
+                icon.classList.toggle('fa-chevron-down', !isVisible);
+                icon.classList.toggle('fa-chevron-right', isVisible);
+            }
+        });
+        
+        patientListClose.addEventListener('click', () => patientListModal.style.display = 'none');
+        patientDetailsClose.addEventListener('click', () => patientDetailsModal.style.display = 'none');
+        patientSearchInput.addEventListener('input', (e) => searchPatients(e.target.value));
+
+        loginModalButton.addEventListener('click', async () => {
+            const username = loginModalUser.value.trim(), password = loginModalPass.value.trim();
+            if (!username || !password) return loginModalFeedback.textContent = "Preencha todos os campos.";
+            loginModalFeedback.textContent = "Verificando..."; loginModalButton.disabled = true;
+            
+            const authResult = await authenticateUser(username, password);
+
+            if (authResult.success) {
+                if (authResult.isBlocked) {
+                    loginModalFeedback.style.color = '#ffcc00';
+                    loginModalFeedback.textContent = "Sua conta foi bloqueada!";
+                    loginModalButton.disabled = false;
+                } else {
+                    loginModalFeedback.style.color = 'var(--success-color)'; loginModalFeedback.textContent = "Sucesso!";
+                    setTimeout(() => handleSuccessfulLogin(username, false), 500);
+                }
+            } else {
+                loginModalFeedback.style.color = 'var(--error-color)'; loginModalFeedback.textContent = "Usuário ou senha incorretos.";
+                loginModalButton.disabled = false;
+            }
+        });
+        loginModalPass.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginModalButton.click(); });
+        
+        savePatientModalClose.addEventListener('click', closeSaveModal);
+        savePatientButton.addEventListener('click', () => {
+            const name = savePatientNameInput.value.trim();
+            const dob = savePatientDobInput.value.trim();
+            if (!name || !dob) return savePatientFeedback.textContent = 'Preencha todos os campos.';
+            savePatient(name, dob);
+        });
+        savePatientDobInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '').slice(0, 8);
+            if (value.length > 4) value = `${value.slice(0,2)}/${value.slice(2,4)}/${value.slice(4)}`;
+            else if (value.length > 2) value = `${value.slice(0,2)}/${value.slice(2)}`;
+            e.target.value = value;
+        });
+        savePatientDobInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') savePatientButton.click(); });
+
+        prescriptionHelperClose.addEventListener('click', closePrescriptionHelper);
+        prescriptionHelperModal.addEventListener('click', (e) => {
+            if (e.target === prescriptionHelperModal) {
+                closePrescriptionHelper();
+            }
+        });
+
+        prescriptionHelperBody.addEventListener('click', (e) => {
+            const copyBtn = e.target.closest('.prescription-template-copy-btn');
+            if (copyBtn) {
+                const templateId = copyBtn.dataset.templateId;
+                const templateTextElement = document.getElementById(templateId);
+                if (templateTextElement) {
+                    const templateText = templateTextElement.textContent;
+                    navigator.clipboard.writeText(templateText).then(() => {
+                        const originalText = copyBtn.innerHTML;
+                        copyBtn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+                        copyBtn.style.backgroundColor = 'var(--success-color)';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = originalText;
+                            copyBtn.style.backgroundColor = '';
+                        }, 2000);
+                    });
+                }
+            }
+        });
+
+        interactiveOutput.addEventListener('click', (e) => {
+            const conductTitle = e.target.closest('.conduct-title');
+            if (conductTitle && conductTitle.dataset.category) {
+                openPrescriptionHelper(conductTitle.dataset.category);
+            }
+        });
+
+        const initApp = async () => {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+            if (savedTheme) {
+                setTheme(savedTheme);
+            } else {
+                setTheme(systemPrefersLight ? 'light' : 'dark');
+            }
+
+            if (isSpeechRecognitionSupported()) initSpeechRecognition();
+            const savedUser = localStorage.getItem('axon_logged_in_user');
+            if (savedUser) {
+                appendOutput(`Restaurando sessão para ${savedUser}...`, "info", false);
+                const userIsValid = await isUserValid(savedUser);
+                if (userIsValid) {
+                    handleSuccessfulLogin(savedUser, true);
+                } else {
+                    appendOutput(`Usuário '${savedUser}' não existe mais. Por favor, faça login novamente.`, "error", false);
+                    localStorage.removeItem('axon_logged_in_user');
+                    loginModal.style.display = 'flex';
+                    loginModalUser.focus();
+                }
+            } else { 
+                loginModal.style.display = 'flex'; 
+                loginModalUser.focus(); 
+            }
+            if (isMobile) { statusTextApi.textContent = ""; statusTextMic.textContent = ""; statusTextCam.textContent = ""; }
+        };
+
+        document.addEventListener('DOMContentLoaded', initApp);
+        
+    </script>
+</body>
+</html>
