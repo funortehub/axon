@@ -653,6 +653,8 @@
 
         @media (max-width: 768px) {
             .container { flex-direction: column; padding: 10px; gap: 10px; }
+            .non-interactive-terminal { order: 1; }
+            .interactive-terminal { order: 2; }
             .monitor-toggle-button span, .status-bar span { display: none; }
             .monitor-toggle-button { padding: 5px 8px; font-size: 16px; width: auto; min-width: 35px; }
             .status-bar { gap: 10px; margin-right: 0; }
@@ -2252,6 +2254,7 @@ Seja técnico, objetivo e resumido.`;
             if (isMobile) {
                 cameraModal.classList.add('fullscreen-mobile');
                 document.body.style.overflow = 'hidden';
+                document.querySelector('.container').style.display = 'none';
             }
             
             toggleMonitorView('camera');
@@ -2303,6 +2306,7 @@ Seja técnico, objetivo e resumido.`;
             if (isMobile) {
                 cameraModal.classList.remove('fullscreen-mobile');
                 document.body.style.overflow = 'auto';
+                document.querySelector('.container').style.display = 'flex';
             }
             toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView);
         };
