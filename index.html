@@ -1558,15 +1558,14 @@
             try {
                 // Special handling for multiple images to avoid 413 Payload Too Large error from Groq
                 if (images.length > 1) {
-                    appendOutput(`Groq: Analisando ${images.length} imagens sequencialmente para evitar sobrecarga...`, "info", false);
+                    appendOutput(`Groq: Analisando ${images.length} imagens sequencialmente...`, "info", false);
                     let combinedResponse = "";
 
                     for (let i = 0; i < images.length; i++) {
                         const image = images[i];
-                        appendOutput(`Processando imagem ${i + 1} de ${images.length}...`, "info", false);
+                        await updateAnalysisProgressInFirestore(`${i + 1}/${images.length}`);
                         
-                        // Create a specific, contextual prompt for this image
-                        const sequentialPrompt = `Esta é a imagem ${i + 1} de um total de ${images.length}.\n\nSiga a instrução original ESTRITAMENTE para ESTA imagem específica:\n\n---\n${prompt}\n---\n\nLembre-se: transcreva APENAS o conteúdo desta imagem, conforme solicitado. Não adicione nenhum texto extra, como valores de referência, diagnósticos ou resumos que não estejam visíveis na imagem.`;
+                        const sequentialPrompt = `TAREFA CRÍTICA: Transcreva o texto visível na imagem fornecida. NADA MAIS. Siga estas regras:\n1. Se for um laudo, copie o texto EXATAMENTE como está.\n2. Se forem resultados de laboratório, liste-os. Adicione "(Alterado)" se aplicável.\n3. NÃO adicione introduções, conclusões, valores de referência ou qualquer texto que não esteja na imagem. Sua resposta deve ser apenas a transcrição direta. Esta é a imagem ${i + 1} de ${images.length}.`;
                         
                         const messages = [{
                             role: "user",
@@ -1597,7 +1596,7 @@
                             const data = await response.json();
                             const content = data.choices?.[0]?.message?.content;
                             if (content) {
-                                combinedResponse += (i > 0 ? `\n\n--- Análise da Imagem ${i + 1} ---\n` : `--- Análise da Imagem 1 ---\n`) + content;
+                                combinedResponse += (i > 0 ? `\n` : '') + content.trim();
                             } else {
                                 combinedResponse += `\n\n--- Imagem ${i + 1} ---\n(Resposta vazia da IA)`;
                             }
@@ -2032,10 +2031,21 @@ Seja técnico, objetivo e resumido.`;
             if (!isLoggedIn || !currentUser) return;
             try {
                 await setDoc(doc(db, "sessions", currentUser), {
-                    isAnalyzing: { status: isAnalyzing, type: analysisType }
+                    isAnalyzing: { status: isAnalyzing, type: analysisType, progress: '' }
                 }, { merge: true });
             } catch (e) {
                 console.error("Erro ao atualizar estado de análise:", e);
+            }
+        };
+
+        const updateAnalysisProgressInFirestore = async (progress) => {
+            if (!isLoggedIn || !currentUser) return;
+            try {
+                await setDoc(doc(db, "sessions", currentUser), {
+                    isAnalyzing: { progress: progress }
+                }, { merge: true });
+            } catch (e) {
+                console.error("Erro ao atualizar progresso da análise:", e);
             }
         };
         
@@ -2059,25 +2069,24 @@ Seja técnico, objetivo e resumido.`;
                     // Handle analysis state synchronization
                     if (data.isAnalyzing && data.isAnalyzing.status) {
                         const type = data.isAnalyzing.type;
+                        const progress = data.isAnalyzing.progress;
+                        const progressText = progress ? `Imagem ${progress}` : 'Analisando Imagens...';
+                        
                         const animationHTML = `
                             <div class="ai-processing-animation">
                                 <div class="scanner-animation">
                                     <div class="brain-icon"><i class="fas fa-brain"></i></div>
                                     <div class="scanner-line"></div>
                                 </div>
-                                <span>Analisando Imagens...</span>
+                                <span>${progressText}</span>
                             </div>`;
                         
                         if (type === 'exams') {
                             if (currentMonitorView !== 'exams') toggleMonitorView('exams', true);
-                            if (!examsResultsPreview.querySelector('.ai-processing-animation')) {
-                                examsResultsPreview.innerHTML = animationHTML;
-                            }
+                            examsResultsPreview.innerHTML = animationHTML;
                         } else if (type === 'axon-eye') {
                             if (currentMonitorView !== 'axon-eye') toggleMonitorView('axon-eye', true);
-                            if (!axonEyeResultsPreview.querySelector('.ai-processing-animation')) {
-                                axonEyeResultsPreview.innerHTML = animationHTML;
-                            }
+                            axonEyeResultsPreview.innerHTML = animationHTML;
                         }
                     }
 
