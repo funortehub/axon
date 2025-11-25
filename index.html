@@ -660,8 +660,6 @@
             .status-bar { gap: 10px; margin-right: 0; }
             .status-item .status-indicator { width: 8px; height: 8px; }
             .logout-button, .settings-button, .theme-toggle { font-size: 18px; }
-            .camera-modal.fullscreen-mobile { position: fixed; top: 65px; bottom: 40px; left: 0; width: 100%; height: auto; z-index: 50; border-radius: 0; }
-            .camera-modal.fullscreen-mobile .camera-container { border-radius: 0; border: none; }
 
             /* Admin Panel Mobile Fixes */
             .radio-group {
@@ -685,6 +683,42 @@
                 min-height: 0;
                 padding-left: 0;
                 padding-top: 15px;
+            }
+
+            /* Fullscreen camera on mobile */
+            body.camera-view-active {
+                overflow: hidden; /* Prevent scrolling when camera is active */
+            }
+
+            body.camera-view-active .header,
+            body.camera-view-active .footer,
+            body.camera-view-active .interactive-terminal {
+                display: none;
+            }
+
+            body.camera-view-active .container {
+                padding: 0;
+                height: 100vh;
+                display: block; /* Override flex to just show one child */
+            }
+
+            body.camera-view-active .non-interactive-terminal {
+                height: 100%;
+                width: 100%;
+                border: none;
+                border-radius: 0;
+                box-shadow: none;
+            }
+            
+            body.camera-view-active #camera-modal {
+                display: flex !important; /* ensure it's shown */
+                position: static; /* Let it fill the parent .non-interactive-terminal */
+                height: 100%;
+            }
+            
+            body.camera-view-active .camera-container {
+                 border-radius: 0;
+                 border: none;
             }
         }
 
@@ -1450,12 +1484,7 @@
             anamnesisPreview.style.display = 'none';
             examsResultsPreview.style.display = 'none';
             axonEyeResultsPreview.style.display = 'none';
-            if (view === 'camera' && !fromRemote) {
-                cameraModal.style.display = 'flex';
-            } else {
-                cameraModal.style.display = 'none';
-                stopCameraStreamOnly();
-            }
+            
             toggleAnamnesisButton.classList.remove('active');
             toggleExamsButton.classList.remove('active');
             toggleAxonEyeButton.classList.remove('active');
@@ -2252,12 +2281,10 @@ Seja técnico, objetivo e resumido.`;
             sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'flex' : 'none';
             
             if (isMobile) {
-                cameraModal.classList.add('fullscreen-mobile');
-                document.body.style.overflow = 'hidden';
-                document.querySelector('.container').style.display = 'none';
+                document.body.classList.add('camera-view-active');
             }
             
-            toggleMonitorView('camera');
+            cameraModal.style.display = 'flex';
 
             try {
                 if (cameraStream) {
@@ -2304,11 +2331,8 @@ Seja técnico, objetivo e resumido.`;
             stopCameraStreamOnly();
             cameraModal.style.display = 'none';
             if (isMobile) {
-                cameraModal.classList.remove('fullscreen-mobile');
-                document.body.style.overflow = 'auto';
-                document.querySelector('.container').style.display = 'flex';
+                document.body.classList.remove('camera-view-active');
             }
-            toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView);
         };
 
         const cancelCamera = () => {
