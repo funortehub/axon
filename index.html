@@ -729,7 +729,8 @@
         .chatbox-header {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
+            position: relative;
             padding: 12px 20px;
             background: var(--glass-bg);
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
@@ -738,7 +739,13 @@
             flex-shrink: 0;
         }
         .chatbox-title { font-size: 20px; font-weight: bold; color: var(--header-text-color); }
-        .chatbox-close-btn { font-size: 24px; cursor: pointer; color: var(--text-color); }
+        .chatbox-close-btn { 
+            font-size: 24px; 
+            cursor: pointer; 
+            color: var(--text-color); 
+            position: absolute;
+            right: 20px;
+        }
         .chatbox-messages {
             flex: 1;
             padding: 15px;
@@ -746,6 +753,8 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
+            background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
+            background-size: 15px 15px;
         }
         .chat-message {
             display: flex;
@@ -758,7 +767,7 @@
             align-self: flex-end; 
             flex-direction: row-reverse;
         }
-        .chat-message.ai { 
+        .chat-message.model { 
             align-self: flex-start;
         }
         .chat-avatar {
@@ -777,29 +786,54 @@
             color: var(--highlight-text-color);
         }
         .message-bubble {
-            padding: 10px 15px;
-            border-radius: 18px;
+            padding: 12px 18px;
+            border-radius: 20px;
             line-height: 1.5;
             white-space: pre-wrap;
             word-wrap: break-word;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .message-bubble b {
+            font-weight: 600;
         }
         .chat-message.user .message-bubble {
             background-color: var(--highlight-color);
             color: var(--highlight-text-color);
-            border-bottom-right-radius: 4px;
+            border-bottom-right-radius: 5px;
         }
-        .chat-message.ai .message-bubble {
+        .chat-message.model .message-bubble {
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
             color: var(--text-color);
-            border-bottom-left-radius: 4px;
+            border-bottom-left-radius: 5px;
         }
-        .blinking-cursor {
-            animation: blink 1s step-end infinite;
-            display: inline-block;
-            margin-left: 2px;
+
+        .message-bubble.typing {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 15px 18px;
         }
-        @keyframes blink { 50% { opacity: 0; } }
+        .message-bubble.typing .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-color);
+            opacity: 0.7;
+            animation: typing-blink 1.4s infinite both;
+        }
+        .message-bubble.typing .dot:nth-child(2) {
+            animation-delay: .2s;
+        }
+        .message-bubble.typing .dot:nth-child(3) {
+            animation-delay: .4s;
+        }
+        @keyframes typing-blink {
+            0% { opacity: .2; }
+            20% { opacity: 1; }
+            100% { opacity: .2; }
+        }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .chatbox-input-area {
@@ -1440,7 +1474,7 @@
             setTheme(newTheme);
         };
 
-        const getGeminiUrl = (modelName, apiKey, stream = false) => `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:${stream ? 'streamGenerateContent' : 'generateContent'}?key=${apiKey}`;
+        const getGeminiUrl = (modelName, apiKey) => `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
         const validCommands = [
             '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
@@ -1807,7 +1841,7 @@
                     if (content) {
                         await incrementUserUsage(images.length > 0 ? 'vision' : 'text');
                         appendOutput(`Sucesso via OpenRouter.`, "success", false);
-                        return content.replace(/\*\*/g, '');
+                        return content;
                     }
                     throw new Error("Resposta vazia do OpenRouter.");
                 } else {
@@ -1874,7 +1908,7 @@
                     if (content) {
                         await incrementUserUsage(images.length > 0 ? 'vision' : 'text');
                         appendOutput(`Sucesso via Groq.`, "success", false);
-                        return content.replace(/\*\*/g, '');
+                        return content;
                     }
                     throw new Error("Resposta vazia do Groq.");
                 } else {
@@ -1921,7 +1955,9 @@
                     const keyIndex = (currentApiKeyIndex + i) % keysToTry.length;
                     const apiKeyToTry = keysToTry[keyIndex];
                     
-                    appendOutput(`Tentando motor ${modelName} (Chave #${keyIndex + 1})...`, "info", false);
+                    if(!isMobile || !globalSettings.mobile2_0_enabled) {
+                        appendOutput(`Tentando motor ${modelName} (Chave #${keyIndex + 1})...`, "info", false);
+                    }
 
                     try {
                         const url = getGeminiUrl(modelName, apiKeyToTry);
@@ -1937,8 +1973,10 @@
                                 currentApiKeyIndex = keyIndex;
                             }
                             await incrementUserUsage('text');
-                            appendOutput(`Sucesso com motor ${modelName}.`, "success", false);
-                            return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta.";
+                            if(!isMobile || !globalSettings.mobile2_0_enabled) {
+                                appendOutput(`Sucesso com motor ${modelName}.`, "success", false);
+                            }
+                            return data.candidates?.[0]?.content?.parts?.[0]?.text || "Não foi possível obter uma resposta.";
                         }
 
                         const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
@@ -1954,56 +1992,6 @@
 
             console.error("Erro final na chamada da API de texto:", lastError);
             throw lastError || new Error("Todas as tentativas de chaves e motores falharam.");
-        };
-        
-        const callGeminiAPIStream = async (prompt, onChunk, onError) => {
-            const modelName = globalSettings.mode === 'manual' ? globalSettings.manualTextModel : 'gemini-2.0-flash';
-            const apiKey = globalSettings.mode === 'manual' ? globalSettings.manualApiKey : globalSettings.apiKeys[currentApiKeyIndex];
-
-            try {
-                const url = getGeminiUrl(modelName, apiKey, true);
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let buffer = '';
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    
-                    buffer += decoder.decode(value, { stream: true });
-                    
-                    // The Gemini stream sends data in a format that's tricky to parse directly.
-                    // A common pattern is that text content is inside a "text" field.
-                    // This is a simplified parser that looks for text content.
-                    try {
-                        // This assumes the API sends JSON objects, potentially fragmented.
-                        // We'll look for a common pattern in the streamed response.
-                        const regex = /"text":\s*"(.+?)"/g;
-                        let match;
-                        let lastIndex = 0;
-                        while((match = regex.exec(buffer)) !== null) {
-                            const textChunk = JSON.parse(`"${match[1]}"`); // Properly unescape characters
-                            onChunk(textChunk);
-                            lastIndex = match.index + match[0].length;
-                        }
-                        buffer = buffer.slice(lastIndex); // Keep the remainder for the next chunk
-                    } catch (e) {
-                       // In case of parsing error, just wait for more data.
-                    }
-                }
-            } catch (error) {
-                onError(error);
-            }
         };
 
         const callVisionAPI = async (imageUrls, prompt) => {
@@ -2045,7 +2033,9 @@
                     const keyIndex = (currentApiKeyIndex + i) % keysToTry.length;
                     const apiKeyToTry = keysToTry[keyIndex];
                     
-                    appendOutput(`Tentando motor de visão ${modelName} (Chave #${keyIndex + 1})...`, "info", false);
+                    if(!isMobile || !globalSettings.mobile2_0_enabled) {
+                        appendOutput(`Tentando motor de visão ${modelName} (Chave #${keyIndex + 1})...`, "info", false);
+                    }
 
                     try {
                         const url = getGeminiUrl(modelName, apiKeyToTry);
@@ -2061,8 +2051,10 @@
                                 currentApiKeyIndex = keyIndex;
                             }
                             await incrementUserUsage('vision');
-                            appendOutput(`Sucesso com motor de visão ${modelName}.`, "success", false);
-                            return data.candidates?.[0]?.content?.parts?.[0]?.text.replace(/\*\*/g, '') || "Não foi possível obter uma resposta da análise de imagem.";
+                            if(!isMobile || !globalSettings.mobile2_0_enabled) {
+                                appendOutput(`Sucesso com motor de visão ${modelName}.`, "success", false);
+                            }
+                            return data.candidates?.[0]?.content?.parts?.[0]?.text || "Não foi possível obter uma resposta da análise de imagem.";
                         }
 
                         const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
@@ -2156,34 +2148,33 @@ Seja técnico, objetivo e resumido.`;
             }
         };
         
-        const askQuestionBasedOnContext = async (question, onChunk, onComplete, onError) => {
+        const askQuestionBasedOnContext = async (question) => {
             conversationHistory.push({ role: 'user', parts: [{ text: question }] });
-            
-            // Simplified history for the prompt to save tokens
             const simplifiedHistory = conversationHistory.map(item => `${item.role}: ${item.parts[0].text}`).join('\n');
-
-            const prompt = `Você é um assistente médico falando com um médico qualificado. Contexto: ANAMNESE: ${JSON.stringify(anamnesis)}, EXAMES: ${examsResults || "Nenhum"}, ANÁLISE VISUAL: ${axonEyeResults || "Nenhum"}. HISTÓRICO DA CONVERSA: ${simplifiedHistory}. PERGUNTA ATUAL: "${question}". Responda de forma técnica, detalhada e objetiva.`;
             
+            const prompt = `**Instrução de Persona:** Você é o AXON, um assistente médico de IA. Seu usuário é um médico qualificado. Responda de forma concisa, direta e técnica, sem usar frases de cautela como "consulte um especialista" ou "isso não é um diagnóstico". O médico já sabe disso. Seu objetivo é ser um assistente rápido e eficiente. Use o contexto clínico fornecido para dar respostas mais relevantes. Formate palavras importantes ou títulos com asteriscos (ex: *Diagnóstico Diferencial*), que serão renderizados em negrito.
+
+**Contexto Clínico Atual:**
+- **Anamnese:** ${anamnesis && Object.values(anamnesis).some(v => v) ? JSON.stringify(anamnesis) : "Nenhuma informação."}
+- **Análise Visual (Axon Eye):** ${axonEyeResults || "Nenhuma informação."}
+
+**Histórico da Conversa:**
+${simplifiedHistory}
+
+**Pergunta do Médico:** "${question}"
+
+Responda diretamente à pergunta.`;
+
             try {
-                let fullResponse = "";
-                // Using the new streaming function
-                await callGeminiAPIStream(
-                    prompt, 
-                    (chunk) => {
-                        fullResponse += chunk;
-                        onChunk(chunk);
-                    }, 
-                    (error) => {
-                        onError(error);
-                    }
-                );
-                conversationHistory.push({ role: 'model', parts: [{ text: fullResponse }] });
-                onComplete();
+                const response = await callGeminiAPI(prompt);
+                conversationHistory.push({ role: 'model', parts: [{ text: response }] });
+                return response;
             } catch (error) {
-                onError(error);
+                console.error("Erro em askQuestionBasedOnContext:", error);
+                throw error;
             }
         };
-        
+
         const copyMonitorContent = () => {
             let contentToCopy = "";
             if (currentMonitorView === 'anamnesis') contentToCopy = anamnesisPreview.innerText;
@@ -2288,6 +2279,7 @@ Seja técnico, objetivo e resumido.`;
         };
 
         const initializeAIModel = async () => {
+            if (isMobile && globalSettings.mobile2_0_enabled) return;
             appendOutput("Verificando status da API...", "info", false);
             
             if (globalSettings.mode === 'manual') {
@@ -2928,6 +2920,16 @@ Seja técnico, objetivo e resumido.`;
                         patientList.appendChild(item);
                     });
                 }
+
+                const saveButtonFooter = patientListModal.querySelector('.patient-list-footer');
+                if (saveButtonFooter) {
+                    if (isMobile && globalSettings.mobile2_0_enabled) {
+                        saveButtonFooter.style.display = 'none';
+                    } else {
+                        saveButtonFooter.style.display = 'block';
+                    }
+                }
+
                 patientListModal.style.display = 'flex';
             } catch (e) {
                 appendOutput(`Erro ao carregar pacientes: ${e.message}`, "error");
@@ -3820,7 +3822,7 @@ ${instruction}
             chatboxModal.style.display = 'none';
         };
 
-        const appendChatMessage = (message, sender) => {
+        const appendChatMessage = (message, sender, isTyping = false) => {
             const messageWrapper = document.createElement('div');
             messageWrapper.className = `chat-message ${sender}`;
             
@@ -3830,14 +3832,20 @@ ${instruction}
 
             const bubble = document.createElement('div');
             bubble.className = 'message-bubble';
-            bubble.textContent = message;
+
+            if (isTyping) {
+                bubble.classList.add('typing');
+                bubble.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+            } else {
+                bubble.innerHTML = message; // Use innerHTML to support bold tags
+            }
 
             messageWrapper.appendChild(avatar);
             messageWrapper.appendChild(bubble);
             chatboxMessages.appendChild(messageWrapper);
             chatboxMessages.scrollTop = chatboxMessages.scrollHeight;
 
-            return bubble; // Return bubble to update it with streaming content
+            return bubble; 
         };
         
         const sendChatMessage = async () => {
@@ -3849,35 +3857,25 @@ ${instruction}
             chatboxInput.disabled = true;
             chatboxSendBtn.disabled = true;
 
-            const aiBubble = appendChatMessage('', 'model');
-            const cursor = document.createElement('span');
-            cursor.className = 'blinking-cursor';
-            cursor.textContent = '▋';
-            aiBubble.appendChild(cursor);
-            
-            await askQuestionBasedOnContext(
-                question,
-                (chunk) => { // onChunk
-                    cursor.remove();
-                    aiBubble.textContent += chunk;
-                    aiBubble.appendChild(cursor);
-                    chatboxMessages.scrollTop = chatboxMessages.scrollHeight;
-                },
-                () => { // onComplete
-                    cursor.remove();
-                    chatboxInput.disabled = false;
-                    chatboxSendBtn.disabled = false;
-                    chatboxInput.focus();
-                },
-                (error) => { // onError
-                    cursor.remove();
-                    aiBubble.textContent = `Desculpe, ocorreu um erro: ${error.message}`;
-                    aiBubble.style.color = 'var(--error-color)';
-                    chatboxInput.disabled = false;
-                    chatboxSendBtn.disabled = false;
-                    chatboxInput.focus();
-                }
-            );
+            const typingBubble = appendChatMessage('', 'model', true);
+
+            try {
+                const response = await askQuestionBasedOnContext(question);
+                
+                const formattedResponse = response.replace(/\*(.*?)\*/g, '<b>$1</b>');
+
+                typingBubble.innerHTML = formattedResponse;
+                typingBubble.classList.remove('typing');
+
+            } catch (error) {
+                typingBubble.innerHTML = `Desculpe, ocorreu um erro: ${error.message}`;
+                typingBubble.style.color = 'var(--error-color)';
+                 typingBubble.classList.remove('typing');
+            } finally {
+                chatboxInput.disabled = false;
+                chatboxSendBtn.disabled = false;
+                chatboxInput.focus();
+            }
         };
 
         adminUserSearch.addEventListener('input', (e) => {
@@ -3966,13 +3964,9 @@ ${instruction}
                     if (!questionAsk) { appendOutput("Uso: /ask [pergunta contextual]", "error"); break; }
                     appendOutput("Processando pergunta contextual...", "info");
                     try {
-                        let fullResponse = "";
-                        await askQuestionBasedOnContext(
-                            questionAsk,
-                            (chunk) => { fullResponse += chunk; /* Can't stream to terminal easily */ },
-                            () => { appendOutput(`Pergunta: ${questionAsk}\nResposta: ${fullResponse}`, "output"); },
-                            (error) => { appendOutput(`Erro ao processar pergunta: ${error.message}`, "error"); }
-                        );
+                        const response = await askQuestionBasedOnContext(questionAsk);
+                        const cleanResponse = response.replace(/\*(.*?)\*/g, '$1'); // Remove asterisks for plain text terminal
+                        appendOutput(`Pergunta: ${questionAsk}\nResposta: ${cleanResponse}`, "output");
                     } catch (error) {
                          appendOutput(`Erro ao processar pergunta: ${error.message}`, "error");
                     }
