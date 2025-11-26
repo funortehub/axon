@@ -759,25 +759,6 @@
             background-color: var(--button-hover-bg);
             text-decoration: underline;
         }
-
-        .mobile-connection-status {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: auto;
-            padding-bottom: 10px;
-            font-size: 12px;
-            color: var(--text-color);
-            opacity: 0.7;
-        }
-        .mobile-connection-status .status-dot {
-            width: 10px;
-            height: 10px;
-            background-color: var(--success-color);
-            border-radius: 50%;
-            box-shadow: 0 0 6px var(--success-color);
-        }
         
         /* Chatbox Modal Styles */
         .chatbox-modal {
@@ -1009,6 +990,37 @@
         input:checked + .slider { background-color: var(--highlight-color); }
         input:checked + .slider:before { transform: translateX(22px); }
 
+        /* Desktop Connection Status Styles */
+        .desktop-status-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-color);
+            opacity: 0.8;
+            padding: 8px 15px;
+            background: var(--input-bg);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 450px;
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .status-dot.green {
+            background-color: var(--success-color);
+            box-shadow: 0 0 5px var(--success-color);
+        }
+        .status-dot.red {
+            background-color: var(--error-color);
+            box-shadow: 0 0 5px var(--error-color);
+        }
+
         @media (max-width: 768px) {
             .container { flex-direction: column-reverse; padding: 10px; gap: 10px; }
             .monitor-toggle-button span, .status-bar span { display: none; }
@@ -1187,9 +1199,9 @@
                 <span>Axon AI Chat</span>
             </button>
         </div>
-        <div class="mobile-connection-status">
-            <div class="status-dot"></div>
-            <span>Conectado em desktop: WINDOWS 11 - CHROME</span>
+        <div id="desktop-connection-status" class="desktop-status-container" style="display: none; margin-top: auto; margin-bottom: 5px;">
+            <span id="desktop-status-dot" class="status-dot"></span>
+            <span id="desktop-status-text" class="status-text"></span>
         </div>
     </div>
 
@@ -2054,7 +2066,7 @@
                 let messages = [];
 
                 if (images.length > 0) {
-                    appendOutput(`Comprimindo ${images.length} imagem(ns) для envio...`, "info", false);
+                    appendOutput(`Comprimindo ${images.length} imagem(ns) para envio...`, "info", false);
                     const compressedImages = await Promise.all(images.map(img => compressImage(img, 1024, 0.7)));
 
                     const contentArray = [
@@ -2546,12 +2558,53 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             return true;
         };
 
+        const parseUserAgent = (ua) => {
+            if (!ua) return 'Dispositivo Desconhecido';
+            let os = 'Unknown OS';
+            let browser = 'Unknown Browser';
+
+            if (/windows/i.test(ua)) os = 'Windows';
+            else if (/macintosh|mac os x/i.test(ua)) os = 'macOS';
+            else if (/android/i.test(ua)) os = 'Android';
+            else if (/linux/i.test(ua)) os = 'Linux';
+            else if (/iphone|ipad|ipod/i.test(ua)) os = 'iOS';
+
+            if (/chrome/i.test(ua) && !/edge|edg/i.test(ua)) browser = 'Chrome';
+            else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = 'Safari';
+            else if (/firefox/i.test(ua)) browser = 'Firefox';
+            else if (/msie|trident/i.test(ua)) browser = 'IE';
+            else if (/edge|edg/i.test(ua)) browser = 'Edge';
+
+            return `${os.toUpperCase()} - ${browser.toUpperCase()}`;
+        };
+
         const setupFirebaseListener = (username) => {
             if (unsubscribeSnapshot) unsubscribeSnapshot();
             const docRef = doc(db, "sessions", username);
             unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
+
+                    // Desktop connection status for mobile view
+                    const statusContainer = document.getElementById('desktop-connection-status');
+                    const statusDot = document.getElementById('desktop-status-dot');
+                    const statusText = document.getElementById('desktop-status-text');
+
+                    if (isMobile && globalSettings.mobile2_0_enabled && statusContainer) {
+                        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+                        if (data.deviceInfo && data.deviceInfo.isMobile === false && data.lastUpdated && data.lastUpdated.toDate() > fiveMinutesAgo) {
+                            statusContainer.style.display = 'flex';
+                            statusDot.className = 'status-dot green';
+                            statusText.textContent = `Conectado em desktop: ${parseUserAgent(data.deviceInfo.userAgent)}`;
+                        } else {
+                            statusContainer.style.display = 'flex';
+                            statusDot.className = 'status-dot red';
+                            statusText.textContent = 'Nenhum desktop conectado no momento.';
+                        }
+                    } else if (statusContainer) {
+                        statusContainer.style.display = 'none';
+                    }
+
 
                     // Handle analysis state synchronization
                     if (data.isAnalyzing && data.isAnalyzing.status) {
@@ -2606,12 +2659,17 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     updateAnamnesisPreview(false);
                     updateExamsResultsPreview(false);
                     updateAxonEyeResultsPreview(false);
+                    
+                    const statusContainer = document.getElementById('desktop-connection-status');
+                    if (statusContainer) {
+                        statusContainer.style.display = 'none';
+                    }
                 }
             });
         };
         
         const applySettings = () => {
-             if (isMobile && globalSettings.mobile2_0_enabled) {
+             if (globalSettings.mobile2_0_enabled) {
                 document.querySelector('.container').style.display = 'none';
                 mobileContainer.style.display = 'flex';
             } else {
@@ -3373,6 +3431,18 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             mobileWelcomeTitle.textContent = `Bem-vindo, ${currentUser}!`;
 
             appendOutput("Sessão pronta. Informe os dados do paciente ou use um comando.", "success");
+
+            // Create/update the session document on Firestore
+            const sessionRef = doc(db, "sessions", username);
+            const deviceInfo = {
+                isMobile: isMobile,
+                userAgent: navigator.userAgent
+            };
+            setDoc(sessionRef, { 
+                createdAt: new Date(),
+                lastUpdated: new Date(),
+                deviceInfo: deviceInfo
+            }, { merge: true });
             
             if (unsubscribeUserDoc) {
                 unsubscribeUserDoc();
