@@ -1,5 +1,5 @@
 
-<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Axon A.I</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><link rel="manifest" href="/manifest.json"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" id="status-bar-style-meta" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Axon A.I"><link rel="apple-touch-icon" href="https://i.imgur.com/ZsfZEh2.png"><meta name="theme-color" id="theme-color-meta" content="#1a202c"><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><style>:root{--bg-gradient:linear-gradient(135deg, #1a202c, #2d3748);--glass-bg:rgba(28, 35, 49, 0.65);--glass-border:rgba(255, 255, 255, 0.18);--glass-shadow:0 8px 32px 0 rgba(0, 0, 0, 0.37);--text-color:#e2e8f0;--header-text-color:#f7fafc;--prompt-color:#63b3ed;--command-color:#90cdf4;--output-color:#e2e8f0;--error-color:#fc8181;--success-color:#68d391;--border-color:rgba(255, 255, 255, 0.1);--highlight-color:#4299e1;--highlight-text-color:#ffffff;--diagnosis-color:#b794f4;--conduct-color:#68d391;--altered-color:#faf089;--input-bg:rgba(0,0,0,0.2);--terminal-header-bg:rgba(0,0,0,0.2);--button-bg:rgba(255, 255, 255, 0.1);--button-hover-bg:rgba(255, 255, 255, 0.2)}body.light-mode{--bg-gradient:linear-gradient(135deg, #f0f9ff, #e0f2fe);--glass-bg:rgba(255, 255, 255, 0.5);--glass-border:rgba(0, 0, 0, 0.1);--glass-shadow:0 8px 32px 0 rgba(100, 100, 100, 0.2);--text-color:#2d3748;--header-text-color:#1a202c;--prompt-color:#2b6cb0;--command-color:#2c5282;--output-color:#2d3748;--error-color:#c53030;--success-color:#2f855a;--border-color:rgba(0, 0, 0, 0.1);--highlight-color:#3182ce;--highlight-text-color:#ffffff;--diagnosis-color:#805ad5;--conduct-color:#2f855a;--altered-color:#d69e2e;--input-bg:rgba(0,0,0,0.05);--terminal-header-bg:rgba(0,0,0,0.05);--button-bg:rgba(0, 0, 0, 0.05);--button-hover-bg:rgba(0, 0, 0, 0.1)}*{margin:0;padding:0;box-sizing:border-box;font-family:Consolas,'Courier New',monospace;touch-action:manipulation}body{background:var(--bg-gradient);background-attachment:fixed;color:var(--text-color);height:100vh;display:flex;flex-direction:column;overflow:hidden;transition:background .5s ease,color .5s ease}.header{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);padding:12px 20px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between;position:relative;height:65px;flex-shrink:0}.header-right{display:flex;align-items:center;gap:10px}.logout-button,.settings-button,.theme-toggle{color:var(--text-color);font-size:20px;cursor:pointer;transition:color .3s ease,transform .2s ease,background-color .3s ease;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%}.logout-button:hover,.settings-button:hover,.theme-toggle:hover{color:var(--highlight-color);background-color:var(--button-hover-bg);transform:scale(1.1)}.logout-button:hover{color:var(--error-color)}.app-title{font-size:22px;font-weight:700;color:var(--header-text-color);text-shadow:0 1px 2px rgba(0,0,0,.1)}.status-bar{display:flex;gap:15px;font-size:14px;background:var(--input-bg);padding:5px 15px;border-radius:20px;border:1px solid var(--border-color)}.status-item{display:flex;align-items:center;gap:5px}.status-indicator{width:10px;height:10px;border-radius:50%;background-color:var(--success-color);box-shadow:0 0 5px var(--success-color)}.status-off{background-color:var(--error-color);box-shadow:0 0 5px var(--error-color)}.container{display:flex;flex:1;padding:20px;gap:20px;height:calc(100vh - 65px - 40px);min-height:0}.terminal{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border:1px solid var(--glass-border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--glass-shadow);position:relative}.terminal-header{padding:8px 12px;background-color:var(--terminal-header-bg);border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between}.terminal-title{font-size:14px;font-weight:700}.terminal-actions{display:flex;gap:8px}.terminal-btn{width:12px;height:12px;border-radius:50%}.close-btn{background-color:#ff5f56}.minimize-btn{background-color:#ffbd2e}.maximize-btn{background-color:#27c93f}.terminal-content{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:10px}.terminal-content::-webkit-scrollbar{width:8px}.terminal-content::-webkit-scrollbar-track{background:0 0}.terminal-content::-webkit-scrollbar-thumb{background-color:var(--button-hover-bg);border-radius:10px;border:2px solid transparent;background-clip:content-box}.terminal-content::-webkit-scrollbar-thumb:hover{background-color:var(--highlight-color)}.interactive-terminal,.non-interactive-terminal{flex:1;min-width:300px;min-height:0}.input-line{display:flex;align-items:center;gap:8px}.prompt{color:var(--prompt-color);white-space:nowrap}.command-input{background:0 0;border:none;color:var(--command-color);width:100%;font-size:16px;caret-color:var(--command-color);outline:0;padding:2px 0}.command-output{color:var(--output-color);white-space:pre-wrap;line-height:1.5;text-align:left}.command-output b,.diagnosis-item b,.conduct-item b{color:var(--highlight-text-color);font-weight:900}.command{color:var(--command-color);font-weight:700}.error{color:var(--error-color)}.success{color:var(--success-color)}.info{color:var(--prompt-color)}.highlight{color:var(--highlight-color)}.blocked-msg{color:var(--altered-color)}.anamnesis-content{line-height:1.8;font-size:15px}.section-title{font-weight:700;margin-top:10px;color:var(--highlight-color)}.help-list{padding-left:0;margin:10px 0;line-height:1.8;list-style:none}.help-item{margin-bottom:5px}.diagnosis-item{color:var(--diagnosis-color);margin-bottom:8px;padding-left:15px;position:relative}.diagnosis-item:before{content:"•";position:absolute;left:0;color:var(--diagnosis-color)}.conduct-section{margin-bottom:15px}.conduct-title{color:var(--conduct-color);font-weight:700;margin-bottom:5px;border-bottom:1px solid var(--conduct-color);padding-bottom:3px;cursor:pointer;transition:color .2s,border-bottom-color .2s}.conduct-title:hover{color:var(--highlight-color);border-bottom-color:var(--highlight-color)}.conduct-item{margin-bottom:8px;padding-left:15px;position:relative}.conduct-item:before{content:"-";position:absolute;left:0}.receituario-item{white-space:pre;font-family:'Courier New',monospace;color:var(--output-color);margin-bottom:5px}.footer{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);padding:10px 20px;border-top:1px solid var(--glass-border);text-align:center;font-size:12px;color:var(--text-color);height:40px;flex-shrink:0}.terminal-logo-internal{position:absolute;top:15px;right:15px;height:calc(105.3px * 1.8 * .7 * 1.2);width:auto;opacity:.1;z-index:0}.monitor-view{text-transform:uppercase;height:100%}.monitor-view .axon-eye-title,.monitor-view .conduct-title,.monitor-view .section-title{text-transform:none}.camera-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:transparent;z-index:100;flex-direction:column;justify-content:flex-start;align-items:center;padding:0}.camera-container{display:flex;flex-direction:column;background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:16px;position:relative;z-index:1;padding:0;gap:10px;overflow:hidden;width:100%;height:100%;max-width:none;max-height:none}.camera-video-wrapper{position:relative;width:100%;padding-bottom:177.77%;background-color:#000;border-radius:10px;overflow:hidden;flex-shrink:0}.camera-video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}.camera-controls{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;gap:10px;justify-content:center;z-index:2;width:90%}.camera-button{background-color:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.2);padding:10px 15px;border-radius:50%;cursor:pointer;font-size:18px;transition:background-color .3s ease,transform .2s ease;display:flex;align-items:center;justify-content:center;width:50px;height:50px;flex-shrink:0;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.camera-button:hover{background-color:var(--highlight-color);transform:scale(1.05)}.camera-button.disabled{background-color:#555;cursor:not-allowed;opacity:.7}.album-button,.camera-action-buttons{position:absolute;top:10px;display:flex;gap:5px;z-index:10;background-color:rgba(0,0,0,.4);border:1px solid var(--border-color);border-radius:20px;padding:5px 10px;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.album-button{left:10px}.camera-action-buttons{right:10px}.camera-switch-button,.flashlight-button{background-color:transparent;color:#fff;border:none;cursor:pointer;font-size:12px;transition:color .2s}.album-button:hover,.camera-switch-button:hover,.flashlight-button:hover{color:var(--highlight-color)}.flashlight-button.active{color:var(--highlight-color)}.album-count{background-color:var(--highlight-color);color:var(--highlight-text-color);border-radius:50%;padding:2px 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center}.monitor-toggle-buttons{display:flex;gap:5px;margin-left:auto;margin-right:10px}.monitor-toggle-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:5px 10px;border-radius:20px;cursor:pointer;font-size:12px;transition:all .3s ease;display:flex;align-items:center;justify-content:center;gap:5px}.monitor-toggle-button:hover{background-color:var(--button-hover-bg)}.monitor-toggle-button.active{background-color:var(--highlight-color);color:var(--highlight-text-color);border-color:transparent}#monitor-content-wrapper{position:relative}.monitor-copy-btn{position:absolute;top:50px;right:25px;background:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:5px 10px;border-radius:50%;width:35px;height:35px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .3s ease;z-index:5}.monitor-copy-btn:hover{background-color:var(--highlight-color);color:var(--highlight-text-color)}.fullscreen-modal{display:none;position:fixed;z-index:2000;padding-top:60px;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.9)}.modal-content{margin:auto;display:block;width:80%;max-width:700px;border-radius:10px}#caption,.modal-content{animation-name:zoom;animation-duration:.6s}@keyframes zoom{from{transform:scale(0)}to{transform:scale(1)}}.modal-close{position:absolute;top:15px;right:35px;color:#f1f1f1;font-size:40px;font-weight:700;transition:.3s}.modal-close:focus,.modal-close:hover{color:#bbb;text-decoration:none;cursor:pointer}.output .altered-text{color:var(--altered-color);font-weight:700;margin-left:10px}.album-modal,.app-modal,.patient-details-modal,.patient-list-modal{display:none;position:fixed;z-index:105;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.5);justify-content:center;align-items:center}.album-modal-content,.app-modal-content,.patient-details-content,.patient-list-content{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);margin:auto;padding:25px;border:1px solid var(--glass-border);border-radius:16px;width:90%;max-width:500px;box-shadow:var(--glass-shadow);position:relative;display:flex;flex-direction:column;max-height:90vh}.album-modal-content,.patient-details-content,.patient-list-content{max-width:800px}.album-modal-header,.app-modal-header,.patient-details-header,.patient-list-header{display:flex;align-items:center;border-bottom:1px solid var(--border-color);padding-bottom:15px;margin-bottom:20px}.album-modal-title,.app-modal-title,.patient-details-title,.patient-list-title{font-size:20px;font-weight:700;color:var(--prompt-color)}.album-modal-close,.app-modal-close,.patient-details-close,.patient-list-close{color:var(--text-color);font-size:28px;font-weight:700;cursor:pointer;transition:.3s;position:absolute;top:15px;right:20px}.album-modal-close:hover,.app-modal-close:hover,.patient-details-close:hover,.patient-list-close:hover{color:var(--highlight-color)}.album-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:15px;overflow-y:auto;padding-right:5px}.album-item{position:relative;width:100%;padding-bottom:100%;overflow:hidden;border:1px solid var(--border-color);border-radius:10px;cursor:pointer;transition:transform .2s ease}.album-item:hover{transform:scale(1.03)}.album-image{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}.album-delete-button{position:absolute;top:5px;right:5px;background-color:rgba(255,0,0,.7);color:#fff;border:none;border-radius:50%;width:24px;height:24px;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;transition:background-color .2s}.album-delete-button:hover{background-color:rgba(255,0,0,1)}.axon-eye-title{color:var(--error-color);font-weight:700;margin-top:10px;margin-bottom:5px;border-bottom:1px solid var(--error-color);padding-bottom:3px}.axon-eye-image-preview{max-width:100%;height:auto;margin-top:15px;border:1px solid var(--border-color);border-radius:10px}.patient-list{display:flex;flex-direction:column;gap:10px;overflow-y:auto;max-height:400px}.patient-item{padding:12px;background-color:var(--button-bg);border:1px solid var(--border-color);border-radius:10px;cursor:pointer;transition:background-color: .2s}.patient-item:hover{background-color:var(--button-hover-bg)}.patient-details-body{overflow-y:auto;padding-right:5px}.patient-details-section{margin-bottom:20px}.patient-details-section-title{font-weight:700;color:var(--highlight-color);margin-bottom:10px;border-bottom:1px solid var(--border-color);padding-bottom:5px}.patient-images-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:10px}.patient-image-item{position:relative;width:100%;padding-bottom:100%;overflow:hidden;border:1px solid var(--border-color);border-radius:10px;cursor:pointer}.patient-image{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}.consultation-item{background-color:var(--input-bg);border:1px solid var(--border-color);border-radius:10px;margin-bottom:10px;overflow:hidden}.consultation-header{padding:10px 15px;cursor:pointer;font-weight:700;transition:background-color .2s}.consultation-header:hover{background-color:var(--button-hover-bg)}.consultation-body{padding:15px;border-top:1px solid var(--border-color);background-color:transparent}.patient-actions{display:flex;gap:10px;margin-top:10px}.patient-action-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;transition:all .3s ease;display:flex;align-items:center;justify-content:center;gap:5px;flex:1}.patient-action-button.disabled{background-color:var(--input-bg);color:var(--text-color);cursor:not-allowed;opacity:.5}.patient-action-button:not(.disabled):hover{background-color:var(--button-hover-bg)}.patient-action-button.delete:not(.disabled){color:var(--error-color)}.patient-action-button.delete:not(.disabled):hover{background-color:var(--error-color);color:#fff}.patient-action-button.pdf:not(.disabled){color:var(--success-color)}.patient-action-button.pdf:not(.disabled):hover{background-color:var(--success-color);color:#fff}.patient-action-button.details:not(.disabled){color:var(--prompt-color)}.patient-action-button.details:not(.disabled):hover{background-color:var(--prompt-color);color:#fff}.patient-search-container{margin-bottom:15px}.patient-search-input{width:100%;padding:12px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:14px}.patient-search-input:focus{outline:0;border-color:var(--highlight-color)}.terminal-footer{padding:8px 15px;border-top:1px solid var(--border-color);background-color:var(--terminal-header-bg)}.action-buttons-container{display:flex;justify-content:space-around;margin-bottom:10px}.action-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all .2s,transform .1s}.action-button:focus,.action-button:hover{background-color:var(--highlight-color);color:var(--highlight-text-color);outline:0}.action-button:active{transform:scale(.95)}.action-button.active{background-color:var(--success-color);color:var(--highlight-text-color);box-shadow:0 0 8px var(--success-color)}.action-button.blocked-ui{opacity:.4;cursor:not-allowed}.app-modal-body p{margin-bottom:20px;color:var(--text-color)}.app-modal-input{width:100%;padding:12px;margin-bottom:15px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:16px}.app-modal-input:focus{outline:0;border-color:var(--highlight-color)}.app-modal-button{width:100%;padding:12px;background-color:var(--highlight-color);color:var(--highlight-text-color);border:none;border-radius:8px;cursor:pointer;font-size:16px;font-weight:700;transition:background-color .3s ease}body.light-mode .app-modal-button:hover{background-color:#2b6cb0}body:not(.light-mode) .app-modal-button:hover{background-color:#63b3ed}.app-modal-button:disabled{background-color:#555;cursor:not-allowed}.app-modal-feedback{margin-top:15px;color:var(--error-color);min-height:20px}.admin-section{margin-bottom:20px;text-align:left;border:1px solid var(--border-color);padding:15px;border-radius:10px}.admin-section-title{color:var(--prompt-color);font-weight:700;margin-bottom:10px;font-size:14px;text-transform:uppercase}.admin-list{display:flex;flex-direction:column;gap:8px}.admin-list-item{display:flex;gap:8px;align-items:center}.admin-input-group{flex:1;display:flex;gap:5px}.admin-input{flex:1;padding:8px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:12px}.admin-action-btn,.admin-btn-add,.admin-btn-remove{border-radius:8px}#admin-panel-modal .app-modal-content{max-width:900px;width:95%;height:85vh;display:flex;flex-direction:column}.admin-tab-content{flex:1;overflow-y:auto;padding-bottom:15px;display:flex;flex-direction:column}.admin-users-container{display:flex;flex:1;min-height:0;gap:20px;text-align:left;overflow:hidden}.admin-users-list-section{flex:1;border-right:1px solid var(--border-color);display:flex;flex-direction:column;padding-right:10px}.admin-users-details-section{flex:2;overflow-y:auto;padding-left:10px}.user-list-scroll{overflow-y:auto;flex:1}.user-list-item{padding:10px;cursor:pointer;border-bottom:1px solid var(--border-color);transition:background-color .2s;display:flex;justify-content:space-between;align-items:center;border-radius:8px;margin-bottom:5px}.user-list-item:hover{background-color:var(--button-hover-bg)}.user-list-item.selected{background-color:rgba(66,153,225,.2);border-left:3px solid var(--highlight-color)}.user-detail-header{margin-bottom:15px;border-bottom:1px solid var(--border-color);padding-bottom:10px}.user-detail-row{margin-bottom:10px}.user-detail-label{color:var(--prompt-color);font-weight:700;font-size:12px;display:block;margin-bottom:2px}.user-detail-value{color:var(--text-color);font-size:14px}.admin-user-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:10px;margin-top:10px}.admin-user-img{width:100%;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border-color);transition:transform .2s}.admin-user-img:hover{transform:scale(1.05)}.usage-stats-box{background-color:var(--input-bg);border:1px solid var(--border-color);padding:10px;border-radius:10px;margin-top:10px}.admin-tabs{display:flex;border-bottom:1px solid var(--border-color);margin-bottom:15px}.admin-tab-btn{flex:1;background:0 0;border:none;color:var(--text-color);padding:10px;cursor:pointer;border-bottom:3px solid transparent;font-size:14px;transition:all .3s ease}.admin-tab-btn:hover{background-color:var(--button-hover-bg)}.admin-tab-btn.active{border-bottom-color:var(--highlight-color);color:var(--highlight-color);font-weight:700}.radio-group{display:flex;gap:15px;margin-bottom:10px;flex-wrap:wrap}.radio-label{display:flex;align-items:center;gap:5px;cursor:pointer}.ai-processing-animation{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--prompt-color)}.scanner-animation{width:100px;height:100px;position:relative;margin-bottom:15px}.scanner-animation .brain-icon{width:100%;height:100%;font-size:80px;line-height:100px;text-align:center;opacity:.5}.scanner-line{position:absolute;top:0;left:0;width:100%;height:3px;background:var(--highlight-color);box-shadow:0 0 10px var(--highlight-color);border-radius:2px;animation:scan 2.5s infinite linear}@keyframes scan{0%{top:0}50%{top:100%}100%{top:0}}.prescription-template-item{background-color:var(--input-bg);border:1px solid var(--border-color);border-radius:8px;margin-bottom:15px;padding:15px}.prescription-template-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.prescription-template-title{font-weight:700;color:var(--prompt-color)}.prescription-template-copy-btn{background-color:var(--button-bg);border:1px solid var(--border-color);color:var(--text-color);padding:5px 10px;border-radius:5px;cursor:pointer;font-size:12px;transition:all .2s}.prescription-template-copy-btn:hover{background-color:var(--highlight-color);color:var(--highlight-text-color)}.prescription-template-text{white-space:pre-wrap;font-family:'Courier New',monospace;font-size:14px;color:var(--output-color);background:rgba(0,0,0,.1);padding:10px;border-radius:5px}.mobile-2-0-container{flex:1;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:20px;gap:20px;height:calc(100vh - 65px - 40px)}.mobile-header{text-align:center;margin-bottom:10px}.mobile-header h2{font-size:24px;color:var(--header-text-color)}.mobile-header p{font-size:14px;opacity:.8}.mobile-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;width:100%;max-width:450px}.mobile-btn{background:var(--glass-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:18px;padding:15px;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-color);text-decoration:none;text-align:center;box-shadow:var(--glass-shadow);transition:transform .2s ease,background-color .3s ease}.mobile-btn:active{transform:scale(.96);background-color:var(--button-hover-bg)}.mobile-btn img{height:76px;width:76px;object-fit:contain;margin-bottom:5px}.mobile-btn span{font-size:14px;font-weight:700}.info-banner{width:100%;max-width:450px;padding:0 10px;margin-bottom:10px}.chat-bubble-info{background:var(--glass-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:12px;padding:12px 15px;font-size:13px;line-height:1.6;text-align:center;position:relative;box-shadow:var(--glass-shadow);animation:fadeIn .5s ease-out}.chat-bubble-info::after{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid var(--glass-border)}.chat-bubble-info .highlight-link{color:var(--highlight-color);font-weight:700;text-decoration:none;background-color:var(--button-bg);padding:2px 6px;border-radius:5px;transition:background-color .2s}.chat-bubble-info .highlight-link:hover{background-color:var(--button-hover-bg);text-decoration:underline}.mobile-connection-status{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;margin-top:auto;padding-bottom:10px;font-size:12px;color:var(--text-color);opacity:.7;cursor:pointer}.mobile-connection-status .status-dot{width:10px;height:10px;background-color:var(--error-color);border-radius:50%;box-shadow:0 0 6px var(--error-color);transition:background-color .5s ease,box-shadow .5s ease}.mobile-connection-status .status-dot.status-on{background-color:var(--success-color);box-shadow:0 0 6px var(--success-color)}.chatbox-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-gradient);z-index:1000;flex-direction:column}.chatbox-header{display:flex;align-items:center;justify-content:center;position:relative;padding:12px 20px;background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border-bottom:1px solid var(--glass-border);height:65px;flex-shrink:0}.chatbox-title{font-size:20px;font-weight:700;color:var(--header-text-color)}.chatbox-close-btn{font-size:24px;cursor:pointer;color:var(--text-color);position:absolute;right:20px}.chatbox-new-chat-btn{font-size:22px;cursor:pointer;color:var(--text-color);position:absolute;left:20px}.chatbox-messages{flex:1;padding:15px;overflow-y:auto;display:flex;flex-direction:column;gap:15px;background-image:radial-gradient(var(--border-color) 1px,transparent 1px);background-size:15px 15px}.chat-message{display:flex;align-items:flex-start;gap:10px;max-width:85%}.chat-message.user{align-self:flex-end;flex-direction:row-reverse;animation:slideInFromRight .4s ease-out}@keyframes slideInFromRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}.chat-message.model{align-self:flex-start;animation:fadeIn .5s ease}.chat-avatar{width:36px;height:36px;border-radius:50%;background-color:var(--input-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}.chat-message.user .chat-avatar{background-color:var(--highlight-color);color:var(--highlight-text-color)}.message-bubble{padding:12px 18px;border-radius:20px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;box-shadow:0 2px 4px rgba(0,0,0,.1)}.message-bubble b{font-weight:600}.chat-message.user .message-bubble{background-color:var(--highlight-color);color:var(--highlight-text-color);border-bottom-right-radius:5px}.chat-message.model .message-bubble{background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-color);border-bottom-left-radius:5px}.message-bubble.typing{display:flex;align-items:center;gap:5px;padding:15px 18px}.message-bubble.typing .dot{width:8px;height:8px;border-radius:50%;background-color:var(--text-color);opacity:.7;animation:typing-blink 1.4s infinite both}.message-bubble.typing .dot:nth-child(2){animation-delay:.2s}.message-bubble.typing .dot:nth-child(3){animation-delay:.4s}@keyframes typing-blink{0%{opacity:.2}20%{opacity:1}100%{opacity:.2}}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.chatbox-input-area{padding:10px 15px;background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border-top:1px solid var(--border-color);display:flex;flex-direction:column;gap:10px}.chat-input-row{display:flex;width:100%;gap:10px;align-items:center}.chatbox-input{flex:1;background:var(--input-bg);border:1px solid var(--border-color);border-radius:20px;padding:12px 15px;color:var(--text-color);font-size:16px}.chatbox-input:focus{outline:0;border-color:var(--highlight-color)}.chatbox-send-btn,.chatbox-upload-btn{background-color:var(--highlight-color);color:var(--highlight-text-color);border:none;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:transform .2s;flex-shrink:0}.chatbox-upload-btn{background-color:var(--button-bg);color:var(--text-color)}.chatbox-send-btn:active,.chatbox-upload-btn:active{transform:scale(.9)}.chat-image-previews{display:flex;gap:10px;overflow-x:auto;width:100%;padding:5px 0}.chat-preview-item{position:relative;flex-shrink:0}.chat-preview-item img{width:60px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color)}.chat-preview-delete{position:absolute;top:-5px;right:-5px;width:20px;height:20px;background-color:rgba(255,0,0,.8);color:#fff;border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer}.message-bubble .chat-image-attachment{width:100%;max-width:200px;height:auto;border-radius:10px;margin-top:10px;display:block}.confirm-modal{display:none;position:fixed;z-index:3000;left:0;top:0;width:100%;height:100%;background-color:rgba(0,0,0,.6);justify-content:center;align-items:center}.confirm-modal-content{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:30px;border:1px solid var(--glass-border);border-radius:16px;width:90%;max-width:400px;box-shadow:var(--glass-shadow);text-align:center}#confirm-modal-text{margin-bottom:25px;font-size:16px;line-height:1.6}.confirm-modal-buttons{display:flex;gap:15px;justify-content:center}.confirm-btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;transition:background-color .2s,transform .1s}.confirm-btn:active{transform:scale(.97)}#confirm-btn-yes{background-color:var(--error-color);color:#fff}#confirm-btn-no{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color)}.mobile-loader{display:none;position:fixed;z-index:2500;top:0;left:0;width:100%;height:100%;background:var(--bg-gradient);justify-content:center;align-items:center}.toggle-switch{position:relative;display:inline-block;width:50px;height:28px}.toggle-switch input{opacity:0;width:0;height:0}.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:var(--button-bg);transition:.4s;border-radius:28px;border:1px solid var(--border-color)}.slider:before{position:absolute;content:"";height:20px;width:20px;left:4px;bottom:3px;background-color:#fff;transition:.4s;border-radius:50%}input:checked+.slider{background-color:var(--highlight-color)}input:checked+.slider:before{transform:translateX(22px)}@media (max-width:768px){.container{flex-direction:column-reverse;padding:10px;gap:10px}.monitor-toggle-button span,.status-bar span{display:none}.monitor-toggle-button{padding:5px 8px;font-size:16px;width:auto;min-width:35px}.status-bar{gap:10px;margin-right:0}.status-item .status-indicator{width:8px;height:8px}.logout-button,.settings-button,.theme-toggle{font-size:18px}.camera-modal.fullscreen-mobile{position:fixed;top:0;bottom:0;left:0;width:100%;height:100%;z-index:100;border-radius:0}.camera-modal.fullscreen-mobile .camera-container{border-radius:0;border:none}.radio-group{flex-direction:column;align-items:flex-start;gap:10px}.admin-users-container{flex-direction:column}.admin-users-list-section{flex:0 0 45%;min-height:220px;border-right:none;border-bottom:1px solid var(--border-color);padding-bottom:15px;padding-right:0}.admin-users-details-section{flex:1;min-height:0;padding-left:0;padding-top:15px}}@media (min-width:769px){.camera-video-wrapper{padding-bottom:56.25%}}</style></head><body><div class="header"><div class="app-title">AXON A.I</div><div class="header-right"><div class="status-bar"><div class="status-item"><div class="status-indicator" id="api-status"></div><span class="status-text-api">API</span></div><div class="status-item"><div class="status-indicator status-off" id="mic-status"></div><span class="status-text-mic">Microfone</span></div><div class="status-item"><div class="status-indicator status-off" id="camera-status"></div><span class="status-text-cam">Câmera</span></div></div><div id="theme-toggle" class="theme-toggle" title="Mudar Tema"><i class="fas fa-sun"></i></div><div id="settings-button" class="settings-button" title="Configurações"><i class="fas fa-cog"></i></div><div id="logout-button" class="logout-button" title="Sair"><i class="fas fa-sign-out-alt"></i></div></div></div><div class="container"><div class="terminal interactive-terminal"><div class="terminal-header"><div class="terminal-title">Terminal Interativo</div><div class="terminal-actions"><div class="terminal-btn close-btn"></div><div class="terminal-btn minimize-btn"></div><div class="terminal-btn maximize-btn"></div></div></div><div class="terminal-content" id="interactive-output"><img src="axon.png" alt="Axon Logo Terminal" class="terminal-logo-internal"><div id="initial-messages" style="position:relative;z-index:1"><pre class="info">
+<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Axon A.I</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><link rel="manifest" href="/manifest.json"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" id="status-bar-style-meta" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Axon A.I"><link rel="apple-touch-icon" href="https://i.imgur.com/ZsfZEh2.png"><meta name="theme-color" id="theme-color-meta" content="#1a202c"><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><style>:root{--bg-gradient:linear-gradient(135deg, #1a202c, #2d3748);--glass-bg:rgba(28, 35, 49, 0.65);--glass-border:rgba(255, 255, 255, 0.18);--glass-shadow:0 8px 32px 0 rgba(0, 0, 0, 0.37);--text-color:#e2e8f0;--header-text-color:#f7fafc;--prompt-color:#63b3ed;--command-color:#90cdf4;--output-color:#e2e8f0;--error-color:#fc8181;--success-color:#68d391;--border-color:rgba(255, 255, 255, 0.1);--highlight-color:#4299e1;--highlight-text-color:#ffffff;--diagnosis-color:#b794f4;--conduct-color:#68d391;--altered-color:#faf089;--input-bg:rgba(0,0,0,0.2);--terminal-header-bg:rgba(0,0,0,0.2);--button-bg:rgba(255, 255, 255, 0.1);--button-hover-bg:rgba(255, 255, 255, 0.2)}body.light-mode{--bg-gradient:linear-gradient(135deg, #f0f9ff, #e0f2fe);--glass-bg:rgba(255, 255, 255, 0.5);--glass-border:rgba(0, 0, 0, 0.1);--glass-shadow:0 8px 32px 0 rgba(100, 100, 100, 0.2);--text-color:#2d3748;--header-text-color:#1a202c;--prompt-color:#2b6cb0;--command-color:#2c5282;--output-color:#2d3748;--error-color:#c53030;--success-color:#2f855a;--border-color:rgba(0, 0, 0, 0.1);--highlight-color:#3182ce;--highlight-text-color:#ffffff;--diagnosis-color:#805ad5;--conduct-color:#2f855a;--altered-color:#d69e2e;--input-bg:rgba(0,0,0,0.05);--terminal-header-bg:rgba(0,0,0,0.05);--button-bg:rgba(0, 0, 0, 0.05);--button-hover-bg:rgba(0, 0, 0, 0.1)}*{margin:0;padding:0;box-sizing:border-box;font-family:Consolas,'Courier New',monospace;touch-action:manipulation}body{background:var(--bg-gradient);background-attachment:fixed;color:var(--text-color);height:100vh;display:flex;flex-direction:column;overflow:hidden;transition:background .5s ease,color .5s ease}.header{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);padding:12px 20px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between;position:relative;height:65px;flex-shrink:0}.header-right{display:flex;align-items:center;gap:10px}.logout-button,.settings-button,.theme-toggle{color:var(--text-color);font-size:20px;cursor:pointer;transition:color .3s ease,transform .2s ease,background-color .3s ease;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%}.logout-button:hover,.settings-button:hover,.theme-toggle:hover{color:var(--highlight-color);background-color:var(--button-hover-bg);transform:scale(1.1)}.logout-button:hover{color:var(--error-color)}.app-title{font-size:22px;font-weight:700;color:var(--header-text-color);text-shadow:0 1px 2px rgba(0,0,0,.1)}.status-bar{display:flex;gap:15px;font-size:14px;background:var(--input-bg);padding:5px 15px;border-radius:20px;border:1px solid var(--border-color)}.status-item{display:flex;align-items:center;gap:5px}.status-indicator{width:10px;height:10px;border-radius:50%;background-color:var(--success-color);box-shadow:0 0 5px var(--success-color)}.status-off{background-color:var(--error-color);box-shadow:0 0 5px var(--error-color)}.container{display:flex;flex:1;padding:20px;gap:20px;height:calc(100vh - 65px - 40px);min-height:0}.terminal{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border:1px solid var(--glass-border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--glass-shadow);position:relative}.terminal-header{padding:8px 12px;background-color:var(--terminal-header-bg);border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between}.terminal-title{font-size:14px;font-weight:700}.terminal-actions{display:flex;gap:8px}.terminal-btn{width:12px;height:12px;border-radius:50%}.close-btn{background-color:#ff5f56}.minimize-btn{background-color:#ffbd2e}.maximize-btn{background-color:#27c93f}.terminal-content{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:10px}.terminal-content::-webkit-scrollbar{width:8px}.terminal-content::-webkit-scrollbar-track{background:0 0}.terminal-content::-webkit-scrollbar-thumb{background-color:var(--button-hover-bg);border-radius:10px;border:2px solid transparent;background-clip:content-box}.terminal-content::-webkit-scrollbar-thumb:hover{background-color:var(--highlight-color)}.interactive-terminal,.non-interactive-terminal{flex:1;min-width:300px;min-height:0}.input-line{display:flex;align-items:center;gap:8px}.prompt{color:var(--prompt-color);white-space:nowrap}.command-input{background:0 0;border:none;color:var(--command-color);width:100%;font-size:16px;caret-color:var(--command-color);outline:0;padding:2px 0}.command-output{color:var(--output-color);white-space:pre-wrap;line-height:1.5;text-align:left}.command{color:var(--command-color);font-weight:700}.error{color:var(--error-color)}.success{color:var(--success-color)}.info{color:var(--prompt-color)}.highlight{color:var(--highlight-color)}.blocked-msg{color:var(--altered-color)}.anamnesis-content{line-height:1.8;font-size:15px}.section-title{font-weight:700;margin-top:10px;color:var(--highlight-color)}.help-list{padding-left:0;margin:10px 0;line-height:1.8;list-style:none}.help-item{margin-bottom:5px}.diagnosis-item{color:var(--diagnosis-color);margin-bottom:8px;padding-left:15px;position:relative}.diagnosis-item:before{content:"•";position:absolute;left:0;color:var(--diagnosis-color)}.conduct-section{margin-bottom:15px}.conduct-title{color:var(--conduct-color);font-weight:700;margin-bottom:5px;border-bottom:1px solid var(--conduct-color);padding-bottom:3px;cursor:pointer;transition:color .2s,border-bottom-color .2s}.conduct-title:hover{color:var(--highlight-color);border-bottom-color:var(--highlight-color)}.conduct-item{margin-bottom:8px;padding-left:15px;position:relative}.conduct-item:before{content:"-";position:absolute;left:0}.receituario-item{white-space:pre;font-family:'Courier New',monospace;color:var(--output-color);margin-bottom:5px}.footer{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);padding:10px 20px;border-top:1px solid var(--glass-border);text-align:center;font-size:12px;color:var(--text-color);height:40px;flex-shrink:0}.terminal-logo-internal{position:absolute;top:15px;right:15px;height:calc(105.3px * 1.8 * .7 * 1.2);width:auto;opacity:.1;z-index:0}.monitor-view{text-transform:uppercase;height:100%}.monitor-view .axon-eye-title,.monitor-view .conduct-title,.monitor-view .section-title{text-transform:none}.camera-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:transparent;z-index:100;flex-direction:column;justify-content:flex-start;align-items:center;padding:0}.camera-container{display:flex;flex-direction:column;background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:16px;position:relative;z-index:1;padding:0;gap:10px;overflow:hidden;width:100%;height:100%;max-width:none;max-height:none}.camera-video-wrapper{position:relative;width:100%;padding-bottom:177.77%;background-color:#000;border-radius:10px;overflow:hidden;flex-shrink:0}.camera-video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}.camera-controls{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;gap:10px;justify-content:center;z-index:2;width:90%}.camera-button{background-color:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.2);padding:10px 15px;border-radius:50%;cursor:pointer;font-size:18px;transition:background-color .3s ease,transform .2s ease;display:flex;align-items:center;justify-content:center;width:50px;height:50px;flex-shrink:0;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.camera-button:hover{background-color:var(--highlight-color);transform:scale(1.05)}.camera-button.disabled{background-color:#555;cursor:not-allowed;opacity:.7}.album-button,.camera-action-buttons{position:absolute;top:10px;display:flex;gap:5px;z-index:10;background-color:rgba(0,0,0,.4);border:1px solid var(--border-color);border-radius:20px;padding:5px 10px;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.album-button{left:10px}.camera-action-buttons{right:10px}.camera-switch-button,.flashlight-button{background-color:transparent;color:#fff;border:none;cursor:pointer;font-size:12px;transition:color .2s}.album-button:hover,.camera-switch-button:hover,.flashlight-button:hover{color:var(--highlight-color)}.flashlight-button.active{color:var(--highlight-color)}.album-count{background-color:var(--highlight-color);color:var(--highlight-text-color);border-radius:50%;padding:2px 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center}.monitor-toggle-buttons{display:flex;gap:5px;margin-left:auto;margin-right:10px}.monitor-toggle-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:5px 10px;border-radius:20px;cursor:pointer;font-size:12px;transition:all .3s ease;display:flex;align-items:center;justify-content:center;gap:5px}.monitor-toggle-button:hover{background-color:var(--button-hover-bg)}.monitor-toggle-button.active{background-color:var(--highlight-color);color:var(--highlight-text-color);border-color:transparent}#monitor-content-wrapper{position:relative}.monitor-copy-btn{position:absolute;top:50px;right:25px;background:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:5px 10px;border-radius:50%;width:35px;height:35px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .3s ease;z-index:5}.monitor-copy-btn:hover{background-color:var(--highlight-color);color:var(--highlight-text-color)}.fullscreen-modal{display:none;position:fixed;z-index:2000;padding-top:60px;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.9)}.modal-content{margin:auto;display:block;width:80%;max-width:700px;border-radius:10px}#caption,.modal-content{animation-name:zoom;animation-duration:.6s}@keyframes zoom{from{transform:scale(0)}to{transform:scale(1)}}.modal-close{position:absolute;top:15px;right:35px;color:#f1f1f1;font-size:40px;font-weight:700;transition:.3s}.modal-close:focus,.modal-close:hover{color:#bbb;text-decoration:none;cursor:pointer}.output .altered-text{color:var(--altered-color);font-weight:700;margin-left:10px}.album-modal,.app-modal,.patient-details-modal,.patient-list-modal{display:none;position:fixed;z-index:105;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.5);justify-content:center;align-items:center}.album-modal-content,.app-modal-content,.patient-details-content,.patient-list-content{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);margin:auto;padding:25px;border:1px solid var(--glass-border);border-radius:16px;width:90%;max-width:500px;box-shadow:var(--glass-shadow);position:relative;display:flex;flex-direction:column;max-height:90vh}.album-modal-content,.patient-details-content,.patient-list-content{max-width:800px}.album-modal-header,.app-modal-header,.patient-details-header,.patient-list-header{display:flex;align-items:center;border-bottom:1px solid var(--border-color);padding-bottom:15px;margin-bottom:20px}.album-modal-title,.app-modal-title,.patient-details-title,.patient-list-title{font-size:20px;font-weight:700;color:var(--prompt-color)}.album-modal-close,.app-modal-close,.patient-details-close,.patient-list-close{color:var(--text-color);font-size:28px;font-weight:700;cursor:pointer;transition:.3s;position:absolute;top:15px;right:20px}.album-modal-close:hover,.app-modal-close:hover,.patient-details-close:hover,.patient-list-close:hover{color:var(--highlight-color)}.album-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:15px;overflow-y:auto;padding-right:5px}.album-item{position:relative;width:100%;padding-bottom:100%;overflow:hidden;border:1px solid var(--border-color);border-radius:10px;cursor:pointer;transition:transform .2s ease}.album-item:hover{transform:scale(1.03)}.album-image{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}.album-delete-button{position:absolute;top:5px;right:5px;background-color:rgba(255,0,0,.7);color:#fff;border:none;border-radius:50%;width:24px;height:24px;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;transition:background-color .2s}.album-delete-button:hover{background-color:rgba(255,0,0,1)}.axon-eye-title{color:var(--error-color);font-weight:700;margin-top:10px;margin-bottom:5px;border-bottom:1px solid var(--error-color);padding-bottom:3px}.axon-eye-image-preview{max-width:100%;height:auto;margin-top:15px;border:1px solid var(--border-color);border-radius:10px}.patient-list{display:flex;flex-direction:column;gap:10px;overflow-y:auto;max-height:400px}.patient-item{padding:12px;background-color:var(--button-bg);border:1px solid var(--border-color);border-radius:10px;cursor:pointer;transition:background-color: .2s}.patient-item:hover{background-color:var(--button-hover-bg)}.patient-details-body{overflow-y:auto;padding-right:5px}.patient-details-section{margin-bottom:20px}.patient-details-section-title{font-weight:700;color:var(--highlight-color);margin-bottom:10px;border-bottom:1px solid var(--border-color);padding-bottom:5px}.patient-images-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:10px}.patient-image-item{position:relative;width:100%;padding-bottom:100%;overflow:hidden;border:1px solid var(--border-color);border-radius:10px;cursor:pointer}.patient-image{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}.consultation-item{background-color:var(--input-bg);border:1px solid var(--border-color);border-radius:10px;margin-bottom:10px;overflow:hidden}.consultation-header{padding:10px 15px;cursor:pointer;font-weight:700;transition:background-color .2s}.consultation-header:hover{background-color:var(--button-hover-bg)}.consultation-body{padding:15px;border-top:1px solid var(--border-color);background-color:transparent}.patient-actions{display:flex;gap:10px;margin-top:10px}.patient-action-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;transition:all .3s ease;display:flex;align-items:center;justify-content:center;gap:5px;flex:1}.patient-action-button.disabled{background-color:var(--input-bg);color:var(--text-color);cursor:not-allowed;opacity:.5}.patient-action-button:not(.disabled):hover{background-color:var(--button-hover-bg)}.patient-action-button.delete:not(.disabled){color:var(--error-color)}.patient-action-button.delete:not(.disabled):hover{background-color:var(--error-color);color:#fff}.patient-action-button.pdf:not(.disabled){color:var(--success-color)}.patient-action-button.pdf:not(.disabled):hover{background-color:var(--success-color);color:#fff}.patient-action-button.details:not(.disabled){color:var(--prompt-color)}.patient-action-button.details:not(.disabled):hover{background-color:var(--prompt-color);color:#fff}.patient-search-container{margin-bottom:15px}.patient-search-input{width:100%;padding:12px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:14px}.patient-search-input:focus{outline:0;border-color:var(--highlight-color)}.terminal-footer{padding:8px 15px;border-top:1px solid var(--border-color);background-color:var(--terminal-header-bg)}.action-buttons-container{display:flex;justify-content:space-around;margin-bottom:10px}.action-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all .2s,transform .1s}.action-button:focus,.action-button:hover{background-color:var(--highlight-color);color:var(--highlight-text-color);outline:0}.action-button:active{transform:scale(.95)}.action-button.active{background-color:var(--success-color);color:var(--highlight-text-color);box-shadow:0 0 8px var(--success-color)}.action-button.blocked-ui{opacity:.4;cursor:not-allowed}.app-modal-body p{margin-bottom:20px;color:var(--text-color)}.app-modal-input{width:100%;padding:12px;margin-bottom:15px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:16px}.app-modal-input:focus{outline:0;border-color:var(--highlight-color)}.app-modal-button{width:100%;padding:12px;background-color:var(--highlight-color);color:var(--highlight-text-color);border:none;border-radius:8px;cursor:pointer;font-size:16px;font-weight:700;transition:background-color .3s ease}body.light-mode .app-modal-button:hover{background-color:#2b6cb0}body:not(.light-mode) .app-modal-button:hover{background-color:#63b3ed}.app-modal-button:disabled{background-color:#555;cursor:not-allowed}.app-modal-feedback{margin-top:15px;color:var(--error-color);min-height:20px}.admin-section{margin-bottom:20px;text-align:left;border:1px solid var(--border-color);padding:15px;border-radius:10px}.admin-section-title{color:var(--prompt-color);font-weight:700;margin-bottom:10px;font-size:14px;text-transform:uppercase}.admin-list{display:flex;flex-direction:column;gap:8px}.admin-list-item{display:flex;gap:8px;align-items:center}.admin-input-group{flex:1;display:flex;gap:5px}.admin-input{flex:1;padding:8px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:12px}.admin-action-btn,.admin-btn-add,.admin-btn-remove{border-radius:8px}#admin-panel-modal .app-modal-content{max-width:900px;width:95%;height:85vh;display:flex;flex-direction:column}.admin-tab-content{flex:1;overflow-y:auto;padding-bottom:15px;display:flex;flex-direction:column}.admin-users-container{display:flex;flex:1;min-height:0;gap:20px;text-align:left;overflow:hidden}.admin-users-list-section{flex:1;border-right:1px solid var(--border-color);display:flex;flex-direction:column;padding-right:10px}.admin-users-details-section{flex:2;overflow-y:auto;padding-left:10px}.user-list-scroll{overflow-y:auto;flex:1}.user-list-item{padding:10px;cursor:pointer;border-bottom:1px solid var(--border-color);transition:background-color .2s;display:flex;justify-content:space-between;align-items:center;border-radius:8px;margin-bottom:5px}.user-list-item:hover{background-color:var(--button-hover-bg)}.user-list-item.selected{background-color:rgba(66,153,225,.2);border-left:3px solid var(--highlight-color)}.user-detail-header{margin-bottom:15px;border-bottom:1px solid var(--border-color);padding-bottom:10px}.user-detail-row{margin-bottom:10px}.user-detail-label{color:var(--prompt-color);font-weight:700;font-size:12px;display:block;margin-bottom:2px}.user-detail-value{color:var(--text-color);font-size:14px}.admin-user-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:10px;margin-top:10px}.admin-user-img{width:100%;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border-color);transition:transform .2s}.admin-user-img:hover{transform:scale(1.05)}.usage-stats-box{background-color:var(--input-bg);border:1px solid var(--border-color);padding:10px;border-radius:10px;margin-top:10px}.admin-tabs{display:flex;border-bottom:1px solid var(--border-color);margin-bottom:15px}.admin-tab-btn{flex:1;background:0 0;border:none;color:var(--text-color);padding:10px;cursor:pointer;border-bottom:3px solid transparent;font-size:14px;transition:all .3s ease}.admin-tab-btn:hover{background-color:var(--button-hover-bg)}.admin-tab-btn.active{border-bottom-color:var(--highlight-color);color:var(--highlight-color);font-weight:700}.radio-group{display:flex;gap:15px;margin-bottom:10px;flex-wrap:wrap}.radio-label{display:flex;align-items:center;gap:5px;cursor:pointer}.ai-processing-animation{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--prompt-color)}.scanner-animation{width:100px;height:100px;position:relative;margin-bottom:15px}.scanner-animation .brain-icon{width:100%;height:100%;font-size:80px;line-height:100px;text-align:center;opacity:.5}.scanner-line{position:absolute;top:0;left:0;width:100%;height:3px;background:var(--highlight-color);box-shadow:0 0 10px var(--highlight-color);border-radius:2px;animation:scan 2.5s infinite linear}@keyframes scan{0%{top:0}50%{top:100%}100%{top:0}}.prescription-template-item{background-color:var(--input-bg);border:1px solid var(--border-color);border-radius:8px;margin-bottom:15px;padding:15px}.prescription-template-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.prescription-template-title{font-weight:700;color:var(--prompt-color)}.prescription-template-copy-btn{background-color:var(--button-bg);border:1px solid var(--border-color);color:var(--text-color);padding:5px 10px;border-radius:5px;cursor:pointer;font-size:12px;transition:all .2s}.prescription-template-copy-btn:hover{background-color:var(--highlight-color);color:var(--highlight-text-color)}.prescription-template-text{white-space:pre-wrap;font-family:'Courier New',monospace;font-size:14px;color:var(--output-color);background:rgba(0,0,0,.1);padding:10px;border-radius:5px}.mobile-2-0-container{flex:1;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:20px;gap:20px;height:calc(100vh - 65px - 40px)}.mobile-header{text-align:center;margin-bottom:10px}.mobile-header h2{font-size:24px;color:var(--header-text-color)}.mobile-header p{font-size:14px;opacity:.8}.mobile-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;width:100%;max-width:450px}.mobile-btn{background:var(--glass-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:18px;padding:15px;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-color);text-decoration:none;text-align:center;box-shadow:var(--glass-shadow);transition:transform .2s ease,background-color .3s ease}.mobile-btn:active{transform:scale(.96);background-color:var(--button-hover-bg)}.mobile-btn img{height:76px;width:76px;object-fit:contain;margin-bottom:5px}.mobile-btn span{font-size:14px;font-weight:700}.info-banner{width:100%;max-width:450px;padding:0 10px;margin-bottom:10px}.chat-bubble-info{background:var(--glass-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:12px;padding:12px 15px;font-size:13px;line-height:1.6;text-align:center;position:relative;box-shadow:var(--glass-shadow);animation:fadeIn .5s ease-out}.chat-bubble-info::after{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid var(--glass-border)}.chat-bubble-info .highlight-link{color:var(--highlight-color);font-weight:700;text-decoration:none;background-color:var(--button-bg);padding:2px 6px;border-radius:5px;transition:background-color .2s}.chat-bubble-info .highlight-link:hover{background-color:var(--button-hover-bg);text-decoration:underline}.mobile-connection-status{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;margin-top:auto;padding-bottom:10px;font-size:12px;color:var(--text-color);opacity:.7;cursor:pointer}.mobile-connection-status .status-dot{width:10px;height:10px;background-color:var(--error-color);border-radius:50%;box-shadow:0 0 6px var(--error-color);transition:background-color .5s ease,box-shadow .5s ease}.mobile-connection-status .status-dot.status-on{background-color:var(--success-color);box-shadow:0 0 6px var(--success-color)}.chatbox-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-gradient);z-index:1000;flex-direction:column}.chatbox-header{display:flex;align-items:center;justify-content:center;position:relative;padding:12px 20px;background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border-bottom:1px solid var(--glass-border);height:65px;flex-shrink:0}.chatbox-title{font-size:20px;font-weight:700;color:var(--header-text-color)}.chatbox-close-btn{font-size:24px;cursor:pointer;color:var(--text-color);position:absolute;right:20px}.chatbox-new-chat-btn{font-size:22px;cursor:pointer;color:var(--text-color);position:absolute;left:20px}.chatbox-messages{flex:1;padding:15px;overflow-y:auto;display:flex;flex-direction:column;gap:15px;background-image:radial-gradient(var(--border-color) 1px,transparent 1px);background-size:15px 15px}.chat-message{display:flex;align-items:flex-start;gap:10px;max-width:85%}.chat-message.user{align-self:flex-end;flex-direction:row-reverse;animation:slideInFromRight .4s ease-out}@keyframes slideInFromRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}.chat-message.model{align-self:flex-start;animation:fadeIn .5s ease}.chat-avatar{width:36px;height:36px;border-radius:50%;background-color:var(--input-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}.chat-message.user .chat-avatar{background-color:var(--highlight-color);color:var(--highlight-text-color)}.message-bubble{padding:12px 18px;border-radius:20px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;box-shadow:0 2px 4px rgba(0,0,0,.1)}.message-bubble b{font-weight:600}.chat-message.user .message-bubble{background-color:var(--highlight-color);color:var(--highlight-text-color);border-bottom-right-radius:5px}.chat-message.model .message-bubble{background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-color);border-bottom-left-radius:5px}.message-bubble.typing{display:flex;align-items:center;gap:5px;padding:15px 18px}.message-bubble.typing .dot{width:8px;height:8px;border-radius:50%;background-color:var(--text-color);opacity:.7;animation:typing-blink 1.4s infinite both}.message-bubble.typing .dot:nth-child(2){animation-delay:.2s}.message-bubble.typing .dot:nth-child(3){animation-delay:.4s}@keyframes typing-blink{0%{opacity:.2}20%{opacity:1}100%{opacity:.2}}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.chatbox-input-area{padding:10px 15px;background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border-top:1px solid var(--border-color);display:flex;flex-direction:column;gap:10px}.chat-input-row{display:flex;width:100%;gap:10px;align-items:center}.chatbox-input{flex:1;background:var(--input-bg);border:1px solid var(--border-color);border-radius:20px;padding:12px 15px;color:var(--text-color);font-size:16px}.chatbox-input:focus{outline:0;border-color:var(--highlight-color)}.chatbox-send-btn,.chatbox-upload-btn{background-color:var(--highlight-color);color:var(--highlight-text-color);border:none;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:transform .2s;flex-shrink:0}.chatbox-upload-btn{background-color:var(--button-bg);color:var(--text-color)}.chatbox-send-btn:active,.chatbox-upload-btn:active{transform:scale(.9)}.chat-image-previews{display:flex;gap:10px;overflow-x:auto;width:100%;padding:5px 0}.chat-preview-item{position:relative;flex-shrink:0}.chat-preview-item img{width:60px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color)}.chat-preview-delete{position:absolute;top:-5px;right:-5px;width:20px;height:20px;background-color:rgba(255,0,0,.8);color:#fff;border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer}.message-bubble .chat-image-attachment{width:100%;max-width:200px;height:auto;border-radius:10px;margin-top:10px;display:block}.confirm-modal{display:none;position:fixed;z-index:3000;left:0;top:0;width:100%;height:100%;background-color:rgba(0,0,0,.6);justify-content:center;align-items:center}.confirm-modal-content{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:30px;border:1px solid var(--glass-border);border-radius:16px;width:90%;max-width:400px;box-shadow:var(--glass-shadow);text-align:center}#confirm-modal-text{margin-bottom:25px;font-size:16px;line-height:1.6}.confirm-modal-buttons{display:flex;gap:15px;justify-content:center}.confirm-btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;transition:background-color .2s,transform .1s}.confirm-btn:active{transform:scale(.97)}#confirm-btn-yes{background-color:var(--error-color);color:#fff}#confirm-btn-no{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color)}.mobile-loader{display:none;position:fixed;z-index:2500;top:0;left:0;width:100%;height:100%;background:var(--bg-gradient);justify-content:center;align-items:center}.toggle-switch{position:relative;display:inline-block;width:50px;height:28px}.toggle-switch input{opacity:0;width:0;height:0}.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:var(--button-bg);transition:.4s;border-radius:28px;border:1px solid var(--border-color)}.slider:before{position:absolute;content:"";height:20px;width:20px;left:4px;bottom:3px;background-color:#fff;transition:.4s;border-radius:50%}input:checked+.slider{background-color:var(--highlight-color)}input:checked+.slider:before{transform:translateX(22px)}@media (max-width:768px){.container{flex-direction:column-reverse;padding:10px;gap:10px}.monitor-toggle-button span,.status-bar span{display:none}.monitor-toggle-button{padding:5px 8px;font-size:16px;width:auto;min-width:35px}.status-bar{gap:10px;margin-right:0}.status-item .status-indicator{width:8px;height:8px}.logout-button,.settings-button,.theme-toggle{font-size:18px}.camera-modal.fullscreen-mobile{position:fixed;top:0;bottom:0;left:0;width:100%;height:100%;z-index:100;border-radius:0}.camera-modal.fullscreen-mobile .camera-container{border-radius:0;border:none}.radio-group{flex-direction:column;align-items:flex-start;gap:10px}.admin-users-container{flex-direction:column}.admin-users-list-section{flex:0 0 45%;min-height:220px;border-right:none;border-bottom:1px solid var(--border-color);padding-bottom:15px;padding-right:0}.admin-users-details-section{flex:1;min-height:0;padding-left:0;padding-top:15px}}@media (min-width:769px){.camera-video-wrapper{padding-bottom:56.25%}}</style></head><body><div class="header"><div class="app-title">AXON A.I</div><div class="header-right"><div class="status-bar"><div class="status-item"><div class="status-indicator" id="api-status"></div><span class="status-text-api">API</span></div><div class="status-item"><div class="status-indicator status-off" id="mic-status"></div><span class="status-text-mic">Microfone</span></div><div class="status-item"><div class="status-indicator status-off" id="camera-status"></div><span class="status-text-cam">Câmera</span></div></div><div id="theme-toggle" class="theme-toggle" title="Mudar Tema"><i class="fas fa-sun"></i></div><div id="settings-button" class="settings-button" title="Configurações"><i class="fas fa-cog"></i></div><div id="logout-button" class="logout-button" title="Sair"><i class="fas fa-sign-out-alt"></i></div></div></div><div class="container"><div class="terminal interactive-terminal"><div class="terminal-header"><div class="terminal-title">Terminal Interativo</div><div class="terminal-actions"><div class="terminal-btn close-btn"></div><div class="terminal-btn minimize-btn"></div><div class="terminal-btn maximize-btn"></div></div></div><div class="terminal-content" id="interactive-output"><img src="axon.png" alt="Axon Logo Terminal" class="terminal-logo-internal"><div id="initial-messages" style="position:relative;z-index:1"><pre class="info">
  █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
 ██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
 ███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
@@ -119,6 +119,7 @@
         const statusTextMic = document.querySelector('.status-text-mic');
         const statusTextCam = document.querySelector('.status-text-cam');
         
+        // Mobile 2.0 Elements
         const mobileContainer = document.getElementById('mobile-2-0-container');
         const mobileWelcomeTitle = document.getElementById('mobile-welcome-title');
         const mobileBtnExames = document.getElementById('mobile-btn-exames');
@@ -329,23 +330,18 @@
             btnMic.innerHTML = '<i class="fas fa-microphone-slash"></i>';
             appendOutput("Microfone desativado.", "info");
         };
-        
-        const formatTextWithBold = (text) => {
-            return typeof text === 'string' ? text.replace(/\*(.*?)\*/g, '<b>$1</b>') : text;
-        };
 
         const appendOutput = (text, type = "output", logToFirebase = true) => {
             const outputElement = document.createElement('div');
-            const formattedText = formatTextWithBold(text);
-
+            
             if (type === "command") {
                 outputElement.innerHTML = `<span class="prompt">></span> <span class="command">${text}</span>`;
             } else if (type === "error") {
-                outputElement.innerHTML = `<span class="error">${formattedText}</span>`;
+                outputElement.innerHTML = `<span class="error">${text}</span>`;
             } else if (type === "success") {
-                outputElement.innerHTML = `<span class="success">${formattedText}</span>`;
+                outputElement.innerHTML = `<span class="success">${text}</span>`;
             } else if (type === "info") {
-                outputElement.innerHTML = `<span class="info">${formattedText}</span>`;
+                outputElement.innerHTML = `<span class="info">${text}</span>`;
             } else if (type === "receituario") {
                 outputElement.classList.add('receituario-item');
                 outputElement.textContent = text;
@@ -354,8 +350,7 @@
                 outputElement.textContent = text;
             }
             else {
-                outputElement.classList.add('command-output');
-                outputElement.innerHTML = `<span class="${type}">${formattedText}</span>`;
+                outputElement.innerHTML = `<span class="${type}">${text}</span>`;
             }
             
             interactiveOutput.appendChild(outputElement);
@@ -446,15 +441,15 @@
             let previewHTML = `
                 <div class="anamnesis-content">
                     <div class="section-title">Queixa Principal (QP):</div>
-                    <div>${formatTextWithBold(anamnesis.qp) || "Ainda não informado."}</div><br>
+                    <div>${anamnesis.qp || "Ainda não informado."}</div><br>
                     <div class="section-title">História da Moléstia Atual (HMA):</div>
-                    <div>${formatTextWithBold(anamnesis.hma) || "Ainda não informado."}</div><br>
+                    <div>${anamnesis.hma || "Ainda não informado."}</div><br>
                     <div class="section-title">História Patológica (HP):</div>
-                    <div>${formatTextWithBold(anamnesis.hp) || "Ainda não informado."}</div><br>
+                    <div>${anamnesis.hp || "Ainda não informado."}</div><br>
                     <div class="section-title">História Familiar (HF):</div>
-                    <div>${formatTextWithBold(anamnesis.hf) || "Ainda não informado."}</div><br>
+                    <div>${anamnesis.hf || "Ainda não informado."}</div><br>
                     <div class="section-title">História Psicossocial (HPS):</div>
-                    <div>${formatTextWithBold(anamnesis.hps) || "Ainda não informado."}</div>
+                    <div>${anamnesis.hps || "Ainda não informado."}</div>
                 </div>`;
             anamnesisPreview.innerHTML = previewHTML;
             if (logToFirebase && isLoggedIn && currentUser) {
@@ -465,8 +460,7 @@
         const updateExamsResultsPreview = (logToFirebase = true) => {
             let formattedResults = '';
             if (examsResults) {
-                const boldedResults = formatTextWithBold(examsResults);
-                formattedResults = boldedResults.split('\n')
+                formattedResults = examsResults.split('\n')
                     .filter(line => line.trim() !== '')
                     .map(line => {
                         if (/\((Alterado|Anormal)\)/i.test(line)) {
@@ -485,46 +479,35 @@
         const updateAxonEyeResultsPreview = (logToFirebase = true) => {
             let formattedResults = '';
             let imageHtml = '';
-
-            if (temporaryImgurUploads && temporaryImgurUploads.length > 0) {
-                imageHtml = `<div class="section-title" style="margin-top:15px; margin-bottom:5px;">Imagens Analisadas:</div>
-                             <div class="patient-images-grid">`;
+            if (temporaryImgurUploads.length > 0 && currentMonitorView === 'axon-eye') {
+                imageHtml = `<div class="patient-images-grid" style="margin-top: 15px;">`;
                 temporaryImgurUploads.forEach(img => {
                     imageHtml += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" onclick="openFullscreenModal('${img.link}')" alt="Imagem Analisada"></div>`;
                 });
                 imageHtml += `</div>`;
             }
-
             if (axonEyeResults) {
-                const formattedWithBold = formatTextWithBold(axonEyeResults);
+                const boldedResults = axonEyeResults.replace(/\*(.*?)\*/g, '<b>$1</b>');
                 const impressionRegex = /(Impressão Diagnóstica|Interpretação Clínica|Diagnósticos Diferenciais):\s*(.*)/i;
-                let match = formattedWithBold.match(impressionRegex);
+                let match = boldedResults.match(impressionRegex);
                 if (match) {
                     const title = match[1];
                     const content = match[2].trim();
-                    const preText = formattedWithBold.substring(0, match.index).trim();
-                    const postText = formattedWithBold.substring(match.index + match[0].length).trim();
-                    
+                    const preText = boldedResults.substring(0, match.index).trim();
+                    const postText = boldedResults.substring(match.index + match[0].length).trim();
                     formattedResults += `<div class="output">${preText.split('\n').map(line => line.trim()).filter(line => line).join('<br>')}</div>`;
                     formattedResults += `<div class="axon-eye-title">${title}</div>`;
                     formattedResults += `<div class="output">${content}</div>`;
-                    if(postText) {
-                        formattedResults += `<div class="output" style="margin-top:10px;">${postText.split('\n').map(line => line.trim()).filter(line => line).join('<br>')}</div>`;
-                    }
+                    formattedResults += `<div class="output">${postText.split('\n').map(line => line.trim()).filter(line => line).join('<br>')}</div>`;
                 } else {
-                    formattedResults = formattedWithBold.split('\n').filter(line => line.trim() !== '').map(line => `<div class="output">${line.trim()}</div>`).join('');
+                    formattedResults = boldedResults.split('\n').filter(line => line.trim() !== '').map(line => `<div class="output">${line.trim()}</div>`).join('');
                 }
             }
-            
-            axonEyeResultsPreview.innerHTML = `<div class="section-title">ANÁLISE AXON EYE:</div>
-                ${formattedResults || '<div class="info">Nenhuma análise visual feita ainda.</div>'}
-                ${imageHtml}`;
-
+            axonEyeResultsPreview.innerHTML = `<div class="section-title">ANÁLISE AXON EYE:</div>${formattedResults || '<div class="info">Nenhuma análise visual feita ainda.</div>'}${imageHtml}`;
             if (logToFirebase && isLoggedIn && currentUser) {
                 saveAxonEyeResultsToFirestore(currentUser, axonEyeResults);
             }
         };
-
 
         const toggleMonitorView = (view, fromRemote = false) => {
             currentMonitorView = view;
@@ -725,9 +708,12 @@
                 throw e;
             }
         };
-        
-        const callTextAPI = async (prompt) => {
-            const provider = (globalSettings.apiProvider === 'custom') ? globalSettings.customTextProvider : globalSettings.apiProvider;
+
+        const callGeminiAPI = async (prompt) => {
+            let provider = globalSettings.apiProvider;
+            if (provider === 'custom') {
+                provider = globalSettings.customTextProvider || 'gemini';
+            }
 
             if (provider === 'openrouter') {
                 return await callOpenRouterAPI(prompt);
@@ -736,7 +722,6 @@
                 return await callGroqAPI(prompt);
             }
 
-            // --- Default to Gemini Logic ---
             let strategyModels = [];
             let keysToTry = [];
 
@@ -803,18 +788,18 @@
         };
 
         const callVisionAPI = async (imageUrls, prompt) => {
-            const provider = (globalSettings.apiProvider === 'custom') ? globalSettings.customVisionProvider : globalSettings.apiProvider;
-            
+            let provider = globalSettings.apiProvider;
+            if (provider === 'custom') {
+                provider = globalSettings.customVisionProvider || 'gemini';
+            }
+
             if (provider === 'openrouter') {
                 return await callOpenRouterAPI(prompt, imageUrls);
             }
             if (provider === 'groq') {
-                // Groq expects base64, OpenRouter expects URLs. This function gets URLs, so we need to handle this.
-                // Assuming imageUrls are base64 for now, as they come from capturedImages.
                 return await callGroqAPI(prompt, imageUrls);
             }
 
-            // --- Default to Gemini Logic ---
             let strategyModels = [];
             let keysToTry = [];
 
@@ -907,7 +892,7 @@
 
             Formato da Resposta: Retorne EXCLUSIVAMENTE um objeto JSON, contendo TODAS as chaves (qp, hma, hp, hf, hps) com os textos atualizados.`;
             try {
-                const response = await callTextAPI(prompt);
+                const response = await callGeminiAPI(prompt);
                 const jsonStart = response.indexOf('{');
                 const jsonEnd = response.lastIndexOf('}') + 1;
                 const jsonString = response.substring(jsonStart, jsonEnd);
@@ -925,10 +910,11 @@
         };
 
         const generateDiagnosticHypotheses = async () => {
-            const prompt = `Com base na anamnese: ${JSON.stringify(anamnesis)}, nos exames: ${examsResults || "Nenhum"}, e na análise visual: ${axonEyeResults || "Nenhuma"}, liste as hipóteses diagnósticas em ordem de probabilidade. Seja técnico e resumido. Retorne apenas a lista.`;
+            const prompt = `Com base na anamnese: ${JSON.stringify(anamnesis)}, nos exames: ${examsResults || "Nenhum"}, e na análise visual: ${axonEyeResults || "Nenhuma"}, liste as hipóteses diagnósticas em ordem de probabilidade. Seja técnico e resumido. Formate palavras importantes ou títulos com asteriscos (ex: *Hipótese Principal*). Retorne apenas a lista.`;
             try {
-                const response = await callTextAPI(prompt);
-                const formattedDiagnosis = response.split('\n').filter(item => item.trim()).map(item => `<div class="diagnosis-item">${formatTextWithBold(item.trim())}</div>`).join('');
+                const response = await callGeminiAPI(prompt);
+                const boldedResponse = response.replace(/\*(.*?)\*/g, '<b>$1</b>');
+                const formattedDiagnosis = boldedResponse.split('\n').filter(item => item.trim()).map(item => `<div class="diagnosis-item">${item.trim()}</div>`).join('');
                 appendOutput(`<div class="conduct-title">HIPÓTESES DIAGNÓSTICAS:</div>${formattedDiagnosis}`, "output");
             } catch (error) {
                 appendOutput(`Erro ao gerar hipóteses: ${error.message}`, "error");
@@ -936,7 +922,7 @@
         };
 
         const generateMedicalConduct = async () => {
-            const prompt = `Com base na anamnese: ${JSON.stringify(anamnesis)}, exames: ${examsResults || "Nenhum"}, e análise visual: ${axonEyeResults || "Nenhuma"}, proponha uma conduta médica completa. 
+            const prompt = `Com base na anamnese: ${JSON.stringify(anamnesis)}, exames: ${examsResults || "Nenhum"}, e análise visual: ${axonEyeResults || "Nenhuma"}, proponha uma conduta médica completa. Formate palavras importantes ou títulos com asteriscos (ex: *Medicação Sugerida*).
 Use EXATAMENTE os seguintes títulos para cada seção, na ordem apresentada, mesmo que a seção não tenha conteúdo: 
 1. CONDUTA FARMACOLÓGICA (SUS):
 2. EXAMES COMPLEMENTARES (SUS):
@@ -944,8 +930,9 @@ Use EXATAMENTE os seguintes títulos para cada seção, na ordem apresentada, me
 4. RECOMENDAÇÕES:
 Seja técnico, objetivo e resumido.`;
             try {
-                const response = await callTextAPI(prompt);
-                const formattedConduct = response
+                const response = await callGeminiAPI(prompt);
+                const boldedResponse = response.replace(/\*(.*?)\*/g, '<b>$1</b>');
+                const formattedConduct = boldedResponse
                     .replace(/CONDUTA FARMACOLÓGICA \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTA FARMACOLÓGICA (SUS)">CONDUTA FARMACOLÓGICA (SUS):</div>')
                     .replace(/EXAMES COMPLEMENTARES \(SUS\):/gi, '<div class="conduct-title" data-category="EXAMES COMPLEMENTARES (SUS)">EXAMES COMPLEMENTARES (SUS):</div>')
                     .replace(/CONDUTAS NÃO FARMACOLÓGICAS \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTAS NÃO FARMACOLÓGICAS (SUS)">CONDUTAS NÃO FARMACOLÓGICAS (SUS):</div>')
@@ -953,7 +940,7 @@ Seja técnico, objetivo e resumido.`;
                     .split('\n').map(line => {
                         const cleanedLine = line.trim().replace(/^\d+\.\s*/, '');
                         if (cleanedLine === '' || line.includes('<div')) return line;
-                        return `<div class="conduct-item">${formatTextWithBold(cleanedLine)}</div>`;
+                        return `<div class="conduct-item">${cleanedLine}</div>`;
                     }).join('');
                 appendOutput(formattedConduct, "output");
             } catch (error) {
@@ -979,7 +966,7 @@ ${simplifiedHistory}
 Responda diretamente à pergunta.`;
 
             try {
-                const response = await callTextAPI(prompt);
+                const response = await callGeminiAPI(prompt);
                 conversationHistory.push({ role: 'model', parts: [{ text: response }] });
                 return response;
             } catch (error) {
@@ -1029,14 +1016,10 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
         };
 
         const checkApiStatus = async (modelName = currentAIModel) => {
-            let providerToCheck = globalSettings.apiProvider;
-            
-            // In custom mode, we can't give a single status, so we check a default (text provider).
-            if (providerToCheck === 'custom') {
-                providerToCheck = globalSettings.customTextProvider || 'gemini';
-            }
+            let keysToTest = [];
+            let modelToTest = modelName;
 
-            if (providerToCheck === 'openrouter') {
+            if (globalSettings.apiProvider === 'openrouter') {
                  try {
                     const response = await fetch("https://openrouter.ai/api/v1/auth/key", {
                         method: "GET",
@@ -1055,7 +1038,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                  }
             }
 
-            if (providerToCheck === 'groq') {
+            if (globalSettings.apiProvider === 'groq') {
                 try {
                     const response = await fetch("https://api.groq.com/openai/v1/models", {
                         method: "GET",
@@ -1074,10 +1057,6 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                  }
             }
 
-            // Default to Gemini check
-            let keysToTest = [];
-            let modelToTest = modelName;
-
             if (globalSettings.mode === 'manual') {
                 keysToTest = [globalSettings.manualApiKey || ''];
                 modelToTest = globalSettings.manualTextModel || modelName;
@@ -1085,21 +1064,30 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 keysToTest = globalSettings.apiKeys;
             }
 
-            if (keysToTest.length === 0 || !keysToTest.some(k => k)) {
+            if (keysToTest.length === 0 || !keysToTest[0]) {
                  apiConnectionStatus = "Sem chaves configuradas";
                  apiStatus.classList.add('status-off');
                  return false;
             }
 
+            const isVision = globalSettings.apiModels.find(m => m.name === modelToTest)?.vision;
+            let requestBody;
+            
+            if (isVision) {
+                const dummyImagePart = { inlineData: { mimeType: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' } };
+                requestBody = JSON.stringify({ contents: [{ parts: [dummyImagePart, { text: "ping" }] }] });
+            } else {
+                requestBody = JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] });
+            }
+
             for (let i = 0; i < keysToTest.length; i++) {
                 const apiKey = keysToTest[i];
-                if (!apiKey) continue;
                 try {
                     const url = getGeminiUrl(modelToTest, apiKey);
                     const response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] }),
+                        body: requestBody,
                         signal: AbortSignal.timeout(5000)
                     });
                     
@@ -1135,10 +1123,8 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             }
 
             let textModelOK = await checkApiStatus(currentAIModel);
-            let providerName = globalSettings.apiProvider;
-            if (providerName === 'custom') {
-                providerName = `Custom (T: ${globalSettings.customTextProvider}, V: ${globalSettings.customVisionProvider})`;
-            } else if (providerName === 'gemini') {
+            let providerName = globalSettings.apiProvider.charAt(0).toUpperCase() + globalSettings.apiProvider.slice(1);
+            if (globalSettings.apiProvider === 'gemini') {
                 providerName = currentAIModel;
             }
             
@@ -1178,11 +1164,13 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             let os = 'OS Desconhecido';
             let browser = 'Navegador Desconhecido';
 
+            // OS Detection
             if (navigator.appVersion.indexOf("Win") != -1) os = "Windows";
             if (navigator.appVersion.indexOf("Mac") != -1) os = "macOS";
             if (navigator.appVersion.indexOf("X11") != -1) os = "UNIX";
             if (navigator.appVersion.indexOf("Linux") != -1) os = "Linux";
 
+            // Browser Detection
             if (ua.indexOf("Edg/") !== -1) {
                 browser = `Edge ${ua.split('Edg/')[1].split(' ')[0]}`;
             } else if (ua.indexOf("Firefox/") !== -1) {
@@ -1224,6 +1212,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         updateMobileConnectionStatus(data.desktopConnection);
                     }
 
+                    // Handle analysis state synchronization
                     if (data.isAnalyzing && data.isAnalyzing.status) {
                         const type = data.isAnalyzing.type;
                         const animationHTML = `
@@ -1248,6 +1237,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         }
                     }
 
+                    // Always process content updates. This will replace the animation when results are ready.
                     if (data.anamnesis && !objectsAreEqual(data.anamnesis, anamnesis)) {
                         anamnesis = data.anamnesis;
                         updateAnamnesisPreview(false);
@@ -1268,27 +1258,29 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         updateAxonEyeResultsPreview(false);
                     }
                     if (data.monitorState && data.monitorState.activeView !== currentMonitorView) {
+                        // Avoid view switching if an analysis is active, as it's already handled by the logic above
                         if (!data.isAnalyzing || !data.isAnalyzing.status) {
                             toggleMonitorView(data.monitorState.activeView, true);
                         }
                     }
 
                 } else {
-                    if (!isMobile) { 
-                        if (isLoggedIn) { 
+                    // Document does not exist. Session ended remotely or cleared.
+                    if (!isMobile) { // If we are on desktop
+                        if (isLoggedIn) { // Avoid multiple logout calls
                             appendOutput("Sessão encerrada remotamente. Desconectando...", "info", false);
                             setTimeout(() => logoutUser(), 1500);
                         }
-                        return;
+                        return; // Stop further processing for desktop
                     }
                     
+                    // Original mobile logic
                     if (isMobile && globalSettings.mobile2_0_enabled) {
                         updateMobileConnectionStatus(null);
                     }
                     anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                     examsResults = "";
                     axonEyeResults = "";
-                    temporaryImgurUploads = [];
                     updateAnamnesisPreview(false);
                     updateExamsResultsPreview(false);
                     updateAxonEyeResultsPreview(false);
@@ -1314,11 +1306,19 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     globalSettings = {
-                        ...globalSettings, // Keep defaults for fields that might not be in Firestore
-                        ...data,
                         apiKeys: data.apiKeys || [...defaultApiKeys],
                         apiModels: data.apiModels || [...defaultApiModels],
-                        mobile2_0_enabled: data.mobile2_0_enabled === undefined ? isMobile : data.mobile2_0_enabled
+                        mode: data.mode || 'automatic',
+                        manualTextModel: data.manualTextModel || '',
+                        manualVisionModel: data.manualVisionModel || '',
+                        manualApiKey: data.manualApiKey || '',
+                        apiProvider: data.apiProvider || 'gemini',
+                        openRouterKey: data.openRouterKey || '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',
+                        groqKey: data.groqKey || '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',
+                        groqModel: data.groqModel || 'llama-3.3-70b-versatile',
+                        mobile2_0_enabled: data.mobile2_0_enabled === undefined ? isMobile : data.mobile2_0_enabled,
+                        customTextProvider: data.customTextProvider || 'gemini',
+                        customVisionProvider: data.customVisionProvider || 'gemini'
                     };
                     
                     if (adminPanelModal.style.display === 'flex') {
@@ -1685,18 +1685,22 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     throw new Error("Falha no upload de uma ou mais imagens.");
                 }
 
-                const prompt = `Analise as imagens e forneça uma opinião clínica detalhada. Descreva achados, lesões, ou sintomas. Ao final, inclua uma seção "Impressão Diagnóstica:" ou "Interpretação Clínica:" com sua conclusão. Seja descritivo e clinicamente relevante.`;
+                const prompt = `Analise as imagens e forneça uma opinião clínica detalhada. Descreva achados, lesões, ou sintomas. Ao final, inclua uma seção "Impressão Diagnóstica:" ou "Interpretação Clínica:" com sua conclusão. Formate palavras importantes com asteriscos (ex: *Lesão sugestiva de...*). Seja descritivo e clinicamente relevante.`;
                 
                 let fullResponse = "";
-                let imagesForApiCall = capturedImages; // Gemini and Groq use base64
+                let imagesForApiCall;
 
-                if (globalSettings.apiProvider === 'openrouter' || (globalSettings.apiProvider === 'custom' && globalSettings.customVisionProvider === 'openrouter')) {
-                    // OpenRouter needs URLs
+                // Decide the image source based on provider
+                if (globalSettings.apiProvider === 'openrouter') {
+                    // OpenRouter needs URLs, which we have from Imgur
                     imagesForApiCall = temporaryImgurUploads.map(upload => upload.link);
+                } else {
+                    // Gemini and Groq need base64 data
+                    imagesForApiCall = capturedImages;
                 }
 
-                const currentProvider = (globalSettings.apiProvider === 'custom') ? globalSettings.customVisionProvider : globalSettings.apiProvider;
-                if (currentProvider === 'groq' && imagesForApiCall.length > 5) {
+                // Decide on batching
+                if (globalSettings.apiProvider === 'groq' && imagesForApiCall.length > 5) {
                     appendOutput(`Groq: Detectadas ${imagesForApiCall.length} imagens. Enviando em lotes de até 5...`, "info", false);
                     const chunks = [];
                     for (let i = 0; i < imagesForApiCall.length; i += 5) {
@@ -1708,6 +1712,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         fullResponse += chunkResponse + "\n\n";
                     }
                 } else {
+                    // No batching needed
                     fullResponse = await callVisionAPI(imagesForApiCall, prompt);
                 }
                 
@@ -1733,7 +1738,6 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                  
                 await setDoc(doc(db, "sessions", currentUser), {
                     axonEyeResults: "",
-                    axonEyeImages: [],
                     isAnalyzing: { status: false, type: null }
                 }, { merge: true });
 
@@ -2251,73 +2255,180 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
 
         const renderAdminSettingsUI = () => {
             const isManual = globalSettings.mode === 'manual';
-            const provider = globalSettings.apiProvider;
+            const isGoogle = globalSettings.apiProvider === 'gemini';
+            const isOpenRouter = globalSettings.apiProvider === 'openrouter';
+            const isGroq = globalSettings.apiProvider === 'groq';
+            const isCustom = globalSettings.apiProvider === 'custom';
+            
+            const textModelsOptions = globalSettings.apiModels.map(m => 
+                `<option value="${m.name}" ${globalSettings.manualTextModel === m.name ? 'selected' : ''}>${m.name}</option>`
+            ).join('');
 
-            const textModelsOptions = globalSettings.apiModels.map(m => `<option value="${m.name}" ${globalSettings.manualTextModel === m.name ? 'selected' : ''}>${m.name}</option>`).join('');
-            const visionModelsOptions = globalSettings.apiModels.filter(m => m.vision).map(m => `<option value="${m.name}" ${globalSettings.manualVisionModel === m.name ? 'selected' : ''}>${m.name}</option>`).join('');
-            const apiKeysOptions = globalSettings.apiKeys.map(key => `<option value="${key}" ${globalSettings.manualApiKey === key ? 'selected' : ''}>${key}</option>`).join('');
-            const openRouterModelsOptions = openRouterModels.map(m => `<option value="${m.name}" ${globalSettings.openRouterModel === m.name ? 'selected' : ''}>${m.name} ${m.vision ? '(+Visão)' : ''}</option>`).join('');
-            const groqModelsOptions = groqModels.map(m => `<option value="${m.name}" ${globalSettings.groqModel === m.name ? 'selected' : ''}>${m.name} ${m.vision ? '(+Visão)' : ''}</option>`).join('');
+            const visionModelsOptions = globalSettings.apiModels.filter(m => m.vision).map(m => 
+                `<option value="${m.name}" ${globalSettings.manualVisionModel === m.name ? 'selected' : ''}>${m.name}</option>`
+            ).join('');
+
+            const apiKeysOptions = globalSettings.apiKeys.map(key => 
+                `<option value="${key}" ${globalSettings.manualApiKey === key ? 'selected' : ''}>${key}</option>`
+            ).join('');
+
+            const openRouterModelsOptions = openRouterModels.map(m => 
+                 `<option value="${m.name}" ${globalSettings.openRouterModel === m.name ? 'selected' : ''}>${m.name} ${m.vision ? '(+Visão)' : ''}</option>`
+            ).join('');
+
+            const groqModelsOptions = groqModels.map(m => 
+                 `<option value="${m.name}" ${globalSettings.groqModel === m.name ? 'selected' : ''}>${m.name} ${m.vision ? '(+Visão)' : ''}</option>`
+            ).join('');
 
             let html = `
                 <div class="admin-section">
-                    <div class="admin-section-title">Provedor da API Principal</div>
+                    <div class="admin-section-title">Provedor da API</div>
                     <div class="radio-group">
-                        <label class="radio-label"><input type="radio" name="apiProvider" value="gemini" ${provider === 'gemini' ? 'checked' : ''} onchange="window.updateProvider('gemini')"> Google Gemini</label>
-                        <label class="radio-label"><input type="radio" name="apiProvider" value="openrouter" ${provider === 'openrouter' ? 'checked' : ''} onchange="window.updateProvider('openrouter')"> OpenRouter</label>
-                        <label class="radio-label"><input type="radio" name="apiProvider" value="groq" ${provider === 'groq' ? 'checked' : ''} onchange="window.updateProvider('groq')"> Groq</label>
-                        <label class="radio-label"><input type="radio" name="apiProvider" value="custom" ${provider === 'custom' ? 'checked' : ''} onchange="window.updateProvider('custom')"> Customizado</label>
+                        <label class="radio-label">
+                            <input type="radio" name="apiProvider" value="gemini" ${isGoogle ? 'checked' : ''} onchange="window.updateProvider('gemini')"> Google Gemini (Direto)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="apiProvider" value="openrouter" ${isOpenRouter ? 'checked' : ''} onchange="window.updateProvider('openrouter')"> OpenRouter (Universal)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="apiProvider" value="groq" ${isGroq ? 'checked' : ''} onchange="window.updateProvider('groq')"> Groq (Ultra Rápido)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="apiProvider" value="custom" ${isCustom ? 'checked' : ''} onchange="window.updateProvider('custom')"> Customizado (Misto)
+                        </label>
                     </div>
-                </div>`;
+                </div>
+            `;
 
-            if (provider === 'gemini') {
+            if (isCustom) {
+                 html += `
+                <div class="admin-section">
+                    <div class="admin-section-title">Configuração Customizada</div>
+                    
+                    <label>Provedor para Tarefas de Texto:</label>
+                    <select id="custom-text-provider" class="admin-input" style="width:100%; margin-bottom:10px;" onchange="window.saveManualSelection()">
+                        <option value="gemini" ${globalSettings.customTextProvider === 'gemini' ? 'selected' : ''}>Google Gemini</option>
+                        <option value="openrouter" ${globalSettings.customTextProvider === 'openrouter' ? 'selected' : ''}>OpenRouter</option>
+                        <option value="groq" ${globalSettings.customTextProvider === 'groq' ? 'selected' : ''}>Groq</option>
+                    </select>
+
+                    <label>Provedor para Tarefas de Visão (Imagens):</label>
+                    <select id="custom-vision-provider" class="admin-input" style="width:100%; margin-bottom:10px;" onchange="window.saveManualSelection()">
+                        <option value="gemini" ${globalSettings.customVisionProvider === 'gemini' ? 'selected' : ''}>Google Gemini</option>
+                        <option value="openrouter" ${globalSettings.customVisionProvider === 'openrouter' ? 'selected' : ''}>OpenRouter</option>
+                        <option value="groq" ${globalSettings.customVisionProvider === 'groq' ? 'selected' : ''}>Groq</option>
+                    </select>
+                    
+                    <div class="info" style="font-size: 12px; margin-top: 10px;">
+                        Nota: As configurações para cada provedor (chaves, modelos) devem ser ajustadas em suas respectivas abas. A seleção customizada apenas direciona as chamadas.
+                    </div>
+                </div>
+                `;
+            } else if (isGoogle) {
                 html += `
                 <div class="admin-section">
                     <div class="admin-section-title">Modo Google (Direto)</div>
                     <div class="radio-group">
-                        <label class="radio-label"><input type="radio" name="apiMode" value="automatic" ${!isManual ? 'checked' : ''} onchange="window.updateMode('automatic')"> Automático</label>
-                        <label class="radio-label"><input type="radio" name="apiMode" value="manual" ${isManual ? 'checked' : ''} onchange="window.updateMode('manual')"> Manual</label>
+                        <label class="radio-label">
+                            <input type="radio" name="apiMode" value="automatic" ${!isManual ? 'checked' : ''} onchange="window.updateMode('automatic')"> Automático (Rotação)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="apiMode" value="manual" ${isManual ? 'checked' : ''} onchange="window.updateMode('manual')"> Manual (Fixo)
+                        </label>
                     </div>
+
                     <div id="manual-settings" style="display: ${isManual ? 'block' : 'none'}; margin-top: 15px;">
-                        <label>Motor Texto:</label><select id="manual-text-select" class="admin-input" onchange="window.saveManualSelection()"><option value="">Selecione...</option>${textModelsOptions}</select>
-                        <label>Motor Visão:</label><select id="manual-vision-select" class="admin-input" onchange="window.saveManualSelection()"><option value="">Selecione...</option>${visionModelsOptions}</select>
-                        <label>Chave API:</label><select id="manual-key-select" class="admin-input" onchange="window.saveManualSelection()"><option value="">Selecione...</option>${apiKeysOptions}</select>
+                        <div class="admin-section-title">Seleção Manual</div>
+                        <label>Motor de Texto:</label>
+                        <select id="manual-text-select" class="admin-input" style="width:100%; margin-bottom:10px;" onchange="window.saveManualSelection()">
+                            <option value="">Selecione...</option>
+                            ${textModelsOptions}
+                        </select>
+                        
+                        <label>Motor de Visão:</label>
+                        <select id="manual-vision-select" class="admin-input" style="width:100%; margin-bottom:10px;" onchange="window.saveManualSelection()">
+                            <option value="">Selecione...</option>
+                            ${visionModelsOptions}
+                        </select>
+                        
+                        <label>Chave API:</label>
+                        <select id="manual-key-select" class="admin-input" style="width:100%;" onchange="window.saveManualSelection()">
+                            <option value="">Selecione...</option>
+                            ${apiKeysOptions}
+                        </select>
                     </div>
                 </div>
+
                 <div class="admin-section">
                     <div class="admin-section-title">Chaves de API (Google)</div>
-                    <div class="admin-list" id="api-keys-list">${globalSettings.apiKeys.map((key, index) => `<div class="admin-list-item"><input type="text" class="admin-input" value="${key}" readonly><button class="patient-action-button delete" onclick="window.removeApiKey(${index})"><i class="fas fa-trash"></i></button></div>`).join('')}</div>
-                    <div class="admin-list-item" style="margin-top: 10px;"><input type="text" id="new-api-key" class="admin-input" placeholder="Nova chave..."><button class="patient-action-button pdf" onclick="window.addApiKey()">Add</button></div>
+                    <div class="admin-list" id="api-keys-list">
+                        ${globalSettings.apiKeys.map((key, index) => `
+                            <div class="admin-list-item">
+                                <input type="text" class="admin-input" value="${key}" readonly>
+                                <button class="patient-action-button delete" style="flex:0;" onclick="window.removeApiKey(${index})"><i class="fas fa-trash"></i></button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="admin-list-item" style="margin-top: 10px;">
+                         <input type="text" id="new-api-key" class="admin-input" placeholder="Nova chave API...">
+                         <button class="patient-action-button pdf" style="flex:0;" onclick="window.addApiKey()">Adicionar</button>
+                    </div>
                 </div>
+                `;
+            } else if (isOpenRouter) {
+                html += `
                 <div class="admin-section">
-                     <div class="admin-section-title">Motores de IA (Google)</div>
-                     <div class="admin-list" id="api-models-list">${globalSettings.apiModels.map((model, index) => `<div class="admin-list-item"><div><b>${model.name}</b><div style="font-size:10px">${model.vision ? 'Visão' : 'Texto'}</div></div><button class="patient-action-button delete" onclick="window.removeApiModel(${index})"><i class="fas fa-trash"></i></button></div>`).join('')}</div>
-                     <div style="margin-top:10px; border-top:1px solid var(--border-color); padding-top:10px;"><input type="text" id="new-model-name" class="admin-input" placeholder="Nome do modelo..."><label class="radio-label"><input type="checkbox" id="new-model-vision"> Suporta Visão?</label><button class="app-modal-button" onclick="window.addApiModel()">Add Modelo</button></div>
-                </div>`;
-            } else if (provider === 'openrouter') {
-                html += `<div class="admin-section"><div class="admin-section-title">Config. OpenRouter</div><label>Chave API:</label><input type="text" id="openrouter-key-input" class="admin-input" value="${globalSettings.openRouterKey}" onchange="window.saveManualSelection()"><label>Modelo:</label><select id="openrouter-model-select" class="admin-input" onchange="window.saveManualSelection()">${openRouterModelsOptions}</select></div>`;
-            } else if (provider === 'groq') {
-                html += `<div class="admin-section"><div class="admin-section-title">Config. Groq</div><label>Chave API:</label><input type="text" id="groq-key-input" class="admin-input" value="${globalSettings.groqKey}" onchange="window.saveManualSelection()"><label>Modelo:</label><select id="groq-model-select" class="admin-input" onchange="window.saveManualSelection()">${groqModelsOptions}</select></div>`;
-            } else if (provider === 'custom') {
-                 html += `<div class="admin-section">
-                            <div class="admin-section-title">PROVEDOR DE TEXTO</div>
-                            <select class="admin-input" onchange="window.saveCustomProvider('text', this.value)">
-                                <option value="gemini" ${globalSettings.customTextProvider === 'gemini' ? 'selected' : ''}>Google Gemini</option>
-                                <option value="openrouter" ${globalSettings.customTextProvider === 'openrouter' ? 'selected' : ''}>OpenRouter</option>
-                                <option value="groq" ${globalSettings.customTextProvider === 'groq' ? 'selected' : ''}>Groq</option>
-                            </select>
-                            <small>Configure o provedor selecionado em sua respectiva aba.</small>
-                         </div>
-                         <div class="admin-section">
-                            <div class="admin-section-title">PROVEDOR DE VISÃO</div>
-                            <select class="admin-input" onchange="window.saveCustomProvider('vision', this.value)">
-                                <option value="gemini" ${globalSettings.customVisionProvider === 'gemini' ? 'selected' : ''}>Google Gemini</option>
-                                <option value="openrouter" ${globalSettings.customVisionProvider === 'openrouter' ? 'selected' : ''}>OpenRouter</option>
-                                <option value="groq" ${globalSettings.customVisionProvider === 'groq' ? 'selected' : ''}>Groq</option>
-                            </select>
-                             <small>Configure o provedor selecionado em sua respectiva aba.</small>
-                         </div>`;
+                    <div class="admin-section-title">Configuração OpenRouter</div>
+                    <label>Chave de API OpenRouter:</label>
+                    <input type="text" id="openrouter-key-input" class="admin-input" style="width: 100%; margin-bottom: 10px;" value="${globalSettings.openRouterKey}" onchange="window.saveManualSelection()">
+                    
+                    <label>Modelo (Texto e Visão):</label>
+                    <select id="openrouter-model-select" class="admin-input" style="width:100%;" onchange="window.saveManualSelection()">
+                        ${openRouterModelsOptions}
+                    </select>
+                </div>
+                `;
+            } else if (isGroq) {
+                html += `
+                <div class="admin-section">
+                    <div class="admin-section-title">Configuração Groq</div>
+                    <label>Chave de API Groq:</label>
+                    <input type="text" id="groq-key-input" class="admin-input" style="width: 100%; margin-bottom: 10px;" value="${globalSettings.groqKey}" onchange="window.saveManualSelection()">
+                    
+                    <label>Modelo (Texto e Visão):</label>
+                    <select id="groq-model-select" class="admin-input" style="width:100%;" onchange="window.saveManualSelection()">
+                        ${groqModelsOptions}
+                    </select>
+                </div>
+                `;
             }
+
+            if (isGoogle) {
+                html += `
+                <div class="admin-section">
+                    <div class="admin-section-title">Motores de IA (Google)</div>
+                    <div class="admin-list" id="api-models-list">
+                         ${globalSettings.apiModels.map((model, index) => `
+                            <div class="admin-list-item">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 12px; font-weight: bold;">${model.name}</div>
+                                    <div style="font-size: 10px; color: #888;">${model.vision ? 'Visão' : 'Texto'}</div>
+                                </div>
+                                <button class="patient-action-button delete" style="flex:0;" onclick="window.removeApiModel(${index})"><i class="fas fa-trash"></i></button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                        <input type="text" id="new-model-name" class="admin-input" placeholder="Nome do modelo (ex: gemini-1.5-pro)" style="width: 100%; margin-bottom: 5px;">
+                        <label class="radio-label" style="font-size: 12px; margin-bottom: 10px;">
+                            <input type="checkbox" id="new-model-vision"> Suporta Visão?
+                        </label>
+                        <button class="app-modal-button" onclick="window.addApiModel()">Adicionar Modelo</button>
+                    </div>
+                </div>
+                `;
+            }
+
             adminSettingsBody.innerHTML = html;
         };
 
@@ -2342,53 +2453,59 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 }
             });
         };
-        
-        window.saveCustomProvider = async (type, provider) => {
-            let updates = {};
-            if (type === 'text') updates.customTextProvider = provider;
-            if (type === 'vision') updates.customVisionProvider = provider;
-            try {
-                await setDoc(doc(db, "settings", "global"), updates, { merge: true });
-            } catch (e) { console.error("Erro ao salvar provedor customizado:", e); }
-        };
 
         window.updateProvider = async (provider) => {
             try {
-                await setDoc(doc(db, "settings", "global"), { apiProvider: provider }, { merge: true });
+                await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiProvider: provider }, { merge: true });
             } catch (e) { console.error("Erro ao atualizar provedor:", e); }
         };
 
         window.updateMode = async (mode) => {
             try {
-                await setDoc(doc(db, "settings", "global"), { mode }, { merge: true });
+                await setDoc(doc(db, "settings", "global"), { ...globalSettings, mode }, { merge: true });
             } catch (e) { console.error("Erro ao atualizar modo:", e); }
         };
 
         window.saveManualSelection = async () => {
             let updates = {};
             
-            const provider = globalSettings.apiProvider;
-
-            if(provider === 'gemini') {
+            if (globalSettings.apiProvider === 'gemini') {
+                const textModel = document.getElementById('manual-text-select')?.value;
+                const visionModel = document.getElementById('manual-vision-select')?.value;
+                const apiKey = document.getElementById('manual-key-select')?.value;
                 updates = {
-                    manualTextModel: document.getElementById('manual-text-select')?.value,
-                    manualVisionModel: document.getElementById('manual-vision-select')?.value,
-                    manualApiKey: document.getElementById('manual-key-select')?.value
+                    manualTextModel: textModel,
+                    manualVisionModel: visionModel,
+                    manualApiKey: apiKey
                 };
-            } else if (provider === 'openrouter') {
+            } else if (globalSettings.apiProvider === 'openrouter') {
+                const orKey = document.getElementById('openrouter-key-input')?.value;
+                const orModel = document.getElementById('openrouter-model-select')?.value;
                 updates = {
-                    openRouterKey: document.getElementById('openrouter-key-input')?.value,
-                    openRouterModel: document.getElementById('openrouter-model-select')?.value
+                    openRouterKey: orKey,
+                    openRouterModel: orModel
                 };
-            } else if (provider === 'groq') {
-                 updates = {
-                    groqKey: document.getElementById('groq-key-input')?.value,
-                    groqModel: document.getElementById('groq-model-select')?.value
+            } else if (globalSettings.apiProvider === 'groq') {
+                const groqKey = document.getElementById('groq-key-input')?.value;
+                const groqModel = document.getElementById('groq-model-select')?.value;
+                updates = {
+                    groqKey: groqKey,
+                    groqModel: groqModel
+                };
+            } else if (globalSettings.apiProvider === 'custom') {
+                const textProvider = document.getElementById('custom-text-provider')?.value;
+                const visionProvider = document.getElementById('custom-vision-provider')?.value;
+                updates = {
+                    customTextProvider: textProvider,
+                    customVisionProvider: visionProvider
                 };
             }
             
             try {
-                await setDoc(doc(db, "settings", "global"), updates, { merge: true });
+                await setDoc(doc(db, "settings", "global"), {
+                    ...globalSettings,
+                    ...updates
+                }, { merge: true });
             } catch (e) { console.error("Erro ao salvar seleção manual:", e); }
         };
 
@@ -2398,7 +2515,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             if (newKey) {
                 const newKeys = [...globalSettings.apiKeys, newKey];
                 try {
-                    await setDoc(doc(db, "settings", "global"), { apiKeys: newKeys }, { merge: true });
+                    await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiKeys: newKeys }, { merge: true });
                     input.value = '';
                 } catch (e) { console.error("Erro ao adicionar chave:", e); }
             }
@@ -2411,7 +2528,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             }
             const newKeys = globalSettings.apiKeys.filter((_, i) => i !== index);
             try {
-                await setDoc(doc(db, "settings", "global"), { apiKeys: newKeys }, { merge: true });
+                await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiKeys: newKeys }, { merge: true });
             } catch (e) { console.error("Erro ao remover chave:", e); }
         };
 
@@ -2423,7 +2540,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 const newModel = { id: Date.now(), name, vision: visionInput.checked };
                 const newModels = [...globalSettings.apiModels, newModel];
                 try {
-                    await setDoc(doc(db, "settings", "global"), { apiModels: newModels }, { merge: true });
+                    await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiModels: newModels }, { merge: true });
                     nameInput.value = '';
                     visionInput.checked = false;
                 } catch (e) { console.error("Erro ao adicionar modelo:", e); }
@@ -2437,7 +2554,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             }
             const newModels = globalSettings.apiModels.filter((_, i) => i !== index);
              try {
-                await setDoc(doc(db, "settings", "global"), { apiModels: newModels }, { merge: true });
+                await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiModels: newModels }, { merge: true });
             } catch (e) { console.error("Erro ao remover modelo:", e); }
         };
 
@@ -2723,7 +2840,7 @@ ${instruction}
 **Retorne APENAS o array JSON, sem nenhum texto ou formatação adicional.**`;
 
             try {
-                const response = await callTextAPI(prompt);
+                const response = await callGeminiAPI(prompt);
                 const jsonStart = response.indexOf('[');
                 const jsonEnd = response.lastIndexOf(']') + 1;
                 if (jsonStart === -1 || jsonEnd === 0) {
@@ -2809,7 +2926,7 @@ ${instruction}
                 bubble.classList.add('typing');
                 bubble.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
             } else {
-                let contentHTML = formatTextWithBold(message);
+                let contentHTML = message.replace(/\*(.*?)\*/g, '<b>$1</b>');
                 if (images.length > 0) {
                     images.forEach(imgSrc => {
                         contentHTML += `<img src="${imgSrc}" class="chat-image-attachment" onclick="window.openFullscreenModal('${imgSrc}')">`;
@@ -2890,7 +3007,9 @@ ${instruction}
                     response = await askQuestionBasedOnContext(question);
                 }
                 
-                typingBubble.innerHTML = formatTextWithBold(response);
+                const formattedResponse = response.replace(/\*(.*?)\*/g, '<b>$1</b>');
+
+                typingBubble.innerHTML = formattedResponse;
                 typingBubble.classList.remove('typing');
 
             } catch (error) {
@@ -2982,8 +3101,8 @@ ${instruction}
                     if (!questionIA) { appendOutput("Uso: /ia [pergunta]", "error"); break; }
                     appendOutput("Processando sua pergunta...", "info");
                     try {
-                        const response = await callTextAPI(`Responda de forma objetiva à pergunta médica: "${questionIA}"`);
-                        appendOutput(response, "output");
+                        const response = await callGeminiAPI(`Responda de forma objetiva à pergunta médica: "${questionIA}"`);
+                        appendOutput(response.replace(/\*(.*?)\*/g, '<b>$1</b>'), "output");
                     } catch (error) { appendOutput(`Erro ao consultar a IA: ${error.message}`, "error"); }
                     break;
                 case '/ask':
@@ -2992,8 +3111,8 @@ ${instruction}
                     appendOutput("Processando pergunta contextual...", "info");
                     try {
                         const response = await askQuestionBasedOnContext(questionAsk);
-                        const cleanResponse = response.replace(/\*(.*?)\*/g, '<b>$1</b>');
-                        appendOutput(`Pergunta: ${questionAsk}<br>Resposta: ${cleanResponse}`, "output");
+                        const formattedResponse = response.replace(/\*(.*?)\*/g, '<b>$1</b>');
+                        appendOutput(`Pergunta: ${questionAsk}<br>Resposta: ${formattedResponse}`, "output");
                     } catch (error) {
                          appendOutput(`Erro ao processar pergunta: ${error.message}`, "error");
                     }
@@ -3084,6 +3203,7 @@ ${instruction}
             openSaveModal();
         });
         
+        // Mobile 2.0 Button Listeners
         mobileBtnExames.addEventListener('click', () => checkBlockedAndExecute(() => startCamera('exams')));
         mobileBtnSee.addEventListener('click', () => checkBlockedAndExecute(() => startCamera('axon-eye')));
         mobileBtnRecords.addEventListener('click', () => checkBlockedAndExecute(loadPatientList));
@@ -3251,6 +3371,8 @@ ${instruction}
 
             window.addEventListener('beforeunload', () => {
                 if (isLoggedIn && currentUser && !isMobile) {
+                    // This is a 'fire and forget' call. It's a best-effort attempt to clean up 
+                    // the session document when the desktop user closes the tab or navigates away.
                     deleteDoc(doc(db, "sessions", currentUser));
                 }
             });
@@ -3294,7 +3416,7 @@ ${instruction}
                     if (!isMobile && sessionSnap.exists()) {
                         handleSuccessfulLogin(savedUser, true);
                     } else {
-                        if (isMobile) { 
+                        if (isMobile) { // Mobile can always "restore" to connect to a desktop session
                              handleSuccessfulLogin(savedUser, true);
                         } else {
                             appendOutput("Sessão anterior foi encerrada. Por favor, faça login novamente.", "info", false);
