@@ -715,6 +715,52 @@
             font-size: 14px;
             font-weight: bold;
         }
+
+        /* Info Banner for Mobile 2.0 */
+        .info-banner {
+            width: 100%;
+            max-width: 450px;
+            padding: 0 10px;
+            margin-bottom: 10px;
+        }
+        .chat-bubble-info {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 12px 15px;
+            font-size: 13px;
+            line-height: 1.6;
+            text-align: center;
+            position: relative;
+            box-shadow: var(--glass-shadow);
+            animation: fadeIn 0.5s ease-out;
+        }
+        .chat-bubble-info::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid var(--glass-border);
+        }
+        .chat-bubble-info .highlight-link {
+            color: var(--highlight-color);
+            font-weight: bold;
+            text-decoration: none;
+            background-color: var(--button-bg);
+            padding: 2px 6px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        .chat-bubble-info .highlight-link:hover {
+            background-color: var(--button-hover-bg);
+            text-decoration: underline;
+        }
         
         /* Chatbox Modal Styles */
         .chatbox-modal {
@@ -938,35 +984,6 @@
             justify-content: center; align-items: center;
         }
         
-        /* Welcome Info Panel Styles */
-        .welcome-info-panel {
-            background-color: var(--input-bg);
-            border: 1px solid var(--border-color);
-            padding: 15px;
-            border-radius: 15px;
-            position: relative;
-            line-height: 1.6;
-            width: 100%;
-            max-width: 450px;
-            text-align: left;
-        }
-        .welcome-info-panel p {
-            margin: 0;
-        }
-        .welcome-link {
-            display: inline-block;
-            margin-top: 5px;
-            background-color: var(--highlight-color);
-            color: var(--highlight-text-color);
-            padding: 5px 10px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        body.light-mode .welcome-link:hover { background-color: #2b6cb0; }
-        body:not(.light-mode) .welcome-link:hover { background-color: #63b3ed; }
-        
         /* Admin Debug Toggle Switch */
         .toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
@@ -1129,13 +1146,12 @@
             <h2 id="mobile-welcome-title">Bem-vindo!</h2>
             <p>Selecione uma opção para começar.</p>
         </div>
-        
-        <div class="welcome-info-panel">
-            <p>Para uma experiência completa com múltiplos monitores e recursos avançados, acesse o <b>Axon Web</b> em seu desktop:</p>
-            <a href="https://funortehub.github.io/axon" target="_blank" class="welcome-link">funortehub.github.io/axon</a>
-            <p style="margin-top: 15px;">Ou insira um dispositivo <b>AXON USB</b> para desbloquear funcionalidades adicionais.</p>
+        <div class="info-banner">
+            <div class="chat-bubble-info">
+                <i class="fas fa-info-circle" style="margin-right: 8px; color: var(--prompt-color);"></i>
+                <span>Para acesso completo, abra o Axon Web em <a href="https://funortehub.github.io/axon" target="_blank" class="highlight-link">funortehub.github.io/axon</a> ou insira um dispositivo AXON USB.</span>
+            </div>
         </div>
-
         <div class="mobile-grid">
             <button id="mobile-btn-exames" class="mobile-btn">
                 <i class="fas fa-vial-virus"></i>
@@ -1337,7 +1353,7 @@
     
     <div id="chatbox-modal" class="chatbox-modal">
         <div class="chatbox-header">
-            <i id="chatbox-new-chat-btn" class="fas fa-eraser chatbox-new-chat-btn" title="Limpar Conversa"></i>
+            <i id="chatbox-new-chat-btn" class="fas fa-plus-circle chatbox-new-chat-btn" title="Nova Conversa"></i>
             <span class="chatbox-title">Axon AI Chat</span>
             <i id="chatbox-close-btn" class="fas fa-times chatbox-close-btn"></i>
         </div>
@@ -1373,6 +1389,7 @@
             <span>Analisando Imagens...</span>
         </div>
     </div>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -2791,7 +2808,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                  if(!isMobile || !globalSettings.mobile2_0_enabled) {
                     appendOutput(`Erro ao acessar a câmera: ${err.message}.`, "error");
                 } else {
-                    showConfirmModal(`Erro ao acessar a câmera: ${err.message}. Tente novamente.`, () => {}, true);
+                    showConfirmModal(`Erro ao acessar a câmera: ${err.message}. Tente novamente.`, () => {});
                 }
                 stopCamera();
             }
