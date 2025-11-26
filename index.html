@@ -479,7 +479,7 @@
         const updateAxonEyeResultsPreview = (logToFirebase = true) => {
             let formattedResults = '';
             let imageHtml = '';
-            if (temporaryImgurUploads.length > 0 && currentMonitorView === 'axon-eye') {
+            if (temporaryImgurUploads.length > 0) {
                 imageHtml = `<div class="patient-images-grid" style="margin-top: 15px;">`;
                 temporaryImgurUploads.forEach(img => {
                     imageHtml += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" onclick="openFullscreenModal('${img.link}')" alt="Imagem Analisada"></div>`;
