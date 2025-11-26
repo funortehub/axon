@@ -477,7 +477,11 @@
             let formattedResults = '';
             let imageHtml = '';
             if (temporaryImgurUploads.length > 0 && currentMonitorView === 'axon-eye') {
-                imageHtml = `<img src="${temporaryImgurUploads[0].link}" class="axon-eye-image-preview" alt="Imagem Analisada">`;
+                imageHtml = `<div class="patient-images-grid" style="margin-top: 15px;">`;
+                temporaryImgurUploads.forEach(img => {
+                    imageHtml += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" onclick="openFullscreenModal('${img.link}')" alt="Imagem Analisada"></div>`;
+                });
+                imageHtml += `</div>`;
             }
             if (axonEyeResults) {
                 const impressionRegex = /(Impressão Diagnóstica|Interpretação Clínica|Diagnósticos Diferenciais):\s*(.*)/i;
@@ -1223,6 +1227,11 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         examsResults = data.examsResults;
                         updateExamsResultsPreview(false);
                     }
+                    if (data.axonEyeImages && JSON.stringify(data.axonEyeImages) !== JSON.stringify(temporaryImgurUploads)) {
+                        temporaryImgurUploads = data.axonEyeImages;
+                    } else if (!data.axonEyeImages && temporaryImgurUploads.length > 0) {
+                        temporaryImgurUploads = [];
+                    }
                     if (data.axonEyeResults !== undefined && data.axonEyeResults !== axonEyeResults) {
                         axonEyeResults = data.axonEyeResults;
                         updateAxonEyeResultsPreview(false);
@@ -1686,6 +1695,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 
                 await setDoc(doc(db, "sessions", currentUser), {
                     axonEyeResults: fullResponse.trim(),
+                    axonEyeImages: [...temporaryImgurUploads],
                     isAnalyzing: { status: false, type: null }
                 }, { merge: true });
                 
