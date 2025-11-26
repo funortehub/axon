@@ -210,7 +210,9 @@
             openRouterKey: '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',
             groqKey: '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',
             groqModel: 'llama-3.3-70b-versatile',
-            mobile2_0_enabled: false
+            mobile2_0_enabled: false,
+            customTextProvider: 'gemini',
+            customVisionProvider: 'gemini'
         };
 
         let currentApiKeyIndex = 0;
@@ -330,6 +332,7 @@
 
         const appendOutput = (text, type = "output", logToFirebase = true) => {
             const outputElement = document.createElement('div');
+            const formattedText = text.replace(/\*{1,2}(.*?)\*{1,2}/g, '<b>$1</b>');
             
             if (type === "command") {
                 outputElement.innerHTML = `<span class="prompt">></span> <span class="command">${text}</span>`;
@@ -347,7 +350,7 @@
                 outputElement.textContent = text;
             }
             else {
-                outputElement.innerHTML = `<span class="${type}">${text}</span>`;
+                outputElement.innerHTML = `<span class="${type}">${formattedText}</span>`;
             }
             
             interactiveOutput.appendChild(outputElement);
@@ -460,11 +463,12 @@
                 formattedResults = examsResults.split('\n')
                     .filter(line => line.trim() !== '')
                     .map(line => {
-                        if (/\((Alterado|Anormal)\)/i.test(line)) {
-                            const cleanLine = line.replace(/\((Alterado|Anormal)\)/gi, '').trim();
+                        let processedLine = line.trim().replace(/\*{1,2}(.*?)\*{1,2}/g, '<b>$1</b>');
+                        if (/\(Alterado|Anormal\)/i.test(processedLine)) {
+                            const cleanLine = processedLine.replace(/\((Alterado|Anormal)\)/gi, '').trim();
                             return `<div class="output">${cleanLine} <span class="altered-text">(Alterado)</span></div>`;
                         }
-                        return `<div class="output">${line.trim()}</div>`;
+                        return `<div class="output">${processedLine}</div>`;
                     }).join('');
             }
             examsResultsPreview.innerHTML = `<div class="section-title">RESULTADOS DOS EXAMES:</div>${formattedResults || '<div class="info">Nenhum exame analisado ainda.</div>'}`;
@@ -484,19 +488,19 @@
                 imageHtml += `</div>`;
             }
             if (axonEyeResults) {
-                const impressionRegex = /(Impressão Diagnóstica|Interpretação Clínica|Diagnósticos Diferenciais):\s*(.*)/i;
-                let match = axonEyeResults.match(impressionRegex);
+                let processedText = axonEyeResults.replace(/\*{1,2}(.*?)\*{1,2}/g, '<b>$1</b>');
+                const impressionRegex = /(<b>Impressão Diagnóstica<\/b>|<b>Interpretação Clínica<\/b>|<b>Diagnósticos Diferenciais<\/b>):\s*([\s\S]*)/i;
+                let match = processedText.match(impressionRegex);
                 if (match) {
                     const title = match[1];
                     const content = match[2].trim();
-                    const preText = axonEyeResults.substring(0, match.index).trim();
-                    const postText = axonEyeResults.substring(match.index + match[0].length).trim();
+                    const preText = processedText.substring(0, match.index).trim();
+                    
                     formattedResults += `<div class="output">${preText.split('\n').map(line => line.trim()).filter(line => line).join('<br>')}</div>`;
-                    formattedResults += `<div class="axon-eye-title">${title}</div>`;
-                    formattedResults += `<div class="output">${content}</div>`;
-                    formattedResults += `<div class="output">${postText.split('\n').map(line => line.trim()).filter(line => line).join('<br>')}</div>`;
+                    formattedResults += `<div class="axon-eye-title">${title.replace(/<b>|<\/b>/g, '')}</div>`;
+                    formattedResults += `<div class="output">${content.split('\n').map(line => line.trim()).filter(line => line).join('<br>')}</div>`;
                 } else {
-                    formattedResults = axonEyeResults.split('\n').filter(line => line.trim() !== '').map(line => `<div class="output">${line.trim()}</div>`).join('');
+                    formattedResults = processedText.split('\n').filter(line => line.trim() !== '').map(line => `<div class="output">${line.trim()}</div>`).join('');
                 }
             }
             axonEyeResultsPreview.innerHTML = `<div class="section-title">ANÁLISE AXON EYE:</div>${formattedResults || '<div class="info">Nenhuma análise visual feita ainda.</div>'}${imageHtml}`;
@@ -706,10 +710,15 @@
         };
 
         const callGeminiAPI = async (prompt) => {
-            if (globalSettings.apiProvider === 'openrouter') {
+            let provider = globalSettings.apiProvider;
+            if (provider === 'custom') {
+                provider = globalSettings.customTextProvider || 'gemini';
+            }
+
+            if (provider === 'openrouter') {
                 return await callOpenRouterAPI(prompt);
             }
-            if (globalSettings.apiProvider === 'groq') {
+            if (provider === 'groq') {
                 return await callGroqAPI(prompt);
             }
 
@@ -779,10 +788,15 @@
         };
 
         const callVisionAPI = async (imageUrls, prompt) => {
-            if (globalSettings.apiProvider === 'openrouter') {
+            let provider = globalSettings.apiProvider;
+            if (provider === 'custom') {
+                provider = globalSettings.customVisionProvider || 'gemini';
+            }
+
+            if (provider === 'openrouter') {
                 return await callOpenRouterAPI(prompt, imageUrls);
             }
-            if (globalSettings.apiProvider === 'groq') {
+            if (provider === 'groq') {
                 return await callGroqAPI(prompt, imageUrls);
             }
 
@@ -899,7 +913,7 @@
             const prompt = `Com base na anamnese: ${JSON.stringify(anamnesis)}, nos exames: ${examsResults || "Nenhum"}, e na análise visual: ${axonEyeResults || "Nenhuma"}, liste as hipóteses diagnósticas em ordem de probabilidade. Seja técnico e resumido. Retorne apenas a lista.`;
             try {
                 const response = await callGeminiAPI(prompt);
-                const formattedDiagnosis = response.split('\n').filter(item => item.trim()).map(item => `<div class="diagnosis-item">${item.trim()}</div>`).join('');
+                const formattedDiagnosis = response.split('\n').filter(item => item.trim()).map(item => `<div class="diagnosis-item">${item.trim().replace(/\*{1,2}(.*?)\*{1,2}/g, '<b>$1</b>')}</div>`).join('');
                 appendOutput(`<div class="conduct-title">HIPÓTESES DIAGNÓSTICAS:</div>${formattedDiagnosis}`, "output");
             } catch (error) {
                 appendOutput(`Erro ao gerar hipóteses: ${error.message}`, "error");
@@ -922,7 +936,7 @@ Seja técnico, objetivo e resumido.`;
                     .replace(/CONDUTAS NÃO FARMACOLÓGICAS \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTAS NÃO FARMACOLÓGICAS (SUS)">CONDUTAS NÃO FARMACOLÓGICAS (SUS):</div>')
                     .replace(/^RECOMENDAÇÕES:/gim, '<div class="conduct-title" data-category="RECOMENDAÇÕES">RECOMENDAÇÕES:</div>')
                     .split('\n').map(line => {
-                        const cleanedLine = line.trim().replace(/^\d+\.\s*/, '');
+                        const cleanedLine = line.trim().replace(/^\d+\.\s*/, '').replace(/\*{1,2}(.*?)\*{1,2}/g, '<b>$1</b>');
                         if (cleanedLine === '' || line.includes('<div')) return line;
                         return `<div class="conduct-item">${cleanedLine}</div>`;
                     }).join('');
@@ -1229,8 +1243,10 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     }
                     if (data.axonEyeImages && JSON.stringify(data.axonEyeImages) !== JSON.stringify(temporaryImgurUploads)) {
                         temporaryImgurUploads = data.axonEyeImages;
+                        updateAxonEyeResultsPreview(false);
                     } else if (!data.axonEyeImages && temporaryImgurUploads.length > 0) {
                         temporaryImgurUploads = [];
+                        updateAxonEyeResultsPreview(false);
                     }
                     if (data.axonEyeResults !== undefined && data.axonEyeResults !== axonEyeResults) {
                         axonEyeResults = data.axonEyeResults;
@@ -1295,7 +1311,9 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         openRouterKey: data.openRouterKey || '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',
                         groqKey: data.groqKey || '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',
                         groqModel: data.groqModel || 'llama-3.3-70b-versatile',
-                        mobile2_0_enabled: data.mobile2_0_enabled === undefined ? isMobile : data.mobile2_0_enabled
+                        mobile2_0_enabled: data.mobile2_0_enabled === undefined ? isMobile : data.mobile2_0_enabled,
+                        customTextProvider: data.customTextProvider || 'gemini',
+                        customVisionProvider: data.customVisionProvider || 'gemini'
                     };
                     
                     if (adminPanelModal.style.display === 'flex') {
@@ -2235,6 +2253,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             const isGoogle = globalSettings.apiProvider === 'gemini';
             const isOpenRouter = globalSettings.apiProvider === 'openrouter';
             const isGroq = globalSettings.apiProvider === 'groq';
+            const isCustom = globalSettings.apiProvider === 'custom';
             
             const textModelsOptions = globalSettings.apiModels.map(m => 
                 `<option value="${m.name}" ${globalSettings.manualTextModel === m.name ? 'selected' : ''}>${m.name}</option>`
@@ -2268,6 +2287,9 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         </label>
                         <label class="radio-label">
                             <input type="radio" name="apiProvider" value="groq" ${isGroq ? 'checked' : ''} onchange="window.updateProvider('groq')"> Groq (Ultra Rápido)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="apiProvider" value="custom" ${isCustom ? 'checked' : ''} onchange="window.updateProvider('custom')"> Customizado
                         </label>
                     </div>
                 </div>
@@ -2350,6 +2372,28 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     </select>
                 </div>
                 `;
+            } else if (isCustom) {
+                html += `
+                <div id="custom-provider-settings" class="admin-section">
+                    <div class="admin-section-title">Configuração Customizada</div>
+                    <label style="display:block; margin-bottom:5px;">Provedor para Tarefas de <b>Texto</b>:</label>
+                    <select id="custom-text-provider-select" class="admin-input" style="width:100%; margin-bottom: 15px;" onchange="window.saveCustomProviderSelection()">
+                        <option value="gemini" ${globalSettings.customTextProvider === 'gemini' ? 'selected' : ''}>Google Gemini (Direto)</option>
+                        <option value="openrouter" ${globalSettings.customTextProvider === 'openrouter' ? 'selected' : ''}>OpenRouter</option>
+                        <option value="groq" ${globalSettings.customTextProvider === 'groq' ? 'selected' : ''}>Groq</option>
+                    </select>
+                    
+                    <label style="display:block; margin-bottom:5px;">Provedor para Tarefas de <b>Visão</b> (Imagens):</label>
+                    <select id="custom-vision-provider-select" class="admin-input" style="width:100%;" onchange="window.saveCustomProviderSelection()">
+                        <option value="gemini" ${globalSettings.customVisionProvider === 'gemini' ? 'selected' : ''}>Google Gemini (Direto)</option>
+                        <option value="openrouter" ${globalSettings.customVisionProvider === 'openrouter' ? 'selected' : ''}>OpenRouter</option>
+                        <option value="groq" ${globalSettings.customVisionProvider === 'groq' ? 'selected' : ''}>Groq</option>
+                    </select>
+                    <div class="info" style="font-size: 12px; margin-top: 15px; padding: 8px; background-color: var(--input-bg); border-radius: 5px;">
+                        <b>Nota:</b> A configuração individual de cada provedor (chaves, modelos fixos, etc.) é gerenciada ao selecioná-los no menu principal acima. O modo customizado utiliza essas configurações salvas.
+                    </div>
+                </div>
+                `;
             }
 
             if (isGoogle) {
@@ -2413,6 +2457,22 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             try {
                 await setDoc(doc(db, "settings", "global"), { ...globalSettings, mode }, { merge: true });
             } catch (e) { console.error("Erro ao atualizar modo:", e); }
+        };
+
+        window.saveCustomProviderSelection = async () => {
+            const textProvider = document.getElementById('custom-text-provider-select')?.value;
+            const visionProvider = document.getElementById('custom-vision-provider-select')?.value;
+            let updates = {
+                customTextProvider: textProvider,
+                customVisionProvider: visionProvider
+            };
+
+            try {
+                await setDoc(doc(db, "settings", "global"), {
+                    ...globalSettings,
+                    ...updates
+                }, { merge: true });
+            } catch (e) { console.error("Erro ao salvar seleção de provedor customizado:", e); }
         };
 
         window.saveManualSelection = async () => {
@@ -2868,7 +2928,7 @@ ${instruction}
                 bubble.classList.add('typing');
                 bubble.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
             } else {
-                let contentHTML = message.replace(/\*(.*?)\*/g, '<b>$1</b>');
+                let contentHTML = message.replace(/\*{1,2}(.*?)\*{1,2}/g, '<b>$1</b>');
                 if (images.length > 0) {
                     images.forEach(imgSrc => {
                         contentHTML += `<img src="${imgSrc}" class="chat-image-attachment" onclick="window.openFullscreenModal('${imgSrc}')">`;
@@ -2949,7 +3009,7 @@ ${instruction}
                     response = await askQuestionBasedOnContext(question);
                 }
                 
-                const formattedResponse = response.replace(/\*(.*?)\*/g, '<b>$1</b>');
+                const formattedResponse = response.replace(/\*{1,2}(.*?)\*{1,2}/g, '<b>$1</b>');
 
                 typingBubble.innerHTML = formattedResponse;
                 typingBubble.classList.remove('typing');
@@ -3053,8 +3113,8 @@ ${instruction}
                     appendOutput("Processando pergunta contextual...", "info");
                     try {
                         const response = await askQuestionBasedOnContext(questionAsk);
-                        const cleanResponse = response.replace(/\*(.*?)\*/g, '$1'); // Remove asterisks for plain text terminal
-                        appendOutput(`Pergunta: ${questionAsk}\nResposta: ${cleanResponse}`, "output");
+                        const formattedResponse = response.replace(/\*{1,2}(.*?)\*{1,2}/g, '<b>$1</b>');
+                        appendOutput(`Pergunta: ${questionAsk}<br>Resposta: ${formattedResponse}`, "output");
                     } catch (error) {
                          appendOutput(`Erro ao processar pergunta: ${error.message}`, "error");
                     }
@@ -3150,98 +3210,74 @@ ${instruction}
         mobileBtnSee.addEventListener('click', () => checkBlockedAndExecute(() => startCamera('axon-eye')));
         mobileBtnRecords.addEventListener('click', () => checkBlockedAndExecute(loadPatientList));
         mobileBtnChat.addEventListener('click', () => checkBlockedAndExecute(openChatbox));
+
         chatboxCloseBtn.addEventListener('click', closeChatbox);
-        chatboxSendBtn.addEventListener('click', sendChatMessage);
         chatboxInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChatMessage(); });
+        chatboxSendBtn.addEventListener('click', sendChatMessage);
         chatboxUploadBtn.addEventListener('click', () => chatFileInput.click());
         chatFileInput.addEventListener('change', handleChatImageUpload);
         chatboxNewChatBtn.addEventListener('click', () => {
-            showConfirmModal("Deseja iniciar uma nova conversa? O histórico atual será perdido.", () => {
-                conversationHistory = [];
-                chatboxMessages.innerHTML = '';
-                openChatbox();
-            });
+            conversationHistory = [];
+            openChatbox();
         });
 
-        adminAuthClose.addEventListener('click', () => adminAuthModal.style.display = 'none');
-        adminAuthButton.addEventListener('click', checkAdminAuth);
-        adminAuthPass.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkAdminAuth(); });
-        
-        patientListModal.addEventListener('click', (e) => {
-            const target = e.target;
-            const deleteButton = target.closest('.delete');
-            const pdfButton = target.closest('.pdf');
-            const detailsButton = target.closest('.details');
-
-            if (deleteButton) {
-                checkBlockedAndExecute(() => deletePatient(deleteButton.dataset.id));
-            } else if (pdfButton && !pdfButton.classList.contains('disabled')) {
-                 checkBlockedAndExecute(() => generatePatientPDF(pdfButton.dataset.id));
-            } else if (detailsButton && !detailsButton.classList.contains('disabled')) {
-                const patientId = detailsButton.dataset.id;
-                const patientData = allPatients.find(p => p.id === patientId);
-                if (patientData) showPatientDetails(patientData);
+        // Patient list actions delegation
+        patientList.addEventListener('click', (e) => {
+            const target = e.target.closest('button.patient-action-button');
+            if (!target) return;
+            const patientId = target.dataset.id;
+            if (target.classList.contains('delete')) {
+                deletePatient(patientId);
+            } else if (target.classList.contains('details')) {
+                const patient = allPatients.find(p => p.id === patientId);
+                if (patient) showPatientDetails(patient);
+            } else if (target.classList.contains('pdf')) {
+                generatePatientPDF(patientId);
             }
         });
 
-        patientDetailsModal.addEventListener('click', (e) => {
+        patientDetailsBody.addEventListener('click', (e) => {
             const header = e.target.closest('.consultation-header');
             if (header) {
                 const body = header.nextElementSibling;
-                const icon = header.querySelector('i');
-                const isVisible = body.style.display === 'block';
-                body.style.display = isVisible ? 'none' : 'block';
-                icon.classList.toggle('fa-chevron-down', !isVisible);
-                icon.classList.toggle('fa-chevron-right', isVisible);
+                body.style.display = body.style.display === 'none' ? 'block' : 'none';
+                header.querySelector('i').classList.toggle('fa-chevron-right');
+                header.querySelector('i').classList.toggle('fa-chevron-down');
             }
         });
         
         patientListClose.addEventListener('click', () => patientListModal.style.display = 'none');
         patientDetailsClose.addEventListener('click', () => patientDetailsModal.style.display = 'none');
-        patientSearchInput.addEventListener('input', (e) => searchPatients(e.target.value));
+        savePatientModalClose.addEventListener('click', closeSaveModal);
+        adminAuthClose.addEventListener('click', () => adminAuthModal.style.display = 'none');
+        prescriptionHelperClose.addEventListener('click', closePrescriptionHelper);
 
         loginModalButton.addEventListener('click', async () => {
-            const username = loginModalUser.value.trim(), password = loginModalPass.value.trim();
-            if (!username || !password) return loginModalFeedback.textContent = "Preencha todos os campos.";
-            loginModalFeedback.textContent = "Verificando..."; loginModalButton.disabled = true;
-            
-            const authResult = await authenticateUser(username, password);
-
+            loginModalButton.disabled = true;
+            loginModalFeedback.textContent = 'Verificando...';
+            const authResult = await authenticateUser(loginModalUser.value, loginModalPass.value);
             if (authResult.success) {
-                if (authResult.isBlocked) {
-                    loginModalFeedback.style.color = '#ffcc00';
-                    loginModalFeedback.textContent = "Sua conta foi bloqueada!";
-                    loginModalButton.disabled = false;
-                } else {
-                    loginModalFeedback.style.color = 'var(--success-color)'; loginModalFeedback.textContent = "Sucesso!";
-                    setTimeout(() => handleSuccessfulLogin(username, false), 500);
+                isUserBlocked = authResult.isBlocked;
+                if(isUserBlocked) {
+                    updateBlockedUI();
                 }
+                handleSuccessfulLogin(loginModalUser.value);
             } else {
-                loginModalFeedback.style.color = 'var(--error-color)'; loginModalFeedback.textContent = "Usuário ou senha incorretos.";
-                loginModalButton.disabled = false;
+                loginModalFeedback.textContent = 'Usuário ou senha inválidos.';
             }
+            loginModalButton.disabled = false;
         });
-        loginModalPass.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginModalButton.click(); });
-        
-        savePatientModalClose.addEventListener('click', closeSaveModal);
-        savePatientButton.addEventListener('click', () => {
-            const name = savePatientNameInput.value.trim();
-            const dob = savePatientDobInput.value.trim();
-            if (!name || !dob) return savePatientFeedback.textContent = 'Preencha todos os campos.';
-            savePatient(name, dob);
-        });
-        savePatientDobInput.addEventListener('input', (e) => {
-            let value = e.target.value.replace(/\D/g, '').slice(0, 8);
-            if (value.length > 4) value = `${value.slice(0,2)}/${value.slice(2,4)}/${value.slice(4)}`;
-            else if (value.length > 2) value = `${value.slice(0,2)}/${value.slice(2)}`;
-            e.target.value = value;
-        });
-        savePatientDobInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') savePatientButton.click(); });
+        loginModalPass.addEventListener('keydown', e => { if (e.key === 'Enter') loginModalButton.click(); });
+        savePatientButton.addEventListener('click', () => savePatient(savePatientNameInput.value, savePatientDobInput.value));
+        adminAuthButton.addEventListener('click', checkAdminAuth);
+        adminAuthPass.addEventListener('keydown', e => { if (e.key === 'Enter') adminAuthButton.click(); });
 
-        prescriptionHelperClose.addEventListener('click', closePrescriptionHelper);
-        prescriptionHelperModal.addEventListener('click', (e) => {
-            if (e.target === prescriptionHelperModal) {
-                closePrescriptionHelper();
+        patientSearchInput.addEventListener('input', (e) => searchPatients(e.target.value));
+
+        interactiveOutput.addEventListener('click', (e) => {
+            const title = e.target.closest('.conduct-title');
+            if (title && title.dataset.category) {
+                openPrescriptionHelper(title.dataset.category);
             }
         });
 
@@ -3249,135 +3285,58 @@ ${instruction}
             const copyBtn = e.target.closest('.prescription-template-copy-btn');
             if (copyBtn) {
                 const templateId = copyBtn.dataset.templateId;
-                const templateTextElement = document.getElementById(templateId);
-                if (templateTextElement) {
-                    const templateText = templateTextElement.textContent;
-                    navigator.clipboard.writeText(templateText).then(() => {
-                        const originalText = copyBtn.innerHTML;
-                        copyBtn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
-                        copyBtn.style.backgroundColor = 'var(--success-color)';
-                        setTimeout(() => {
-                            copyBtn.innerHTML = originalText;
-                            copyBtn.style.backgroundColor = '';
-                        }, 2000);
-                    });
-                }
-            }
-        });
-
-        interactiveOutput.addEventListener('click', (e) => {
-            const conductTitle = e.target.closest('.conduct-title');
-            if (conductTitle && conductTitle.dataset.category) {
-                openPrescriptionHelper(conductTitle.dataset.category);
-            }
-        });
-
-        const initApp = async () => {
-            const savedTheme = localStorage.getItem('theme');
-            const systemPrefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-            if (savedTheme) {
-                setTheme(savedTheme);
-            } else {
-                setTheme(systemPrefersLight ? 'light' : 'dark');
-            }
-
-            adminPanelModal.addEventListener('click', (e) => {
-                const formContainer = document.getElementById('create-user-form-container');
-                if (!formContainer) return;
-
-                if (e.target.closest('#toggle-create-user-form')) {
-                    formContainer.style.display = 'block';
-                }
-                if (e.target.closest('#close-create-user-form')) {
-                    formContainer.style.display = 'none';
-                }
-            });
-
-            const mobileStatusEl = document.querySelector('.mobile-connection-status');
-            if (mobileStatusEl) {
-                mobileStatusEl.addEventListener('click', () => {
-                    showConfirmModal(
-                        "Deseja encerrar todas as sessões em desktops? Qualquer dispositivo conectado será desconectado e precisará de um novo login.",
-                        async () => {
-                            if (currentUser) {
-                                try {
-                                    await deleteDoc(doc(db, "sessions", currentUser));
-                                } catch (e) {
-                                    console.error("Erro ao encerrar sessão remota:", e);
-                                }
-                            }
-                        }
-                    );
+                const textToCopy = document.getElementById(templateId).innerText;
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copiar';
+                    }, 2000);
                 });
             }
+        });
 
-            window.addEventListener('beforeunload', () => {
-                if (isLoggedIn && currentUser && !isMobile) {
-                    // This is a 'fire and forget' call. It's a best-effort attempt to clean up 
-                    // the session document when the desktop user closes the tab or navigates away.
-                    deleteDoc(doc(db, "sessions", currentUser));
-                }
-            });
+        document.getElementById('toggle-create-user-form').addEventListener('click', () => {
+            document.getElementById('create-user-form-container').style.display = 'block';
+        });
 
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    if (chatboxModal.style.display === 'flex') {
-                        closeChatbox();
-                    } else if (fullscreenModal.style.display === 'block') {
-                        fullscreenModal.style.display = 'none';
-                    } else if (albumModal.style.display === 'flex') {
-                        closeAlbumModal();
-                    } else if (patientListModal.style.display === 'flex') {
-                        patientListModal.style.display = 'none';
-                    } else if (patientDetailsModal.style.display === 'flex') {
-                        patientDetailsModal.style.display = 'none';
-                    } else if (savePatientModal.style.display === 'flex') {
-                        closeSaveModal();
-                    } else if (adminAuthModal.style.display === 'flex') {
-                        adminAuthModal.style.display = 'none';
-                    } else if (adminPanelModal.style.display === 'flex') {
-                        adminPanelModal.style.display = 'none';
-                    } else if (prescriptionHelperModal.style.display === 'flex') {
-                        closePrescriptionHelper();
-                    } else if (cameraModal.style.display === 'flex') {
-                        cancelCamera();
-                    }
-                }
-            });
+        document.getElementById('close-create-user-form').addEventListener('click', () => {
+            document.getElementById('create-user-form-container').style.display = 'none';
+        });
 
-            if (isSpeechRecognitionSupported()) initSpeechRecognition();
-            
-            const savedUser = localStorage.getItem('axon_logged_in_user');
-            if (savedUser) {
-                appendOutput(`Verificando sessão para ${savedUser}...`, "info", false);
-                const userIsValid = await isUserValid(savedUser);
-                if (userIsValid) {
-                    const sessionRef = doc(db, "sessions", savedUser);
-                    const sessionSnap = await getDoc(sessionRef);
-
-                    if (!isMobile && sessionSnap.exists()) {
-                        handleSuccessfulLogin(savedUser, true);
-                    } else {
-                        if (isMobile) { // Mobile can always "restore" to connect to a desktop session
-                             handleSuccessfulLogin(savedUser, true);
-                        } else {
-                            appendOutput("Sessão anterior foi encerrada. Por favor, faça login novamente.", "info", false);
-                            localStorage.removeItem('axon_logged_in_user');
-                            loginModal.style.display = 'flex';
-                            loginModalUser.focus();
+        document.querySelector('.mobile-connection-status').addEventListener('click', async () => {
+             if (isMobile) {
+                showConfirmModal(
+                    "Deseja fazer logout em outros desktops conectados a esta conta?",
+                    async () => {
+                        if (currentUser && isLoggedIn) {
+                            try {
+                                await deleteDoc(doc(db, "sessions", currentUser));
+                                updateMobileConnectionStatus(null);
+                            } catch (error) {
+                                console.error("Erro ao desconectar desktop remoto:", error);
+                            }
                         }
                     }
-                } else {
-                    appendOutput(`Usuário '${savedUser}' não existe mais. Por favor, faça login novamente.`, "error", false);
-                    localStorage.removeItem('axon_logged_in_user');
-                    loginModal.style.display = 'flex';
-                    loginModalUser.focus();
-                }
-            } else { 
-                loginModal.style.display = 'flex'; 
-                loginModalUser.focus(); 
+                );
             }
-            if (isMobile) { statusTextApi.textContent = ""; statusTextMic.textContent = ""; statusTextCam.textContent = ""; }
-        };
+        });
 
-        document.addEventListener('DOMContentLoaded', initApp);</script></body></html>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            setTheme(savedTheme);
+            const savedUser = localStorage.getItem('axon_logged_in_user');
+            if (savedUser && await isUserValid(savedUser)) {
+                loginModal.style.display = 'none';
+                const userDoc = await getDoc(doc(db, "users", savedUser));
+                isUserBlocked = userDoc.data()?.isBlocked || false;
+                handleSuccessfulLogin(savedUser, true);
+                if (isUserBlocked) {
+                    updateBlockedUI();
+                }
+            } else {
+                loginModal.style.display = 'flex';
+                loginModalUser.focus();
+            }
+            
+            initSpeechRecognition();
+        });</script></body></html>
