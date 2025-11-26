@@ -938,42 +938,6 @@
             justify-content: center; align-items: center;
         }
         
-        /* Welcome Modal Styles */
-        .welcome-chat-bubble {
-            background-color: var(--input-bg);
-            border: 1px solid var(--border-color);
-            padding: 15px;
-            border-radius: 15px;
-            border-bottom-left-radius: 3px;
-            position: relative;
-            line-height: 1.6;
-        }
-        .welcome-chat-bubble::before {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: -10px;
-            width: 10px;
-            height: 10px;
-            border-bottom: 1px solid var(--border-color);
-            border-left: 1px solid var(--border-color);
-            border-bottom-left-radius: 8px;
-            box-shadow: -2px 2px 0 0 var(--input-bg); /* to cover the corner */
-        }
-        .welcome-link {
-            display: inline-block;
-            margin-top: 5px;
-            background-color: var(--highlight-color);
-            color: var(--highlight-text-color);
-            padding: 5px 10px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        body.light-mode .welcome-link:hover { background-color: #2b6cb0; }
-        body:not(.light-mode) .welcome-link:hover { background-color: #63b3ed; }
-        
         /* Admin Debug Toggle Switch */
         .toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
@@ -1337,7 +1301,7 @@
     
     <div id="chatbox-modal" class="chatbox-modal">
         <div class="chatbox-header">
-            <i id="chatbox-new-chat-btn" class="fas fa-eraser chatbox-new-chat-btn" title="Limpar Conversa"></i>
+            <i id="chatbox-new-chat-btn" class="fas fa-plus-circle chatbox-new-chat-btn" title="Nova Conversa"></i>
             <span class="chatbox-title">Axon AI Chat</span>
             <i id="chatbox-close-btn" class="fas fa-times chatbox-close-btn"></i>
         </div>
@@ -1371,22 +1335,6 @@
                 <div class="scanner-line"></div>
             </div>
             <span>Analisando Imagens...</span>
-        </div>
-    </div>
-
-    <div id="welcome-modal" class="app-modal" style="display: none;">
-        <div class="app-modal-content" style="max-width: 400px; text-align: left;">
-            <div class="app-modal-header" style="justify-content: center; margin-bottom: 10px;">
-                <h2 class="app-modal-title">Bem-vindo ao Axon A.I</h2>
-            </div>
-            <div class="app-modal-body" style="padding: 0 15px 15px;">
-                <div class="welcome-chat-bubble">
-                    <p>Para uma experiência completa com múltiplos monitores e recursos avançados, acesse o <b>Axon Web</b> em seu desktop:</p>
-                    <a href="https://funortehub.github.io/axon" target="_blank" class="welcome-link">funortehub.github.io/axon</a>
-                    <p style="margin-top: 15px;">Ou insira um dispositivo <b>AXON USB</b> para desbloquear funcionalidades adicionais.</p>
-                </div>
-                <button id="welcome-modal-close-btn" class="app-modal-button" style="margin-top: 20px;">Entendido</button>
-            </div>
         </div>
     </div>
 
@@ -1523,8 +1471,6 @@
         
         const customConfirmModal = document.getElementById('custom-confirm-modal');
         const mobileAnalysisLoader = document.getElementById('mobile-analysis-loader');
-        const welcomeModal = document.getElementById('welcome-modal');
-        const welcomeModalCloseBtn = document.getElementById('welcome-modal-close-btn');
         
         let isListening = false;
         let isLoggedIn = false;
@@ -1761,7 +1707,6 @@
                 isUserBlocked = false;
                 currentUser = null;
                 localStorage.removeItem('axon_logged_in_user');
-                sessionStorage.removeItem('welcomeModalShown');
                 if (unsubscribeSnapshot) {
                     unsubscribeSnapshot();
                     unsubscribeSnapshot = null;
@@ -2811,7 +2756,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                  if(!isMobile || !globalSettings.mobile2_0_enabled) {
                     appendOutput(`Erro ao acessar a câmera: ${err.message}.`, "error");
                 } else {
-                    showConfirmModal(`Erro ao acessar a câmera: ${err.message}. Tente novamente.`, () => {}, true);
+                    showConfirmModal(`Erro ao acessar a câmera: ${err.message}. Tente novamente.`, () => {});
                 }
                 stopCamera();
             }
@@ -3345,11 +3290,6 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             initialMessagesContainer.style.display = 'none';
             
             mobileWelcomeTitle.textContent = `Bem-vindo, ${currentUser}!`;
-
-            if (isMobile && globalSettings.mobile2_0_enabled && !sessionStorage.getItem('welcomeModalShown')) {
-                welcomeModal.style.display = 'flex';
-                sessionStorage.setItem('welcomeModalShown', 'true');
-            }
 
             appendOutput("Sessão pronta. Informe os dados do paciente ou use um comando.", "success");
             
@@ -4484,10 +4424,6 @@ ${instruction}
             if (conductTitle && conductTitle.dataset.category) {
                 openPrescriptionHelper(conductTitle.dataset.category);
             }
-        });
-
-        welcomeModalCloseBtn.addEventListener('click', () => {
-            welcomeModal.style.display = 'none';
         });
 
         const initApp = async () => {
