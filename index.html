@@ -759,6 +759,25 @@
             background-color: var(--button-hover-bg);
             text-decoration: underline;
         }
+
+        .mobile-connection-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: auto;
+            padding-bottom: 10px;
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+        .mobile-connection-status .status-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--success-color);
+            border-radius: 50%;
+            box-shadow: 0 0 6px var(--success-color);
+        }
         
         /* Chatbox Modal Styles */
         .chatbox-modal {
@@ -1167,6 +1186,10 @@
                 <img src="btn4.PNG" alt="Axon AI Chat">
                 <span>Axon AI Chat</span>
             </button>
+        </div>
+        <div class="mobile-connection-status">
+            <div class="status-dot"></div>
+            <span>Conectado em desktop: WINDOWS 11 - CHROME</span>
         </div>
     </div>
 
@@ -2588,7 +2611,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
         };
         
         const applySettings = () => {
-             if (globalSettings.mobile2_0_enabled) {
+             if (isMobile && globalSettings.mobile2_0_enabled) {
                 document.querySelector('.container').style.display = 'none';
                 mobileContainer.style.display = 'flex';
             } else {
