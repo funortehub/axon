@@ -759,26 +759,6 @@
             background-color: var(--button-hover-bg);
             text-decoration: underline;
         }
-
-        .mobile-connection-status {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: auto;
-            padding-bottom: 10px;
-            font-size: 12px;
-            color: var(--text-color);
-            opacity: 0.7;
-        }
-        .mobile-connection-status .status-dot {
-            width: 10px;
-            height: 10px;
-            background-color: var(--success-color);
-            border-radius: 50%;
-            box-shadow: 0 0 6px var(--success-color);
-            transition: background-color 0.5s ease, box-shadow 0.5s ease;
-        }
         
         /* Chatbox Modal Styles */
         .chatbox-modal {
@@ -1167,7 +1147,7 @@
         <div class="info-banner">
             <div class="chat-bubble-info">
                 <i class="fas fa-info-circle" style="margin-right: 8px; color: var(--prompt-color);"></i>
-                <span>Para acesso completo, abra o Axon Web em seu computador em <a href="https://funortehub.github.io/axon" target="_blank" class="highlight-link">funortehub.github.io/axon</a> ou insira um dispositivo AXON USB.</span>
+                <span>Para acesso completo, abra o Axon Web em <a href="https://funortehub.github.io/axon" target="_blank" class="highlight-link">funortehub.github.io/axon</a> ou insira um dispositivo AXON USB.</span>
             </div>
         </div>
         <div class="mobile-grid">
@@ -1187,10 +1167,6 @@
                 <img src="btn4.PNG" alt="Axon AI Chat">
                 <span>Axon AI Chat</span>
             </button>
-        </div>
-        <div class="mobile-connection-status">
-            <div class="status-dot status-off"></div>
-            <span>Nenhum desktop conectado</span>
         </div>
     </div>
 
@@ -1342,13 +1318,6 @@
                         <div class="admin-section-title" style="margin-top: 0; margin-bottom: 10px; flex-shrink: 0;">Usuários (Rank de Uso)</div>
                         <div id="admin-users-list" class="user-list-scroll">
                             <div class="info">Carregando...</div>
-                        </div>
-                        <div class="admin-section" style="margin-top: 15px; margin-bottom: 0;">
-                            <div class="admin-section-title">Criar Novo Usuário</div>
-                            <input type="text" id="admin-new-user" class="admin-input" placeholder="Novo nome de usuário" style="margin-bottom: 5px;">
-                            <input type="text" id="admin-new-pass" class="admin-input" placeholder="Nova senha" style="margin-bottom: 10px;">
-                            <button class="app-modal-button" onclick="window.createUserFromPanel()">Criar Usuário</button>
-                            <div id="admin-create-user-feedback" class="app-modal-feedback" style="text-align: left; margin-top: 10px; min-height: 15px; font-size: 12px;"></div>
                         </div>
                     </div>
                     <div class="admin-users-details-section" id="admin-user-details">
@@ -1573,13 +1542,13 @@
         let currentCameraFacingMode = 'environment';
         let currentMonitorView = 'anamnesis';
         let isFlashlightOn = false;
+        let cameraMode = 'exams';
         const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const isMobile = isMobileDevice();
         let allPatients = [];
         let conversationHistory = [];
         let adminUsersData = [];
         let chatImagesToSend = [];
-        let desktopHeartbeatInterval = null;
 
         const defaultApiKeys = [
             'AIzaSyB7krrv-Jjw4hn34MIFYBcrzDa5mWB9PpU',
@@ -1622,6 +1591,7 @@
             manualApiKey: '',
             apiProvider: 'gemini',
             openRouterKey: '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',
+            openRouterModel: 'x-ai/grok-4.1-fast:free',
             groqKey: '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',
             groqModel: 'llama-3.3-70b-versatile',
             mobile2_0_enabled: false
@@ -1828,10 +1798,6 @@
         
         const logoutUser = async () => {
             appendOutput("Fazendo logout...", "info", false);
-            if (desktopHeartbeatInterval) {
-                clearInterval(desktopHeartbeatInterval);
-                desktopHeartbeatInterval = null;
-            }
             await clearTemporaryUploads();
             if (currentUser) {
                 try {
@@ -2550,50 +2516,12 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             return true;
         };
 
-        const getDesktopInfo = () => {
-            const ua = navigator.userAgent;
-            let os = 'DESCONHECIDO';
-            if (ua.includes("Win")) os = "WINDOWS";
-            if (ua.includes("Mac")) os = "MACOS";
-            if (ua.includes("Linux")) os = "LINUX";
-
-            let browser = 'DESCONHECIDO';
-            if (ua.includes("Chrome") && !ua.includes("Edg")) browser = "CHROME";
-            else if (ua.includes("Firefox")) browser = "FIREFOX";
-            else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "SAFARI";
-            else if (ua.includes("Edg")) browser = "EDGE";
-            
-            return { os, browser };
-        };
-
-        const updateMobileConnectionStatus = (desktopData) => {
-            const mobileStatusEl = document.querySelector('.mobile-connection-status');
-            if (!mobileStatusEl) return;
-
-            const dot = mobileStatusEl.querySelector('.status-dot');
-            const text = mobileStatusEl.querySelector('span');
-            
-            const isConnected = desktopData && desktopData.timestamp && (new Date() - desktopData.timestamp.toDate() < 30000);
-
-            if (isConnected) {
-                dot.classList.remove('status-off');
-                text.textContent = `Conectado em desktop: ${desktopData.os} - ${desktopData.browser}`;
-            } else {
-                dot.classList.add('status-off');
-                text.textContent = 'Nenhum desktop conectado';
-            }
-        };
-
         const setupFirebaseListener = (username) => {
             if (unsubscribeSnapshot) unsubscribeSnapshot();
             const docRef = doc(db, "sessions", username);
             unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-
-                    if (isMobile && globalSettings.mobile2_0_enabled) {
-                        updateMobileConnectionStatus(data.desktopConnection);
-                    }
 
                     // Handle analysis state synchronization
                     if (data.isAnalyzing && data.isAnalyzing.status) {
@@ -2642,9 +2570,6 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
 
                 } else {
                     // Reset local state if session document is deleted
-                    if (isMobile && globalSettings.mobile2_0_enabled) {
-                        updateMobileConnectionStatus(null);
-                    }
                     anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                     examsResults = "";
                     axonEyeResults = "";
@@ -2681,9 +2606,10 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         manualApiKey: data.manualApiKey || '',
                         apiProvider: data.apiProvider || 'gemini',
                         openRouterKey: data.openRouterKey || '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',
+                        openRouterModel: data.openRouterModel || 'x-ai/grok-4.1-fast:free',
                         groqKey: data.groqKey || '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',
                         groqModel: data.groqModel || 'llama-3.3-70b-versatile',
-                        mobile2_0_enabled: data.mobile2_0_enabled === undefined ? isMobile : data.mobile2_0_enabled
+                        mobile2_0_enabled: data.mobile2_0_enabled || false
                     };
                     
                     if (adminPanelModal.style.display === 'flex') {
@@ -2697,7 +2623,6 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     
                     applySettings();
                 } else {
-                    globalSettings.mobile2_0_enabled = isMobile;
                     setDoc(docRef, globalSettings);
                 }
             }, (error) => {
@@ -3418,21 +3343,6 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
 
             appendOutput("Sessão pronta. Informe os dados do paciente ou use um comando.", "success");
             
-            if (desktopHeartbeatInterval) clearInterval(desktopHeartbeatInterval);
-            if (!isMobile) {
-                const updateDesktopStatus = () => {
-                    if (isLoggedIn && currentUser) {
-                        const desktopInfo = getDesktopInfo();
-                        const sessionRef = doc(db, "sessions", currentUser);
-                        setDoc(sessionRef, {
-                            desktopConnection: { ...desktopInfo, timestamp: new Date() }
-                        }, { merge: true }).catch(e => console.error("Heartbeat failed:", e));
-                    }
-                };
-                updateDesktopStatus();
-                desktopHeartbeatInterval = setInterval(updateDesktopStatus, 15000);
-            }
-
             if (unsubscribeUserDoc) {
                 unsubscribeUserDoc();
             }
@@ -3526,43 +3436,6 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 renderAdminSettingsUI();
             } else if (tabName === 'debug') {
                 renderAdminDebugUI();
-            }
-        };
-        
-        window.createUserFromPanel = async () => {
-            const usernameInput = document.getElementById('admin-new-user');
-            const passwordInput = document.getElementById('admin-new-pass');
-            const feedbackEl = document.getElementById('admin-create-user-feedback');
-
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value.trim();
-
-            if (!username || !password) {
-                feedbackEl.textContent = "Preencha todos os campos.";
-                feedbackEl.style.color = 'var(--error-color)';
-                return;
-            }
-            
-            feedbackEl.textContent = 'Verificando...';
-            feedbackEl.style.color = 'var(--prompt-color)';
-
-            try {
-                const userRef = doc(db, "users", username);
-                const docSnap = await getDoc(userRef);
-                if (docSnap.exists()) {
-                    feedbackEl.textContent = `Usuário '${username}' já existe.`;
-                    feedbackEl.style.color = 'var(--error-color)';
-                } else {
-                    await setDoc(userRef, { password, createdAt: new Date(), textRequests: 0, visionRequests: 0, isBlocked: false });
-                    feedbackEl.textContent = `Usuário '${username}' criado!`;
-                    feedbackEl.style.color = 'var(--success-color)';
-                    usernameInput.value = '';
-                    passwordInput.value = '';
-                    await loadAdminUsersData(); // Refresh list
-                }
-            } catch (e) {
-                feedbackEl.textContent = `Erro: ${e.message}`;
-                feedbackEl.style.color = 'var(--error-color)';
             }
         };
 
