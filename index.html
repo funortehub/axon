@@ -1147,7 +1147,7 @@
         <div class="info-banner">
             <div class="chat-bubble-info">
                 <i class="fas fa-info-circle" style="margin-right: 8px; color: var(--prompt-color);"></i>
-                <span>Para acesso completo, abra o Axon Web em <a href="https://funortehub.github.io/axon" target="_blank" class="highlight-link">funortehub.github.io/axon</a> ou insira um dispositivo AXON USB.</span>
+                <span>Para acesso completo, abra o Axon Web em seu computador em <a href="https://funortehub.github.io/axon" target="_blank" class="highlight-link">funortehub.github.io/axon</a> ou insira um dispositivo AXON USB.</span>
             </div>
         </div>
         <div class="mobile-grid">
@@ -1318,6 +1318,13 @@
                         <div class="admin-section-title" style="margin-top: 0; margin-bottom: 10px; flex-shrink: 0;">Usuários (Rank de Uso)</div>
                         <div id="admin-users-list" class="user-list-scroll">
                             <div class="info">Carregando...</div>
+                        </div>
+                        <div class="admin-section" style="margin-top: 15px; margin-bottom: 0;">
+                            <div class="admin-section-title">Criar Novo Usuário</div>
+                            <input type="text" id="admin-new-user" class="admin-input" placeholder="Novo nome de usuário" style="margin-bottom: 5px;">
+                            <input type="text" id="admin-new-pass" class="admin-input" placeholder="Nova senha" style="margin-bottom: 10px;">
+                            <button class="app-modal-button" onclick="window.createUserFromPanel()">Criar Usuário</button>
+                            <div id="admin-create-user-feedback" class="app-modal-feedback" style="text-align: left; margin-top: 10px; min-height: 15px; font-size: 12px;"></div>
                         </div>
                     </div>
                     <div class="admin-users-details-section" id="admin-user-details">
@@ -2581,7 +2588,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
         };
         
         const applySettings = () => {
-             if (isMobile && globalSettings.mobile2_0_enabled) {
+             if (globalSettings.mobile2_0_enabled) {
                 document.querySelector('.container').style.display = 'none';
                 mobileContainer.style.display = 'flex';
             } else {
@@ -2609,7 +2616,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         openRouterModel: data.openRouterModel || 'x-ai/grok-4.1-fast:free',
                         groqKey: data.groqKey || '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',
                         groqModel: data.groqModel || 'llama-3.3-70b-versatile',
-                        mobile2_0_enabled: data.mobile2_0_enabled || false
+                        mobile2_0_enabled: data.mobile2_0_enabled === undefined ? isMobile : data.mobile2_0_enabled
                     };
                     
                     if (adminPanelModal.style.display === 'flex') {
@@ -2623,6 +2630,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     
                     applySettings();
                 } else {
+                    globalSettings.mobile2_0_enabled = isMobile;
                     setDoc(docRef, globalSettings);
                 }
             }, (error) => {
@@ -3436,6 +3444,43 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 renderAdminSettingsUI();
             } else if (tabName === 'debug') {
                 renderAdminDebugUI();
+            }
+        };
+        
+        window.createUserFromPanel = async () => {
+            const usernameInput = document.getElementById('admin-new-user');
+            const passwordInput = document.getElementById('admin-new-pass');
+            const feedbackEl = document.getElementById('admin-create-user-feedback');
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!username || !password) {
+                feedbackEl.textContent = "Preencha todos os campos.";
+                feedbackEl.style.color = 'var(--error-color)';
+                return;
+            }
+            
+            feedbackEl.textContent = 'Verificando...';
+            feedbackEl.style.color = 'var(--prompt-color)';
+
+            try {
+                const userRef = doc(db, "users", username);
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists()) {
+                    feedbackEl.textContent = `Usuário '${username}' já existe.`;
+                    feedbackEl.style.color = 'var(--error-color)';
+                } else {
+                    await setDoc(userRef, { password, createdAt: new Date(), textRequests: 0, visionRequests: 0, isBlocked: false });
+                    feedbackEl.textContent = `Usuário '${username}' criado!`;
+                    feedbackEl.style.color = 'var(--success-color)';
+                    usernameInput.value = '';
+                    passwordInput.value = '';
+                    await loadAdminUsersData(); // Refresh list
+                }
+            } catch (e) {
+                feedbackEl.textContent = `Erro: ${e.message}`;
+                feedbackEl.style.color = 'var(--error-color)';
             }
         };
 
