@@ -166,7 +166,6 @@
         let adminUsersData = [];
         let chatImagesToSend = [];
         let desktopHeartbeatInterval = null;
-        const imageUploadCache = new Map(); // Cache for uploaded images: base64 -> { link, deleteHash }
 
         const defaultApiKeys = [
             'AIzaSyB7krrv-Jjw4hn34MIFYBcrzDa5mWB9PpU',
@@ -1459,6 +1458,342 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
                     },
                 });
+            } catch (error) {
+                console.error("Imgur delete error:", error);
+            }
+        };
+        
+        const clearTemporaryUploads = async () => {
+            if (temporaryImgurUploads.length > 0) {
+                appendOutput('Limpando imagens temporárias não salvas...', 'info');
+                for (const upload of temporaryImgurUploads) {
+                    await deleteFromImgur(upload.deleteHash);
+                }
+                temporaryImgurUploads = [];
+            }
+        };
+
+        const startCamera = async (mode) => {
+            // Limpa estado anterior para uma nova análise
+            examsResults = "";
+            axonEyeResults = "";
+            capturedImages = [];
+            examsResultsPreview.innerHTML = '<div class="info">Nenhum exame analisado ainda.</div>';
+            axonEyeResultsPreview.innerHTML = '<div class="info">Nenhuma análise visual feita ainda.</div>';
+            updateAlbumCount();
+            sendExamsButton.classList.add('disabled');
+            sendAxonEyeButton.classList.add('disabled');
+            
+            cameraMode = mode;
+            cameraModalTitle.textContent = mode === 'exams' ? 'Câmera de Exames' : 'Axon Eye';
+            sendExamsButton.style.display = mode === 'exams' ? 'flex' : 'none';
+            sendAxonEyeButton.style.display = mode === 'axon-eye' ? 'flex' : 'none';
+            
+            cameraModal.style.display = 'flex';
+            if (isMobile) {
+                cameraModal.classList.add('fullscreen-mobile');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            updateMonitorStateInFirestore(currentUser, { activeView: mode === 'exams' ? 'exams' : 'axon-eye' });
+
+            try {
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentCameraFacingMode } });
+                
+                cameraVideo.srcObject = stream;
+                cameraStream = stream;
+                
+                cameraVideo.onloadedmetadata = () => {
+                    cameraVideo.play().catch(e => console.error("Play failed:", e));
+                };
+
+                cameraStatus.classList.remove('status-off');
+                if(!isMobile || !globalSettings.mobile2_0_enabled) {
+                    appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}.`, "info");
+                }
+
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                if (devices.filter(d => d.kind === 'videoinput').length > 1) {
+                    cameraSwitchButton.style.display = 'block';
+                }
+                
+                const track = stream.getVideoTracks()[0];
+                if (track && 'torch' in track.getCapabilities()) {
+                    flashlightButton.style.display = 'block';
+                }
+
+            } catch (err) {
+                 if(!isMobile || !globalSettings.mobile2_0_enabled) {
+                    appendOutput(`Erro ao acessar a câmera: ${err.message}.`, "error");
+                } else {
+                    showConfirmModal(`Erro ao acessar a câmera: ${err.message}. Tente novamente.`, () => {});
+                }
+                stopCamera();
+            }
+        };
+
+        const stopCameraStreamOnly = () => {
+            if (cameraStream) {
+                if (isFlashlightOn) toggleFlashlight();
+                cameraStream.getTracks().forEach(track => track.stop()); cameraVideo.srcObject = null; cameraStream = null;
+            }
+            cameraStatus.classList.add('status-off');
+        };
+
+        const stopCamera = () => {
+            stopCameraStreamOnly();
+            cameraModal.style.display = 'none';
+            if (isMobile) {
+                cameraModal.classList.remove('fullscreen-mobile');
+                document.body.style.overflow = 'auto';
+            }
+            if (!isMobile || !globalSettings.mobile2_0_enabled) {
+               toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView);
+            }
+        };
+
+        const cancelCamera = () => {
+            updateMonitorStateInFirestore(currentUser, { activeView: 'anamnesis' });
+            stopCamera();
+            capturedImages = [];
+            updateAlbumCount();
+            sendExamsButton.classList.add('disabled');
+            sendAxonEyeButton.classList.add('disabled');
+        };
+
+        const switchCamera = async () => { currentCameraFacingMode = (currentCameraFacingMode === 'user') ? 'environment' : 'user'; await startCamera(cameraMode); };
+        const toggleFlashlight = async () => {
+            if (!cameraStream) return;
+            const track = cameraStream.getVideoTracks()[0];
+            if (track && 'torch' in track.getCapabilities()) {
+                try { await track.applyConstraints({ advanced: [{ torch: !isFlashlightOn }] }); isFlashlightOn = !isFlashlightOn; flashlightButton.classList.toggle('active', isFlashlightOn); } catch (err) { appendOutput("Erro ao controlar a lanterna.", "error"); }
+            }
+        };
+        const capturePhoto = () => { if (!cameraStream) return; cameraCanvas.width = cameraVideo.videoWidth; cameraCanvas.height = cameraVideo.videoHeight; cameraCanvas.getContext('2d').drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height); addCapturedImage(cameraCanvas.toDataURL('image/jpeg')); };
+        const handleFileUpload = (event) => { for (const file of event.target.files) { if (file.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = (e) => addCapturedImage(e.target.result); reader.readAsDataURL(file); } } };
+        const addCapturedImage = (imageDataURL) => { capturedImages.push(imageDataURL); updateAlbumCount(); sendExamsButton.classList.remove('disabled'); sendAxonEyeButton.classList.remove('disabled'); };
+        const removeCapturedImage = (imageDataURL) => { capturedImages = capturedImages.filter(url => url !== imageDataURL); updateAlbumCount(); if (capturedImages.length === 0) { sendExamsButton.classList.add('disabled'); sendAxonEyeButton.classList.add('disabled'); } renderAlbum(); };
+        const updateAlbumCount = () => { albumCount.textContent = capturedImages.length; albumButton.style.display = capturedImages.length > 0 ? 'flex' : 'none'; };
+        const openAlbumModal = () => { renderAlbum(); albumModal.style.display = 'flex'; };
+        const closeAlbumModal = () => { albumModal.style.display = 'none'; };
+        const renderAlbum = () => {
+            albumGrid.innerHTML = capturedImages.length === 0 ? '<div class="info" style="grid-column: 1 / -1; text-align: center;">Nenhuma imagem no álbum.</div>' : '';
+            capturedImages.forEach(url => {
+                const item = document.createElement('div'); item.className = 'album-item';
+                const img = document.createElement('img'); img.src = url; img.className = 'album-image'; img.onclick = () => openFullscreenModal(url);
+                const delBtn = document.createElement('button'); delBtn.className = 'album-delete-button'; delBtn.innerHTML = '&times;'; delBtn.onclick = (e) => { e.stopPropagation(); removeCapturedImage(url); };
+                item.append(img, delBtn); albumGrid.appendChild(item);
+            });
+        };
+        
+        window.openFullscreenModal = (imageDataURL) => { 
+            modalImage.src = imageDataURL; 
+            fullscreenModal.style.display = 'block'; 
+        };
+        
+        modalClose.onclick = () => fullscreenModal.style.display = 'none';
+        fullscreenModal.onclick = (e) => { if (e.target === fullscreenModal) fullscreenModal.style.display = 'none'; };
+        
+        const showMobileLoader = () => { if (isMobile && globalSettings.mobile2_0_enabled) mobileAnalysisLoader.style.display = 'flex'; };
+        const hideMobileLoader = () => { if (isMobile && globalSettings.mobile2_0_enabled) mobileAnalysisLoader.style.display = 'none'; };
+
+
+        const analyzeExams = async () => {
+            if (capturedImages.length === 0) return appendOutput("Nenhuma imagem de exame para analisar.", "info");
+            
+            if(!isMobile || !globalSettings.mobile2_0_enabled) {
+                toggleMonitorView('exams');
+            } else {
+                showMobileLoader();
+            }
+            await setAnalyzingStateInFirestore(true, 'exams');
+
+            try {
+                const prompt = `Você é um assistente especialista em análise de exames médicos. Sua tarefa é extrair e transcrever os dados dos exames fornecidos. Siga estas regras ESTRITAMENTE:\n\n1. **Resultados Laboratoriais:** Transcreva os resultados em formato de lista. Se um valor estiver alterado, adicione "(Alterado)" ao final da linha. Exemplo: Glicose: 90 mg/dL (Alterado).\n2. **Laudos de Imagem:** Se for um laudo de texto, transcreva o texto completo, palavra por palavra, sem NENHUMA alteração ou resumo.\n3. **Formato Rígido:** NUNCA comece sua resposta com frases como "Aqui estão os resultados...", "Analisando os exames...", etc. Sua resposta DEVE começar DIRETAMENTE com o primeiro item do resultado. Retorne APENAS a lista de resultados ou o texto do laudo.`;
+                
+                let fullResponse = "";
+
+                if (globalSettings.apiProvider === 'groq' && capturedImages.length > 5) {
+                    appendOutput(`Groq: Detectadas ${capturedImages.length} imagens. Enviando em lotes de até 5...`, "info", false);
+                    const chunks = [];
+                    for (let i = 0; i < capturedImages.length; i += 5) {
+                        chunks.push(capturedImages.slice(i, i + 5));
+                    }
+                    for (let i = 0; i < chunks.length; i++) {
+                        appendOutput(`Enviando lote ${i + 1}/${chunks.length}...`, "info", false);
+                        const chunkResponse = await callVisionAPI(chunks[i], prompt);
+                        fullResponse += chunkResponse + "\n";
+                    }
+                } else {
+                    fullResponse = await callVisionAPI(capturedImages, prompt);
+                }
+                
+                await setDoc(doc(db, "sessions", currentUser), {
+                    examsResults: fullResponse.trim(),
+                    isAnalyzing: { status: false, type: null }
+                }, { merge: true });
+                
+                if (isMobile && globalSettings.mobile2_0_enabled) {
+                    showConfirmModal('Análise de exames concluída!', () => {}, true);
+                } else {
+                    appendOutput("Análise de exames concluída.", "success");
+                }
+
+            } catch (error) {
+                 if (isMobile && globalSettings.mobile2_0_enabled) {
+                    showConfirmModal(`Erro ao analisar exames: ${error.message}`, () => {}, true);
+                } else {
+                    appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
+                }
+
+                await setDoc(doc(db, "sessions", currentUser), {
+                    examsResults: "",
+                    isAnalyzing: { status: false, type: null }
+                }, { merge: true });
+
+            } finally {
+                hideMobileLoader();
+                stopCamera(); capturedImages = []; updateAlbumCount();
+            }
+        };
+
+        const analyzeAxonEye = async () => {
+            if (capturedImages.length === 0) return appendOutput("Nenhuma imagem para análise visual.", "info");
+            
+            await clearTemporaryUploads();
+            
+            if(!isMobile || !globalSettings.mobile2_0_enabled) {
+                toggleMonitorView('axon-eye');
+            } else {
+                showMobileLoader();
+            }
+            await setAnalyzingStateInFirestore(true, 'axon-eye');
+            
+            try {
+                for (const imgBase64 of capturedImages) {
+                    const uploadResult = await uploadToImgur(imgBase64);
+                    if (uploadResult) {
+                        temporaryImgurUploads.push(uploadResult);
+                    }
+                }
+                if (temporaryImgurUploads.length !== capturedImages.length) {
+                    throw new Error("Falha no upload de uma ou mais imagens.");
+                }
+
+                const prompt = `Analise as imagens e forneça uma opinião clínica detalhada. Descreva achados, lesões, ou sintomas. Ao final, inclua uma seção "Impressão Diagnóstica:" ou "Interpretação Clínica:" com sua conclusão. Formate palavras importantes com asteriscos (ex: *Lesão sugestiva de...*). Seja descritivo e clinicamente relevante.`;
+                
+                let fullResponse = "";
+                let imagesForApiCall;
+
+                // Decide the image source based on provider
+                if (globalSettings.apiProvider === 'openrouter') {
+                    // OpenRouter needs URLs, which we have from Imgur
+                    imagesForApiCall = temporaryImgurUploads.map(upload => upload.link);
+                } else {
+                    // Gemini and Groq need base64 data
+                    imagesForApiCall = capturedImages;
+                }
+
+                // Decide on batching
+                if (globalSettings.apiProvider === 'groq' && imagesForApiCall.length > 5) {
+                    appendOutput(`Groq: Detectadas ${imagesForApiCall.length} imagens. Enviando em lotes de até 5...`, "info", false);
+                    const chunks = [];
+                    for (let i = 0; i < imagesForApiCall.length; i += 5) {
+                        chunks.push(imagesForApiCall.slice(i, i + 5));
+                    }
+                    for (let i = 0; i < chunks.length; i++) {
+                        appendOutput(`Enviando lote ${i + 1}/${chunks.length}...`, "info", false);
+                        const chunkResponse = await callVisionAPI(chunks[i], prompt);
+                        fullResponse += chunkResponse + "\n\n";
+                    }
+                } else {
+                    // No batching needed
+                    fullResponse = await callVisionAPI(imagesForApiCall, prompt);
+                }
+                
+                await setDoc(doc(db, "sessions", currentUser), {
+                    axonEyeResults: fullResponse.trim(),
+                    axonEyeImages: [...temporaryImgurUploads],
+                    isAnalyzing: { status: false, type: null }
+                }, { merge: true });
+                
+                if (isMobile && globalSettings.mobile2_0_enabled) {
+                    showConfirmModal('Análise Axon Eye concluída. Imagens prontas para salvar em um prontuário.', () => {}, true);
+                } else {
+                    appendOutput("Análise Axon Eye concluída. Imagens prontas para salvar.", "success");
+                }
+
+            } catch (error) {
+                 if (isMobile && globalSettings.mobile2_0_enabled) {
+                    showConfirmModal(`Erro com Axon Eye: ${error.message}`, () => {}, true);
+                } else {
+                    appendOutput(`Erro com Axon Eye: ${error.message}`, "error");
+                }
+                await clearTemporaryUploads();
+                 
+                await setDoc(doc(db, "sessions", currentUser), {
+                    axonEyeResults: "",
+                    isAnalyzing: { status: false, type: null }
+                }, { merge: true });
+
+            } finally {
+                hideMobileLoader();
+                stopCamera(); capturedImages = []; updateAlbumCount();
+            }
+        };
+
+        const savePatient = async (patientName, birthDate) => {
+            if (!isLoggedIn) {
+                appendOutput("Você precisa estar logado.", "error");
+                return;
+            }
+            savePatientButton.disabled = true;
+            savePatientFeedback.textContent = 'Salvando...';
+        
+            try {
+                const patientId = `${currentUser}_${patientName.replace(/\s+/g, '_').toLowerCase()}_${birthDate.replace(/\//g, '')}`;
+                const patientRef = doc(db, "patients", patientId);
+        
+                const newConsultation = {
+                    date: new Date(),
+                    anamnesis: { ...anamnesis },
+                    examsResults,
+                    axonEyeResults,
+                    axonEyeImages: [...temporaryImgurUploads],
+                };
+        
+                const docSnap = await getDoc(patientRef);
+        
+                if (docSnap.exists()) {
+                    const existingData = docSnap.data();
+                    const updatedConsultations = existingData.consultations ? [...existingData.consultations, newConsultation] : [newConsultation];
+                    await updateDoc(patientRef, {
+                        consultations: updatedConsultations,
+                        lastUpdated: new Date()
+                    });
+                    appendOutput(`Nova consulta salva para '${patientName}'.`, "success");
+                } else {
+                    await setDoc(patientRef, {
+                        patientName,
+                        birthDate,
+                        savedBy: currentUser,
+                        createdAt: new Date(),
+                        consultations: [newConsultation],
+                        lastUpdated: new Date()
+                    });
+                    appendOutput(`Paciente '${patientName}' e primeira consulta salvos com sucesso.`, "success");
+                }
+        
+                temporaryImgurUploads = [];
+                closeSaveModal();
+            } catch (e) {
+                appendOutput(`Erro ao salvar paciente: ${e.message}`, "error");
+                savePatientFeedback.textContent = `Erro: ${e.message}`;
+            } finally {
                 savePatientButton.disabled = false;
             }
         };
