@@ -1,12 +1,1460 @@
 <!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Axon A.I</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><link rel="manifest" href="/manifest.json"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" id="status-bar-style-meta" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Axon A.I"><link rel="apple-touch-icon" href="https://i.imgur.com/ZsfZEh2.png"><meta name="theme-color" id="theme-color-meta" content="#1a202c"><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><style>:root{--bg-gradient:linear-gradient(135deg, #1a202c, #2d3748);--glass-bg:rgba(28, 35, 49, 0.65);--glass-border:rgba(255, 255, 255, 0.18);--glass-shadow:0 8px 32px 0 rgba(0, 0, 0, 0.37);--text-color:#e2e8f0;--header-text-color:#f7fafc;--prompt-color:#63b3ed;--command-color:#90cdf4;--output-color:#e2e8f0;--error-color:#fc8181;--success-color:#68d391;--border-color:rgba(255, 255, 255, 0.1);--highlight-color:#4299e1;--highlight-text-color:#ffffff;--diagnosis-color:#b794f4;--conduct-color:#68d391;--altered-color:#faf089;--input-bg:rgba(0,0,0,0.2);--terminal-header-bg:rgba(0,0,0,0.2);--button-bg:rgba(255, 255, 255, 0.1);--button-hover-bg:rgba(255, 255, 255, 0.2)}body.light-mode{--bg-gradient:linear-gradient(135deg, #f0f9ff, #e0f2fe);--glass-bg:rgba(255, 255, 255, 0.5);--glass-border:rgba(0, 0, 0, 0.1);--glass-shadow:0 8px 32px 0 rgba(100, 100, 100, 0.2);--text-color:#2d3748;--header-text-color:#1a202c;--prompt-color:#2b6cb0;--command-color:#2c5282;--output-color:#2d3748;--error-color:#c53030;--success-color:#2f855a;--border-color:rgba(0, 0, 0, 0.1);--highlight-color:#3182ce;--highlight-text-color:#ffffff;--diagnosis-color:#805ad5;--conduct-color:#2f855a;--altered-color:#d69e2e;--input-bg:rgba(0,0,0,0.05);--terminal-header-bg:rgba(0,0,0,0.05);--button-bg:rgba(0, 0, 0, 0.05);--button-hover-bg:rgba(0, 0, 0, 0.1)}*{margin:0;padding:0;box-sizing:border-box;font-family:Consolas,'Courier New',monospace;touch-action:manipulation}body{background:var(--bg-gradient);background-attachment:fixed;color:var(--text-color);height:100vh;display:flex;flex-direction:column;overflow:hidden;transition:background .5s ease,color .5s ease}.header{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);padding:12px 20px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between;position:relative;height:65px;flex-shrink:0}.header-right{display:flex;align-items:center;gap:10px}.logout-button,.settings-button,.theme-toggle{color:var(--text-color);font-size:20px;cursor:pointer;transition:color .3s ease,transform .2s ease,background-color .3s ease;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%}.logout-button:hover,.settings-button:hover,.theme-toggle:hover{color:var(--highlight-color);background-color:var(--button-hover-bg);transform:scale(1.1)}.logout-button:hover{color:var(--error-color)}.app-title{font-size:22px;font-weight:700;color:var(--header-text-color);text-shadow:0 1px 2px rgba(0,0,0,.1)}.status-bar{display:flex;gap:15px;font-size:14px;background:var(--input-bg);padding:5px 15px;border-radius:20px;border:1px solid var(--border-color)}.status-item{display:flex;align-items:center;gap:5px}.status-indicator{width:10px;height:10px;border-radius:50%;background-color:var(--success-color);box-shadow:0 0 5px var(--success-color)}.status-off{background-color:var(--error-color);box-shadow:0 0 5px var(--error-color)}.container{display:flex;flex:1;padding:20px;gap:20px;height:calc(100vh - 65px - 40px);min-height:0}.terminal{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border:1px solid var(--glass-border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--glass-shadow);position:relative}.terminal-header{padding:8px 12px;background-color:var(--terminal-header-bg);border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between}.terminal-title{font-size:14px;font-weight:700}.terminal-actions{display:flex;gap:8px}.terminal-btn{width:12px;height:12px;border-radius:50%}.close-btn{background-color:#ff5f56}.minimize-btn{background-color:#ffbd2e}.maximize-btn{background-color:#27c93f}.terminal-content{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:10px}.terminal-content::-webkit-scrollbar{width:8px}.terminal-content::-webkit-scrollbar-track{background:0 0}.terminal-content::-webkit-scrollbar-thumb{background-color:var(--button-hover-bg);border-radius:10px;border:2px solid transparent;background-clip:content-box}.terminal-content::-webkit-scrollbar-thumb:hover{background-color:var(--highlight-color)}.interactive-terminal,.non-interactive-terminal{flex:1;min-width:300px;min-height:0}.input-line{display:flex;align-items:center;gap:8px}.prompt{color:var(--prompt-color);white-space:nowrap}.command-input{background:0 0;border:none;color:var(--command-color);width:100%;font-size:16px;caret-color:var(--command-color);outline:0;padding:2px 0}.command-output{color:var(--output-color);white-space:pre-wrap;line-height:1.5;text-align:left}.command{color:var(--command-color);font-weight:700}.error{color:var(--error-color)}.success{color:var(--success-color)}.info{color:var(--prompt-color)}.highlight{color:var(--highlight-color)}.blocked-msg{color:var(--altered-color)}.anamnesis-content{line-height:1.8;font-size:15px}.section-title{font-weight:700;margin-top:10px;color:var(--highlight-color)}.help-list{padding-left:0;margin:10px 0;line-height:1.8;list-style:none}.help-item{margin-bottom:5px}.diagnosis-item{color:var(--diagnosis-color);margin-bottom:8px;padding-left:15px;position:relative}.diagnosis-item:before{content:"•";position:absolute;left:0;color:var(--diagnosis-color)}.conduct-section{margin-bottom:15px}.conduct-title{color:var(--conduct-color);font-weight:700;margin-bottom:5px;border-bottom:1px solid var(--conduct-color);padding-bottom:3px;cursor:pointer;transition:color .2s,border-bottom-color .2s}.conduct-title:hover{color:var(--highlight-color);border-bottom-color:var(--highlight-color)}.conduct-item{margin-bottom:8px;padding-left:15px;position:relative}.conduct-item:before{content:"-";position:absolute;left:0}.receituario-item{white-space:pre;font-family:'Courier New',monospace;color:var(--output-color);margin-bottom:5px}.footer{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);padding:10px 20px;border-top:1px solid var(--glass-border);text-align:center;font-size:12px;color:var(--text-color);height:40px;flex-shrink:0}.terminal-logo-internal{position:absolute;top:15px;right:15px;height:calc(105.3px * 1.8 * .7 * 1.2);width:auto;opacity:.1;z-index:0}.monitor-view{text-transform:uppercase;height:100%}.monitor-view .axon-eye-title,.monitor-view .conduct-title,.monitor-view .section-title{text-transform:none}.camera-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:transparent;z-index:100;flex-direction:column;justify-content:flex-start;align-items:center;padding:0}.camera-container{display:flex;flex-direction:column;background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:16px;position:relative;z-index:1;padding:0;gap:10px;overflow:hidden;width:100%;height:100%;max-width:none;max-height:none}.camera-video-wrapper{position:relative;width:100%;padding-bottom:177.77%;background-color:#000;border-radius:10px;overflow:hidden;flex-shrink:0}.camera-video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}.camera-controls{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;gap:10px;justify-content:center;z-index:2;width:90%}.camera-button{background-color:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.2);padding:10px 15px;border-radius:50%;cursor:pointer;font-size:18px;transition:background-color .3s ease,transform .2s ease;display:flex;align-items:center;justify-content:center;width:50px;height:50px;flex-shrink:0;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.camera-button:hover{background-color:var(--highlight-color);transform:scale(1.05)}.camera-button.disabled{background-color:#555;cursor:not-allowed;opacity:.7}.album-button,.camera-action-buttons{position:absolute;top:10px;display:flex;gap:5px;z-index:10;background-color:rgba(0,0,0,.4);border:1px solid var(--border-color);border-radius:20px;padding:5px 10px;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.album-button{left:10px}.camera-action-buttons{right:10px}.camera-switch-button,.flashlight-button{background-color:transparent;color:#fff;border:none;cursor:pointer;font-size:12px;transition:color .2s}.album-button:hover,.camera-switch-button:hover,.flashlight-button:hover{color:var(--highlight-color)}.flashlight-button.active{color:var(--highlight-color)}.album-count{background-color:var(--highlight-color);color:var(--highlight-text-color);border-radius:50%;padding:2px 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center}.monitor-toggle-buttons{display:flex;gap:5px;margin-left:auto;margin-right:10px}.monitor-toggle-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:5px 10px;border-radius:20px;cursor:pointer;font-size:12px;transition:all .3s ease;display:flex;align-items:center;justify-content:center;gap:5px}.monitor-toggle-button:hover{background-color:var(--button-hover-bg)}.monitor-toggle-button.active{background-color:var(--highlight-color);color:var(--highlight-text-color);border-color:transparent}#monitor-content-wrapper{position:relative}.monitor-copy-btn{position:absolute;top:50px;right:25px;background:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:5px 10px;border-radius:50%;width:35px;height:35px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .3s ease;z-index:5}.monitor-copy-btn:hover{background-color:var(--highlight-color);color:var(--highlight-text-color)}.fullscreen-modal{display:none;position:fixed;z-index:2000;padding-top:60px;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.9)}.modal-content{margin:auto;display:block;width:80%;max-width:700px;border-radius:10px}#caption,.modal-content{animation-name:zoom;animation-duration:.6s}@keyframes zoom{from{transform:scale(0)}to{transform:scale(1)}}.modal-close{position:absolute;top:15px;right:35px;color:#f1f1f1;font-size:40px;font-weight:700;transition:.3s}.modal-close:focus,.modal-close:hover{color:#bbb;text-decoration:none;cursor:pointer}.output .altered-text{color:var(--altered-color);font-weight:700;margin-left:10px}.album-modal,.app-modal,.patient-details-modal,.patient-list-modal{display:none;position:fixed;z-index:105;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.5);justify-content:center;align-items:center}.album-modal-content,.app-modal-content,.patient-details-content,.patient-list-content{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);margin:auto;padding:25px;border:1px solid var(--glass-border);border-radius:16px;width:90%;max-width:500px;box-shadow:var(--glass-shadow);position:relative;display:flex;flex-direction:column;max-height:90vh}.album-modal-content,.patient-details-content,.patient-list-content{max-width:800px}.album-modal-header,.app-modal-header,.patient-details-header,.patient-list-header{display:flex;align-items:center;border-bottom:1px solid var(--border-color);padding-bottom:15px;margin-bottom:20px}.album-modal-title,.app-modal-title,.patient-details-title,.patient-list-title{font-size:20px;font-weight:700;color:var(--prompt-color)}.album-modal-close,.app-modal-close,.patient-details-close,.patient-list-close{color:var(--text-color);font-size:28px;font-weight:700;cursor:pointer;transition:.3s;position:absolute;top:15px;right:20px}.album-modal-close:hover,.app-modal-close:hover,.patient-details-close:hover,.patient-list-close:hover{color:var(--highlight-color)}.album-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:15px;overflow-y:auto;padding-right:5px}.album-item{position:relative;width:100%;padding-bottom:100%;overflow:hidden;border:1px solid var(--border-color);border-radius:10px;cursor:pointer;transition:transform .2s ease}.album-item:hover{transform:scale(1.03)}.album-image{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}.album-delete-button{position:absolute;top:5px;right:5px;background-color:rgba(255,0,0,.7);color:#fff;border:none;border-radius:50%;width:24px;height:24px;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;transition:background-color .2s}.album-delete-button:hover{background-color:rgba(255,0,0,1)}.axon-eye-title{color:var(--error-color);font-weight:700;margin-top:10px;margin-bottom:5px;border-bottom:1px solid var(--error-color);padding-bottom:3px}.axon-eye-image-preview{max-width:100%;height:auto;margin-top:15px;border:1px solid var(--border-color);border-radius:10px}.patient-list{display:flex;flex-direction:column;gap:10px;overflow-y:auto;max-height:400px}.patient-item{padding:12px;background-color:var(--button-bg);border:1px solid var(--border-color);border-radius:10px;cursor:pointer;transition:background-color: .2s}.patient-item:hover{background-color:var(--button-hover-bg)}.patient-details-body{overflow-y:auto;padding-right:5px}.patient-details-section{margin-bottom:20px}.patient-details-section-title{font-weight:700;color:var(--highlight-color);margin-bottom:10px;border-bottom:1px solid var(--border-color);padding-bottom:5px}.patient-images-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:10px}.patient-image-item{position:relative;width:100%;padding-bottom:100%;overflow:hidden;border:1px solid var(--border-color);border-radius:10px;cursor:pointer}.patient-image{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}.consultation-item{background-color:var(--input-bg);border:1px solid var(--border-color);border-radius:10px;margin-bottom:10px;overflow:hidden}.consultation-header{padding:10px 15px;cursor:pointer;font-weight:700;transition:background-color .2s}.consultation-header:hover{background-color:var(--button-hover-bg)}.consultation-body{padding:15px;border-top:1px solid var(--border-color);background-color:transparent}.patient-actions{display:flex;gap:10px;margin-top:10px}.patient-action-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;transition:all .3s ease;display:flex;align-items:center;justify-content:center;gap:5px;flex:1}.patient-action-button.disabled{background-color:var(--input-bg);color:var(--text-color);cursor:not-allowed;opacity:.5}.patient-action-button:not(.disabled):hover{background-color:var(--button-hover-bg)}.patient-action-button.delete:not(.disabled){color:var(--error-color)}.patient-action-button.delete:not(.disabled):hover{background-color:var(--error-color);color:#fff}.patient-action-button.pdf:not(.disabled){color:var(--success-color)}.patient-action-button.pdf:not(.disabled):hover{background-color:var(--success-color);color:#fff}.patient-action-button.details:not(.disabled){color:var(--prompt-color)}.patient-action-button.details:not(.disabled):hover{background-color:var(--prompt-color);color:#fff}.patient-search-container{margin-bottom:15px}.patient-search-input{width:100%;padding:12px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:14px}.patient-search-input:focus{outline:0;border-color:var(--highlight-color)}.terminal-footer{padding:8px 15px;border-top:1px solid var(--border-color);background-color:var(--terminal-header-bg)}.action-buttons-container{display:flex;justify-content:space-around;margin-bottom:10px}.action-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all .2s,transform .1s}.action-button:focus,.action-button:hover{background-color:var(--highlight-color);color:var(--highlight-text-color);outline:0}.action-button:active{transform:scale(.95)}.action-button.active{background-color:var(--success-color);color:var(--highlight-text-color);box-shadow:0 0 8px var(--success-color)}.action-button.blocked-ui{opacity:.4;cursor:not-allowed}.app-modal-body p{margin-bottom:20px;color:var(--text-color)}.app-modal-input{width:100%;padding:12px;margin-bottom:15px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:16px}.app-modal-input:focus{outline:0;border-color:var(--highlight-color)}.app-modal-button{width:100%;padding:12px;background-color:var(--highlight-color);color:var(--highlight-text-color);border:none;border-radius:8px;cursor:pointer;font-size:16px;font-weight:700;transition:background-color .3s ease}body.light-mode .app-modal-button:hover{background-color:#2b6cb0}body:not(.light-mode) .app-modal-button:hover{background-color:#63b3ed}.app-modal-button:disabled{background-color:#555;cursor:not-allowed}.app-modal-feedback{margin-top:15px;color:var(--error-color);min-height:20px}.admin-section{margin-bottom:20px;text-align:left;border:1px solid var(--border-color);padding:15px;border-radius:10px}.admin-section-title{color:var(--prompt-color);font-weight:700;margin-bottom:10px;font-size:14px;text-transform:uppercase}.admin-list{display:flex;flex-direction:column;gap:8px}.admin-list-item{display:flex;gap:8px;align-items:center}.admin-input-group{flex:1;display:flex;gap:5px}.admin-input{flex:1;padding:8px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:12px}.admin-action-btn,.admin-btn-add,.admin-btn-remove{border-radius:8px}#admin-panel-modal .app-modal-content{max-width:900px;width:95%;height:85vh;display:flex;flex-direction:column}.admin-tab-content{flex:1;overflow-y:auto;padding-bottom:15px;display:flex;flex-direction:column}.admin-users-container{display:flex;flex:1;min-height:0;gap:20px;text-align:left;overflow:hidden}.admin-users-list-section{flex:1;border-right:1px solid var(--border-color);display:flex;flex-direction:column;padding-right:10px}.admin-users-details-section{flex:2;overflow-y:auto;padding-left:10px}.user-list-scroll{overflow-y:auto;flex:1}.user-list-item{padding:10px;cursor:pointer;border-bottom:1px solid var(--border-color);transition:background-color .2s;display:flex;justify-content:space-between;align-items:center;border-radius:8px;margin-bottom:5px}.user-list-item:hover{background-color:var(--button-hover-bg)}.user-list-item.selected{background-color:rgba(66,153,225,.2);border-left:3px solid var(--highlight-color)}.user-detail-header{margin-bottom:15px;border-bottom:1px solid var(--border-color);padding-bottom:10px}.user-detail-row{margin-bottom:10px}.user-detail-label{color:var(--prompt-color);font-weight:700;font-size:12px;display:block;margin-bottom:2px}.user-detail-value{color:var(--text-color);font-size:14px}.admin-user-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:10px;margin-top:10px}.admin-user-img{width:100%;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border-color);transition:transform .2s}.admin-user-img:hover{transform:scale(1.05)}.usage-stats-box{background-color:var(--input-bg);border:1px solid var(--border-color);padding:10px;border-radius:10px;margin-top:10px}.admin-tabs{display:flex;border-bottom:1px solid var(--border-color);margin-bottom:15px}.admin-tab-btn{flex:1;background:0 0;border:none;color:var(--text-color);padding:10px;cursor:pointer;border-bottom:3px solid transparent;font-size:14px;transition:all .3s ease}.admin-tab-btn:hover{background-color:var(--button-hover-bg)}.admin-tab-btn.active{border-bottom-color:var(--highlight-color);color:var(--highlight-color);font-weight:700}.radio-group{display:flex;gap:15px;margin-bottom:10px;flex-wrap:wrap}.radio-label{display:flex;align-items:center;gap:5px;cursor:pointer}.ai-processing-animation{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--prompt-color)}.scanner-animation{width:100px;height:100px;position:relative;margin-bottom:15px}.scanner-animation .brain-icon{width:100%;height:100%;font-size:80px;line-height:100px;text-align:center;opacity:.5}.scanner-line{position:absolute;top:0;left:0;width:100%;height:3px;background:var(--highlight-color);box-shadow:0 0 10px var(--highlight-color);border-radius:2px;animation:scan 2.5s infinite linear}@keyframes scan{0%{top:0}50%{top:100%}100%{top:0}}.prescription-template-item{background-color:var(--input-bg);border:1px solid var(--border-color);border-radius:8px;margin-bottom:15px;padding:15px}.prescription-template-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.prescription-template-title{font-weight:700;color:var(--prompt-color)}.prescription-template-copy-btn{background-color:var(--button-bg);border:1px solid var(--border-color);color:var(--text-color);padding:5px 10px;border-radius:5px;cursor:pointer;font-size:12px;transition:all .2s}.prescription-template-copy-btn:hover{background-color:var(--highlight-color);color:var(--highlight-text-color)}.prescription-template-text{white-space:pre-wrap;font-family:'Courier New',monospace;font-size:14px;color:var(--output-color);background:rgba(0,0,0,.1);padding:10px;border-radius:5px}.mobile-2-0-container{flex:1;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:20px;gap:20px;height:calc(100vh - 65px - 40px)}.mobile-header{text-align:center;margin-bottom:10px}.mobile-header h2{font-size:24px;color:var(--header-text-color)}.mobile-header p{font-size:14px;opacity:.8}.mobile-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;width:100%;max-width:450px}.mobile-btn{background:var(--glass-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:18px;padding:15px;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-color);text-decoration:none;text-align:center;box-shadow:var(--glass-shadow);transition:transform .2s ease,background-color .3s ease}.mobile-btn:active{transform:scale(.96);background-color:var(--button-hover-bg)}.mobile-btn img{height:76px;width:76px;object-fit:contain;margin-bottom:5px}.mobile-btn span{font-size:14px;font-weight:700}.info-banner{width:100%;max-width:450px;padding:0 10px;margin-bottom:10px}.chat-bubble-info{background:var(--glass-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:12px;padding:12px 15px;font-size:13px;line-height:1.6;text-align:center;position:relative;box-shadow:var(--glass-shadow);animation:fadeIn .5s ease-out}.chat-bubble-info::after{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid var(--glass-border)}.chat-bubble-info .highlight-link{color:var(--highlight-color);font-weight:700;text-decoration:none;background-color:var(--button-bg);padding:2px 6px;border-radius:5px;transition:background-color .2s}.chat-bubble-info .highlight-link:hover{background-color:var(--button-hover-bg);text-decoration:underline}.mobile-connection-status{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;margin-top:auto;padding-bottom:10px;font-size:12px;color:var(--text-color);opacity:.7;cursor:pointer}.mobile-connection-status .status-dot{width:10px;height:10px;background-color:var(--error-color);border-radius:50%;box-shadow:0 0 6px var(--error-color);transition:background-color .5s ease,box-shadow .5s ease}.mobile-connection-status .status-dot.status-on{background-color:var(--success-color);box-shadow:0 0 6px var(--success-color)}.chatbox-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-gradient);z-index:1000;flex-direction:column}.chatbox-header{display:flex;align-items:center;justify-content:center;position:relative;padding:12px 20px;background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border-bottom:1px solid var(--glass-border);height:65px;flex-shrink:0}.chatbox-title{font-size:20px;font-weight:700;color:var(--header-text-color)}.chatbox-close-btn{font-size:24px;cursor:pointer;color:var(--text-color);position:absolute;right:20px}.chatbox-new-chat-btn{font-size:22px;cursor:pointer;color:var(--text-color);position:absolute;left:20px}.chatbox-messages{flex:1;padding:15px;overflow-y:auto;display:flex;flex-direction:column;gap:15px;background-image:radial-gradient(var(--border-color) 1px,transparent 1px);background-size:15px 15px}.chat-message{display:flex;align-items:flex-start;gap:10px;max-width:85%}.chat-message.user{align-self:flex-end;flex-direction:row-reverse;animation:slideInFromRight .4s ease-out}@keyframes slideInFromRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}.chat-message.model{align-self:flex-start;animation:fadeIn .5s ease}.chat-avatar{width:36px;height:36px;border-radius:50%;background-color:var(--input-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}.chat-message.user .chat-avatar{background-color:var(--highlight-color);color:var(--highlight-text-color)}.message-bubble{padding:12px 18px;border-radius:20px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;box-shadow:0 2px 4px rgba(0,0,0,.1)}.message-bubble b{font-weight:600}.chat-message.user .message-bubble{background-color:var(--highlight-color);color:var(--highlight-text-color);border-bottom-right-radius:5px}.chat-message.model .message-bubble{background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-color);border-bottom-left-radius:5px}.message-bubble.typing{display:flex;align-items:center;gap:5px;padding:15px 18px}.message-bubble.typing .dot{width:8px;height:8px;border-radius:50%;background-color:var(--text-color);opacity:.7;animation:typing-blink 1.4s infinite both}.message-bubble.typing .dot:nth-child(2){animation-delay:.2s}.message-bubble.typing .dot:nth-child(3){animation-delay:.4s}@keyframes typing-blink{0%{opacity:.2}20%{opacity:1}100%{opacity:.2}}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.chatbox-input-area{padding:10px 15px;background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border-top:1px solid var(--border-color);display:flex;flex-direction:column;gap:10px}.chat-input-row{display:flex;width:100%;gap:10px;align-items:center}.chatbox-input{flex:1;background:var(--input-bg);border:1px solid var(--border-color);border-radius:20px;padding:12px 15px;color:var(--text-color);font-size:16px}.chatbox-input:focus{outline:0;border-color:var(--highlight-color)}.chatbox-send-btn,.chatbox-upload-btn{background-color:var(--highlight-color);color:var(--highlight-text-color);border:none;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:transform .2s;flex-shrink:0}.chatbox-upload-btn{background-color:var(--button-bg);color:var(--text-color)}.chatbox-send-btn:active,.chatbox-upload-btn:active{transform:scale(.9)}.chat-image-previews{display:flex;gap:10px;overflow-x:auto;width:100%;padding:5px 0}.chat-preview-item{position:relative;flex-shrink:0}.chat-preview-item img{width:60px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color)}.chat-preview-delete{position:absolute;top:-5px;right:-5px;width:20px;height:20px;background-color:rgba(255,0,0,.8);color:#fff;border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer}.message-bubble .chat-image-attachment{width:100%;max-width:200px;height:auto;border-radius:10px;margin-top:10px;display:block}.confirm-modal{display:none;position:fixed;z-index:3000;left:0;top:0;width:100%;height:100%;background-color:rgba(0,0,0,.6);justify-content:center;align-items:center}.confirm-modal-content{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:30px;border:1px solid var(--glass-border);border-radius:16px;width:90%;max-width:400px;box-shadow:var(--glass-shadow);text-align:center}#confirm-modal-text{margin-bottom:25px;font-size:16px;line-height:1.6}.confirm-modal-buttons{display:flex;gap:15px;justify-content:center}.confirm-btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;transition:background-color .2s,transform .1s}.confirm-btn:active{transform:scale(.97)}#confirm-btn-yes{background-color:var(--error-color);color:#fff}#confirm-btn-no{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color)}.mobile-loader{display:none;position:fixed;z-index:2500;top:0;left:0;width:100%;height:100%;background:var(--bg-gradient);justify-content:center;align-items:center}.toggle-switch{position:relative;display:inline-block;width:50px;height:28px}.toggle-switch input{opacity:0;width:0;height:0}.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:var(--button-bg);transition:.4s;border-radius:28px;border:1px solid var(--border-color)}.slider:before{position:absolute;content:"";height:20px;width:20px;left:4px;bottom:3px;background-color:#fff;transition:.4s;border-radius:50%}input:checked+.slider{background-color:var(--highlight-color)}input:checked+.slider:before{transform:translateX(22px)}@media (max-width:768px){.container{flex-direction:column-reverse;padding:10px;gap:10px}.monitor-toggle-button span,.status-bar span{display:none}.monitor-toggle-button{padding:5px 8px;font-size:16px;width:auto;min-width:35px}.status-bar{gap:10px;margin-right:0}.status-item .status-indicator{width:8px;height:8px}.logout-button,.settings-button,.theme-toggle{font-size:18px}.camera-modal.fullscreen-mobile{position:fixed;top:0;bottom:0;left:0;width:100%;height:100%;z-index:100;border-radius:0}.camera-modal.fullscreen-mobile .camera-container{border-radius:0;border:none}.radio-group{flex-direction:column;align-items:flex-start;gap:10px}.admin-users-container{flex-direction:column}.admin-users-list-section{flex:0 0 45%;min-height:220px;border-right:none;border-bottom:1px solid var(--border-color);padding-bottom:15px;padding-right:0}.admin-users-details-section{flex:1;min-height:0;padding-left:0;padding-top:15px}}@media (min-width:769px){.camera-video-wrapper{padding-bottom:56.25%}}</style></head><body><div class="header"><div class="app-title">AXON A.I</div><div class="header-right"><div class="status-bar"><div class="status-item"><div class="status-indicator" id="api-status"></div><span class="status-text-api">API</span></div><div class="status-item"><div class="status-indicator status-off" id="mic-status"></div><span class="status-text-mic">Microfone</span></div><div class="status-item"><div class="status-indicator status-off" id="camera-status"></div><span class="status-text-cam">Câmera</span></div></div><div id="theme-toggle" class="theme-toggle" title="Mudar Tema"><i class="fas fa-sun"></i></div><div id="settings-button" class="settings-button" title="Configurações"><i class="fas fa-cog"></i></div><div id="logout-button" class="logout-button" title="Sair"><i class="fas fa-sign-out-alt"></i></div></div></div><div class="container"><div class="terminal interactive-terminal"><div class="terminal-header"><div class="terminal-title">Terminal Interativo</div><div class="terminal-actions"><div class="terminal-btn close-btn"></div><div class="terminal-btn minimize-btn"></div><div class="terminal-btn maximize-btn"></div></div></div><div class="terminal-content" id="interactive-output"><img src="axon.png" alt="Axon Logo Terminal" class="terminal-logo-internal"><div id="initial-messages" style="position:relative;z-index:1"><pre class="info">
  █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
 ██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
+███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
+██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
+██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                    </pre><span class="info">Axon - Assistente Médico v1.0</span><br><span class="info">Aguardando autenticação...</span><br><br></div></div><div class="terminal-footer"><div class="action-buttons-container"><button id="btn-exames" class="action-button" title="Analisar Exames (/exames)"><i class="fas fa-file-medical-alt"></i></button><button id="btn-see" class="action-button" title="Análise Visual Axon Eye (/see)"><i class="fas fa-eye"></i></button><button id="btn-hd" class="action-button" title="Gerar Hipóteses Diagnósticas (/hd)"><i class="fas fa-lightbulb"></i></button><button id="btn-cd" class="action-button" title="Gerar Conduta Médica (/cd)"><i class="fas fa-pills"></i></button><button id="btn-records" class="action-button" title="Prontuários"><i class="fas fa-book-medical"></i></button><button id="btn-clear" class="action-button" title="Limpar Sessão (/clear)"><i class="fas fa-eraser"></i></button><button id="btn-mic" class="action-button" title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button></div><div class="input-line"><span class="prompt">></span><input type="text" class="command-input" id="command-input" autocomplete="off" autofocus></div></div></div><div class="terminal non-interactive-terminal"><div class="terminal-header"><div class="terminal-title">Monitor</div><div class="monitor-toggle-buttons"><button id="toggle-anamnesis" class="monitor-toggle-button active"><i class="fas fa-notes-medical"></i><span>Anamnese</span></button><button id="toggle-exams" class="monitor-toggle-button"><i class="fas fa-file-medical-alt"></i><span>Exames</span></button><button id="toggle-axon-eye" class="monitor-toggle-button"><i class="fas fa-eye"></i><span>Axon Eye</span></button></div><div class="terminal-actions"><div class="terminal-btn close-btn"></div><div class="terminal-btn minimize-btn"></div><div class="terminal-btn maximize-btn"></div></div></div><button id="monitor-copy-btn" class="monitor-copy-btn" title="Copiar Conteúdo"><i class="fas fa-copy"></i></button><div class="terminal-content" id="monitor-content-wrapper"><div id="anamnesis-preview" class="monitor-view"><div class="info">Aguardando início da anamnese...</div></div><div id="exams-results-preview" class="monitor-view" style="display:none"><div class="info">Nenhum exame analisado ainda.</div></div><div id="axon-eye-results-preview" class="monitor-view" style="display:none"><div class="info">Nenhuma análise visual feita ainda.</div></div></div></div></div><div id="mobile-2-0-container" class="mobile-2-0-container" style="display:none"><div class="mobile-header"><h2 id="mobile-welcome-title">Bem-vindo!</h2><p>Selecione uma opção para começar.</p></div><div class="info-banner"><div class="chat-bubble-info"><i class="fas fa-info-circle" style="margin-right:8px;color:var(--prompt-color)"></i><span id="info-banner-content">Para acesso completo, abra o Axon Web em seu computador em<a href="https://funortehub.github.io/axon" target="_blank" class="highlight-link">funortehub.github.io/axon</a>ou insira um dispositivo AXON USB.</span></div></div><div class="mobile-grid"><button id="mobile-btn-exames" class="mobile-btn"><img src="btn1.PNG" alt="Analisar Exames"><span>Analisar Exames</span></button><button id="mobile-btn-see" class="mobile-btn"><img src="btn2.PNG" alt="Análise Axon Eye"><span>Análise Axon Eye</span></button><button id="mobile-btn-records" class="mobile-btn"><img src="btn3.PNG" alt="Prontuários"><span>Prontuários</span></button><button id="mobile-btn-chat" class="mobile-btn"><img src="btn4.PNG" alt="Axon AI Chat"><span>Axon AI Chat</span></button></div><div class="mobile-connection-status"><div style="display: flex; align-items: center; justify-content: center; gap: 8px;"><div class="status-dot"></div><span>Nenhum desktop conectado</span></div><small style="font-size: 10px; opacity: 0.8; margin-top: 5px; max-width: 220px; line-height: 1.3;">^Clique aqui para fazer logout em outros desktops conectados</small></div></div><div class="footer"><span>AXON | Sistema médico inteligente desenvolvido por Ian Bastos</span></div><div id="camera-modal" class="camera-modal"><div class="camera-container"><div class="terminal-header"><div class="terminal-title" id="camera-modal-title">Câmera de Exames</div><div class="terminal-actions"><div class="terminal-btn close-btn" id="camera-close-btn"></div></div></div><div class="terminal-content" style="padding:10px"><div class="camera-video-wrapper"><video id="camera-video" class="camera-video" autoplay playsinline muted></video><div class="camera-action-buttons"><button id="flashlight-button" class="flashlight-button" style="display:none"><i class="fas fa-lightbulb"></i>Lanterna</button><button id="camera-switch-button" class="camera-switch-button" style="display:none"><i class="fas fa-sync-alt"></i>Trocar Câmera</button></div><div id="album-button" class="album-button" style="display:none"><i class="fas fa-images"></i>Álbum<span id="album-count" class="album-count">0</span></div><div class="camera-controls"><button id="capture-button" class="camera-button" title="Capturar Foto"><i class="fas fa-camera"></i></button><input type="file" id="file-input" accept="image/*" multiple="multiple" style="display:none"><button id="upload-button" class="camera-button" title="Carregar Arquivo"><i class="fas fa-upload"></i></button><button id="send-exams-button" class="camera-button disabled" title="Enviar Exames"><i class="fas fa-paper-plane"></i></button><button id="send-axon-eye-button" class="camera-button disabled" title="Analisar com Axon Eye" style="display:none"><i class="fas fa-eye"></i></button><button id="cancel-camera-button" class="camera-button" title="Cancelar"><i class="fas fa-times"></i></button></div></div><canvas id="camera-canvas" style="display:none"></canvas></div></div></div><div id="fullscreen-modal" class="fullscreen-modal"><span class="modal-close">&times;</span><img class="modal-content" id="modal-image"></div><div id="album-modal" class="album-modal"><div class="album-modal-content"><span class="album-modal-close">&times;</span><div class="album-modal-header"><div class="album-modal-title">Álbum de Exames</div></div><div id="album-grid" class="album-grid"></div></div></div><div id="patient-list-modal" class="patient-list-modal"><div class="patient-list-content"><span class="patient-list-close">&times;</span><div class="patient-list-header"><div class="patient-list-title">Pacientes Salvos</div></div><div class="patient-search-container"><input type="text" id="patient-search-input" class="patient-search-input" placeholder="Pesquisar paciente..."></div><div id="patient-list" class="patient-list"></div><div class="patient-list-footer" style="margin-top:15px;padding-top:15px;border-top:1px solid var(--border-color)"><button id="btn-save-from-list" class="app-modal-button" style="width:100%">Salvar Consulta Atual</button></div></div></div><div id="patient-details-modal" class="patient-details-modal"><div class="patient-details-content"><span class="patient-details-close">&times;</span><div class="patient-details-header"><div class="patient-details-title" id="patient-details-title">Detalhes do Paciente</div></div><div id="patient-details-body" class="patient-details-body"></div></div></div><div id="login-modal" class="app-modal"><div class="app-modal-content"><div class="app-modal-header"><h2 class="app-modal-title">AXON A.I - Login</h2></div><div class="app-modal-body"><p>Por favor, faça login para continuar.</p><input type="text" id="login-modal-user" placeholder="Usuário" class="app-modal-input" autocomplete="username"> <input type="password" id="login-modal-pass" placeholder="Senha" class="app-modal-input" autocomplete="current-password"><button id="login-modal-button" class="app-modal-button">Entrar</button><div id="login-modal-feedback" class="app-modal-feedback"></div></div></div></div><div id="save-patient-modal" class="app-modal"><div class="app-modal-content"><span class="app-modal-close">&times;</span><div class="app-modal-header"><h2 class="app-modal-title">Salvar Paciente</h2></div><div class="app-modal-body"><p>Insira os dados do paciente para salvar a sessão atual.</p><input type="text" id="save-patient-name" placeholder="Nome Completo do Paciente" class="app-modal-input"> <input type="text" id="save-patient-dob" placeholder="Data de Nascimento (DD/MM/AAAA)" class="app-modal-input"><button id="save-patient-button" class="app-modal-button">Salvar</button><div id="save-patient-feedback" class="app-modal-feedback"></div></div></div></div><div id="admin-auth-modal" class="app-modal"><div class="app-modal-content"><span class="app-modal-close">&times;</span><div class="app-modal-header"><h2 class="app-modal-title">Administração</h2></div><div class="app-modal-body"><p>Insira a senha de administrador.</p><input type="password" id="admin-auth-pass" placeholder="Senha" class="app-modal-input"><button id="admin-auth-button" class="app-modal-button">Acessar</button><div id="admin-auth-feedback" class="app-modal-feedback"></div></div></div></div><div id="admin-panel-modal" class="app-modal"><div class="app-modal-content"><span class="app-modal-close">&times;</span><div class="app-modal-header"><h2 class="app-modal-title">Painel Administrativo</h2></div><div class="admin-tabs"><button class="admin-tab-btn active" data-tab="users">Usuários</button><button class="admin-tab-btn" data-tab="api">API</button><button class="admin-tab-btn" data-tab="debug">Debug</button></div><div id="tab-users" class="admin-tab-content"><div class="patient-search-container" style="margin:0 0 15px 0"><input type="text" id="admin-user-search" class="patient-search-input" placeholder="Buscar usuário..."></div><div class="admin-users-container"><div class="admin-users-list-section"><div class="admin-section-title" style="margin-top:0;margin-bottom:10px;flex-shrink:0; display: flex; justify-content: space-between; align-items: center;"><span>Usuários (Rank de Uso)</span><div style="display:flex; gap: 5px;"><button id="disconnect-all-users-btn" class="patient-action-button" style="flex:0;padding: 4px 8px;font-size:12px;color: var(--error-color);"><i class="fas fa-power-off"></i> Desconectar Todos</button><button id="toggle-create-user-form" class="patient-action-button details" style="flex:0;padding: 4px 8px;font-size:12px;"><i class="fas fa-plus"></i> Novo</button></div></div><div id="admin-users-list" class="user-list-scroll"><div class="info">Carregando...</div></div></div><div class="admin-users-details-section" id="admin-user-details"><div class="info" style="margin-top:20px">Selecione um usuário para ver detalhes.</div></div></div><div id="create-user-form-container" class="admin-section" style="margin-top: 15px; padding: 10px 15px; flex-shrink: 0; display: none;"><div class="admin-section-title" style="display:flex; justify-content:space-between; align-items:center;"><span>Criar Novo Usuário</span><i id="close-create-user-form" class="fas fa-times" style="cursor:pointer; font-size:16px;"></i></div><div style="display: flex; gap: 10px; margin-bottom: 10px;"><input type="text" id="admin-new-user" class="admin-input" placeholder="Novo nome de usuário" style="flex: 1;"> <input type="text" id="admin-new-pass" class="admin-input" placeholder="Nova senha" style="flex: 1;"></div><button class="app-modal-button" onclick="window.createUserFromPanel()">Criar Usuário</button><div id="admin-create-user-feedback" class="app-modal-feedback" style="text-align:left;margin-top:10px;min-height:15px;font-size:12px"></div></div></div><div id="tab-api" class="admin-tab-content" style="display:none"><div id="admin-settings-body"></div></div><div id="tab-debug" class="admin-tab-content" style="display:none"><div id="admin-debug-body"></div></div></div></div><div id="prescription-helper-modal" class="app-modal"><div class="app-modal-content" style="max-width:600px"><span class="app-modal-close">&times;</span><div class="app-modal-header"><h2 class="app-modal-title" id="prescription-helper-title">Assistente de Prescrição</h2></div><div class="app-modal-body" id="prescription-helper-body" style="text-align:left;overflow-y:auto"></div></div></div><div id="chatbox-modal" class="chatbox-modal"><div class="chatbox-header"><i id="chatbox-new-chat-btn" class="fas fa-plus-circle chatbox-new-chat-btn" title="Nova Conversa"></i><span class="chatbox-title">Axon AI Chat</span><i id="chatbox-close-btn" class="fas fa-times chatbox-close-btn"></i></div><div class="chatbox-messages" id="chatbox-messages"></div><div class="chatbox-input-area"><div id="chat-image-previews" class="chat-image-previews"></div><div class="chat-input-row"><input type="file" id="chat-file-input" accept="image/*" multiple="multiple" style="display:none"><button id="chatbox-upload-btn" class="chatbox-upload-btn"><i class="fas fa-camera"></i></button><input type="text" id="chatbox-input" class="chatbox-input" placeholder="Faça uma pergunta..."><button id="chatbox-send-btn" class="chatbox-send-btn"><i class="fas fa-paper-plane"></i></button></div></div></div><div id="custom-confirm-modal" class="confirm-modal"><div class="confirm-modal-content"><p id="confirm-modal-text"></p><div class="confirm-modal-buttons"><button id="confirm-btn-no" class="confirm-btn">Cancelar</button><button id="confirm-btn-yes" class="confirm-btn">Confirmar</button></div></div></div><div id="mobile-analysis-loader" class="mobile-loader"><div class="ai-processing-animation"><div class="scanner-animation"><div class="brain-icon"><i class="fas fa-brain"></i></div><div class="scanner-line"></div></div><span>Analisando Imagens...</span></div></div><script type="module">import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, where, increment, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA4bis9CVQkl1eJDfezsvUKTx1X_kFVT4M",
+            authDomain: "axon-91d0b.firebaseapp.com",
+            projectId: "axon-91d0b",
+            storageBucket: "axon-91d0b.firebasestorage.app",
+            messagingSenderId: "701115983749",
+            appId: "1:701115983749:web:9a57928b678918ffbb86ec"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const commandInput = document.getElementById('command-input');
+        const interactiveOutput = document.getElementById('interactive-output');
+        const anamnesisPreview = document.getElementById('anamnesis-preview');
+        const examsResultsPreview = document.getElementById('exams-results-preview');
+        const axonEyeResultsPreview = document.getElementById('axon-eye-results-preview');
+        const apiStatus = document.getElementById('api-status');
+        const micStatus = document.getElementById('mic-status');
+        const cameraStatus = document.getElementById('camera-status');
+        const initialMessagesContainer = document.getElementById('initial-messages');
+        const monitorCopyBtn = document.getElementById('monitor-copy-btn');
+        const logoutButton = document.getElementById('logout-button');
+        const settingsButton = document.getElementById('settings-button');
+        const themeToggleButton = document.getElementById('theme-toggle');
+        
+        const cameraModal = document.getElementById('camera-modal');
+        const cameraModalTitle = document.getElementById('camera-modal-title');
+        const cameraVideo = document.getElementById('camera-video');
+        const cameraCanvas = document.getElementById('camera-canvas');
+        const captureButton = document.getElementById('capture-button');
+        const fileInput = document.getElementById('file-input');
+        const uploadButton = document.getElementById('upload-button');
+        const sendExamsButton = document.getElementById('send-exams-button');
+        const sendAxonEyeButton = document.getElementById('send-axon-eye-button');
+        const cancelCameraButton = document.getElementById('cancel-camera-button');
+        const cameraSwitchButton = document.getElementById('camera-switch-button');
+        const flashlightButton = document.getElementById('flashlight-button');
+        const cameraCloseBtn = document.getElementById('camera-close-btn');
+
+        const toggleAnamnesisButton = document.getElementById('toggle-anamnesis');
+        const toggleExamsButton = document.getElementById('toggle-exams');
+        const toggleAxonEyeButton = document.getElementById('toggle-axon-eye');
+
+        const fullscreenModal = document.getElementById('fullscreen-modal');
+        const modalImage = document.getElementById('modal-image');
+        const modalClose = document.getElementsByClassName('modal-close')[0];
+
+        const albumButton = document.getElementById('album-button');
+        const albumCount = document.getElementById('album-count');
+        const albumModal = document.getElementById('album-modal');
+        const albumModalClose = albumModal.querySelector('.album-modal-close');
+        const albumGrid = document.getElementById('album-grid');
+
+        const btnExames = document.getElementById('btn-exames');
+        const btnSee = document.getElementById('btn-see');
+        const btnHd = document.getElementById('btn-hd');
+        const btnCd = document.getElementById('btn-cd');
+        const btnMic = document.getElementById('btn-mic');
+        const btnRecords = document.getElementById('btn-records');
+        const btnClear = document.getElementById('btn-clear');
+
+        const patientListModal = document.getElementById('patient-list-modal');
+        const patientList = document.getElementById('patient-list');
+        const patientListClose = patientListModal.querySelector('.patient-list-close');
+        const patientDetailsModal = document.getElementById('patient-details-modal');
+        const patientDetailsTitle = document.getElementById('patient-details-title');
+        const patientDetailsBody = document.getElementById('patient-details-body');
+        const patientDetailsClose = patientDetailsModal.querySelector('.patient-details-close');
+        const patientSearchInput = document.getElementById('patient-search-input');
+        const btnSaveFromList = document.getElementById('btn-save-from-list');
+        
+        const loginModal = document.getElementById('login-modal');
+        const loginModalUser = document.getElementById('login-modal-user');
+        const loginModalPass = document.getElementById('login-modal-pass');
+        const loginModalButton = document.getElementById('login-modal-button');
+        const loginModalFeedback = document.getElementById('login-modal-feedback');
+
+        const savePatientModal = document.getElementById('save-patient-modal');
+        const savePatientNameInput = document.getElementById('save-patient-name');
+        const savePatientDobInput = document.getElementById('save-patient-dob');
+        const savePatientButton = document.getElementById('save-patient-button');
+        const savePatientFeedback = document.getElementById('save-patient-feedback');
+        const savePatientModalClose = savePatientModal.querySelector('.app-modal-close');
+
+        const adminAuthModal = document.getElementById('admin-auth-modal');
+        const adminAuthPass = document.getElementById('admin-auth-pass');
+        const adminAuthButton = document.getElementById('admin-auth-button');
+        const adminAuthFeedback = document.getElementById('admin-auth-feedback');
+        const adminAuthClose = adminAuthModal.querySelector('.app-modal-close');
+
+        const adminPanelModal = document.getElementById('admin-panel-modal');
+        const adminPanelClose = adminPanelModal.querySelector('.app-modal-close');
+        const adminSettingsBody = document.getElementById('admin-settings-body');
+        const adminDebugBody = document.getElementById('admin-debug-body');
+        const adminUsersList = document.getElementById('admin-users-list');
+        const adminUserDetails = document.getElementById('admin-user-details');
+        const adminUserSearch = document.getElementById('admin-user-search');
+        const adminTabButtons = document.querySelectorAll('.admin-tab-btn');
+        const disconnectAllUsersBtn = document.getElementById('disconnect-all-users-btn');
+
+        const prescriptionHelperModal = document.getElementById('prescription-helper-modal');
+        const prescriptionHelperTitle = document.getElementById('prescription-helper-title');
+        const prescriptionHelperBody = document.getElementById('prescription-helper-body');
+        const prescriptionHelperClose = prescriptionHelperModal.querySelector('.app-modal-close');
+
+        const statusTextApi = document.querySelector('.status-text-api');
+        const statusTextMic = document.querySelector('.status-text-mic');
+        const statusTextCam = document.querySelector('.status-text-cam');
+        
+        // Mobile 2.0 Elements
+        const mobileContainer = document.getElementById('mobile-2-0-container');
+        const mobileWelcomeTitle = document.getElementById('mobile-welcome-title');
+        const mobileBtnExames = document.getElementById('mobile-btn-exames');
+        const mobileBtnSee = document.getElementById('mobile-btn-see');
+        const mobileBtnRecords = document.getElementById('mobile-btn-records');
+        const mobileBtnChat = document.getElementById('mobile-btn-chat');
+        const chatboxModal = document.getElementById('chatbox-modal');
+        const chatboxCloseBtn = document.getElementById('chatbox-close-btn');
+        const chatboxNewChatBtn = document.getElementById('chatbox-new-chat-btn');
+        const chatboxMessages = document.getElementById('chatbox-messages');
+        const chatboxInput = document.getElementById('chatbox-input');
+        const chatboxSendBtn = document.getElementById('chatbox-send-btn');
+        const chatboxUploadBtn = document.getElementById('chatbox-upload-btn');
+        const chatFileInput = document.getElementById('chat-file-input');
+        const chatImagePreviews = document.getElementById('chat-image-previews');
+        
+        const customConfirmModal = document.getElementById('custom-confirm-modal');
+        const mobileAnalysisLoader = document.getElementById('mobile-analysis-loader');
+        
+        let isListening = false;
+        let isLoggedIn = false;
+        let isUserBlocked = false;
+        let currentUser = null;
+        let recognition = null;
+        let audioStream = null; 
+        let anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+        let examsResults = "";
+        let axonEyeResults = "";
+        let lastAnamnesisInfo = "";
+        let apiConnectionStatus = "Desconhecido";
+        let unsubscribeSnapshot = null;
+        let unsubscribeUserDoc = null;
+        let unsubscribeSettings = null;
+        let cameraStream = null;
+        let capturedImages = [];
+        let temporaryImgurUploads = [];
+        let currentCameraFacingMode = 'environment';
+        let currentMonitorView = 'anamnesis';
+        let isFlashlightOn = false;
+        let cameraMode = 'exams';
+        const isMobileDevice = () => /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isMobile = isMobileDevice();
+        let allPatients = [];
+        let conversationHistory = [];
         let adminUsersData = [];
         let chatImagesToSend = [];
         let desktopHeartbeatInterval = null;
-        const imageUploadCache = new Map(); // Cache for uploaded images: base64 -> { link, deleteHash }
+
         const defaultApiKeys = [
             'AIzaSyB7krrv-Jjw4hn34MIFYBcrzDa5mWB9PpU',
+            'AIzaSyAJk2u0SsCv11d9mrECAkoBRafHEVGgwwg',
+            'AIzaSyAG0j6JuMlR5FoCTUcNQOvNy_lcS5C9ew0'
+        ];
+        const defaultApiModels = [
+            { id: 1, name: 'gemini-2.0-flash', vision: true },
+            { id: 2, name: 'gemini-flash-lite-latest', vision: true },
+            { id: 3, name: 'gemini-2.5-flash', vision: true },
+            { id: 4, name: 'gemini-2.5-pro', vision: true },
+            { id: 5, name: 'gemini-1.5-pro', vision: true },
+            { id: 6, name: 'gemini-1.5-flash', vision: true }
+        ];
+        const openRouterModels = [
+            { name: 'x-ai/grok-4.1-fast:free', vision: true },
+            { name: 'deepseek/deepseek-r1:free', vision: false },
+            { name: 'google/gemini-2.0-flash-exp:free', vision: true },
+            { name: 'mistralai/mistral-small-3.1-24b-instruct:free', vision: true },
+            { name: 'nvidia/nemotron-nano-12b-v2-vl:free', vision: true }
+        ];
+        const groqModels = [
+            { name: 'llama-3.3-70b-versatile', vision: false },
+            { name: 'llama-3.1-8b-instant', vision: false },
+            { name: 'llama-3.2-90b-vision-preview', vision: true },
+            { name: 'llama-3.2-11b-vision-preview', vision: true },
+            { name: 'deepseek-r1-distill-llama-70b', vision: false },
+            { name: 'mixtral-8x7b-32768', vision: false },
+            { name: 'gemma2-9b-it', vision: false },
+            { name: 'meta-llama/llama-4-scout-17b-16e-instruct', vision: true },
+            { name: 'openai/gpt-oss-20b', vision: false }
+        ];
+
+        let globalSettings = {
+            apiKeys: [...defaultApiKeys],
+            apiModels: [...defaultApiModels],
+            mode: 'automatic',
+            manualTextModel: '',
+            manualVisionModel: '',
+            manualApiKey: '',
+            apiProvider: 'gemini',
+            openRouterKey: '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',
+            groqKey: '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',
+            groqModel: 'llama-3.3-70b-versatile',
+            mobile2_0_enabled: false,
+            customTextProvider: 'gemini',
+            customVisionProvider: 'gemini'
+        };
+
+        let currentApiKeyIndex = 0;
+        let currentAIModel = 'gemini-2.0-flash';
+        let currentVisionAIModel = 'gemini-2.5-flash-lite';
+        const IMGUR_CLIENT_ID = '546c25a59c58ad7';
+
+        const setTheme = (theme) => {
+            localStorage.setItem('theme', theme);
+            const icon = themeToggleButton.querySelector('i');
+            const themeColorMeta = document.getElementById('theme-color-meta');
+            const statusBarStyleMeta = document.getElementById('status-bar-style-meta');
+
+            if (theme === 'light') {
+                document.body.classList.add('light-mode');
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                if (themeColorMeta) themeColorMeta.setAttribute('content', '#f0f9ff');
+                if (statusBarStyleMeta) statusBarStyleMeta.setAttribute('content', 'default');
+            } else { // dark mode
+                document.body.classList.remove('light-mode');
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                if (themeColorMeta) themeColorMeta.setAttribute('content', '#1a202c');
+                if (statusBarStyleMeta) statusBarStyleMeta.setAttribute('content', 'black-translucent');
+            }
+        };
+
+        const toggleTheme = () => {
+            const currentTheme = localStorage.getItem('theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        };
+
+        const getGeminiUrl = (modelName, apiKey) => `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+        const validCommands = [
+            '/exit', '/hear on', '/hear off', '/hd', '/cd', '/copy', 
+            '/ia', '/help', '/clear', '/api', '/api-set', '/register', '/exames', '/see', '/ask', '/delete', '/pdf', '/load', '/users'
+        ];
+
+        const isSpeechRecognitionSupported = () => 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+        
+        const initSpeechRecognition = () => {
+            if (!isSpeechRecognitionSupported()) {
+                appendOutput("Reconhecimento de voz não suportado neste navegador.", "error");
+                return;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = false;
+            recognition.lang = 'pt-BR';
+
+            recognition.onstart = () => {
+                isListening = true;
+                micStatus.classList.remove('status-off');
+                btnMic.classList.add('active');
+                btnMic.innerHTML = '<i class="fas fa-microphone"></i>';
+                appendOutput("Microfone ativado. Gravando consulta...", "success");
+                if (isLoggedIn && currentUser) {
+                    updateMonitorStateInFirestore(currentUser, { activeView: 'anamnesis' });
+                }
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[event.results.length - 1][0].transcript;
+                
+                if (transcript.trim()) {
+                    appendOutput(`[Voz] ${transcript}`, "info");
+                    processAnamnesisInfo(transcript);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                appendOutput(`Erro no reconhecimento de voz: ${event.error}`, "error");
+                stopListening();
+            };
+
+            recognition.onend = () => {
+                if (isListening) {
+                    recognition.start();
+                }
+            };
+        };
+
+        const toggleListening = () => {
+            if (!isListening) {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        audioStream = stream;
+                        recognition.start();
+                    })
+                    .catch(err => {
+                        appendOutput(`Permissão de microfone negada: ${err.message}`, "error");
+                    });
+            } else {
+                stopListening();
+            }
+        };
+
+        const stopListening = () => {
+            if (recognition) {
+                recognition.stop();
+            }
+            if (audioStream) {
+                audioStream.getTracks().forEach(track => track.stop());
+                audioStream = null;
+            }
+            isListening = false;
+            micStatus.classList.add('status-off');
+            btnMic.classList.remove('active');
+            btnMic.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+            appendOutput("Microfone desativado.", "info");
+        };
+
+        const appendOutput = (text, type = "output", logToFirebase = true) => {
+            const outputElement = document.createElement('div');
+            
+            if (type === "command") {
+                outputElement.innerHTML = `<span class="prompt">></span> <span class="command">${text}</span>`;
+            } else if (type === "error") {
+                outputElement.innerHTML = `<span class="error">${text}</span>`;
+            } else if (type === "success") {
+                outputElement.innerHTML = `<span class="success">${text}</span>`;
+            } else if (type === "info") {
+                outputElement.innerHTML = `<span class="info">${text}</span>`;
+            } else if (type === "receituario") {
+                outputElement.classList.add('receituario-item');
+                outputElement.textContent = text;
+            } else if (type === "highlight") {
+                outputElement.classList.add('blocked-msg');
+                outputElement.textContent = text;
+            }
+            else {
+                outputElement.innerHTML = `<span class="${type}">${text}</span>`;
+            }
+            
+            interactiveOutput.appendChild(outputElement);
+            interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
+
+            if (logToFirebase && isLoggedIn && currentUser) {
+                logInteractionToFirebase(currentUser, text, type, 'interactive');
+            }
+        };
+
+        const resetInteractiveTerminal = (requireLogin = false) => {
+            const elementsToKeep = [initialMessagesContainer];
+            Array.from(interactiveOutput.children).forEach(child => {
+                if (!elementsToKeep.includes(child) && !child.classList.contains('terminal-logo-internal')) {
+                    child.remove();
+                }
+            });
+
+            initialMessagesContainer.style.display = 'block';
+            
+            if (requireLogin) {
+                isLoggedIn = false;
+                isUserBlocked = false;
+                currentUser = null;
+                localStorage.removeItem('axon_logged_in_user');
+                if (unsubscribeSnapshot) {
+                    unsubscribeSnapshot();
+                    unsubscribeSnapshot = null;
+                }
+                if (unsubscribeUserDoc) {
+                    unsubscribeUserDoc();
+                    unsubscribeUserDoc = null;
+                }
+                initialMessagesContainer.innerHTML = `
+                    <pre class="info">
+ █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
+██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
+███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
+██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
+██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                    </pre>
+                    <span class="info">Axon - Assistente Médico v1.0</span><br>
+                    <span class="info">Aguardando autenticação...</span><br><br>
+                `;
+                loginModal.style.display = 'flex';
+                loginModalUser.focus();
+            } else {
+                initialMessagesContainer.innerHTML = `
+                    <pre class="info">
+ █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
+██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
+███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
+██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
+██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
+                    </pre>
+                    <span class="info">Axon - Assistente Médico v1.0</span><br>
+                    <span class="info">Digite </span><span class="command">/help</span><span class="info"> para ver os comandos disponíveis</span><br>
+                `;
+            }
+            interactiveOutput.scrollTop = interactiveOutput.scrollHeight;
+        };
+        
+        const logoutUser = async () => {
+            appendOutput("Fazendo logout...", "info", false);
+            if (desktopHeartbeatInterval) {
+                clearInterval(desktopHeartbeatInterval);
+                desktopHeartbeatInterval = null;
+            }
+            await clearTemporaryUploads();
+            if (currentUser) {
+                try {
+                    await deleteDoc(doc(db, "sessions", currentUser));
+                } catch (e) {
+                    console.error("Could not delete session doc on logout:", e);
+                }
+            }
+            if (unsubscribeUserDoc) {
+                unsubscribeUserDoc();
+                unsubscribeUserDoc = null;
+            }
+            stopListening();
+            resetInteractiveTerminal(true);
+        };
+
+        const updateAnamnesisPreview = (logToFirebase = true) => {
+            let previewHTML = `
+                <div class="anamnesis-content">
+                    <div class="section-title">Queixa Principal (QP):</div>
+                    <div>${anamnesis.qp || "Ainda não informado."}</div><br>
+                    <div class="section-title">História da Moléstia Atual (HMA):</div>
+                    <div>${anamnesis.hma || "Ainda não informado."}</div><br>
+                    <div class="section-title">História Patológica (HP):</div>
+                    <div>${anamnesis.hp || "Ainda não informado."}</div><br>
+                    <div class="section-title">História Familiar (HF):</div>
+                    <div>${anamnesis.hf || "Ainda não informado."}</div><br>
+                    <div class="section-title">História Psicossocial (HPS):</div>
+                    <div>${anamnesis.hps || "Ainda não informado."}</div>
+                </div>`;
+            anamnesisPreview.innerHTML = previewHTML;
+            if (logToFirebase && isLoggedIn && currentUser) {
+                saveAnamnesisToFirestore(currentUser, anamnesis);
+            }
+        };
+
+        const updateExamsResultsPreview = (logToFirebase = true) => {
+            let formattedResults = '';
+            if (examsResults) {
+                formattedResults = examsResults.split('\n')
+                    .filter(line => line.trim() !== '')
+                    .map(line => {
+                        if (/\((Alterado|Anormal)\)/i.test(line)) {
+                            const cleanLine = line.replace(/\((Alterado|Anormal)\)/gi, '').trim();
+                            return `<div class="output">${cleanLine} <span class="altered-text">(Alterado)</span></div>`;
+                        }
+                        return `<div class="output">${line.trim()}</div>`;
+                    }).join('');
+            }
+            examsResultsPreview.innerHTML = `<div class="section-title">RESULTADOS DOS EXAMES:</div>${formattedResults || '<div class="info">Nenhum exame analisado ainda.</div>'}`;
+            if (logToFirebase && isLoggedIn && currentUser) {
+                saveExamsResultsToFirestore(currentUser, examsResults);
+            }
+        };
+
+        const updateAxonEyeResultsPreview = (logToFirebase = true) => {
+            let formattedResults = '';
+            let imageHtml = '';
+            if (temporaryImgurUploads.length > 0) {
+                imageHtml = `<div class="patient-images-grid" style="margin-top: 15px;">`;
+                temporaryImgurUploads.forEach(img => {
+                    imageHtml += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" onclick="openFullscreenModal('${img.link}')" alt="Imagem Analisada"></div>`;
+                });
+                imageHtml += `</div>`;
+            }
+            if (axonEyeResults) {
+                const boldedResults = axonEyeResults.replace(/\*(.*?)\*/g, '<b>$1</b>');
+                const impressionRegex = /(Impressão Diagnóstica|Interpretação Clínica|Diagnósticos Diferenciais):\s*(.*)/i;
+                let match = boldedResults.match(impressionRegex);
+                if (match) {
+                    const title = match[1];
+                    const content = match[2].trim();
+                    const preText = boldedResults.substring(0, match.index).trim();
+                    const postText = boldedResults.substring(match.index + match[0].length).trim();
+                    formattedResults += `<div class="output">${preText.split('\n').map(line => line.trim()).filter(line => line).join('<br>')}</div>`;
+                    formattedResults += `<div class="axon-eye-title">${title}</div>`;
+                    formattedResults += `<div class="output">${content}</div>`;
+                    formattedResults += `<div class="output">${postText.split('\n').map(line => line.trim()).filter(line => line).join('<br>')}</div>`;
+                } else {
+                    formattedResults = boldedResults.split('\n').filter(line => line.trim() !== '').map(line => `<div class="output">${line.trim()}</div>`).join('');
+                }
+            }
+            axonEyeResultsPreview.innerHTML = `<div class="section-title">ANÁLISE AXON EYE:</div>${formattedResults || '<div class="info">Nenhuma análise visual feita ainda.</div>'}${imageHtml}`;
+            if (logToFirebase && isLoggedIn && currentUser) {
+                saveAxonEyeResultsToFirestore(currentUser, axonEyeResults);
+            }
+        };
+
+        const toggleMonitorView = (view, fromRemote = false) => {
+            currentMonitorView = view;
+            anamnesisPreview.style.display = 'none';
+            examsResultsPreview.style.display = 'none';
+            axonEyeResultsPreview.style.display = 'none';
+            
+            // This logic is for classic mode only
+            if (!isMobile || !globalSettings.mobile2_0_enabled) {
+                if (view === 'camera' && !fromRemote) {
+                    cameraModal.style.display = 'flex';
+                } else {
+                    cameraModal.style.display = 'none';
+                    stopCameraStreamOnly();
+                }
+            }
+
+            toggleAnamnesisButton.classList.remove('active');
+            toggleExamsButton.classList.remove('active');
+            toggleAxonEyeButton.classList.remove('active');
+            if (view === 'anamnesis') {
+                anamnesisPreview.style.display = 'block';
+                toggleAnamnesisButton.classList.add('active');
+            } else if (view === 'exams') {
+                examsResultsPreview.style.display = 'block';
+                toggleExamsButton.classList.add('active');
+            } else if (view === 'axon-eye') {
+                axonEyeResultsPreview.style.display = 'block';
+                toggleAxonEyeButton.classList.add('active');
+            }
+            if (!fromRemote && isLoggedIn && currentUser) {
+                updateMonitorStateInFirestore(currentUser, { activeView: view });
+            }
+        };
+
+        const incrementUserUsage = async (type) => {
+            if (!currentUser || !isLoggedIn) return;
+            const userRef = doc(db, "users", currentUser);
+            try {
+                const updateData = {};
+                if (type === 'text') {
+                    updateData.textRequests = increment(1);
+                } else if (type === 'vision') {
+                    updateData.visionRequests = increment(1);
+                }
+                await updateDoc(userRef, updateData);
+            } catch (e) {
+                console.error("Erro ao incrementar uso do usuário:", e);
+            }
+        };
+
+        const compressImage = (base64Str, maxWidth = 1024, quality = 0.7) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.src = base64Str;
+                img.onload = () => {
+                    let { width, height } = img;
+                    if (width > maxWidth) {
+                        height = (maxWidth / width) * height;
+                        width = maxWidth;
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.onerror = (error) => reject(error);
+            });
+        };
+
+        const callOpenRouterAPI = async (prompt, images = []) => {
+            const modelName = globalSettings.openRouterModel || 'x-ai/grok-4.1-fast:free';
+            const apiKey = globalSettings.openRouterKey;
+            
+            appendOutput(`Conectando via OpenRouter (${modelName})...`, "info", false);
+
+            try {
+                let messages = [];
+                
+                if (images.length > 0) {
+                    const contentArray = [
+                        { type: "text", text: prompt }
+                    ];
+                    
+                    images.forEach(img => {
+                         contentArray.push({
+                            type: "image_url",
+                            image_url: { url: img }
+                        });
+                    });
+                    
+                    messages = [{ role: "user", content: contentArray }];
+                } else {
+                    messages = [{ role: "user", content: prompt }];
+                }
+
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${apiKey}`,
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": window.location.href,
+                        "X-Title": "Axon A.I"
+                    },
+                    body: JSON.stringify({
+                        model: modelName,
+                        messages: messages
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const content = data.choices?.[0]?.message?.content;
+                    if (content) {
+                        await incrementUserUsage(images.length > 0 ? 'vision' : 'text');
+                        appendOutput(`Sucesso via OpenRouter.`, "success", false);
+                        return content;
+                    }
+                    throw new Error("Resposta vazia do OpenRouter.");
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error?.message || `Erro OpenRouter: ${response.status}`);
+                }
+            } catch (e) {
+                console.error("Erro na chamada OpenRouter:", e);
+                throw e;
+            }
+        };
+
+        const callGroqAPI = async (prompt, images = []) => {
+            const modelName = globalSettings.groqModel || 'llama-3.3-70b-versatile';
+            const apiKey = globalSettings.groqKey;
+
+            appendOutput(`Conectando via Groq (${modelName})...`, "info", false);
+
+            try {
+                let messages = [];
+
+                if (images.length > 0) {
+                    appendOutput(`Comprimindo ${images.length} imagem(ns) para envio...`, "info", false);
+                    const compressedImages = await Promise.all(images.map(img => compressImage(img, 1024, 0.7)));
+
+                    const contentArray = [
+                        { type: "text", text: prompt }
+                    ];
+
+                    compressedImages.forEach(img => {
+                        contentArray.push({
+                            type: "image_url",
+                            image_url: {
+                                url: img
+                            }
+                        });
+                    });
+
+                    messages = [{ role: "user", content: contentArray }];
+                } else {
+                    messages = [{ role: "user", content: prompt }];
+                }
+
+                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${apiKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: modelName,
+                        messages: messages,
+                        temperature: 1,
+                        max_tokens: 8192,
+                        top_p: 1,
+                        stream: false,
+                        stop: null
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const content = data.choices?.[0]?.message?.content;
+                    if (content) {
+                        await incrementUserUsage(images.length > 0 ? 'vision' : 'text');
+                        appendOutput(`Sucesso via Groq.`, "success", false);
+                        return content;
+                    }
+                    throw new Error("Resposta vazia do Groq.");
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error?.message || `Erro Groq: ${response.status}`);
+                }
+            } catch (e) {
+                console.error("Erro na chamada Groq:", e);
+                throw e;
+            }
+        };
+
+        const callGeminiAPI = async (prompt) => {
+            let provider = globalSettings.apiProvider;
+            if (provider === 'custom') {
+                provider = globalSettings.customTextProvider || 'gemini';
+            }
+
+            if (provider === 'openrouter') {
+                return await callOpenRouterAPI(prompt);
+            }
+            if (provider === 'groq') {
+                return await callGroqAPI(prompt);
+            }
+
+            let strategyModels = [];
+            let keysToTry = [];
+
+            if (globalSettings.mode === 'manual') {
+                if (globalSettings.manualTextModel && globalSettings.manualApiKey) {
+                    strategyModels = [globalSettings.manualTextModel];
+                    keysToTry = [globalSettings.manualApiKey];
+                } else {
+                    throw new Error("Modo manual ativo, mas modelo ou chave não configurados.");
+                }
+            } else {
+                const preferredOrder = ['gemini-2.0-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+                const availableModelNames = globalSettings.apiModels.map(m => m.name);
+                const activePreferred = preferredOrder.filter(name => availableModelNames.includes(name));
+                const others = availableModelNames.filter(name => !preferredOrder.includes(name));
+                strategyModels = [...activePreferred, ...others];
+                keysToTry = globalSettings.apiKeys;
+            }
+
+            let lastError = null;
+
+            for (const modelName of strategyModels) {
+                for (let i = 0; i < keysToTry.length; i++) {
+                    const keyIndex = (currentApiKeyIndex + i) % keysToTry.length;
+                    const apiKeyToTry = keysToTry[keyIndex];
+                    
+                    if(!isMobile || !globalSettings.mobile2_0_enabled) {
+                        appendOutput(`Tentando motor ${modelName} (Chave #${keyIndex + 1})...`, "info", false);
+                    }
+
+                    try {
+                        const url = getGeminiUrl(modelName, apiKeyToTry);
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (globalSettings.mode === 'automatic') {
+                                currentApiKeyIndex = keyIndex;
+                            }
+                            await incrementUserUsage('text');
+                            if(!isMobile || !globalSettings.mobile2_0_enabled) {
+                                appendOutput(`Sucesso com motor ${modelName}.`, "success", false);
+                            }
+                            return data.candidates?.[0]?.content?.parts?.[0]?.text || "Não foi possível obter uma resposta.";
+                        }
+
+                        const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
+                        lastError = new Error(errorData.error?.message || `Erro desconhecido (${response.status})`);
+                        console.warn(`Falha com motor ${modelName} chave ${keyIndex}: ${lastError.message}`);
+
+                    } catch (error) {
+                        lastError = error;
+                        console.warn(`Falha de rede motor ${modelName} chave ${keyIndex}: ${error.message}`);
+                    }
+                }
+            }
+
+            console.error("Erro final na chamada da API de texto:", lastError);
+            throw lastError || new Error("Todas as tentativas de chaves e motores falharam.");
+        };
+
+        const callVisionAPI = async (imageUrls, prompt) => {
+            let provider = globalSettings.apiProvider;
+            if (provider === 'custom') {
+                provider = globalSettings.customVisionProvider || 'gemini';
+            }
+
+            if (provider === 'openrouter') {
+                return await callOpenRouterAPI(prompt, imageUrls);
+            }
+            if (provider === 'groq') {
+                return await callGroqAPI(prompt, imageUrls);
+            }
+
+            let strategyModels = [];
+            let keysToTry = [];
+
+            if (globalSettings.mode === 'manual') {
+                 if (globalSettings.manualVisionModel && globalSettings.manualApiKey) {
+                    strategyModels = [globalSettings.manualVisionModel];
+                    keysToTry = [globalSettings.manualApiKey];
+                } else {
+                    throw new Error("Modo manual ativo, mas modelo de visão ou chave não configurados.");
+                }
+            } else {
+                const preferredOrder = ['gemini-2.0-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash', 'gemini-2.5-pro'];
+                const availableModelNames = globalSettings.apiModels.filter(m => m.vision).map(m => m.name);
+                
+                const activePreferred = preferredOrder.filter(name => availableModelNames.includes(name));
+                const others = availableModelNames.filter(name => !preferredOrder.includes(name));
+                
+                strategyModels = [...activePreferred, ...others];
+                keysToTry = globalSettings.apiKeys;
+            }
+            
+            let lastError = null;
+        
+            for (const modelName of strategyModels) {
+                const imageParts = imageUrls.map(url => ({ inlineData: { mimeType: 'image/jpeg', data: url.split(',')[1] } }));
+                const textPart = { text: prompt };
+
+                for (let i = 0; i < keysToTry.length; i++) {
+                    const keyIndex = (currentApiKeyIndex + i) % keysToTry.length;
+                    const apiKeyToTry = keysToTry[keyIndex];
+                    
+                    if(!isMobile || !globalSettings.mobile2_0_enabled) {
+                        appendOutput(`Tentando motor de visão ${modelName} (Chave #${keyIndex + 1})...`, "info", false);
+                    }
+
+                    try {
+                        const url = getGeminiUrl(modelName, apiKeyToTry);
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [...imageParts, textPart] }] })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (globalSettings.mode === 'automatic') {
+                                currentApiKeyIndex = keyIndex;
+                            }
+                            await incrementUserUsage('vision');
+                            if(!isMobile || !globalSettings.mobile2_0_enabled) {
+                                appendOutput(`Sucesso com motor de visão ${modelName}.`, "success", false);
+                            }
+                            return data.candidates?.[0]?.content?.parts?.[0]?.text || "Não foi possível obter uma resposta da análise de imagem.";
+                        }
+
+                        const errorData = await response.json().catch(() => ({ error: { message: `HTTP error! status: ${response.status}` } }));
+                        lastError = new Error(errorData.error?.message || `Erro desconhecido na API de Visão (${response.status})`);
+                        console.warn(`Falha visão motor ${modelName} chave ${keyIndex}: ${lastError.message}`);
+
+                    } catch (error) {
+                        lastError = error;
+                        console.warn(`Falha de rede visão motor ${modelName} chave ${keyIndex}: ${error.message}`);
+                    }
+                }
+            }
+            
+            console.error("Erro final na chamada da API de visão:", lastError);
+            throw lastError || new Error("Todas as tentativas de chaves e motores de visão falharam.");
+        };
+
+        const processAnamnesisInfo = async (info) => {
+            lastAnamnesisInfo = info;
+            const prompt = `Você é um assistente médico especialista em semiologia. Sua tarefa é redigir uma anamnese médica profissional, organizando as informações fornecidas em seções adequadas. A anamnese deve ser bem redigida, coesa e utilizar termos médicos apropriados.
+            Contexto da consulta atual (informações existentes):
+            - QP (Queixa Principal): "${anamnesis.qp || "Nenhuma"}"
+            - HMA (História da Moléstia Atual): "${anamnesis.hma || "Nenhuma"}"
+            - HP (História Patológica): "${anamnesis.hp || "Nenhuma"}"
+            - HF (História Familiar): "${anamnesis.hf || "Nenhuma"}"
+            - HPS (História Psicossocial): "${anamnesis.hps || "Nenhuma"}"
+
+            Nova informação recebida (diálogo médico-paciente): "${info}"
+
+            Instruções cruciais:
+            1.  **Analise o contexto completo**: Considere tanto as informações existentes quanto a "nova informação recebida" para construir a anamnese mais precisa.
+            2.  **Ordene logicamente**: Mesmo que as informações sejam fornecidas fora de ordem, organize-as de forma coerente dentro da seção correta (QP, HMA, HP, HF, HPS).
+            3.  **Seja Fiel ao Conteúdo**: NÃO adicione, invente ou presuma informações que não foram explicitamente ditas. Frases como "Paciente não relata outros sintomas" ou "Paciente não sabe especificar" só devem ser incluídas se o médico ou paciente as tiverem mencionado.
+            4.  **Distinga os interlocutores e filtre as perguntas**: Sua tarefa é extrair APENAS as respostas e relatos do paciente. IGNORE completamente as perguntas diretas feitas pelo médico. Por exemplo, se o diálogo for "Médico: Você tem febre? Paciente: Sim, desde ontem.", a informação a ser registrada é "Paciente relata febre desde o dia anterior". A pergunta "Você tem febre?" NÃO DEVE ser incluída no texto da anamnese.
+            5.  **Atualize, não substitua**: Integre a nova informação à seção apropriada, complementando o que já existe. Mantenha o conteúdo das outras seções inalterado.
+            6.  **Filtro Rigoroso de Relevância Clínica**: Ignore A-B-S-O-L-U-T-A-M-E-N-T-E qualquer parte da conversa que não seja estritamente sobre a saúde do paciente. Isso inclui, mas não se limita a: saudações (bom dia, olá), cumprimentos, despedidas, comentários sobre o tempo, trânsito, amenidades sociais ou qualquer diálogo que não descreva um sintoma, um histórico médico, um hábito de vida relevante (fumo, álcool) ou uma queixa. Seu foco é 100% clínico.
+
+            Formato da Resposta: Retorne EXCLUSIVAMENTE um objeto JSON, contendo TODAS as chaves (qp, hma, hp, hf, hps) com os textos atualizados.`;
+            try {
+                const response = await callGeminiAPI(prompt);
+                const jsonStart = response.indexOf('{');
+                const jsonEnd = response.lastIndexOf('}') + 1;
+                const jsonString = response.substring(jsonStart, jsonEnd);
+                const updatedAnamnesis = JSON.parse(jsonString);
+                anamnesis = {
+                    qp: updatedAnamnesis.qp || "", hma: updatedAnamnesis.hma || "",
+                    hp: updatedAnamnesis.hp || "", hf: updatedAnamnesis.hf || "",
+                    hps: updatedAnamnesis.hps || ""
+                };
+                updateAnamnesisPreview();
+                appendOutput("Anamnese atualizada com sucesso.", "success");
+            } catch (error) {
+                appendOutput(`Erro ao atualizar a anamnese: ${error.message}.`, "error");
+            }
+        };
+
+        const generateDiagnosticHypotheses = async () => {
+            const prompt = `Com base na anamnese: ${JSON.stringify(anamnesis)}, nos exames: ${examsResults || "Nenhum"}, e na análise visual: ${axonEyeResults || "Nenhuma"}, liste as hipóteses diagnósticas em ordem de probabilidade. Seja técnico e resumido. Formate palavras importantes ou títulos com asteriscos (ex: *Hipótese Principal*). Retorne apenas a lista.`;
+            try {
+                const response = await callGeminiAPI(prompt);
+                const boldedResponse = response.replace(/\*(.*?)\*/g, '<b>$1</b>');
+                const formattedDiagnosis = boldedResponse.split('\n').filter(item => item.trim()).map(item => `<div class="diagnosis-item">${item.trim()}</div>`).join('');
+                appendOutput(`<div class="conduct-title">HIPÓTESES DIAGNÓSTICAS:</div>${formattedDiagnosis}`, "output");
+            } catch (error) {
+                appendOutput(`Erro ao gerar hipóteses: ${error.message}`, "error");
+            }
+        };
+
+        const generateMedicalConduct = async () => {
+            const prompt = `Com base na anamnese: ${JSON.stringify(anamnesis)}, exames: ${examsResults || "Nenhum"}, e análise visual: ${axonEyeResults || "Nenhuma"}, proponha uma conduta médica completa. Formate palavras importantes ou títulos com asteriscos (ex: *Medicação Sugerida*).
+Use EXATAMENTE os seguintes títulos para cada seção, na ordem apresentada, mesmo que a seção não tenha conteúdo: 
+1. CONDUTA FARMACOLÓGICA (SUS):
+2. EXAMES COMPLEMENTARES (SUS):
+3. CONDUTAS NÃO FARMACOLÓGICAS (SUS):
+4. RECOMENDAÇÕES:
+Seja técnico, objetivo e resumido.`;
+            try {
+                const response = await callGeminiAPI(prompt);
+                const boldedResponse = response.replace(/\*(.*?)\*/g, '<b>$1</b>');
+                const formattedConduct = boldedResponse
+                    .replace(/CONDUTA FARMACOLÓGICA \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTA FARMACOLÓGICA (SUS)">CONDUTA FARMACOLÓGICA (SUS):</div>')
+                    .replace(/EXAMES COMPLEMENTARES \(SUS\):/gi, '<div class="conduct-title" data-category="EXAMES COMPLEMENTARES (SUS)">EXAMES COMPLEMENTARES (SUS):</div>')
+                    .replace(/CONDUTAS NÃO FARMACOLÓGICAS \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTAS NÃO FARMACOLÓGICAS (SUS)">CONDUTAS NÃO FARMACOLÓGICAS (SUS):</div>')
+                    .replace(/^RECOMENDAÇÕES:/gim, '<div class="conduct-title" data-category="RECOMENDAÇÕES">RECOMENDAÇÕES:</div>')
+                    .split('\n').map(line => {
+                        const cleanedLine = line.trim().replace(/^\d+\.\s*/, '');
+                        if (cleanedLine === '' || line.includes('<div')) return line;
+                        return `<div class="conduct-item">${cleanedLine}</div>`;
+                    }).join('');
+                appendOutput(formattedConduct, "output");
+            } catch (error) {
+                appendOutput(`Erro ao gerar conduta: ${error.message}`, "error");
+            }
+        };
+        
+        const askQuestionBasedOnContext = async (question) => {
+            conversationHistory.push({ role: 'user', parts: [{ text: question }] });
+            const simplifiedHistory = conversationHistory.map(item => `${item.role}: ${item.parts[0].text}`).join('\n');
+            
+            const prompt = `**Instrução de Persona:** Você é o AXON, um assistente médico de IA. Seu usuário é um médico qualificado. Responda de forma concisa, direta e técnica, sem usar frases de cautela como "consulte um especialista" ou "isso não é um diagnóstico". O médico já sabe disso. Seu objetivo é ser um assistente rápido e eficiente. Use o contexto clínico fornecido para dar respostas mais relevantes. Formate palavras importantes ou títulos com asteriscos (ex: *Diagnóstico Diferencial*), que serão renderizados em negrito.
+
+**Contexto Clínico Atual:**
+- **Anamnese:** ${anamnesis && Object.values(anamnesis).some(v => v) ? JSON.stringify(anamnesis) : "Nenhuma informação."}
+- **Análise Visual (Axon Eye):** ${axonEyeResults || "Nenhuma informação."}
+
+**Histórico da Conversa:**
+${simplifiedHistory}
+
+**Pergunta do Médico:** "${question}"
+
+Responda diretamente à pergunta.`;
+
+            try {
+                const response = await callGeminiAPI(prompt);
+                conversationHistory.push({ role: 'model', parts: [{ text: response }] });
+                return response;
+            } catch (error) {
+                console.error("Erro em askQuestionBasedOnContext:", error);
+                throw error;
+            }
+        };
+        
+        const askVisionQuestionBasedOnContext = async (question, images) => {
+             const imageParts = images.map(url => ({ inlineData: { mimeType: 'image/jpeg', data: url.split(',')[1] } }));
+             conversationHistory.push({ role: 'user', parts: [{ text: question }, ...imageParts] });
+             
+             const simplifiedHistory = conversationHistory.map(item => {
+                const textPart = item.parts.find(p => p.text);
+                return `${item.role}: ${textPart ? textPart.text : '[Imagem enviada]'}`;
+            }).join('\n');
+            
+             const prompt = `**Instrução de Persona:** Você é o AXON, um assistente médico de IA. Seu usuário é um médico qualificado. Ele enviou ${images.length} imagem(ns) junto com uma pergunta. Analise as imagens e responda de forma concisa, direta e técnica, sem usar frases de cautela. Use o contexto clínico se for relevante. Formate palavras importantes com asteriscos (ex: *Lesão sugestiva de...*).
+
+**Contexto Clínico Atual:**
+- **Anamnese:** ${anamnesis && Object.values(anamnesis).some(v => v) ? JSON.stringify(anamnesis) : "Nenhuma informação."}
+- **Análise Visual (Axon Eye) Prévia:** ${axonEyeResults || "Nenhuma informação."}
+
+**Histórico da Conversa:**
+${simplifiedHistory}
+
+**Pergunta do Médico (referente à(s) imagem(ns) enviada(s) agora):** "${question}"
+
+Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
+
+            try {
+                const response = await callVisionAPI(images, prompt);
+                conversationHistory.push({ role: 'model', parts: [{ text: response }] });
+                return response;
+            } catch (error) {
+                console.error("Erro em askVisionQuestionBasedOnContext:", error);
+                throw error;
+            }
+        };
+
+        const copyMonitorContent = () => {
+            let contentToCopy = "";
+            if (currentMonitorView === 'anamnesis') contentToCopy = anamnesisPreview.innerText;
+            else if (currentMonitorView === 'exams') contentToCopy = examsResultsPreview.innerText.replace("RESULTADOS DOS EXAMES:", "").trim();
+            else if (currentMonitorView === 'axon-eye') contentToCopy = axonEyeResultsPreview.innerText.replace("ANÁLISE AXON EYE:", "").trim();
+            navigator.clipboard.writeText(contentToCopy).then(() => appendOutput("Conteúdo copiado.", "success"), () => appendOutput("Erro ao copiar.", "error"));
+        };
+
+        const checkApiStatus = async (modelName = currentAIModel) => {
+            let keysToTest = [];
+            let modelToTest = modelName;
+
+            if (globalSettings.apiProvider === 'openrouter') {
+                 try {
+                    const response = await fetch("https://openrouter.ai/api/v1/auth/key", {
+                        method: "GET",
+                        headers: { "Authorization": `Bearer ${globalSettings.openRouterKey}` }
+                    });
+                    if (response.ok) {
+                         apiConnectionStatus = "Conectado (OpenRouter)";
+                         apiStatus.classList.remove('status-off');
+                         return true;
+                    }
+                    throw new Error("Chave OpenRouter inválida");
+                 } catch (e) {
+                     apiConnectionStatus = "Offline (OpenRouter)";
+                     apiStatus.classList.add('status-off');
+                     return false;
+                 }
+            }
+
+            if (globalSettings.apiProvider === 'groq') {
+                try {
+                    const response = await fetch("https://api.groq.com/openai/v1/models", {
+                        method: "GET",
+                        headers: { "Authorization": `Bearer ${globalSettings.groqKey}` }
+                    });
+                    if (response.ok) {
+                         apiConnectionStatus = "Conectado (Groq)";
+                         apiStatus.classList.remove('status-off');
+                         return true;
+                    }
+                    throw new Error("Chave Groq inválida");
+                 } catch (e) {
+                     apiConnectionStatus = "Offline (Groq)";
+                     apiStatus.classList.add('status-off');
+                     return false;
+                 }
+            }
+
+            if (globalSettings.mode === 'manual') {
+                keysToTest = [globalSettings.manualApiKey || ''];
+                modelToTest = globalSettings.manualTextModel || modelName;
+            } else {
+                keysToTest = globalSettings.apiKeys;
+            }
+
+            if (keysToTest.length === 0 || !keysToTest[0]) {
+                 apiConnectionStatus = "Sem chaves configuradas";
+                 apiStatus.classList.add('status-off');
+                 return false;
+            }
+
+            const isVision = globalSettings.apiModels.find(m => m.name === modelToTest)?.vision;
+            let requestBody;
+            
+            if (isVision) {
+                const dummyImagePart = { inlineData: { mimeType: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' } };
+                requestBody = JSON.stringify({ contents: [{ parts: [dummyImagePart, { text: "ping" }] }] });
+            } else {
+                requestBody = JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] });
+            }
+
+            for (let i = 0; i < keysToTest.length; i++) {
+                const apiKey = keysToTest[i];
+                try {
+                    const url = getGeminiUrl(modelToTest, apiKey);
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: requestBody,
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    
+                    if (response.ok) {
+                        apiConnectionStatus = "Conectado"; 
+                        apiStatus.classList.remove('status-off');
+                        
+                        if (globalSettings.mode === 'automatic') {
+                            currentApiKeyIndex = i;
+                        }
+                        return true;
+                    }
+                } catch (error) {
+                    console.warn(`Falha ao testar chave ${i} no status check: ${error.message}`);
+                }
+            }
+
+            apiConnectionStatus = "Offline (Todas as chaves falharam)";
+            apiStatus.classList.add('status-off');
+            return false;
+        };
+
+        const initializeAIModel = async () => {
+            if (isMobile && globalSettings.mobile2_0_enabled) return;
+            appendOutput("Verificando status da API...", "info", false);
+            
+            if (globalSettings.mode === 'manual') {
+                currentAIModel = globalSettings.manualTextModel || currentAIModel;
+                currentVisionAIModel = globalSettings.manualVisionModel || currentVisionAIModel;
+            } else {
+                currentAIModel = 'gemini-2.0-flash';
+                currentVisionAIModel = 'gemini-2.0-flash';
+            }
+
+            let textModelOK = await checkApiStatus(currentAIModel);
+            let providerName = globalSettings.apiProvider.charAt(0).toUpperCase() + globalSettings.apiProvider.slice(1);
+            if (globalSettings.apiProvider === 'gemini') {
+                providerName = currentAIModel;
+            }
+            
+            if (textModelOK) appendOutput(`Motor conectado (${providerName}).`, "success", false);
+            else appendOutput(`Falha ao conectar motor: ${apiConnectionStatus}.`, "error", false);
+        };
+
+        const logInteractionToFirebase = async (username, content, type, terminal) => { try { await addDoc(collection(db, "sessions", username, "interactions"), { content, type, terminal, timestamp: new Date() }); } catch (e) { console.error("Erro no log Firebase: ", e); } };
+        const saveAnamnesisToFirestore = async (username, data) => { try { await setDoc(doc(db, "sessions", username), { anamnesis: data, lastUpdated: new Date() }, { merge: true }); } catch (e) { console.error("Erro ao salvar anamnese: ", e); } };
+        const saveExamsResultsToFirestore = async (username, data) => { try { await setDoc(doc(db, "sessions", username), { examsResults: data, lastUpdated: new Date() }, { merge: true }); } catch (e) { console.error("Erro ao salvar exames: ", e); } };
+        const saveAxonEyeResultsToFirestore = async (username, data) => { try { await setDoc(doc(db, "sessions", username), { axonEyeResults: data, lastUpdated: new Date() }, { merge: true }); } catch (e) { console.error("Erro ao salvar Axon Eye: ", e); } };
+        const updateMonitorStateInFirestore = async (username, state) => { try { await setDoc(doc(db, "sessions", username), { monitorState: { ...state, lastUpdated: new Date() } }, { merge: true }); } catch (e) { console.error("Erro ao salvar estado do monitor: ", e); } };
+        
+        const setAnalyzingStateInFirestore = async (isAnalyzing, analysisType = null) => {
+            if (!isLoggedIn || !currentUser) return;
+            try {
+                await setDoc(doc(db, "sessions", currentUser), {
+                    isAnalyzing: { status: isAnalyzing, type: analysisType }
+                }, { merge: true });
+            } catch (e) {
+                console.error("Erro ao atualizar estado de análise:", e);
+            }
+        };
+        
+        const objectsAreEqual = (obj1, obj2) => {
+            const keys1 = Object.keys(obj1);
+            const keys2 = Object.keys(obj2);
+            if (keys1.length !== keys2.length) return false;
+            for (let key of keys1) {
+                if (obj1[key] !== obj2[key]) return false;
+            }
+            return true;
+        };
+
+        const getDesktopInfo = () => {
+            const ua = navigator.userAgent;
+            let os = 'OS Desconhecido';
+            let browser = 'Navegador Desconhecido';
+
+            // OS Detection
+            if (navigator.appVersion.indexOf("Win") != -1) os = "Windows";
+            if (navigator.appVersion.indexOf("Mac") != -1) os = "macOS";
+            if (navigator.appVersion.indexOf("X11") != -1) os = "UNIX";
+            if (navigator.appVersion.indexOf("Linux") != -1) os = "Linux";
+
+            // Browser Detection
+            if (ua.indexOf("Edg/") !== -1) {
+                browser = `Edge ${ua.split('Edg/')[1].split(' ')[0]}`;
+            } else if (ua.indexOf("Firefox/") !== -1) {
+                browser = `Firefox ${ua.split('Firefox/')[1].split(' ')[0]}`;
+            } else if (ua.indexOf("Chrome/") !== -1 && ua.indexOf("Safari/") !== -1 && ua.indexOf("OPR/") === -1) {
+                browser = `Chrome ${ua.split('Chrome/')[1].split(' ')[0]}`;
+            } else if (ua.indexOf("Safari/") !== -1 && ua.indexOf("Chrome/") === -1) {
+                browser = `Safari ${ua.split('Version/')[1].split(' ')[0]}`;
+            }
+
+            return { os, browser };
+        };
+
+        const updateMobileConnectionStatus = (desktopData) => {
+            const mobileStatusEl = document.querySelector('.mobile-connection-status');
+            if (!mobileStatusEl) return;
+
+            const dot = mobileStatusEl.querySelector('.status-dot');
+            const text = mobileStatusEl.querySelector('span');
+            
+            const isConnected = desktopData && desktopData.timestamp && (new Date() - desktopData.timestamp.toDate() < 30000);
+
+            dot.classList.toggle('status-on', isConnected);
+            if (isConnected) {
+                text.textContent = `Conectado em desktop: ${desktopData.os} - ${desktopData.browser}`;
+            } else {
+                text.textContent = 'Nenhum desktop conectado';
+            }
+        };
+
+        const setupFirebaseListener = (username) => {
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
+            const docRef = doc(db, "sessions", username);
+            unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+
+                    if (isMobile && globalSettings.mobile2_0_enabled) {
+                        updateMobileConnectionStatus(data.desktopConnection);
+                    }
+
+                    // Handle analysis state synchronization
+                    if (data.isAnalyzing && data.isAnalyzing.status) {
+                        const type = data.isAnalyzing.type;
+                        const animationHTML = `
+                            <div class="ai-processing-animation">
+                                <div class="scanner-animation">
+                                    <div class="brain-icon"><i class="fas fa-brain"></i></div>
+                                    <div class="scanner-line"></div>
+                                </div>
+                                <span>Analisando Imagens...</span>
+                            </div>`;
+                        
+                        if (type === 'exams') {
+                            if (currentMonitorView !== 'exams') toggleMonitorView('exams', true);
+                            if (!examsResultsPreview.querySelector('.ai-processing-animation')) {
+                                examsResultsPreview.innerHTML = animationHTML;
+                            }
+                        } else if (type === 'axon-eye') {
+                            if (currentMonitorView !== 'axon-eye') toggleMonitorView('axon-eye', true);
+                            if (!axonEyeResultsPreview.querySelector('.ai-processing-animation')) {
+                                axonEyeResultsPreview.innerHTML = animationHTML;
+                            }
+                        }
+                    }
+
+                    // Always process content updates. This will replace the animation when results are ready.
+                    if (data.anamnesis && !objectsAreEqual(data.anamnesis, anamnesis)) {
+                        anamnesis = data.anamnesis;
+                        updateAnamnesisPreview(false);
+                    }
+                    if (data.examsResults !== undefined && data.examsResults !== examsResults) {
+                        examsResults = data.examsResults;
+                        updateExamsResultsPreview(false);
+                    }
+                    if (data.axonEyeImages && JSON.stringify(data.axonEyeImages) !== JSON.stringify(temporaryImgurUploads)) {
+                        temporaryImgurUploads = data.axonEyeImages;
+                        updateAxonEyeResultsPreview(false);
+                    } else if (!data.axonEyeImages && temporaryImgurUploads.length > 0) {
+                        temporaryImgurUploads = [];
+                        updateAxonEyeResultsPreview(false);
+                    }
+                    if (data.axonEyeResults !== undefined && data.axonEyeResults !== axonEyeResults) {
+                        axonEyeResults = data.axonEyeResults;
+                        updateAxonEyeResultsPreview(false);
+                    }
+                    if (data.monitorState && data.monitorState.activeView !== currentMonitorView) {
+                        // Avoid view switching if an analysis is active, as it's already handled by the logic above
+                        if (!data.isAnalyzing || !data.isAnalyzing.status) {
+                            toggleMonitorView(data.monitorState.activeView, true);
+                        }
+                    }
+
+                } else {
+                    // Document does not exist. Session ended remotely or cleared.
+                    if (!isMobile) { // If we are on desktop
+                        if (isLoggedIn) { // Avoid multiple logout calls
+                            appendOutput("Sessão encerrada remotamente. Desconectando...", "info", false);
+                            setTimeout(() => logoutUser(), 1500);
+                        }
+                        return; // Stop further processing for desktop
+                    }
+                    
+                    // Original mobile logic
+                    if (isMobile && globalSettings.mobile2_0_enabled) {
+                        updateMobileConnectionStatus(null);
+                    }
+                    anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+                    examsResults = "";
+                    axonEyeResults = "";
+                    updateAnamnesisPreview(false);
+                    updateExamsResultsPreview(false);
+                    updateAxonEyeResultsPreview(false);
+                }
+            });
+        };
+        
+        const applySettings = () => {
+             if (isMobile && globalSettings.mobile2_0_enabled) {
+                document.querySelector('.container').style.display = 'none';
+                mobileContainer.style.display = 'flex';
+            } else {
+                document.querySelector('.container').style.display = 'flex';
+                mobileContainer.style.display = 'none';
+            }
+            initializeAIModel();
+        };
+
+        const setupGlobalSettingsListener = () => {
+            if (unsubscribeSettings) unsubscribeSettings();
+            const docRef = doc(db, "settings", "global");
+            unsubscribeSettings = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    globalSettings = {
+                        apiKeys: data.apiKeys || [...defaultApiKeys],
+                        apiModels: data.apiModels || [...defaultApiModels],
+                        mode: data.mode || 'automatic',
+                        manualTextModel: data.manualTextModel || '',
+                        manualVisionModel: data.manualVisionModel || '',
+                        manualApiKey: data.manualApiKey || '',
+                        apiProvider: data.apiProvider || 'gemini',
+                        openRouterKey: data.openRouterKey || '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',
+                        groqKey: data.groqKey || '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',
+                        groqModel: data.groqModel || 'llama-3.3-70b-versatile',
+                        mobile2_0_enabled: data.mobile2_0_enabled === undefined ? isMobile : data.mobile2_0_enabled,
+                        customTextProvider: data.customTextProvider || 'gemini',
+                        customVisionProvider: data.customVisionProvider || 'gemini'
+                    };
+                    
+                    if (adminPanelModal.style.display === 'flex') {
+                       if (document.querySelector('.admin-tab-btn[data-tab="api"]').classList.contains('active')) {
+                           renderAdminSettingsUI();
+                       }
+                       if (document.querySelector('.admin-tab-btn[data-tab="debug"]').classList.contains('active')) {
+                           renderAdminDebugUI();
+                       }
+                    }
+                    
+                    applySettings();
+                } else {
+                    globalSettings.mobile2_0_enabled = isMobile;
+                    setDoc(docRef, globalSettings);
+                }
+            }, (error) => {
+                console.error("Erro ao sincronizar configurações globais:", error);
+            });
+        };
+
+        const registerUser = async (adminPassword, username, password) => {
+            if (adminPassword !== 'admin123') return appendOutput("Senha de administrador incorreta.", "error");
+            if (!username || !password) return appendOutput("Uso: /register [senha_admin] [usuário] [senha]", "error");
+            try {
+                const userRef = doc(db, "users", username);
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists()) appendOutput(`Usuário '${username}' já existe.`, "error");
+                else { await setDoc(userRef, { password, createdAt: new Date(), textRequests: 0, visionRequests: 0, isBlocked: false }); appendOutput(`Usuário '${username}' registrado com sucesso.`, "success"); }
+            } catch (e) { appendOutput(`Erro ao registrar: ${e.message}`, "error"); }
+        };
+        const deleteUser = async (adminPassword, username) => {
+            if (adminPassword !== 'admin123') return appendOutput("Senha de administrador incorreta.", "error");
+            if (!username) return appendOutput("Uso: /delete [senha_admin] [usuário]", "error");
+            try {
+                const userRef = doc(db, "users", username);
+                await deleteDoc(userRef);
+                appendOutput(`Usuário '${username}' deletado.`, "success");
+                if (currentUser === username) { 
+                    appendOutput("Você foi desconectado.", "info");
+                    logoutUser();
+                }
+            } catch (e) { appendOutput(`Erro ao deletar: ${e.message}`, "error"); }
+        };
+        const authenticateUser = async (username, password) => {
+            if (username === 'ian' && password === 'ian123') return { success: true, isBlocked: false };
+            try {
+                const userRef = doc(db, "users", username);
+                const docSnap = await getDoc(userRef);
+                if (docSnap.exists()) {
+                    const userData = docSnap.data();
+                    if (userData.password === password) {
+                        return { success: true, isBlocked: userData.isBlocked || false };
+                    }
+                }
+                return { success: false };
+            } catch (e) { return { success: false }; }
+        };
+
+        const isUserValid = async (username) => {
+            try {
+                const userRef = doc(db, "users", username);
+                const docSnap = await getDoc(userRef);
+                return docSnap.exists();
+            } catch (e) {
+                console.error("Error checking user validity:", e);
+                return false;
+            }
+        };
+        
+        const updateBlockedUI = () => {
+            const buttons = document.querySelectorAll('.action-button, .mobile-btn');
+            const infoBannerBubble = document.querySelector('.info-banner .chat-bubble-info');
+            const infoBannerContent = document.getElementById('info-banner-content');
+
+            if (isUserBlocked) {
+                appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
+                buttons.forEach(btn => btn.classList.add('blocked-ui'));
+                commandInput.disabled = true;
+                if (cameraModal.style.display === 'flex') stopCamera();
+                patientListModal.style.display = 'none';
+                savePatientModal.style.display = 'none';
+                adminPanelModal.style.display = 'none';
+                chatboxModal.style.display = 'none';
+
+                if (isMobile && globalSettings.mobile2_0_enabled && infoBannerBubble && infoBannerContent) {
+                    infoBannerBubble.style.backgroundColor = 'var(--altered-color)';
+                    infoBannerBubble.style.color = '#1a202c'; // Dark text for yellow bg
+                    infoBannerContent.innerHTML = 'Sua conta do usuário foi bloqueada.';
+                }
+            } else {
+                 appendOutput("Sua conta foi desbloqueada.", "success");
+                 buttons.forEach(btn => btn.classList.remove('blocked-ui'));
+                 commandInput.disabled = false;
+                 
+                 if (isMobile && globalSettings.mobile2_0_enabled && infoBannerBubble && infoBannerContent) {
+                    infoBannerBubble.style.backgroundColor = '';
+                    infoBannerBubble.style.color = '';
+                    infoBannerContent.innerHTML = `Para acesso completo, abra o Axon Web em seu computador em<a href="https://funortehub.github.io/axon" target="_blank" class="highlight-link">funortehub.github.io/axon</a>ou insira um dispositivo AXON USB.`;
+                 }
+            }
+        };
+
+        const uploadToImgur = async (base64Image) => {
+            try {
+                const response = await fetch('https://api.imgur.com/3/image', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        image: base64Image.split(',')[1],
+                        type: 'base64',
+                        title: 'Axon Eye Analysis',
+                        description: `Image uploaded by Axon A.I for user ${currentUser}`
+                    }),
+                });
+                const data = await response.json();
+                if (data.success) {
+                    return { link: data.data.link, deleteHash: data.data.deletehash };
+                } else {
+                    throw new Error(data.data.error || 'Imgur upload failed');
+                }
+            } catch (error) {
+                console.error("Imgur upload error:", error);
+                appendOutput(`Erro ao fazer upload da imagem para o Imgur: ${error.message}`, 'error');
+                return null;
+            }
+        };
+
+        const deleteFromImgur = async (deleteHash) => {
+            if (!deleteHash) return;
+            try {
+                await fetch(`https://api.imgur.com/3/image/${deleteHash}`, {
+                    method: 'DELETE',
+                    headers: {
                         Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
                     },
                 });
@@ -24,6 +1472,7 @@
                 temporaryImgurUploads = [];
             }
         };
+
         const startCamera = async (mode) => {
             // Limpa estado anterior para uma nova análise
             examsResults = "";
@@ -47,10 +1496,12 @@
             }
             
             updateMonitorStateInFirestore(currentUser, { activeView: mode === 'exams' ? 'exams' : 'axon-eye' });
+
             try {
                 if (cameraStream) {
                     cameraStream.getTracks().forEach(track => track.stop());
                 }
+
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentCameraFacingMode } });
                 
                 cameraVideo.srcObject = stream;
@@ -59,10 +1510,12 @@
                 cameraVideo.onloadedmetadata = () => {
                     cameraVideo.play().catch(e => console.error("Play failed:", e));
                 };
+
                 cameraStatus.classList.remove('status-off');
                 if(!isMobile || !globalSettings.mobile2_0_enabled) {
                     appendOutput(`Câmera ativada para ${mode === 'exams' ? 'exames' : 'análise visual'}.`, "info");
                 }
+
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 if (devices.filter(d => d.kind === 'videoinput').length > 1) {
                     cameraSwitchButton.style.display = 'block';
@@ -72,6 +1525,7 @@
                 if (track && 'torch' in track.getCapabilities()) {
                     flashlightButton.style.display = 'block';
                 }
+
             } catch (err) {
                  if(!isMobile || !globalSettings.mobile2_0_enabled) {
                     appendOutput(`Erro ao acessar a câmera: ${err.message}.`, "error");
@@ -81,6 +1535,7 @@
                 stopCamera();
             }
         };
+
         const stopCameraStreamOnly = () => {
             if (cameraStream) {
                 if (isFlashlightOn) toggleFlashlight();
@@ -88,6 +1543,7 @@
             }
             cameraStatus.classList.add('status-off');
         };
+
         const stopCamera = () => {
             stopCameraStreamOnly();
             cameraModal.style.display = 'none';
@@ -99,6 +1555,7 @@
                toggleMonitorView(currentMonitorView === 'camera' ? 'anamnesis' : currentMonitorView);
             }
         };
+
         const cancelCamera = () => {
             updateMonitorStateInFirestore(currentUser, { activeView: 'anamnesis' });
             stopCamera();
@@ -107,6 +1564,7 @@
             sendExamsButton.classList.add('disabled');
             sendAxonEyeButton.classList.add('disabled');
         };
+
         const switchCamera = async () => { currentCameraFacingMode = (currentCameraFacingMode === 'user') ? 'environment' : 'user'; await startCamera(cameraMode); };
         const toggleFlashlight = async () => {
             if (!cameraStream) return;
@@ -142,6 +1600,8 @@
         
         const showMobileLoader = () => { if (isMobile && globalSettings.mobile2_0_enabled) mobileAnalysisLoader.style.display = 'flex'; };
         const hideMobileLoader = () => { if (isMobile && globalSettings.mobile2_0_enabled) mobileAnalysisLoader.style.display = 'none'; };
+
+
         const analyzeExams = async () => {
             if (capturedImages.length === 0) return appendOutput("Nenhuma imagem de exame para analisar.", "info");
             
@@ -151,10 +1611,12 @@
                 showMobileLoader();
             }
             await setAnalyzingStateInFirestore(true, 'exams');
+
             try {
                 const prompt = `Você é um assistente especialista em análise de exames médicos. Sua tarefa é extrair e transcrever os dados dos exames fornecidos. Siga estas regras ESTRITAMENTE:\n\n1. **Resultados Laboratoriais:** Transcreva os resultados em formato de lista. Se um valor estiver alterado, adicione "(Alterado)" ao final da linha. Exemplo: Glicose: 90 mg/dL (Alterado).\n2. **Laudos de Imagem:** Se for um laudo de texto, transcreva o texto completo, palavra por palavra, sem NENHUMA alteração ou resumo.\n3. **Formato Rígido:** NUNCA comece sua resposta com frases como "Aqui estão os resultados...", "Analisando os exames...", etc. Sua resposta DEVE começar DIRETAMENTE com o primeiro item do resultado. Retorne APENAS a lista de resultados ou o texto do laudo.`;
                 
                 let fullResponse = "";
+
                 if (globalSettings.apiProvider === 'groq' && capturedImages.length > 5) {
                     appendOutput(`Groq: Detectadas ${capturedImages.length} imagens. Enviando em lotes de até 5...`, "info", false);
                     const chunks = [];
@@ -180,21 +1642,25 @@
                 } else {
                     appendOutput("Análise de exames concluída.", "success");
                 }
+
             } catch (error) {
                  if (isMobile && globalSettings.mobile2_0_enabled) {
                     showConfirmModal(`Erro ao analisar exames: ${error.message}`, () => {}, true);
                 } else {
                     appendOutput(`Erro ao analisar exames: ${error.message}`, "error");
                 }
+
                 await setDoc(doc(db, "sessions", currentUser), {
                     examsResults: "",
                     isAnalyzing: { status: false, type: null }
                 }, { merge: true });
+
             } finally {
                 hideMobileLoader();
                 stopCamera(); capturedImages = []; updateAlbumCount();
             }
         };
+
         const analyzeAxonEye = async () => {
             if (capturedImages.length === 0) return appendOutput("Nenhuma imagem para análise visual.", "info");
             
@@ -217,10 +1683,12 @@
                 if (temporaryImgurUploads.length !== capturedImages.length) {
                     throw new Error("Falha no upload de uma ou mais imagens.");
                 }
+
                 const prompt = `Analise as imagens e forneça uma opinião clínica detalhada. Descreva achados, lesões, ou sintomas. Ao final, inclua uma seção "Impressão Diagnóstica:" ou "Interpretação Clínica:" com sua conclusão. Formate palavras importantes com asteriscos (ex: *Lesão sugestiva de...*). Seja descritivo e clinicamente relevante.`;
                 
                 let fullResponse = "";
                 let imagesForApiCall;
+
                 // Decide the image source based on provider
                 if (globalSettings.apiProvider === 'openrouter') {
                     // OpenRouter needs URLs, which we have from Imgur
@@ -229,6 +1697,7 @@
                     // Gemini and Groq need base64 data
                     imagesForApiCall = capturedImages;
                 }
+
                 // Decide on batching
                 if (globalSettings.apiProvider === 'groq' && imagesForApiCall.length > 5) {
                     appendOutput(`Groq: Detectadas ${imagesForApiCall.length} imagens. Enviando em lotes de até 5...`, "info", false);
@@ -257,6 +1726,7 @@
                 } else {
                     appendOutput("Análise Axon Eye concluída. Imagens prontas para salvar.", "success");
                 }
+
             } catch (error) {
                  if (isMobile && globalSettings.mobile2_0_enabled) {
                     showConfirmModal(`Erro com Axon Eye: ${error.message}`, () => {}, true);
@@ -269,11 +1739,13 @@
                     axonEyeResults: "",
                     isAnalyzing: { status: false, type: null }
                 }, { merge: true });
+
             } finally {
                 hideMobileLoader();
                 stopCamera(); capturedImages = []; updateAlbumCount();
             }
         };
+
         const savePatient = async (patientName, birthDate) => {
             if (!isLoggedIn) {
                 appendOutput("Você precisa estar logado.", "error");
@@ -325,6 +1797,7 @@
                 savePatientButton.disabled = false;
             }
         };
+
         const loadPatientList = async () => {
             if (!isLoggedIn) return appendOutput("Você precisa estar logado.", "error");
             try {
@@ -335,11 +1808,13 @@
                 querySnapshot.forEach((doc) => {
                     allPatients.push({ id: doc.id, ...doc.data() });
                 });
+
                 allPatients.sort((a, b) => {
                     const dateA = a.lastUpdated?.toDate() || a.createdAt?.toDate() || 0;
                     const dateB = b.lastUpdated?.toDate() || b.createdAt?.toDate() || 0;
                     return dateB - dateA;
                 });
+
                 patientList.innerHTML = '';
                 if (allPatients.length === 0) {
                     patientList.innerHTML = '<div class="info">Nenhum paciente salvo.</div>';
@@ -356,6 +1831,7 @@
                                 lastConsultDateStr = mostRecentConsult.date.toDate().toLocaleString();
                             }
                         }
+
                         const item = document.createElement('div'); 
                         item.className = 'patient-item';
                         item.dataset.patientId = p.id;
@@ -369,6 +1845,7 @@
                         patientList.appendChild(item);
                     });
                 }
+
                 const saveButtonFooter = patientListModal.querySelector('.patient-list-footer');
                 if (saveButtonFooter) {
                     if (isMobile && globalSettings.mobile2_0_enabled) {
@@ -377,17 +1854,20 @@
                         saveButtonFooter.style.display = 'block';
                     }
                 }
+
                 patientListModal.style.display = 'flex';
             } catch (e) {
                 appendOutput(`Erro ao carregar pacientes: ${e.message}`, "error");
                 console.error("Erro em loadPatientList:", e);
             }
         };
+
         const deletePatient = async (patientId) => {
             showConfirmModal("Tem certeza que deseja excluir este paciente e TODAS as suas consultas? A ação é irreversível.", async () => {
                 try {
                     const patientRef = doc(db, "patients", patientId);
                     const docSnap = await getDoc(patientRef);
+
                     if (docSnap.exists()) {
                         const patientData = docSnap.data();
                         if (patientData.consultations && patientData.consultations.length > 0) {
@@ -401,6 +1881,7 @@
                             }
                         }
                     }
+
                     await deleteDoc(patientRef);
                     appendOutput("Paciente e todos os registros foram excluídos com sucesso.", "success");
                     await loadPatientList();
@@ -409,6 +1890,7 @@
                 }
             });
         };
+
         const generatePatientPDF = async (patientId) => {
             try {
                 const patientSnap = await getDoc(doc(db, "patients", patientId));
@@ -418,6 +1900,7 @@
                 if (!patient.consultations || patient.consultations.length === 0) {
                     return appendOutput("Nenhuma consulta registrada para gerar PDF.", "info");
                 }
+
                 const { jsPDF } = window.jspdf; 
                 const pdfDoc = new jsPDF();
                 
@@ -425,6 +1908,7 @@
                 pdfDoc.setFontSize(14).text(`Paciente: ${patient.patientName}`, 14, 35);
                 pdfDoc.setFontSize(12).text(`Data de Nascimento: ${patient.birthDate || 'N/A'}`, 14, 42);
                 pdfDoc.line(14, 45, 196, 45);
+
                 let y = 55;
                 const pageHeight = pdfDoc.internal.pageSize.height;
                 const addSection = (title, content, doc) => {
@@ -440,9 +1924,11 @@
                     doc.setFontSize(10).setFont(undefined, 'normal').text(splitText, 14, y);
                     y += splitText.length * 5 + 5;
                 };
+
                 const sortedConsultations = [...patient.consultations]
                     .filter(c => c.date && c.date.toDate)
                     .sort((a, b) => (a.date.toDate()) - (b.date.toDate()));
+
                 sortedConsultations.forEach((consult, index) => {
                     if (y + 20 > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
                     
@@ -459,6 +1945,7 @@
                 
                 pdfDoc.save(`prontuario_${patient.patientName.replace(/\s+/g, '_')}.pdf`);
                 appendOutput(`PDF do prontuário completo gerado com sucesso.`, "success");
+
             } catch (e) { appendOutput(`Erro ao gerar PDF: ${e.message}`, "error"); console.error(e); }
         };
         
@@ -500,6 +1987,7 @@
             pdfDoc.save(`prontuario_atual_${patientName.replace(/\s+/g, '_')}.pdf`);
             appendOutput(`PDF da sessão atual gerado com sucesso.`, "success");
         };
+
         const showPatientDetails = (patient) => {
             patientDetailsTitle.textContent = `Paciente: ${patient.patientName}`;
             let detailsHTML = '';
@@ -524,6 +2012,7 @@
                 }
                 return `<div class="patient-details-section"><div class="patient-details-section-title">${title}</div><div>${body}</div></div>`;
             };
+
             if (patient.consultations && patient.consultations.length > 0) {
                 const sortedConsultations = [...patient.consultations]
                     .filter(c => c.date && c.date.toDate)
@@ -555,6 +2044,7 @@
             patientDetailsBody.innerHTML = detailsHTML;
             patientDetailsModal.style.display = 'flex';
         };
+
         const openSaveModal = () => {
             savePatientNameInput.value = '';
             savePatientDobInput.value = '';
@@ -562,9 +2052,11 @@
             savePatientModal.style.display = 'flex';
             savePatientNameInput.focus();
         };
+
         const closeSaveModal = () => {
             savePatientModal.style.display = 'none';
         };
+
         const handleSuccessfulLogin = (username, isRestoredSession = false) => {
             isLoggedIn = true; currentUser = username; localStorage.setItem('axon_logged_in_user', username);
             loginModal.style.display = 'none';
@@ -573,6 +2065,7 @@
             initialMessagesContainer.style.display = 'none';
             
             mobileWelcomeTitle.textContent = `Bem-vindo, ${currentUser}!`;
+
             appendOutput("Sessão pronta. Informe os dados do paciente ou use um comando.", "success");
             
             if (desktopHeartbeatInterval) clearInterval(desktopHeartbeatInterval);
@@ -589,6 +2082,7 @@
                 updateDesktopStatus();
                 desktopHeartbeatInterval = setInterval(updateDesktopStatus, 15000);
             }
+
             if (unsubscribeUserDoc) {
                 unsubscribeUserDoc();
             }
@@ -613,14 +2107,17 @@
                     logoutUser();
                 }, 3000);
             });
+
             setupFirebaseListener(currentUser);
             setupGlobalSettingsListener();
             toggleMonitorView('anamnesis');
         };
+
         const searchPatients = (searchTerm) => {
             const lowerCaseSearchTerm = searchTerm.toLowerCase();
             const patientItems = patientList.querySelectorAll('.patient-item');
             let visibleCount = 0;
+
             patientItems.forEach(item => {
                 const patientName = item.querySelector('strong')?.textContent.toLowerCase();
                 if (patientName && patientName.includes(lowerCaseSearchTerm)) {
@@ -630,10 +2127,12 @@
                     item.style.display = 'none';
                 }
             });
+
             const noResultsMessage = patientList.querySelector('.info');
             if (noResultsMessage) {
                 noResultsMessage.remove();
             }
+
             if (visibleCount === 0 && patientItems.length > 0) {
                 const noResults = document.createElement('div');
                 noResults.className = 'info';
@@ -641,12 +2140,14 @@
                 patientList.appendChild(noResults);
             }
         };
+
         const openAdminAuth = () => {
             adminAuthPass.value = '';
             adminAuthFeedback.textContent = '';
             adminAuthModal.style.display = 'flex';
             adminAuthPass.focus();
         };
+
         const checkAdminAuth = () => {
             if (adminAuthPass.value === 'admin123') {
                 adminAuthModal.style.display = 'none';
@@ -664,9 +2165,11 @@
                     const feedbackEl = document.getElementById('admin-create-user-feedback') || { textContent: '', style: {} };
                     feedbackEl.textContent = 'Desconectando todos os usuários...';
                     feedbackEl.style.color = 'var(--prompt-color)';
+
                     try {
                         const sessionsRef = collection(db, "sessions");
                         const sessionsSnap = await getDocs(sessionsRef);
+
                         if (sessionsSnap.empty) {
                             feedbackEl.textContent = 'Nenhuma sessão ativa para desconectar.';
                             feedbackEl.style.color = 'var(--info-color)';
@@ -678,8 +2181,10 @@
                             batch.delete(doc.ref);
                         });
                         await batch.commit();
+
                         feedbackEl.textContent = `Sucesso! ${sessionsSnap.size} sessão(ões) encerrada(s).`;
                         feedbackEl.style.color = 'var(--success-color)';
+
                     } catch (e) {
                         feedbackEl.textContent = `Erro: ${e.message}`;
                         feedbackEl.style.color = 'var(--error-color)';
@@ -688,16 +2193,19 @@
                 }
             );
         };
+
         const activateAdminTab = (tabName) => {
             adminTabButtons.forEach(btn => {
                 btn.dataset.tab === tabName ? btn.classList.add('active') : btn.classList.remove('active');
             });
+
             document.getElementById('tab-users').style.display = 'none';
             document.getElementById('tab-api').style.display = 'none';
             document.getElementById('tab-debug').style.display = 'none';
             
             const tabContent = document.getElementById(`tab-${tabName}`);
             if(tabContent) tabContent.style.display = 'flex';
+
             if (tabName === 'users') {
                 loadAdminUsersData();
             } else if (tabName === 'api') {
@@ -711,8 +2219,10 @@
             const usernameInput = document.getElementById('admin-new-user');
             const passwordInput = document.getElementById('admin-new-pass');
             const feedbackEl = document.getElementById('admin-create-user-feedback');
+
             const username = usernameInput.value.trim();
             const password = passwordInput.value.trim();
+
             if (!username || !password) {
                 feedbackEl.textContent = "Preencha todos os campos.";
                 feedbackEl.style.color = 'var(--error-color)';
@@ -721,6 +2231,7 @@
             
             feedbackEl.textContent = 'Verificando...';
             feedbackEl.style.color = 'var(--prompt-color)';
+
             try {
                 const userRef = doc(db, "users", username);
                 const docSnap = await getDoc(userRef);
@@ -740,6 +2251,7 @@
                 feedbackEl.style.color = 'var(--error-color)';
             }
         };
+
         const renderAdminSettingsUI = () => {
             const isManual = globalSettings.mode === 'manual';
             const isGoogle = globalSettings.apiProvider === 'gemini';
@@ -750,18 +2262,23 @@
             const textModelsOptions = globalSettings.apiModels.map(m => 
                 `<option value="${m.name}" ${globalSettings.manualTextModel === m.name ? 'selected' : ''}>${m.name}</option>`
             ).join('');
+
             const visionModelsOptions = globalSettings.apiModels.filter(m => m.vision).map(m => 
                 `<option value="${m.name}" ${globalSettings.manualVisionModel === m.name ? 'selected' : ''}>${m.name}</option>`
             ).join('');
+
             const apiKeysOptions = globalSettings.apiKeys.map(key => 
                 `<option value="${key}" ${globalSettings.manualApiKey === key ? 'selected' : ''}>${key}</option>`
             ).join('');
+
             const openRouterModelsOptions = openRouterModels.map(m => 
                  `<option value="${m.name}" ${globalSettings.openRouterModel === m.name ? 'selected' : ''}>${m.name} ${m.vision ? '(+Visão)' : ''}</option>`
             ).join('');
+
             const groqModelsOptions = groqModels.map(m => 
                  `<option value="${m.name}" ${globalSettings.groqModel === m.name ? 'selected' : ''}>${m.name} ${m.vision ? '(+Visão)' : ''}</option>`
             ).join('');
+
             let html = `
                 <div class="admin-section">
                     <div class="admin-section-title">Provedor da API</div>
@@ -781,6 +2298,7 @@
                     </div>
                 </div>
             `;
+
             if (isCustom) {
                  html += `
                 <div class="admin-section">
@@ -792,6 +2310,7 @@
                         <option value="openrouter" ${globalSettings.customTextProvider === 'openrouter' ? 'selected' : ''}>OpenRouter</option>
                         <option value="groq" ${globalSettings.customTextProvider === 'groq' ? 'selected' : ''}>Groq</option>
                     </select>
+
                     <label>Provedor para Tarefas de Visão (Imagens):</label>
                     <select id="custom-vision-provider" class="admin-input" style="width:100%; margin-bottom:10px;" onchange="window.saveManualSelection()">
                         <option value="gemini" ${globalSettings.customVisionProvider === 'gemini' ? 'selected' : ''}>Google Gemini</option>
@@ -816,6 +2335,7 @@
                             <input type="radio" name="apiMode" value="manual" ${isManual ? 'checked' : ''} onchange="window.updateMode('manual')"> Manual (Fixo)
                         </label>
                     </div>
+
                     <div id="manual-settings" style="display: ${isManual ? 'block' : 'none'}; margin-top: 15px;">
                         <div class="admin-section-title">Seleção Manual</div>
                         <label>Motor de Texto:</label>
@@ -837,6 +2357,7 @@
                         </select>
                     </div>
                 </div>
+
                 <div class="admin-section">
                     <div class="admin-section-title">Chaves de API (Google)</div>
                     <div class="admin-list" id="api-keys-list">
@@ -880,6 +2401,7 @@
                 </div>
                 `;
             }
+
             if (isGoogle) {
                 html += `
                 <div class="admin-section">
@@ -905,8 +2427,10 @@
                 </div>
                 `;
             }
+
             adminSettingsBody.innerHTML = html;
         };
+
         const renderAdminDebugUI = () => {
             adminDebugBody.innerHTML = `
                 <div class="admin-section">
@@ -928,16 +2452,19 @@
                 }
             });
         };
+
         window.updateProvider = async (provider) => {
             try {
                 await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiProvider: provider }, { merge: true });
             } catch (e) { console.error("Erro ao atualizar provedor:", e); }
         };
+
         window.updateMode = async (mode) => {
             try {
                 await setDoc(doc(db, "settings", "global"), { ...globalSettings, mode }, { merge: true });
             } catch (e) { console.error("Erro ao atualizar modo:", e); }
         };
+
         window.saveManualSelection = async () => {
             let updates = {};
             
@@ -980,6 +2507,7 @@
                 }, { merge: true });
             } catch (e) { console.error("Erro ao salvar seleção manual:", e); }
         };
+
         window.addApiKey = async () => {
             const input = document.getElementById('new-api-key');
             const newKey = input.value.trim();
@@ -991,6 +2519,7 @@
                 } catch (e) { console.error("Erro ao adicionar chave:", e); }
             }
         };
+
         window.removeApiKey = async (index) => {
             if (globalSettings.apiKeys.length <= 1) {
                 alert("É necessário ter pelo menos uma chave de API.");
@@ -1001,6 +2530,7 @@
                 await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiKeys: newKeys }, { merge: true });
             } catch (e) { console.error("Erro ao remover chave:", e); }
         };
+
         window.addApiModel = async () => {
             const nameInput = document.getElementById('new-model-name');
             const visionInput = document.getElementById('new-model-vision');
@@ -1015,6 +2545,7 @@
                 } catch (e) { console.error("Erro ao adicionar modelo:", e); }
             }
         };
+
         window.removeApiModel = async (index) => {
              if (globalSettings.apiModels.length <= 1) {
                 alert("É necessário ter pelo menos um modelo.");
@@ -1025,6 +2556,7 @@
                 await setDoc(doc(db, "settings", "global"), { ...globalSettings, apiModels: newModels }, { merge: true });
             } catch (e) { console.error("Erro ao remover modelo:", e); }
         };
+
         const loadAdminUsersData = async () => {
             try {
                 const usersSnap = await getDocs(collection(db, "users"));
@@ -1038,6 +2570,7 @@
                         savedCounts[data.savedBy] = (savedCounts[data.savedBy] || 0) + 1;
                     }
                 });
+
                 usersSnap.forEach(doc => {
                     const userData = doc.data();
                     users.push({
@@ -1046,19 +2579,23 @@
                         savedCount: savedCounts[doc.id] || 0
                     });
                 });
+
                 users.sort((a, b) => b.savedCount - a.savedCount);
                 adminUsersData = users;
                 renderAdminUsersList(users);
+
             } catch (e) {
                 console.error("Erro ao carregar usuários:", e);
                 adminUsersList.innerHTML = `<div class="error">Erro ao carregar dados: ${e.message}</div>`;
             }
         };
+
         const renderAdminUsersList = (users) => {
             if (users.length === 0) {
                 adminUsersList.innerHTML = '<div class="info">Nenhum usuário encontrado.</div>';
                 return;
             }
+
             adminUsersList.innerHTML = users.map(user => `
                 <div class="user-list-item" onclick="window.selectAdminUser('${user.username}')" id="user-item-${user.username}">
                     <div>
@@ -1072,13 +2609,17 @@
                 </div>
             `).join('');
         };
+
         window.selectAdminUser = async (username) => {
             document.querySelectorAll('.user-list-item').forEach(el => el.classList.remove('selected'));
             const selectedEl = document.getElementById(`user-item-${username}`);
             if (selectedEl) selectedEl.classList.add('selected');
+
             const user = adminUsersData.find(u => u.username === username);
             if (!user) return;
+
             adminUserDetails.innerHTML = '<div class="info">Carregando detalhes e imagens...</div>';
+
             try {
                 const patientsQuery = query(collection(db, "patients"), where("savedBy", "==", username));
                 const patientsSnap = await getDocs(patientsQuery);
@@ -1087,6 +2628,7 @@
                 let consultationsLast7Days = 0;
                 const oneWeekAgo = new Date();
                 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
                 patientsSnap.forEach(doc => {
                     const pData = doc.data();
                     if (pData.consultations) {
@@ -1098,7 +2640,9 @@
                         });
                     }
                 });
+
                 const dailyAvg = (consultationsLast7Days / 7).toFixed(1);
+
                 let imagesHtml = '';
                 if (images.length > 0) {
                     imagesHtml = `
@@ -1112,6 +2656,7 @@
                 } else {
                     imagesHtml = '<div class="info" style="margin-top: 15px;">Nenhuma imagem salva encontrada.</div>';
                 }
+
                 adminUserDetails.innerHTML = `
                     <div class="user-detail-header">
                         <h3 style="color: var(--prompt-color); margin-bottom: 5px;">${user.username} ${user.isBlocked ? '(BLOQUEADO)' : ''}</h3>
@@ -1122,10 +2667,12 @@
                         <span class="user-detail-label">SENHA</span>
                         <span class="user-detail-value" style="font-family: monospace;">${user.password || '****'}</span>
                     </div>
+
                     <div class="user-detail-row">
                         <span class="user-detail-label">DATA DE REGISTRO</span>
                         <span class="user-detail-value">${user.createdAt ? user.createdAt.toDate().toLocaleString() : 'Desconhecida'}</span>
                     </div>
+
                      <div class="user-detail-row" style="margin-top: 15px;">
                          <span class="user-detail-label">AÇÕES DA CONTA</span>
                          <div style="display: flex; margin-top: 5px; gap: 10px;">
@@ -1137,6 +2684,7 @@
                              </button>
                          </div>
                     </div>
+
                     <div class="usage-stats-box">
                         <div class="user-detail-label" style="color: var(--highlight-color);">ESTATÍSTICAS DE USO (API)</div>
                         <div style="display: flex; gap: 20px; margin-top: 5px; flex-wrap: wrap;">
@@ -1162,8 +2710,10 @@
                             </div>
                         </div>
                     </div>
+
                     ${imagesHtml}
                 `;
+
             } catch (e) {
                 console.error("Erro ao carregar detalhes do usuário:", e);
                 adminUserDetails.innerHTML = `<div class="error">Erro ao carregar detalhes: ${e.message}</div>`;
@@ -1184,6 +2734,7 @@
                 alert(`Erro ao alterar status de bloqueio: ${e.message}`);
             }
         };
+
         window.deleteUserFromPanel = async (username) => {
             showConfirmModal(`Tem certeza que deseja excluir o usuário '${username}' permanentemente?`, async () => {
                  try {
@@ -1197,10 +2748,12 @@
                 }
             });
         };
+
         const openPrescriptionHelper = async (category) => {
             prescriptionHelperTitle.textContent = `Assistente de Prescrição: ${category}`;
             prescriptionHelperBody.innerHTML = `<div class="info">Gerando sugestões personalizadas para o paciente...</div>`;
             prescriptionHelperModal.style.display = 'flex';
+
             try {
                 const templates = await generateContextualTemplates(category);
                 
@@ -1223,12 +2776,15 @@
                 } else {
                     contentHTML = `<div class="info">Nenhuma sugestão relevante encontrada para o quadro clínico atual.</div>`;
                 }
+
                 prescriptionHelperBody.innerHTML = contentHTML;
+
             } catch (error) {
                 console.error(`Error generating contextual templates for ${category}:`, error);
                 prescriptionHelperBody.innerHTML = `<div class="error">Erro ao gerar sugestões: ${error.message}</div>`;
             }
         };
+
         const generateContextualTemplates = async (category) => {
             let instruction = '';
             let format_example = '';
@@ -1264,19 +2820,24 @@ GRATO.`;
             }
             
             const prompt = `Você é um assistente médico especialista em gerar documentos clínicos. Com base no quadro clínico do paciente, siga a instrução fornecida.
+
 **Quadro Clínico do Paciente:**
 - Anamnese: ${JSON.stringify(anamnesis)}
 - Resultados de Exames Prévios: ${examsResults || "Nenhum"}
 - Análise Visual (Axon Eye): ${axonEyeResults || "Nenhum"}
+
 **Instrução Específica:**
 ${instruction}
+
 **Regras de Formatação (Obrigatório):**
 1. Crie solicitações que façam sentido clínico com o quadro apresentado.
 2. Formate a resposta como um array JSON de objetos. Cada objeto deve ter as chaves 'title' e 'text'.
 3. O 'title' deve ser um resumo curto da sugestão (ex: "Metformina para DM2", "Encaminhamento à Cardiologia").
 4. ${format_example}
 5. Se nenhuma sugestão for clinicamente justificável, retorne um array JSON vazio: [].
+
 **Retorne APENAS o array JSON, sem nenhum texto ou formatação adicional.**`;
+
             try {
                 const response = await callGeminiAPI(prompt);
                 const jsonStart = response.indexOf('[');
@@ -1292,9 +2853,11 @@ ${instruction}
                 throw new Error("A IA retornou uma resposta em formato inválido.");
             }
         };
+
         const closePrescriptionHelper = () => {
             prescriptionHelperModal.style.display = 'none';
         };
+
         const openChatbox = () => {
             chatboxMessages.innerHTML = '';
             // Populate with existing history
@@ -1303,12 +2866,15 @@ ${instruction}
                 const imageParts = msg.parts.filter(p => p.inlineData);
                 appendChatMessage(textPart.text, msg.role, false, imageParts.map(p => `data:${p.inlineData.mimeType};base64,${p.inlineData.data}`));
             });
+
             if (conversationHistory.length === 0) {
                  appendChatMessage(`Olá Dr(a). ${currentUser}! Como posso te ajudar hoje?`, 'model');
             }
+
             chatboxModal.style.display = 'flex';
             chatboxInput.focus();
         };
+
         const closeChatbox = () => {
             chatboxModal.style.display = 'none';
         };
@@ -1318,6 +2884,7 @@ ${instruction}
             const text = document.getElementById('confirm-modal-text');
             const btnYes = document.getElementById('confirm-btn-yes');
             const btnNo = document.getElementById('confirm-btn-no');
+
             text.textContent = message;
             
             if (isAlert) {
@@ -1329,6 +2896,7 @@ ${instruction}
             }
             
             modal.style.display = 'flex';
+
             return new Promise((resolve) => {
                 btnYes.onclick = () => {
                     modal.style.display = 'none';
@@ -1341,6 +2909,7 @@ ${instruction}
                 };
             });
         };
+
         const appendChatMessage = (message, sender, isTyping = false, images = []) => {
             const messageWrapper = document.createElement('div');
             messageWrapper.className = `chat-message ${sender}`;
@@ -1348,8 +2917,10 @@ ${instruction}
             const avatar = document.createElement('div');
             avatar.className = 'chat-avatar';
             avatar.innerHTML = sender === 'user' ? '<i class="fas fa-user-circle"></i>' : '<i class="fas fa-robot"></i>';
+
             const bubble = document.createElement('div');
             bubble.className = 'message-bubble';
+
             if (isTyping) {
                 bubble.classList.add('typing');
                 bubble.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
@@ -1362,10 +2933,12 @@ ${instruction}
                 }
                 bubble.innerHTML = contentHTML;
             }
+
             messageWrapper.appendChild(avatar);
             messageWrapper.appendChild(bubble);
             chatboxMessages.appendChild(messageWrapper);
             chatboxMessages.scrollTop = chatboxMessages.scrollHeight;
+
             return bubble; 
         };
         
@@ -1373,12 +2946,14 @@ ${instruction}
             chatImagePreviews.innerHTML = '';
             chatImagesToSend = [];
             const files = Array.from(event.target.files);
+
             files.forEach((file, index) => {
                 if (file.type.startsWith('image/')) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         const imageDataURL = e.target.result;
                         chatImagesToSend.push(imageDataURL);
+
                         const previewItem = document.createElement('div');
                         previewItem.className = 'chat-preview-item';
                         previewItem.innerHTML = `
@@ -1392,6 +2967,7 @@ ${instruction}
             });
             event.target.value = ''; // Reset input
         };
+
         window.removeChatPreviewImage = (indexToRemove) => {
             chatImagesToSend.splice(indexToRemove, 1);
             chatImagePreviews.innerHTML = ''; // Re-render
@@ -1409,15 +2985,19 @@ ${instruction}
         const sendChatMessage = async () => {
             const question = chatboxInput.value.trim();
             if (!question && chatImagesToSend.length === 0) return;
+
             appendChatMessage(question, 'user', false, chatImagesToSend);
             chatboxInput.value = '';
             chatboxInput.disabled = true;
             chatboxSendBtn.disabled = true;
             chatboxUploadBtn.disabled = true;
             chatImagePreviews.innerHTML = '';
+
             const images = [...chatImagesToSend];
             chatImagesToSend = [];
+
             const typingBubble = appendChatMessage('', 'model', true);
+
             try {
                 let response;
                 if (images.length > 0) {
@@ -1427,8 +3007,10 @@ ${instruction}
                 }
                 
                 const formattedResponse = response.replace(/\*(.*?)\*/g, '<b>$1</b>');
+
                 typingBubble.innerHTML = formattedResponse;
                 typingBubble.classList.remove('typing');
+
             } catch (error) {
                 typingBubble.innerHTML = `Desculpe, ocorreu um erro: ${error.message}`;
                 typingBubble.style.color = 'var(--error-color)';
@@ -1440,21 +3022,26 @@ ${instruction}
                 chatboxInput.focus();
             }
         };
+
         adminUserSearch.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
             const filtered = adminUsersData.filter(u => u.username.toLowerCase().includes(term));
             renderAdminUsersList(filtered);
         });
+
         adminPanelClose.addEventListener('click', () => adminPanelModal.style.display = 'none');
+
         adminTabButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const tabName = e.currentTarget.dataset.tab;
                 activateAdminTab(tabName);
             });
         });
+
         const processCommand = async (command) => {
             if (!command.trim()) return;
             appendOutput(command, "command");
+
             if (isUserBlocked) {
                 appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
                 commandInput.value = '';
@@ -1562,12 +3149,14 @@ ${instruction}
             }
             commandInput.value = '';
         };
+
         commandInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') processCommand(commandInput.value); });
         monitorCopyBtn.addEventListener('click', copyMonitorContent);
         logoutButton.addEventListener('click', logoutUser);
         settingsButton.addEventListener('click', openAdminAuth);
         themeToggleButton.addEventListener('click', toggleTheme);
         disconnectAllUsersBtn.addEventListener('click', disconnectAllUsers);
+
         captureButton.addEventListener('click', capturePhoto);
         uploadButton.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileUpload);
@@ -1583,6 +3172,7 @@ ${instruction}
         albumButton.addEventListener('click', openAlbumModal);
         albumModalClose.addEventListener('click', closeAlbumModal);
         albumModal.addEventListener('click', (e) => { if (e.target === albumModal) closeAlbumModal(); });
+
         const checkBlockedAndExecute = (callback) => {
              if(isUserBlocked) {
                  if (isMobile && globalSettings.mobile2_0_enabled) {
@@ -1594,6 +3184,7 @@ ${instruction}
                  callback();
              }
         }
+
         btnExames.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/exames')));
         btnSee.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/see')));
         btnHd.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/hd')));
@@ -1628,6 +3219,7 @@ ${instruction}
                 openChatbox();
             });
         });
+
         adminAuthClose.addEventListener('click', () => adminAuthModal.style.display = 'none');
         adminAuthButton.addEventListener('click', checkAdminAuth);
         adminAuthPass.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkAdminAuth(); });
@@ -1637,6 +3229,7 @@ ${instruction}
             const deleteButton = target.closest('.delete');
             const pdfButton = target.closest('.pdf');
             const detailsButton = target.closest('.details');
+
             if (deleteButton) {
                 checkBlockedAndExecute(() => deletePatient(deleteButton.dataset.id));
             } else if (pdfButton && !pdfButton.classList.contains('disabled')) {
@@ -1647,6 +3240,7 @@ ${instruction}
                 if (patientData) showPatientDetails(patientData);
             }
         });
+
         patientDetailsModal.addEventListener('click', (e) => {
             const header = e.target.closest('.consultation-header');
             if (header) {
@@ -1662,12 +3256,14 @@ ${instruction}
         patientListClose.addEventListener('click', () => patientListModal.style.display = 'none');
         patientDetailsClose.addEventListener('click', () => patientDetailsModal.style.display = 'none');
         patientSearchInput.addEventListener('input', (e) => searchPatients(e.target.value));
+
         loginModalButton.addEventListener('click', async () => {
             const username = loginModalUser.value.trim(), password = loginModalPass.value.trim();
             if (!username || !password) return loginModalFeedback.textContent = "Preencha todos os campos.";
             loginModalFeedback.textContent = "Verificando..."; loginModalButton.disabled = true;
             
             const authResult = await authenticateUser(username, password);
+
             if (authResult.success) {
                 if (authResult.isBlocked) {
                     loginModalFeedback.style.color = '#ffcc00';
@@ -1698,12 +3294,14 @@ ${instruction}
             e.target.value = value;
         });
         savePatientDobInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') savePatientButton.click(); });
+
         prescriptionHelperClose.addEventListener('click', closePrescriptionHelper);
         prescriptionHelperModal.addEventListener('click', (e) => {
             if (e.target === prescriptionHelperModal) {
                 closePrescriptionHelper();
             }
         });
+
         prescriptionHelperBody.addEventListener('click', (e) => {
             const copyBtn = e.target.closest('.prescription-template-copy-btn');
             if (copyBtn) {
@@ -1723,12 +3321,14 @@ ${instruction}
                 }
             }
         });
+
         interactiveOutput.addEventListener('click', (e) => {
             const conductTitle = e.target.closest('.conduct-title');
             if (conductTitle && conductTitle.dataset.category) {
                 openPrescriptionHelper(conductTitle.dataset.category);
             }
         });
+
         const initApp = async () => {
             const savedTheme = localStorage.getItem('theme');
             const systemPrefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
@@ -1737,9 +3337,11 @@ ${instruction}
             } else {
                 setTheme(systemPrefersLight ? 'light' : 'dark');
             }
+
             adminPanelModal.addEventListener('click', (e) => {
                 const formContainer = document.getElementById('create-user-form-container');
                 if (!formContainer) return;
+
                 if (e.target.closest('#toggle-create-user-form')) {
                     formContainer.style.display = 'block';
                 }
@@ -1747,6 +3349,7 @@ ${instruction}
                     formContainer.style.display = 'none';
                 }
             });
+
             const mobileStatusEl = document.querySelector('.mobile-connection-status');
             if (mobileStatusEl) {
                 mobileStatusEl.addEventListener('click', () => {
@@ -1764,6 +3367,7 @@ ${instruction}
                     );
                 });
             }
+
             window.addEventListener('beforeunload', () => {
                 if (isLoggedIn && currentUser && !isMobile) {
                     // This is a 'fire and forget' call. It's a best-effort attempt to clean up 
@@ -1771,6 +3375,7 @@ ${instruction}
                     deleteDoc(doc(db, "sessions", currentUser));
                 }
             });
+
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     if (chatboxModal.style.display === 'flex') {
@@ -1796,6 +3401,7 @@ ${instruction}
                     }
                 }
             });
+
             if (isSpeechRecognitionSupported()) initSpeechRecognition();
             
             const savedUser = localStorage.getItem('axon_logged_in_user');
@@ -1805,6 +3411,7 @@ ${instruction}
                 if (userIsValid) {
                     const sessionRef = doc(db, "sessions", savedUser);
                     const sessionSnap = await getDoc(sessionRef);
+
                     if (!isMobile && sessionSnap.exists()) {
                         handleSuccessfulLogin(savedUser, true);
                     } else {
@@ -1829,4 +3436,5 @@ ${instruction}
             }
             if (isMobile) { statusTextApi.textContent = ""; statusTextMic.textContent = ""; statusTextCam.textContent = ""; }
         };
+
         document.addEventListener('DOMContentLoaded', initApp);</script></body></html>
