@@ -2113,7 +2113,7 @@
 ██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
 ██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
 ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-                    </pre><span class="info">Axon - Assistente Médico v1.5</span><br><span class="info">Aguardando
+                    </pre><span class="info">Axon - Assistente Médico v1.0</span><br><span class="info">Aguardando
                         autenticação...</span><br><br>
                 </div>
             </div>
@@ -5455,7 +5455,16 @@ ${instruction}
                 case '/exit': logoutUser(); break;
                 case '/clear':
                     await clearTemporaryUploads();
-                    if (currentUser) await deleteDoc(doc(db, "sessions", currentUser));
+                    // Only clear session data in Firestore, don't delete the session document
+                    // (deleting would log out desktop users)
+                    if (currentUser && isMobile) {
+                        // Mobile can safely update session to clear data
+                        await setDoc(doc(db, "sessions", currentUser), {
+                            examsResults: "",
+                            axonEyeResults: "",
+                            axonEyeImages: []
+                        }, { merge: true });
+                    }
                     anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
                     examsResults = ""; axonEyeResults = ""; conversationHistory = [];
                     updateAnamnesisPreview(false); updateExamsResultsPreview(false); updateAxonEyeResultsPreview(false);
