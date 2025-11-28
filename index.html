@@ -2385,7 +2385,7 @@
         </div>
     </div>
     <script type="module">import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, where, increment, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, where, increment, writeBatch, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA4bis9CVQkl1eJDfezsvUKTx1X_kFVT4M",
@@ -4814,6 +4814,64 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             adminSettingsBody.innerHTML = html;
         };
 
+        const fixTimestamps = (obj) => {
+            if (obj === null || typeof obj !== 'object') return obj;
+            if (obj.seconds !== undefined && obj.nanoseconds !== undefined && Object.keys(obj).length === 2) {
+                return new Timestamp(obj.seconds, obj.nanoseconds);
+            }
+            if (Array.isArray(obj)) return obj.map(fixTimestamps);
+            const newObj = {};
+            for (const key in obj) newObj[key] = fixTimestamps(obj[key]);
+            return newObj;
+        };
+
+        window.backupFirestore = async () => {
+            const feedback = document.getElementById('backup-feedback');
+            feedback.textContent = 'Gerando backup...'; feedback.style.color = 'var(--prompt-color)';
+            try {
+                const data = { patients: [], users: [], timestamp: new Date().toISOString(), version: '1.6' };
+                const patientsSnap = await getDocs(collection(db, "patients"));
+                patientsSnap.forEach(doc => data.patients.push({ id: doc.id, ...doc.data() }));
+                const usersSnap = await getDocs(collection(db, "users"));
+                usersSnap.forEach(doc => data.users.push({ id: doc.id, ...doc.data() }));
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `axon_backup_${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                feedback.textContent = `Backup concluído! ${data.patients.length} pacientes e ${data.users.length} usuários.`; feedback.style.color = 'var(--success-color)';
+            } catch (e) { console.error("Erro backup:", e); feedback.textContent = `Erro: ${e.message}`; feedback.style.color = 'var(--error-color)'; }
+        };
+
+        window.restoreFirestore = async (input) => {
+            const file = input.files[0]; if (!file) return;
+            const feedback = document.getElementById('backup-feedback');
+            feedback.textContent = 'Lendo arquivo...'; feedback.style.color = 'var(--prompt-color)';
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.patients && !data.users) throw new Error("Arquivo inválido.");
+                    feedback.textContent = 'Restaurando...';
+                    let batch = writeBatch(db); let count = 0;
+                    if (data.patients) {
+                        for (const p of data.patients) {
+                            batch.set(doc(db, "patients", p.id), fixTimestamps(p));
+                            count++; if (count >= 400) { await batch.commit(); batch = writeBatch(db); count = 0; }
+                        }
+                    }
+                    if (data.users) {
+                        for (const u of data.users) {
+                            batch.set(doc(db, "users", u.id), fixTimestamps(u));
+                            count++; if (count >= 400) { await batch.commit(); batch = writeBatch(db); count = 0; }
+                        }
+                    }
+                    if (count > 0) await batch.commit();
+                    feedback.textContent = 'Restauração concluída! Recarregando...'; feedback.style.color = 'var(--success-color)';
+                    setTimeout(() => window.location.reload(), 2000);
+                } catch (err) { console.error("Erro restore:", err); feedback.textContent = `Erro: ${err.message}`; feedback.style.color = 'var(--error-color)'; }
+            };
+            reader.readAsText(file); input.value = '';
+        };
+
         const renderAdminDebugUI = () => {
             adminDebugBody.innerHTML = `
                 <div class="admin-section">
@@ -4825,6 +4883,15 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                             <span class="slider"></span>
                         </label>
                     </div>
+                </div>
+                <div class="admin-section">
+                    <div class="admin-section-title">Backup & Restauração (Firestore)</div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button class="app-modal-button" onclick="window.backupFirestore()" style="flex: 1;"><i class="fas fa-download"></i> Baixar Backup (JSON)</button>
+                        <button class="app-modal-button" onclick="document.getElementById('restore-file-input').click()" style="flex: 1; background-color: var(--altered-color); color: #1a202c;"><i class="fas fa-upload"></i> Restaurar</button>
+                        <input type="file" id="restore-file-input" accept=".json" style="display: none;" onchange="window.restoreFirestore(this)">
+                    </div>
+                    <div id="backup-feedback" class="info" style="font-size: 12px;"></div>
                 </div>
             `;
             document.getElementById('mobile-2-0-toggle').addEventListener('change', async (e) => {
@@ -5573,7 +5640,7 @@ ${instruction}
         btnHd.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/hd')));
         btnCd.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/cd')));
         btnRecords.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/load')));
-        btnClear.addEventListener('click', () => checkBlockedAndExecute(() => logoutUser()));
+        btnClear.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/clear')));
         btnMic.addEventListener('click', () => checkBlockedAndExecute(() => processCommand(isListening ? '/hear off' : '/hear on')));
         btnSaveFromList.addEventListener('click', () => {
             if (isUserBlocked) {
