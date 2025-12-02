@@ -13,6 +13,7 @@
     <link rel="apple-touch-icon" href="https://i.imgur.com/ZsfZEh2.png">
     <meta name="theme-color" id="theme-color-meta" content="#1a202c">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #1a202c, #2d3748);
@@ -2128,7 +2129,9 @@
                         title="Prontuários"><i class="fas fa-book-medical"></i></button><button id="btn-clear"
                         class="action-button" title="Limpar Sessão (/clear)"><i
                             class="fas fa-eraser"></i></button><button id="btn-mic" class="action-button"
-                        title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button></div>
+                        title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button><button
+                        id="btn-p2p" class="action-button" title="Enviar Arquivo P2P"><i
+                            class="fas fa-share-square"></i></button></div>
                 <div class="input-line"><span class="prompt">></span><input type="text" class="command-input"
                         id="command-input" autocomplete="off" autofocus></div>
             </div>
@@ -2179,7 +2182,10 @@
                 class="mobile-btn"><img src="btn2.PNG" alt="Análise Axon Eye"><span>Análise Axon
                     Eye</span></button><button id="mobile-btn-records" class="mobile-btn"><img src="btn3.PNG"
                     alt="Prontuários"><span>Prontuários</span></button><button id="mobile-btn-chat"
-                class="mobile-btn"><img src="btn4.PNG" alt="Axon AI Chat"><span>Axon AI Chat</span></button></div>
+                class="mobile-btn"><img src="btn4.PNG" alt="Axon AI Chat"><span>Axon AI Chat</span></button><button
+                id="mobile-btn-p2p" class="mobile-btn"><i class="fas fa-share-square"
+                    style="font-size: 60px; margin-bottom: 10px; color: var(--text-color);"></i><span>Enviar
+                    Arquivo</span></button></div>
         <div class="mobile-connection-status">
             <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
                 <div class="status-dot"></div><span>Nenhum desktop conectado</span>
@@ -2384,6 +2390,24 @@
             </div><span>Analisando Imagens...</span>
         </div>
     </div>
+    <div id="p2p-modal" class="app-modal">
+        <div class="app-modal-content">
+            <span class="app-modal-close" id="p2p-modal-close">&times;</span>
+            <div class="app-modal-header">
+                <h2 class="app-modal-title">Enviar Arquivo (P2P)</h2>
+            </div>
+            <div class="app-modal-body" style="text-align: center;">
+                <div id="p2p-drop-zone"
+                    style="border: 2px dashed var(--border-color); padding: 40px; border-radius: 10px; margin-bottom: 20px; cursor: pointer; transition: border-color 0.3s;">
+                    <i class="fas fa-cloud-upload-alt"
+                        style="font-size: 48px; color: var(--prompt-color); margin-bottom: 10px;"></i>
+                    <p>Arraste e solte um arquivo aqui ou clique para selecionar</p>
+                </div>
+                <div id="p2p-status" class="info">Aguardando conexão...</div>
+            </div>
+        </div>
+    </div>
+    <input type="file" id="p2p-file-input" style="display:none">
     <script type="module">import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, where, increment, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -3679,9 +3703,19 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             if (isMobile && globalSettings.mobile2_0_enabled) {
                 document.querySelector('.container').style.display = 'none';
                 mobileContainer.style.display = 'flex';
+
+                const btnExames = document.getElementById('mobile-btn-exames');
+                const btnSee = document.getElementById('mobile-btn-see');
+                if (btnExames) btnExames.style.display = 'none';
+                if (btnSee) btnSee.style.display = 'none';
             } else {
                 document.querySelector('.container').style.display = 'flex';
                 mobileContainer.style.display = 'none';
+
+                const btnExames = document.getElementById('mobile-btn-exames');
+                const btnSee = document.getElementById('mobile-btn-see');
+                if (btnExames) btnExames.style.display = 'flex';
+                if (btnSee) btnSee.style.display = 'flex';
             }
             initializeAIModel();
         };
@@ -4455,6 +4489,8 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             if (isRestoredSession) appendOutput(`Sessão restaurada para: ${currentUser}`, "success", false);
             else appendOutput(`Login bem-sucedido. Bem-vindo, ${currentUser}.`, "success", false);
             initialMessagesContainer.style.display = 'none';
+
+            initializeP2P(currentUser);
 
             mobileWelcomeTitle.textContent = `Bem-vindo, ${currentUser}!`;
 
@@ -5813,6 +5849,159 @@ ${instruction}
                 openPrescriptionHelper(conductTitle.dataset.category);
             }
         });
+
+        // P2P Logic
+        let peer = null;
+        let p2pConn = null;
+        const p2pModal = document.getElementById('p2p-modal');
+        const p2pModalClose = document.getElementById('p2p-modal-close');
+        const p2pDropZone = document.getElementById('p2p-drop-zone');
+        const p2pFileInput = document.getElementById('p2p-file-input');
+        const p2pStatus = document.getElementById('p2p-status');
+        const btnP2P = document.getElementById('btn-p2p');
+        const mobileBtnP2P = document.getElementById('mobile-btn-p2p');
+
+        const initializeP2P = (username) => {
+            if (peer) return;
+
+            // Simple ID generation based on username
+            // Note: In production, handle potential collisions or use a more robust signaling
+            const myId = isMobile ? `axon-mobile-${username}` : `axon-desktop-${username}`;
+            const targetId = isMobile ? `axon-desktop-${username}` : `axon-mobile-${username}`;
+
+            try {
+                peer = new Peer(myId);
+
+                peer.on('open', (id) => {
+                    console.log('My peer ID is: ' + id);
+                    if (p2pStatus) p2pStatus.textContent = "Conectado à rede P2P. Aguardando par...";
+                    // Try to connect to the other device
+                    connectToPeer(targetId);
+                });
+
+                peer.on('connection', (conn) => {
+                    setupConnection(conn);
+                });
+
+                peer.on('error', (err) => {
+                    console.error('Peer error:', err);
+                    if (err.type === 'unavailable-id') {
+                        // ID already taken, maybe another tab is open or session didn't clear
+                        // Try to connect anyway as we might be the second one opening
+                        connectToPeer(targetId);
+                    } else {
+                        if (p2pStatus) p2pStatus.textContent = "Erro P2P: " + err.type;
+                    }
+                });
+            } catch (e) {
+                console.error("PeerJS init error:", e);
+            }
+        };
+
+        const connectToPeer = (targetId) => {
+            if (!peer) return;
+            const conn = peer.connect(targetId);
+            setupConnection(conn);
+        };
+
+        const setupConnection = (conn) => {
+            conn.on('open', () => {
+                p2pConn = conn;
+                if (p2pStatus) p2pStatus.textContent = "Dispositivo conectado!";
+                appendOutput("Dispositivo P2P conectado.", "success");
+            });
+
+            conn.on('data', (data) => {
+                if (data.file && data.name && data.type) {
+                    const blob = new Blob([data.file], { type: data.type });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = data.name;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    appendOutput(`Arquivo recebido via P2P: ${data.name}`, "success");
+                    if (isMobile && globalSettings.mobile2_0_enabled) {
+                        showConfirmModal(`Arquivo recebido: ${data.name}`, () => { }, true);
+                    }
+                }
+            });
+
+            conn.on('close', () => {
+                p2pConn = null;
+                if (p2pStatus) p2pStatus.textContent = "Desconectado.";
+            });
+        };
+
+        const sendFile = (file) => {
+            if (!p2pConn) {
+                alert("Nenhum dispositivo conectado.");
+                return;
+            }
+            if (p2pStatus) p2pStatus.textContent = "Enviando " + file.name + "...";
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const blob = new Blob([e.target.result], { type: file.type });
+                p2pConn.send({
+                    file: blob,
+                    name: file.name,
+                    type: file.type
+                });
+                if (p2pStatus) p2pStatus.textContent = "Arquivo enviado!";
+                appendOutput(`Arquivo enviado via P2P: ${file.name}`, "success");
+                setTimeout(() => {
+                    if (p2pStatus) p2pStatus.textContent = "Dispositivo conectado!";
+                    if (p2pModal.style.display === 'flex') p2pModal.style.display = 'none';
+                }, 1500);
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        if (btnP2P) {
+            btnP2P.addEventListener('click', () => {
+                p2pModal.style.display = 'flex';
+            });
+        }
+
+        if (mobileBtnP2P) {
+            mobileBtnP2P.addEventListener('click', () => {
+                p2pFileInput.click();
+            });
+        }
+
+        if (p2pModalClose) {
+            p2pModalClose.addEventListener('click', () => {
+                p2pModal.style.display = 'none';
+            });
+        }
+
+        if (p2pDropZone) {
+            p2pDropZone.addEventListener('click', () => p2pFileInput.click());
+            p2pDropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                p2pDropZone.style.borderColor = 'var(--highlight-color)';
+            });
+            p2pDropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                p2pDropZone.style.borderColor = 'var(--border-color)';
+            });
+            p2pDropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                p2pDropZone.style.borderColor = 'var(--border-color)';
+                if (e.dataTransfer.files.length > 0) {
+                    sendFile(e.dataTransfer.files[0]);
+                }
+            });
+        }
+
+        if (p2pFileInput) {
+            p2pFileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    sendFile(e.target.files[0]);
+                }
+            });
+        }
 
         const initApp = async () => {
             const savedTheme = localStorage.getItem('theme');
