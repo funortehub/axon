@@ -1511,7 +1511,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     cameraStream.getTracks().forEach(track => track.stop());
                 }
 
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentCameraFacingMode } });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentCameraFacingMode, width: { ideal: 4096 }, height: { ideal: 2160 } } });
 
                 cameraVideo.srcObject = stream;
                 cameraStream = stream;
