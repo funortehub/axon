@@ -13,6 +13,7 @@
     <link rel="apple-touch-icon" href="https://i.imgur.com/ZsfZEh2.png">
     <meta name="theme-color" id="theme-color-meta" content="#1a202c">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #1a202c, #2d3748);
@@ -2058,6 +2059,169 @@
             .admin-users-details-section {
                 flex: 1;
                 min-height: 0;
+        .confirm-modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center
+        }
+
+        .confirm-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 14px;
+            transition: background-color .2s, transform .1s
+        }
+
+        .confirm-btn:active {
+            transform: scale(.97)
+        }
+
+        #confirm-btn-yes {
+            background-color: var(--error-color);
+            color: #fff
+        }
+
+        #confirm-btn-no {
+            background-color: var(--button-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color)
+        }
+
+        .mobile-loader {
+            display: none;
+            position: fixed;
+            z-index: 2500;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-gradient);
+            justify-content: center;
+            align-items: center
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--button-bg);
+            transition: .4s;
+            border-radius: 28px;
+            border: 1px solid var(--border-color)
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 3px;
+            background-color: #fff;
+            transition: .4s;
+            border-radius: 50%
+        }
+
+        input:checked+.slider {
+            background-color: var(--highlight-color)
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(22px)
+        }
+
+        @media (max-width:768px) {
+            .container {
+                flex-direction: column-reverse;
+                padding: 10px;
+                gap: 10px
+            }
+
+            .monitor-toggle-button span,
+            .status-bar span {
+                display: none
+            }
+
+            .monitor-toggle-button {
+                padding: 5px 8px;
+                font-size: 16px;
+                width: auto;
+                min-width: 35px
+            }
+
+            .status-bar {
+                gap: 10px;
+                margin-right: 0
+            }
+
+            .status-item .status-indicator {
+                width: 8px;
+                height: 8px
+            }
+
+            .logout-button,
+            .settings-button,
+            .theme-toggle {
+                font-size: 18px
+            }
+
+            .camera-modal.fullscreen-mobile {
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 100;
+                border-radius: 0
+            }
+
+            .camera-modal.fullscreen-mobile .camera-container {
+                border-radius: 0;
+                border: none
+            }
+
+            .radio-group {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px
+            }
+
+            .admin-users-container {
+                flex-direction: column
+            }
+
+            .admin-users-list-section {
+                flex: 0 0 45%;
+                min-height: 220px;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 15px;
+                padding-right: 0
+            }
+
+            .admin-users-details-section {
+                flex: 1;
+                min-height: 0;
                 padding-left: 0;
                 padding-top: 15px
             }
@@ -2068,6 +2232,79 @@
                 padding-bottom: 56.25%
             }
         }
+
+        /* P2P Modal Styles */
+        .p2p-modal-content {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 25px;
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--glass-shadow);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            color: var(--text-color);
+        }
+
+        .p2p-status-container {
+            text-align: center;
+            padding: 15px;
+            background: var(--input-bg);
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .p2p-id-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--highlight-color);
+            margin: 10px 0;
+            letter-spacing: 2px;
+            cursor: pointer;
+        }
+
+        .p2p-drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(0,0,0,0.1);
+        }
+
+        .p2p-drop-zone.dragover {
+            border-color: var(--highlight-color);
+            background: rgba(66, 153, 225, 0.1);
+        }
+
+        .p2p-progress-bar {
+            width: 100%;
+            height: 10px;
+            background: var(--input-bg);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .p2p-progress-fill {
+            height: 100%;
+            background: var(--success-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .p2p-connection-form {
+            display: flex;
+            gap: 10px;
+        }
+
     </style>
 </head>
 
@@ -2128,258 +2365,7 @@
                         title="Prontuários"><i class="fas fa-book-medical"></i></button><button id="btn-clear"
                         class="action-button" title="Limpar Sessão (/clear)"><i
                             class="fas fa-eraser"></i></button><button id="btn-mic" class="action-button"
-                        title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button></div>
-                <div class="input-line"><span class="prompt">></span><input type="text" class="command-input"
-                        id="command-input" autocomplete="off" autofocus></div>
-            </div>
-        </div>
-        <div class="terminal non-interactive-terminal">
-            <div class="terminal-header">
-                <div class="terminal-title">Monitor</div>
-                <div class="monitor-toggle-buttons"><button id="toggle-anamnesis"
-                        class="monitor-toggle-button active"><i
-                            class="fas fa-notes-medical"></i><span>Anamnese</span></button><button id="toggle-exams"
-                        class="monitor-toggle-button"><i
-                            class="fas fa-file-medical-alt"></i><span>Exames</span></button><button id="toggle-axon-eye"
-                        class="monitor-toggle-button"><i class="fas fa-eye"></i><span>Axon Eye</span></button></div>
-                <div class="terminal-actions">
-                    <div class="terminal-btn close-btn"></div>
-                    <div class="terminal-btn minimize-btn"></div>
-                    <div class="terminal-btn maximize-btn"></div>
-                </div>
-            </div><button id="monitor-copy-btn" class="monitor-copy-btn" title="Copiar Conteúdo"><i
-                    class="fas fa-copy"></i></button>
-            <div class="terminal-content" id="monitor-content-wrapper">
-                <div id="anamnesis-preview" class="monitor-view">
-                    <div class="info">Aguardando início da anamnese...</div>
-                </div>
-                <div id="exams-results-preview" class="monitor-view" style="display:none">
-                    <div class="info">Nenhum exame analisado ainda.</div>
-                </div>
-                <div id="axon-eye-results-preview" class="monitor-view" style="display:none">
-                    <div class="info">Nenhuma análise visual feita ainda.</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="mobile-2-0-container" class="mobile-2-0-container" style="display:none">
-        <div class="mobile-header">
-            <h2 id="mobile-welcome-title">Bem-vindo!</h2>
-            <p>Selecione uma opção para começar.</p>
-        </div>
-        <div class="info-banner">
-            <div class="chat-bubble-info"><i class="fas fa-info-circle"
-                    style="margin-right:8px;color:var(--prompt-color)"></i><span id="info-banner-content">Para acesso
-                    completo, abra o Axon Web em seu computador em<a href="https://funortehub.github.io/axon"
-                        target="_blank" class="highlight-link">funortehub.github.io/axon</a>ou insira um dispositivo
-                    AXON USB.</span></div>
-        </div>
-        <div class="mobile-grid"><button id="mobile-btn-exames" class="mobile-btn"><img src="btn1.PNG"
-                    alt="Analisar Exames"><span>Analisar Exames</span></button><button id="mobile-btn-see"
-                class="mobile-btn"><img src="btn2.PNG" alt="Análise Axon Eye"><span>Análise Axon
-                    Eye</span></button><button id="mobile-btn-records" class="mobile-btn"><img src="btn3.PNG"
-                    alt="Prontuários"><span>Prontuários</span></button><button id="mobile-btn-chat"
-                class="mobile-btn"><img src="btn4.PNG" alt="Axon AI Chat"><span>Axon AI Chat</span></button></div>
-        <div class="mobile-connection-status">
-            <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <div class="status-dot"></div><span>Nenhum desktop conectado</span>
-            </div><small
-                style="font-size: 10px; opacity: 0.8; margin-top: 5px; max-width: 220px; line-height: 1.3;">^Clique aqui
-                para fazer logout em outros desktops conectados</small>
-        </div>
-    </div>
-    <div class="footer"><span>AXON | Sistema médico inteligente desenvolvido por Ian Bastos</span></div>
-    <div id="camera-modal" class="camera-modal">
-        <div class="camera-container">
-            <div class="terminal-header">
-                <div class="terminal-title" id="camera-modal-title">Câmera de Exames</div>
-                <div class="terminal-actions">
-                    <div class="terminal-btn close-btn" id="camera-close-btn"></div>
-                </div>
-            </div>
-            <div class="terminal-content" style="padding:10px">
-                <div class="camera-video-wrapper"><video id="camera-video" class="camera-video" autoplay playsinline
-                        muted></video>
-                    <div class="camera-action-buttons"><button id="flashlight-button" class="flashlight-button"
-                            style="display:none"><i class="fas fa-lightbulb"></i>Lanterna</button><button
-                            id="camera-switch-button" class="camera-switch-button" style="display:none"><i
-                                class="fas fa-sync-alt"></i>Trocar Câmera</button></div>
-                    <div id="album-button" class="album-button" style="display:none"><i
-                            class="fas fa-images"></i>Álbum<span id="album-count" class="album-count">0</span></div>
-                    <div class="camera-controls"><button id="capture-button" class="camera-button"
-                            title="Capturar Foto"><i class="fas fa-camera"></i></button><input type="file"
-                            id="file-input" accept="image/*" multiple="multiple" style="display:none"><button
-                            id="upload-button" class="camera-button" title="Carregar Arquivo"><i
-                                class="fas fa-upload"></i></button><button id="send-exams-button"
-                            class="camera-button disabled" title="Enviar Exames"><i
-                                class="fas fa-paper-plane"></i></button><button id="send-axon-eye-button"
-                            class="camera-button disabled" title="Analisar com Axon Eye" style="display:none"><i
-                                class="fas fa-eye"></i></button><button id="cancel-camera-button" class="camera-button"
-                            title="Cancelar"><i class="fas fa-times"></i></button></div>
-                </div><canvas id="camera-canvas" style="display:none"></canvas>
-            </div>
-        </div>
-    </div>
-    <div id="fullscreen-modal" class="fullscreen-modal"><span class="modal-close">&times;</span><img
-            class="modal-content" id="modal-image"></div>
-    <div id="album-modal" class="album-modal">
-        <div class="album-modal-content"><span class="album-modal-close">&times;</span>
-            <div class="album-modal-header">
-                <div class="album-modal-title">Álbum de Exames</div>
-            </div>
-            <div id="album-grid" class="album-grid"></div>
-        </div>
-    </div>
-    <div id="patient-list-modal" class="patient-list-modal">
-        <div class="patient-list-content"><span class="patient-list-close">&times;</span>
-            <div class="patient-list-header">
-                <div class="patient-list-title">Pacientes Salvos</div>
-            </div>
-            <div class="patient-search-container"><input type="text" id="patient-search-input"
-                    class="patient-search-input" placeholder="Pesquisar paciente..."></div>
-            <div id="patient-list" class="patient-list"></div>
-            <div class="patient-list-footer"
-                style="margin-top:15px;padding-top:15px;border-top:1px solid var(--border-color)"><button
-                    id="btn-save-from-list" class="app-modal-button" style="width:100%">Salvar Consulta Atual</button>
-            </div>
-        </div>
-    </div>
-    <div id="patient-details-modal" class="patient-details-modal">
-        <div class="patient-details-content"><span class="patient-details-close">&times;</span>
-            <div class="patient-details-header">
-                <div class="patient-details-title" id="patient-details-title">Detalhes do Paciente</div>
-            </div>
-            <div id="patient-details-body" class="patient-details-body"></div>
-        </div>
-    </div>
-    <div id="login-modal" class="app-modal">
-        <div class="app-modal-content">
-            <div class="app-modal-header">
-                <h2 class="app-modal-title">AXON A.I - Login</h2>
-            </div>
-            <div class="app-modal-body">
-                <p>Por favor, faça login para continuar.</p><input type="text" id="login-modal-user"
-                    placeholder="Usuário" class="app-modal-input" autocomplete="username"> <input type="password"
-                    id="login-modal-pass" placeholder="Senha" class="app-modal-input"
-                    autocomplete="current-password"><button id="login-modal-button"
-                    class="app-modal-button">Entrar</button>
-                <div id="login-modal-feedback" class="app-modal-feedback"></div>
-            </div>
-        </div>
-    </div>
-    <div id="save-patient-modal" class="app-modal">
-        <div class="app-modal-content"><span class="app-modal-close">&times;</span>
-            <div class="app-modal-header">
-                <h2 class="app-modal-title">Salvar Paciente</h2>
-            </div>
-            <div class="app-modal-body">
-                <p>Insira os dados do paciente para salvar a sessão atual.</p><input type="text" id="save-patient-name"
-                    placeholder="Nome Completo do Paciente" class="app-modal-input"> <input type="text"
-                    id="save-patient-dob" placeholder="Data de Nascimento (DD/MM/AAAA)" class="app-modal-input"><button
-                    id="save-patient-button" class="app-modal-button">Salvar</button>
-                <div id="save-patient-feedback" class="app-modal-feedback"></div>
-            </div>
-        </div>
-    </div>
-    <div id="admin-auth-modal" class="app-modal">
-        <div class="app-modal-content"><span class="app-modal-close">&times;</span>
-            <div class="app-modal-header">
-                <h2 class="app-modal-title">Administração</h2>
-            </div>
-            <div class="app-modal-body">
-                <p>Insira a senha de administrador.</p><input type="password" id="admin-auth-pass" placeholder="Senha"
-                    class="app-modal-input"><button id="admin-auth-button" class="app-modal-button">Acessar</button>
-                <div id="admin-auth-feedback" class="app-modal-feedback"></div>
-            </div>
-        </div>
-    </div>
-    <div id="admin-panel-modal" class="app-modal">
-        <div class="app-modal-content"><span class="app-modal-close">&times;</span>
-            <div class="app-modal-header">
-                <h2 class="app-modal-title">Painel Administrativo</h2>
-            </div>
-            <div class="admin-tabs"><button class="admin-tab-btn active" data-tab="users">Usuários</button><button
-                    class="admin-tab-btn" data-tab="api">API</button><button class="admin-tab-btn"
-                    data-tab="debug">Debug</button></div>
-            <div id="tab-users" class="admin-tab-content">
-                <div class="patient-search-container" style="margin:0 0 15px 0"><input type="text"
-                        id="admin-user-search" class="patient-search-input" placeholder="Buscar usuário..."></div>
-                <div class="admin-users-container">
-                    <div class="admin-users-list-section">
-                        <div class="admin-section-title"
-                            style="margin-top:0;margin-bottom:10px;flex-shrink:0; display: flex; justify-content: space-between; align-items: center;">
-                            <span>Usuários (Rank de Uso)</span>
-                            <div style="display:flex; gap: 5px;"><button id="disconnect-all-users-btn"
-                                    class="patient-action-button"
-                                    style="flex:0;padding: 4px 8px;font-size:12px;color: var(--error-color);"><i
-                                        class="fas fa-power-off"></i> Desconectar Todos</button><button
-                                    id="toggle-create-user-form" class="patient-action-button details"
-                                    style="flex:0;padding: 4px 8px;font-size:12px;"><i class="fas fa-plus"></i>
-                                    Novo</button></div>
-                        </div>
-                        <div id="admin-users-list" class="user-list-scroll">
-                            <div class="info">Carregando...</div>
-                        </div>
-                    </div>
-                    <div class="admin-users-details-section" id="admin-user-details">
-                        <div class="info" style="margin-top:20px">Selecione um usuário para ver detalhes.</div>
-                    </div>
-                </div>
-                <div id="create-user-form-container" class="admin-section"
-                    style="margin-top: 15px; padding: 10px 15px; flex-shrink: 0; display: none;">
-                    <div class="admin-section-title"
-                        style="display:flex; justify-content:space-between; align-items:center;"><span>Criar Novo
-                            Usuário</span><i id="close-create-user-form" class="fas fa-times"
-                            style="cursor:pointer; font-size:16px;"></i></div>
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px;"><input type="text" id="admin-new-user"
-                            class="admin-input" placeholder="Novo nome de usuário" style="flex: 1;"> <input type="text"
-                            id="admin-new-pass" class="admin-input" placeholder="Nova senha" style="flex: 1;"></div>
-                    <button class="app-modal-button" onclick="window.createUserFromPanel()">Criar Usuário</button>
-                    <div id="admin-create-user-feedback" class="app-modal-feedback"
-                        style="text-align:left;margin-top:10px;min-height:15px;font-size:12px"></div>
-                </div>
-            </div>
-            <div id="tab-api" class="admin-tab-content" style="display:none">
-                <div id="admin-settings-body"></div>
-            </div>
-            <div id="tab-debug" class="admin-tab-content" style="display:none">
-                <div id="admin-debug-body"></div>
-            </div>
-        </div>
-    </div>
-    <div id="prescription-helper-modal" class="app-modal">
-        <div class="app-modal-content" style="max-width:600px"><span class="app-modal-close">&times;</span>
-            <div class="app-modal-header">
-                <h2 class="app-modal-title" id="prescription-helper-title">Assistente de Prescrição</h2>
-            </div>
-            <div class="app-modal-body" id="prescription-helper-body" style="text-align:left;overflow-y:auto"></div>
-        </div>
-    </div>
-    <div id="chatbox-modal" class="chatbox-modal">
-        <div class="chatbox-header"><i id="chatbox-new-chat-btn" class="fas fa-plus-circle chatbox-new-chat-btn"
-                title="Nova Conversa"></i><span class="chatbox-title">Axon AI Chat</span><i id="chatbox-close-btn"
-                class="fas fa-times chatbox-close-btn"></i></div>
-        <div class="chatbox-messages" id="chatbox-messages"></div>
-        <div class="chatbox-input-area">
-            <div id="chat-image-previews" class="chat-image-previews"></div>
-            <div class="chat-input-row"><input type="file" id="chat-file-input" accept="image/*" multiple="multiple"
-                    style="display:none"><button id="chatbox-upload-btn" class="chatbox-upload-btn"><i
-                        class="fas fa-camera"></i></button><input type="text" id="chatbox-input" class="chatbox-input"
-                    placeholder="Faça uma pergunta..."><button id="chatbox-send-btn" class="chatbox-send-btn"><i
-                        class="fas fa-paper-plane"></i></button></div>
-        </div>
-    </div>
-    <div id="custom-confirm-modal" class="confirm-modal">
-        <div class="confirm-modal-content">
-            <p id="confirm-modal-text"></p>
-            <div class="confirm-modal-buttons"><button id="confirm-btn-no" class="confirm-btn">Cancelar</button><button
-                    id="confirm-btn-yes" class="confirm-btn">Confirmar</button></div>
-        </div>
-    </div>
-    <div id="mobile-analysis-loader" class="mobile-loader">
-        <div class="ai-processing-animation">
-            <div class="scanner-animation">
-                <div class="brain-icon"><i class="fas fa-brain"></i></div>
+                        title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button><button id="btn-send-p2p"
                 <div class="scanner-line"></div>
             </div><span>Analisando Imagens...</span>
         </div>
@@ -5922,7 +5908,187 @@ ${instruction}
             if (isMobile) { statusTextApi.textContent = ""; statusTextMic.textContent = ""; statusTextCam.textContent = ""; }
         };
 
-        document.addEventListener('DOMContentLoaded', initApp);</script>
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        // --- P2P & Mobile 2.0 Logic ---
+
+        const p2pModal = document.getElementById('p2p-modal');
+        const p2pModalClose = document.getElementById('p2p-modal-close');
+        const btnSendP2P = document.getElementById('btn-send-p2p');
+        const mobileBtnSendP2P = document.getElementById('mobile-btn-send-p2p');
+        const p2pMyIdDisplay = document.getElementById('p2p-my-id');
+        const p2pConnectionStatus = document.getElementById('p2p-connection-status');
+        const p2pPeerIdInput = document.getElementById('p2p-peer-id-input');
+        const p2pConnectBtn = document.getElementById('p2p-connect-btn');
+        const p2pTransferArea = document.getElementById('p2p-transfer-area');
+        const p2pDropZone = document.getElementById('p2p-drop-zone');
+        const p2pFileInput = document.getElementById('p2p-file-input');
+        const p2pProgressBar = document.getElementById('p2p-progress-bar');
+        const p2pProgressFill = document.getElementById('p2p-progress-fill');
+        const p2pTransferStatus = document.getElementById('p2p-transfer-status');
+
+        let peer = null;
+        let conn = null;
+
+        const initPeer = () => {
+            if (peer) return;
+            peer = new Peer();
+
+            peer.on('open', (id) => {
+                p2pMyIdDisplay.textContent = id;
+                p2pMyIdDisplay.onclick = () => {
+                    navigator.clipboard.writeText(id);
+                    const originalText = p2pMyIdDisplay.textContent;
+                    p2pMyIdDisplay.textContent = "Copiado!";
+                    setTimeout(() => p2pMyIdDisplay.textContent = originalText, 1500);
+                };
+            });
+
+            peer.on('connection', (connection) => {
+                handleConnection(connection);
+            });
+
+            peer.on('error', (err) => {
+                console.error("PeerJS Error:", err);
+                p2pConnectionStatus.textContent = "Erro: " + err.type;
+                p2pConnectionStatus.style.color = "var(--error-color)";
+            });
+        };
+
+        const handleConnection = (connection) => {
+            conn = connection;
+            p2pConnectionStatus.textContent = "Conectado a: " + conn.peer;
+            p2pConnectionStatus.style.color = "var(--success-color)";
+            p2pTransferArea.style.display = 'block';
+            p2pPeerIdInput.style.display = 'none';
+            p2pConnectBtn.style.display = 'none';
+
+            conn.on('data', (data) => {
+                handleIncomingData(data);
+            });
+
+            conn.on('close', () => {
+                p2pConnectionStatus.textContent = "Conexão encerrada.";
+                p2pConnectionStatus.style.color = "var(--text-color)";
+                p2pTransferArea.style.display = 'none';
+                p2pPeerIdInput.style.display = 'block';
+                p2pConnectBtn.style.display = 'block';
+                conn = null;
+            });
+        };
+
+        const connectToPeer = () => {
+            const peerId = p2pPeerIdInput.value.trim();
+            if (!peerId) return;
+            p2pConnectionStatus.textContent = "Conectando...";
+            const connection = peer.connect(peerId);
+            connection.on('open', () => {
+                handleConnection(connection);
+            });
+            connection.on('error', (err) => {
+                p2pConnectionStatus.textContent = "Erro ao conectar.";
+            });
+        };
+
+        const handleIncomingData = (data) => {
+            if (data.file && data.name && data.type) {
+                p2pTransferStatus.textContent = "Recebendo arquivo: " + data.name;
+                const blob = new Blob([data.file], { type: data.type });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = data.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                p2pTransferStatus.textContent = "Arquivo recebido: " + data.name;
+            }
+        };
+
+        const sendP2PFile = (file) => {
+            if (!conn) return;
+            p2pTransferStatus.textContent = "Enviando: " + file.name;
+            p2pProgressBar.style.display = 'block';
+            p2pProgressFill.style.width = '0%';
+
+            conn.send({
+                file: file,
+                name: file.name,
+                type: file.type
+            });
+
+            p2pProgressFill.style.width = '100%';
+            p2pTransferStatus.textContent = "Enviado: " + file.name;
+            setTimeout(() => {
+                p2pProgressBar.style.display = 'none';
+                p2pProgressFill.style.width = '0%';
+            }, 2000);
+        };
+
+        if (btnSendP2P) {
+            btnSendP2P.addEventListener('click', () => {
+                initPeer();
+                p2pModal.style.display = 'flex';
+            });
+        }
+
+        if (mobileBtnSendP2P) {
+            mobileBtnSendP2P.addEventListener('click', () => {
+                initPeer();
+                p2pModal.style.display = 'flex';
+            });
+        }
+
+        if (p2pModalClose) p2pModalClose.addEventListener('click', () => p2pModal.style.display = 'none');
+        if (p2pConnectBtn) p2pConnectBtn.addEventListener('click', connectToPeer);
+
+        if (p2pDropZone) {
+            p2pDropZone.addEventListener('click', () => p2pFileInput.click());
+            p2pDropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                p2pDropZone.classList.add('dragover');
+            });
+            p2pDropZone.addEventListener('dragleave', () => p2pDropZone.classList.remove('dragover'));
+            p2pDropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                p2pDropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length > 0) {
+                    sendP2PFile(e.dataTransfer.files[0]);
+                }
+            });
+        }
+
+        if (p2pFileInput) {
+            p2pFileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    sendP2PFile(e.target.files[0]);
+                }
+            });
+        }
+
+        const updateMobileButtonsVisibility = (settings) => {
+            if (!settings) return;
+            const isMobileMode = isMobile && settings.mobile2_0_enabled;
+
+            if (isMobileMode) {
+                if (mobileBtnExames) mobileBtnExames.style.display = 'none';
+                if (mobileBtnSee) mobileBtnSee.style.display = 'none';
+            } else {
+                if (mobileBtnExames) mobileBtnExames.style.display = 'flex';
+                if (mobileBtnSee) mobileBtnSee.style.display = 'flex';
+            }
+        };
+
+        onSnapshot(doc(db, "settings", "global"), (doc) => {
+            if (doc.exists()) {
+                const settings = doc.data();
+                // Ensure globalSettings is updated if it exists
+                if (typeof globalSettings !== 'undefined') {
+                    Object.assign(globalSettings, settings);
+                }
+                updateMobileButtonsVisibility(settings);
+            }
+        });</script>
 </body>
 
 </html>
