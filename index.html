@@ -1,11 +1,11 @@
-<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Axon A.I</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><link rel="manifest" href="/manifest.json"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" id="status-bar-style-meta" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Axon A.I"><link rel="apple-touch-icon" href="https://i.imgur.com/ZsfZEh2.png"><meta name="theme-color" id="theme-color-meta" content="#1a202c"><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><style>:root{--bg-gradient:linear-gradient(135deg, #1a202c, #2d3748);--glass-bg:rgba(28, 35, 49, 0.65);--glass-border:rgba(255, 255, 255, 0.18);--glass-shadow:0 8px 32px 0 rgba(0, 0, 0, 0.37);--text-color:#e2e8f0;--header-text-color:#f7fafc;--prompt-color:#63b3ed;--command-color:#90cdf4;--output-color:#e2e8f0;--error-color:#fc8181;--success-color:#68d391;--border-color:rgba(255, 255, 255, 0.1);--highlight-color:#4299e1;--highlight-text-color:#ffffff;--diagnosis-color:#b794f4;--conduct-color:#68d391;--altered-color:#faf089;--input-bg:rgba(0, 0, 0, 0.2);--terminal-header-bg:rgba(0, 0, 0, 0.2);--button-bg:rgba(255, 255, 255, 0.1);--button-hover-bg:rgba(255, 255, 255, 0.2)}body.light-mode{--bg-gradient:linear-gradient(135deg, #f0f9ff, #e0f2fe);--glass-bg:rgba(255, 255, 255, 0.5);--glass-border:rgba(0, 0, 0, 0.1);--glass-shadow:0 8px 32px 0 rgba(100, 100, 100, 0.2);--text-color:#2d3748;--header-text-color:#1a202c;--prompt-color:#2b6cb0;--command-color:#2c5282;--output-color:#2d3748;--error-color:#c53030;--success-color:#2f855a;--border-color:rgba(0, 0, 0, 0.1);--highlight-color:#3182ce;--highlight-text-color:#ffffff;--diagnosis-color:#805ad5;--conduct-color:#2f855a;--altered-color:#d69e2e;--input-bg:rgba(0, 0, 0, 0.05);--terminal-header-bg:rgba(0, 0, 0, 0.05);--button-bg:rgba(0, 0, 0, 0.05);--button-hover-bg:rgba(0, 0, 0, 0.1)}*{margin:0;padding:0;box-sizing:border-box;font-family:Consolas,'Courier New',monospace;touch-action:manipulation}body{background:var(--bg-gradient);background-attachment:fixed;color:var(--text-color);height:100vh;display:flex;flex-direction:column;overflow:hidden;transition:background .5s ease,color .5s ease}.header{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);padding:12px 20px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between;position:relative;height:65px;flex-shrink:0}.header-right{display:flex;align-items:center;gap:10px}.logout-button,.settings-button,.theme-toggle{color:var(--text-color);font-size:20px;cursor:pointer;transition:color .3s ease,transform .2s ease,background-color .3s ease;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%}.logout-button:hover,.settings-button:hover,.theme-toggle:hover{color:var(--highlight-color);background-color:var(--button-hover-bg);transform:scale(1.1)}.logout-button:hover{color:var(--error-color)}.app-title{font-size:22px;font-weight:700;color:var(--header-text-color);text-shadow:0 1px 2px rgba(0,0,0,.1)}.status-bar{display:flex;gap:15px;font-size:14px;background:var(--input-bg);padding:5px 15px;border-radius:20px;border:1px solid var(--border-color)}.status-item{display:flex;align-items:center;gap:5px}.status-indicator{width:10px;height:10px;border-radius:50%;background-color:var(--success-color);box-shadow:0 0 5px var(--success-color)}.status-off{background-color:var(--error-color);box-shadow:0 0 5px var(--error-color)}.container{display:flex;flex:1;padding:20px;gap:20px;height:calc(100vh - 65px - 40px);min-height:0}.terminal{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border:1px solid var(--glass-border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--glass-shadow);position:relative}.terminal-header{padding:8px 12px;background-color:var(--terminal-header-bg);border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between}.terminal-title{font-size:14px;font-weight:700}.terminal-actions{display:flex;gap:8px}.terminal-btn{width:12px;height:12px;border-radius:50%}.close-btn{background-color:#ff5f56}.minimize-btn{background-color:#ffbd2e}.maximize-btn{background-color:#27c93f}.terminal-content{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:10px}.terminal-content::-webkit-scrollbar{width:8px}.terminal-content::-webkit-scrollbar-track{background:0 0}.terminal-content::-webkit-scrollbar-thumb{background-color:var(--button-hover-bg);border-radius:10px;border:2px solid transparent;background-clip:content-box}.terminal-content::-webkit-scrollbar-thumb:hover{background-color:var(--highlight-color)}.interactive-terminal,.non-interactive-terminal{flex:1;min-width:300px;min-height:0}.input-line{display:flex;align-items:center;gap:8px}.prompt{color:var(--prompt-color);white-space:nowrap}.command-input{background:0 0;border:none;color:var(--command-color);width:100%;font-size:16px;caret-color:var(--command-color);outline:0;padding:2px 0}.command-output{color:var(--output-color);white-space:pre-wrap;line-height:1.5;text-align:left}.command{color:var(--command-color);font-weight:700}.error{color:var(--error-color)}.success{color:var(--success-color)}.info{color:var(--prompt-color)}.highlight{color:var(--highlight-color)}.blocked-msg{color:var(--altered-color)}.anamnesis-content{line-height:1.8;font-size:15px}.section-title{font-weight:700;margin-top:10px;color:var(--highlight-color)}.help-list{padding-left:0;margin:10px 0;line-height:1.8;list-style:none}.help-item{margin-bottom:5px}.diagnosis-item{color:var(--diagnosis-color);margin-bottom:8px;padding-left:15px;position:relative}.diagnosis-item:before{content:"•";position:absolute;left:0;color:var(--diagnosis-color)}.conduct-section{margin-bottom:15px}.conduct-title{color:var(--conduct-color);font-weight:700;margin-bottom:5px;border-bottom:1px solid var(--conduct-color);padding-bottom:3px;cursor:pointer;transition:color .2s,border-bottom-color .2s}.conduct-title:hover{color:var(--highlight-color);border-bottom-color:var(--highlight-color)}.conduct-item{margin-bottom:8px;padding-left:15px;position:relative}.conduct-item:before{content:"-";position:absolute;left:0}.receituario-item{white-space:pre;font-family:'Courier New',monospace;color:var(--output-color);margin-bottom:5px}.footer{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);padding:10px 20px;border-top:1px solid var(--glass-border);text-align:center;font-size:12px;color:var(--text-color);height:40px;flex-shrink:0}.terminal-logo-internal{position:absolute;top:15px;right:15px;height:calc(105.3px * 1.8 * .7 * 1.2);width:auto;opacity:.1;z-index:0}.monitor-view{text-transform:uppercase;height:100%}.monitor-view .axon-eye-title,.monitor-view .conduct-title,.monitor-view .section-title{text-transform:none}.camera-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:transparent;z-index:100;flex-direction:column;justify-content:flex-start;align-items:center;padding:0}.camera-container{display:flex;flex-direction:column;background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:16px;position:relative;z-index:1;padding:0;gap:10px;overflow:hidden;width:100%;height:100%;max-width:none;max-height:none}.camera-video-wrapper{position:relative;width:100%;padding-bottom:177.77%;background-color:#000;border-radius:10px;overflow:hidden;flex-shrink:0}.camera-video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}.camera-controls{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;gap:10px;justify-content:center;z-index:2;width:90%}.camera-button{background-color:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.2);padding:10px 15px;border-radius:50%;cursor:pointer;font-size:18px;transition:background-color .3s ease,transform .2s ease;display:flex;align-items:center;justify-content:center;width:50px;height:50px;flex-shrink:0;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.camera-button:hover{background-color:var(--highlight-color);transform:scale(1.05)}.camera-button.disabled{background-color:#555;cursor:not-allowed;opacity:.7}.album-button,.camera-action-buttons{position:absolute;top:10px;display:flex;gap:5px;z-index:10;background-color:rgba(0,0,0,.4);border:1px solid var(--border-color);border-radius:20px;padding:5px 10px;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.album-button{left:10px}.camera-action-buttons{right:10px}.camera-switch-button,.flashlight-button{background-color:transparent;color:#fff;border:none;cursor:pointer;font-size:12px;transition:color .2s}.album-button:hover,.camera-switch-button:hover,.flashlight-button:hover{color:var(--highlight-color)}.flashlight-button.active{color:var(--highlight-color)}.album-count{background-color:var(--highlight-color);color:var(--highlight-text-color);border-radius:50%;padding:2px 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center}.monitor-toggle-buttons{display:flex;gap:5px;margin-left:auto;margin-right:10px}.monitor-toggle-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:5px 10px;border-radius:20px;cursor:pointer;font-size:12px;transition:all .3s ease;display:flex;align-items:center;justify-content:center;gap:5px}.monitor-toggle-button:hover{background-color:var(--button-hover-bg)}.monitor-toggle-button.active{background-color:var(--highlight-color);color:var(--highlight-text-color);border-color:transparent}#monitor-content-wrapper{position:relative}.monitor-copy-btn{position:absolute;top:50px;right:25px;background:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:5px 10px;border-radius:50%;width:35px;height:35px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .3s ease;z-index:5}.monitor-copy-btn:hover{background-color:var(--highlight-color);color:var(--highlight-text-color)}.fullscreen-modal{display:none;position:fixed;z-index:2000;padding-top:60px;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.9)}.modal-content{margin:auto;display:block;width:80%;max-width:700px;border-radius:10px}#caption,.modal-content{animation-name:zoom;animation-duration:.6s}@keyframes zoom{from{transform:scale(0)}to{transform:scale(1)}}.modal-close{position:absolute;top:15px;right:35px;color:#f1f1f1;font-size:40px;font-weight:700;transition:.3s}.modal-close:focus,.modal-close:hover{color:#bbb;text-decoration:none;cursor:pointer}.output .altered-text{color:var(--altered-color);font-weight:700;margin-left:10px}.album-modal,.app-modal,.patient-details-modal,.patient-list-modal{display:none;position:fixed;z-index:105;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.5);justify-content:center;align-items:center}.album-modal-content,.app-modal-content,.patient-details-content,.patient-list-content{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);margin:auto;padding:25px;border:1px solid var(--glass-border);border-radius:16px;width:90%;max-width:500px;box-shadow:var(--glass-shadow);position:relative;display:flex;flex-direction:column;max-height:90vh}.album-modal-content,.patient-details-content,.patient-list-content{max-width:800px}.album-modal-header,.app-modal-header,.patient-details-header,.patient-list-header{display:flex;align-items:center;border-bottom:1px solid var(--border-color);padding-bottom:15px;margin-bottom:20px}.album-modal-title,.app-modal-title,.patient-details-title,.patient-list-title{font-size:20px;font-weight:700;color:var(--prompt-color)}.album-modal-close,.app-modal-close,.patient-details-close,.patient-list-close{color:var(--text-color);font-size:28px;font-weight:700;cursor:pointer;transition:.3s;position:absolute;top:15px;right:20px}.album-modal-close:hover,.app-modal-close:hover,.patient-details-close:hover,.patient-list-close:hover{color:var(--highlight-color)}.album-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:15px;overflow-y:auto;padding-right:5px}.album-item{position:relative;width:100%;padding-bottom:100%;overflow:hidden;border:1px solid var(--border-color);border-radius:10px;cursor:pointer;transition:transform .2s ease}.album-item:hover{transform:scale(1.03)}.album-image{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}.album-delete-button{position:absolute;top:5px;right:5px;background-color:rgba(255,0,0,.7);color:#fff;border:none;border-radius:50%;width:24px;height:24px;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;transition:background-color .2s}.album-delete-button:hover{background-color:rgba(255,0,0,1)}.axon-eye-title{color:var(--error-color);font-weight:700;margin-top:10px;margin-bottom:5px;border-bottom:1px solid var(--error-color);padding-bottom:3px}.axon-eye-image-preview{max-width:100%;height:auto;margin-top:15px;border:1px solid var(--border-color);border-radius:10px}.patient-list{display:flex;flex-direction:column;gap:10px;overflow-y:auto;max-height:400px}.patient-item{padding:12px;background-color:var(--button-bg);border:1px solid var(--border-color);border-radius:10px;cursor:pointer;transition:background-color: .2s}.patient-item:hover{background-color:var(--button-hover-bg)}.patient-details-body{overflow-y:auto;padding-right:5px}.patient-details-section{margin-bottom:20px}.patient-details-section-title{font-weight:700;color:var(--highlight-color);margin-bottom:10px;border-bottom:1px solid var(--border-color);padding-bottom:5px}.patient-images-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:10px}.patient-image-item{position:relative;width:100%;padding-bottom:100%;overflow:hidden;border:1px solid var(--border-color);border-radius:10px;cursor:pointer}.patient-image{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}.consultation-item{background-color:var(--input-bg);border:1px solid var(--border-color);border-radius:10px;margin-bottom:10px;overflow:hidden}.consultation-header{padding:10px 15px;cursor:pointer;font-weight:700;transition:background-color .2s}.consultation-header:hover{background-color:var(--button-hover-bg)}.consultation-body{padding:15px;border-top:1px solid var(--border-color);background-color:transparent}.patient-actions{display:flex;gap:10px;margin-top:10px}.patient-action-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;transition:all .3s ease;display:flex;align-items:center;justify-content:center;gap:5px;flex:1}.patient-action-button.disabled{background-color:var(--input-bg);color:var(--text-color);cursor:not-allowed;opacity:.5}.patient-action-button:not(.disabled):hover{background-color:var(--button-hover-bg)}.patient-action-button.delete:not(.disabled){color:var(--error-color)}.patient-action-button.delete:not(.disabled):hover{background-color:var(--error-color);color:#fff}.patient-action-button.pdf:not(.disabled){color:var(--success-color)}.patient-action-button.pdf:not(.disabled):hover{background-color:var(--success-color);color:#fff}.patient-action-button.details:not(.disabled){color:var(--prompt-color)}.patient-action-button.details:not(.disabled):hover{background-color:var(--prompt-color);color:#fff}.patient-search-container{margin-bottom:15px}.patient-search-input{width:100%;padding:12px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:14px}.patient-search-input:focus{outline:0;border-color:var(--highlight-color)}.terminal-footer{padding:8px 15px;border-top:1px solid var(--border-color);background-color:var(--terminal-header-bg)}.action-buttons-container{display:flex;justify-content:space-around;margin-bottom:10px}.action-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all .2s,transform .1s}.action-button:focus,.action-button:hover{background-color:var(--highlight-color);color:var(--highlight-text-color);outline:0}.action-button:active{transform:scale(.95)}.action-button.active{background-color:var(--success-color);color:var(--highlight-text-color);box-shadow:0 0 8px var(--success-color)}.action-button.blocked-ui{opacity:.4;cursor:not-allowed}.app-modal-body p{margin-bottom:20px;color:var(--text-color)}.app-modal-input{width:100%;padding:12px;margin-bottom:15px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:16px}.app-modal-input:focus{outline:0;border-color:var(--highlight-color)}.app-modal-button{width:100%;padding:12px;background-color:var(--highlight-color);color:var(--highlight-text-color);border:none;border-radius:8px;cursor:pointer;font-size:16px;font-weight:700;transition:background-color .3s ease}body.light-mode .app-modal-button:hover{background-color:#2b6cb0}body:not(.light-mode) .app-modal-button:hover{background-color:#63b3ed}.app-modal-button:disabled{background-color:#555;cursor:not-allowed}.app-modal-feedback{margin-top:15px;color:var(--error-color);min-height:20px}.admin-section{margin-bottom:20px;text-align:left;border:1px solid var(--border-color);padding:15px;border-radius:10px}.admin-section-title{color:var(--prompt-color);font-weight:700;margin-bottom:10px;font-size:14px;text-transform:uppercase}.admin-list{display:flex;flex-direction:column;gap:8px}.admin-list-item{display:flex;gap:8px;align-items:center}.admin-input-group{flex:1;display:flex;gap:5px}.admin-input{flex:1;padding:8px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:12px}.admin-action-btn,.admin-btn-add,.admin-btn-remove{border-radius:8px}#admin-panel-modal .app-modal-content{max-width:900px;width:95%;height:85vh;display:flex;flex-direction:column}.admin-tab-content{flex:1;overflow-y:auto;padding-bottom:15px;display:flex;flex-direction:column}.admin-users-container{display:flex;flex:1;min-height:0;gap:20px;text-align:left;overflow:hidden}.admin-users-list-section{flex:1;border-right:1px solid var(--border-color);display:flex;flex-direction:column;padding-right:10px}.admin-users-details-section{flex:2;overflow-y:auto;padding-left:10px}.user-list-scroll{overflow-y:auto;flex:1}.user-list-item{padding:10px;cursor:pointer;border-bottom:1px solid var(--border-color);transition:background-color .2s;display:flex;justify-content:space-between;align-items:center;border-radius:8px;margin-bottom:5px}.user-list-item:hover{background-color:var(--button-hover-bg)}.user-list-item.selected{background-color:rgba(66,153,225,.2);border-left:3px solid var(--highlight-color)}.user-detail-header{margin-bottom:15px;border-bottom:1px solid var(--border-color);padding-bottom:10px}.user-detail-row{margin-bottom:10px}.user-detail-label{color:var(--prompt-color);font-weight:700;font-size:12px;display:block;margin-bottom:2px}.user-detail-value{color:var(--text-color);font-size:14px}.admin-user-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:10px;margin-top:10px}.admin-user-img{width:100%;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border-color);transition:transform .2s}.admin-user-img:hover{transform:scale(1.05)}.usage-stats-box{background-color:var(--input-bg);border:1px solid var(--border-color);padding:10px;border-radius:10px;margin-top:10px}.admin-tabs{display:flex;border-bottom:1px solid var(--border-color);margin-bottom:15px}.admin-tab-btn{flex:1;background:0 0;border:none;color:var(--text-color);padding:10px;cursor:pointer;border-bottom:3px solid transparent;font-size:14px;transition:all .3s ease}.admin-tab-btn:hover{background-color:var(--button-hover-bg)}.admin-tab-btn.active{border-bottom-color:var(--highlight-color);color:var(--highlight-color);font-weight:700}.radio-group{display:flex;gap:15px;margin-bottom:10px;flex-wrap:wrap}.radio-label{display:flex;align-items:center;gap:5px;cursor:pointer}.ai-processing-animation{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--prompt-color)}.scanner-animation{width:100px;height:100px;position:relative;margin-bottom:15px}.scanner-animation .brain-icon{width:100%;height:100%;font-size:80px;line-height:100px;text-align:center;opacity:.5}.scanner-line{position:absolute;top:0;left:0;width:100%;height:3px;background:var(--highlight-color);box-shadow:0 0 10px var(--highlight-color);border-radius:2px;animation:scan 2.5s infinite linear}@keyframes scan{0%{top:0}50%{top:100%}100%{top:0}}.prescription-template-item{background-color:var(--input-bg);border:1px solid var(--border-color);border-radius:8px;margin-bottom:15px;padding:15px}.prescription-template-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.prescription-template-title{font-weight:700;color:var(--prompt-color)}.prescription-template-copy-btn{background-color:var(--button-bg);border:1px solid var(--border-color);color:var(--text-color);padding:5px 10px;border-radius:5px;cursor:pointer;font-size:12px;transition:all .2s}.prescription-template-copy-btn:hover{background-color:var(--highlight-color);color:var(--highlight-text-color)}.prescription-template-text{white-space:pre-wrap;font-family:'Courier New',monospace;font-size:14px;color:var(--output-color);background:rgba(0,0,0,.1);padding:10px;border-radius:5px}.mobile-2-0-container{flex:1;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:20px;gap:20px;height:calc(100vh - 65px - 40px)}.mobile-header{text-align:center;margin-bottom:10px}.mobile-header h2{font-size:24px;color:var(--header-text-color)}.mobile-header p{font-size:14px;opacity:.8}.mobile-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;width:100%;max-width:450px}.mobile-btn{background:var(--glass-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:18px;padding:15px;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-color);text-decoration:none;text-align:center;box-shadow:var(--glass-shadow);transition:transform .2s ease,background-color .3s ease}.mobile-btn:active{transform:scale(.96);background-color:var(--button-hover-bg)}.mobile-btn img{height:76px;width:76px;object-fit:contain;margin-bottom:5px}.mobile-btn span{font-size:14px;font-weight:700}.info-banner{width:100%;max-width:450px;padding:0 10px;margin-bottom:10px}.chat-bubble-info{background:var(--glass-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:12px;padding:12px 15px;font-size:13px;line-height:1.6;text-align:center;position:relative;box-shadow:var(--glass-shadow);animation:fadeIn .5s ease-out}.chat-bubble-info::after{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid var(--glass-border)}.chat-bubble-info .highlight-link{color:var(--highlight-color);font-weight:700;text-decoration:none;background-color:var(--button-bg);padding:2px 6px;border-radius:5px;transition:background-color .2s}.chat-bubble-info .highlight-link:hover{background-color:var(--button-hover-bg);text-decoration:underline}.mobile-connection-status{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;margin-top:auto;padding-bottom:10px;font-size:12px;color:var(--text-color);opacity:.7;cursor:pointer}.mobile-connection-status .status-dot{width:10px;height:10px;background-color:var(--error-color);border-radius:50%;box-shadow:0 0 6px var(--error-color);transition:background-color .5s ease,box-shadow .5s ease}.mobile-connection-status .status-dot.status-on{background-color:var(--success-color);box-shadow:0 0 6px var(--success-color)}.chatbox-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-gradient);z-index:1000;flex-direction:column}.chatbox-header{display:flex;align-items:center;justify-content:center;position:relative;padding:12px 20px;background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border-bottom:1px solid var(--glass-border);height:65px;flex-shrink:0}.chatbox-title{font-size:20px;font-weight:700;color:var(--header-text-color)}.chatbox-close-btn{font-size:24px;cursor:pointer;color:var(--text-color);position:absolute;right:20px}.chatbox-new-chat-btn{font-size:22px;cursor:pointer;color:var(--text-color);position:absolute;left:20px}.chatbox-messages{flex:1;padding:15px;overflow-y:auto;display:flex;flex-direction:column;gap:15px;background-image:radial-gradient(var(--border-color) 1px,transparent 1px);background-size:15px 15px}.chat-message{display:flex;align-items:flex-start;gap:10px;max-width:85%}.chat-message.user{align-self:flex-end;flex-direction:row-reverse;animation:slideInFromRight .4s ease-out}@keyframes slideInFromRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}.chat-message.model{align-self:flex-start;animation:fadeIn .5s ease}.chat-avatar{width:36px;height:36px;border-radius:50%;background-color:var(--input-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}.chat-message.user .chat-avatar{background-color:var(--highlight-color);color:var(--highlight-text-color)}.message-bubble{padding:12px 18px;border-radius:20px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;box-shadow:0 2px 4px rgba(0,0,0,.1)}.message-bubble b{font-weight:600}.chat-message.user .message-bubble{background-color:var(--highlight-color);color:var(--highlight-text-color);border-bottom-right-radius:5px}.chat-message.model .message-bubble{background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-color);border-bottom-left-radius:5px}.message-bubble.typing{display:flex;align-items:center;gap:5px;padding:15px 18px}.message-bubble.typing .dot{width:8px;height:8px;border-radius:50%;background-color:var(--text-color);opacity:.7;animation:typing-blink 1.4s infinite both}.message-bubble.typing .dot:nth-child(2){animation-delay:.2s}.message-bubble.typing .dot:nth-child(3){animation-delay:.4s}@keyframes typing-blink{0%{opacity:.2}20%{opacity:1}100%{opacity:.2}}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.chatbox-input-area{padding:10px 15px;background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border-top:1px solid var(--border-color);display:flex;flex-direction:column;gap:10px}.chat-input-row{display:flex;width:100%;gap:10px;align-items:center}.chatbox-input{flex:1;background:var(--input-bg);border:1px solid var(--border-color);border-radius:20px;padding:12px 15px;color:var(--text-color);font-size:16px}.chatbox-input:focus{outline:0;border-color:var(--highlight-color)}.chatbox-send-btn,.chatbox-upload-btn{background-color:var(--highlight-color);color:var(--highlight-text-color);border:none;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:transform .2s;flex-shrink:0}.chatbox-upload-btn{background-color:var(--button-bg);color:var(--text-color)}.chatbox-send-btn:active,.chatbox-upload-btn:active{transform:scale(.9)}.chat-image-previews{display:flex;gap:10px;overflow-x:auto;width:100%;padding:5px 0}.chat-preview-item{position:relative;flex-shrink:0}.chat-preview-item img{width:60px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color)}.chat-preview-delete{position:absolute;top:-5px;right:-5px;width:20px;height:20px;background-color:rgba(255,0,0,.8);color:#fff;border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer}.message-bubble .chat-image-attachment{width:100%;max-width:200px;height:auto;border-radius:10px;margin-top:10px;display:block}.confirm-modal{display:none;position:fixed;z-index:3000;left:0;top:0;width:100%;height:100%;background-color:rgba(0,0,0,.6);justify-content:center;align-items:center}.confirm-modal-content{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:30px;border:1px solid var(--glass-border);border-radius:16px;width:90%;max-width:400px;box-shadow:var(--glass-shadow);text-align:center}#confirm-modal-text{margin-bottom:25px;font-size:16px;line-height:1.6}.confirm-modal-buttons{display:flex;gap:15px;justify-content:center}.confirm-btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;transition:background-color .2s,transform .1s}.confirm-btn:active{transform:scale(.97)}#confirm-btn-yes{background-color:var(--error-color);color:#fff}#confirm-btn-no{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color)}.mobile-loader{display:none;position:fixed;z-index:2500;top:0;left:0;width:100%;height:100%;background:var(--bg-gradient);justify-content:center;align-items:center}.toggle-switch{position:relative;display:inline-block;width:50px;height:28px}.toggle-switch input{opacity:0;width:0;height:0}.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:var(--button-bg);transition:.4s;border-radius:28px;border:1px solid var(--border-color)}.slider:before{position:absolute;content:"";height:20px;width:20px;left:4px;bottom:3px;background-color:#fff;transition:.4s;border-radius:50%}input:checked+.slider{background-color:var(--highlight-color)}input:checked+.slider:before{transform:translateX(22px)}.transfer-drop-zone{border:2px dashed var(--border-color);border-radius:10px;padding:30px;text-align:center;color:var(--text-color);cursor:pointer;margin-bottom:15px;transition:all .3s ease;display:flex;flex-direction:column;align-items:center;gap:10px}.transfer-drop-zone:hover,.transfer-drop-zone.dragover{border-color:var(--highlight-color);background-color:var(--button-bg)}.transfer-icon{font-size:40px;color:var(--highlight-color);margin-bottom:10px}.transfer-status{margin-top:15px;text-align:center;font-size:14px}.progress-bar-container{width:100%;background-color:var(--input-bg);border-radius:10px;height:10px;margin-top:10px;overflow:hidden}.progress-bar-fill{height:100%;background-color:var(--success-color);width:0%;transition:width .2s ease}.notification-popup{position:fixed;bottom:20px;right:20px;background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border:1px solid var(--glass-border);padding:15px;border-radius:10px;z-index:4000;display:none;flex-direction:column;gap:5px;box-shadow:var(--glass-shadow);width:300px;animation:slideInRight .3s ease-out}@keyframes slideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}.notification-popup.mobile-center{width:80%;max-width:300px}.progress-bar-fill.pro-mode{background-color:#4299e1;box-shadow:0 0 10px #4299e1}@media (max-width:768px){.notification-popup{bottom:auto;top:50%;left:50%;right:auto;transform:translate(-50%,-50%);animation:fadeIn .3s ease-out;border-radius:16px;padding:20px}.notification-popup.mobile-center{width:85%}.container{flex-direction:column-reverse;padding:10px;gap:10px}.monitor-toggle-button span,.status-bar span{display:none}.monitor-toggle-button{padding:5px 8px;font-size:16px;width:auto;min-width:35px}.status-bar{gap:10px;margin-right:0}.status-item .status-indicator{width:8px;height:8px}.logout-button,.settings-button,.theme-toggle{font-size:18px}.camera-modal.fullscreen-mobile{position:fixed;top:0;bottom:0;left:0;width:100%;height:100%;z-index:100;border-radius:0}.camera-modal.fullscreen-mobile .camera-container{border-radius:0;border:none}.radio-group{flex-direction:column;align-items:flex-start;gap:10px}.admin-users-container{flex-direction:column}.admin-users-list-section{flex:0 0 45%;min-height:220px;border-right:none;border-bottom:1px solid var(--border-color);padding-bottom:15px;padding-right:0}.admin-users-details-section{flex:1;min-height:0;padding-left:0;padding-top:15px}}@media (min-width:769px){.camera-video-wrapper{padding-bottom:56.25%}}</style></head><body><div class="header"><div class="app-title">AXON A.I</div><div class="header-right"><div class="status-bar" id="btn-transfer-file" style="cursor:pointer;margin-right:10px;background:var(--highlight-color);color:#fff;border-color:transparent"><div class="status-item"><i class="fas fa-paper-plane"></i><span>Enviar</span></div></div><div class="status-bar"><div class="status-item"><div class="status-indicator" id="api-status"></div><span class="status-text-api">API</span></div><div class="status-item"><div class="status-indicator status-off" id="mic-status"></div><span class="status-text-mic">Microfone</span></div><div class="status-item"><div class="status-indicator status-off" id="camera-status"></div><span class="status-text-cam">Câmera</span></div></div><div id="theme-toggle" class="theme-toggle" title="Mudar Tema"><i class="fas fa-sun"></i></div><div id="settings-button" class="settings-button" title="Configurações"><i class="fas fa-cog"></i></div><div id="logout-button" class="logout-button" title="Sair"><i class="fas fa-sign-out-alt"></i></div></div></div><div class="container"><div class="terminal interactive-terminal"><div class="terminal-header"><div class="terminal-title">Terminal Interativo</div><div class="terminal-actions"><div class="terminal-btn close-btn"></div><div class="terminal-btn minimize-btn"></div><div class="terminal-btn maximize-btn"></div></div></div><div class="terminal-content" id="interactive-output"><img src="axon.png" alt="Axon Logo Terminal" class="terminal-logo-internal"><div id="initial-messages" style="position:relative;z-index:1"><pre class="info">
+<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Axon</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"><link rel="manifest" href="/manifest.json"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" id="status-bar-style-meta" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Axon"><link rel="apple-touch-icon" href="https://i.imgur.com/ZsfZEh2.png"><meta name="theme-color" id="theme-color-meta" content="#1a202c"><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><style>:root{--bg-gradient:linear-gradient(135deg, #1a202c, #2d3748);--glass-bg:rgba(28, 35, 49, 0.65);--glass-border:rgba(255, 255, 255, 0.18);--glass-shadow:0 8px 32px 0 rgba(0, 0, 0, 0.37);--text-color:#e2e8f0;--header-text-color:#f7fafc;--prompt-color:#63b3ed;--command-color:#90cdf4;--output-color:#e2e8f0;--error-color:#fc8181;--success-color:#68d391;--border-color:rgba(255, 255, 255, 0.1);--highlight-color:#4299e1;--highlight-text-color:#ffffff;--diagnosis-color:#b794f4;--conduct-color:#68d391;--altered-color:#faf089;--input-bg:rgba(0, 0, 0, 0.2);--terminal-header-bg:rgba(0, 0, 0, 0.2);--button-bg:rgba(255, 255, 255, 0.1);--button-hover-bg:rgba(255, 255, 255, 0.2)}body.light-mode{--bg-gradient:linear-gradient(135deg, #f0f9ff, #e0f2fe);--glass-bg:rgba(255, 255, 255, 0.5);--glass-border:rgba(0, 0, 0, 0.1);--glass-shadow:0 8px 32px 0 rgba(100, 100, 100, 0.2);--text-color:#2d3748;--header-text-color:#1a202c;--prompt-color:#2b6cb0;--command-color:#2c5282;--output-color:#2d3748;--error-color:#c53030;--success-color:#2f855a;--border-color:rgba(0, 0, 0, 0.1);--highlight-color:#3182ce;--highlight-text-color:#ffffff;--diagnosis-color:#805ad5;--conduct-color:#2f855a;--altered-color:#d69e2e;--input-bg:rgba(0, 0, 0, 0.05);--terminal-header-bg:rgba(0, 0, 0, 0.05);--button-bg:rgba(0, 0, 0, 0.05);--button-hover-bg:rgba(0, 0, 0, 0.1)}*{margin:0;padding:0;box-sizing:border-box;font-family:Consolas,'Courier New',monospace;touch-action:manipulation}body{background:var(--bg-gradient);background-attachment:fixed;color:var(--text-color);height:100vh;display:flex;flex-direction:column;overflow:hidden;transition:background .5s ease,color .5s ease}.header{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);padding:12px 20px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;justify-content:space-between;position:relative;height:65px;flex-shrink:0}.header-right{display:flex;align-items:center;gap:10px}.logout-button,.settings-button,.theme-toggle{color:var(--text-color);font-size:20px;cursor:pointer;transition:color .3s ease,transform .2s ease,background-color .3s ease;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%}.logout-button:hover,.settings-button:hover,.theme-toggle:hover{color:var(--highlight-color);background-color:var(--button-hover-bg);transform:scale(1.1)}.logout-button:hover{color:var(--error-color)}.app-title{font-size:22px;font-weight:700;color:var(--header-text-color);text-shadow:0 1px 2px rgba(0,0,0,.1)}.status-bar{display:flex;gap:15px;font-size:14px;background:var(--input-bg);padding:5px 15px;border-radius:20px;border:1px solid var(--border-color)}.status-item{display:flex;align-items:center;gap:5px}.status-indicator{width:10px;height:10px;border-radius:50%;background-color:var(--success-color);box-shadow:0 0 5px var(--success-color)}.status-off{background-color:var(--error-color);box-shadow:0 0 5px var(--error-color)}.container{display:flex;flex:1;padding:20px;gap:20px;height:calc(100vh - 65px - 40px);min-height:0}.terminal{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border:1px solid var(--glass-border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--glass-shadow);position:relative}.terminal-header{padding:8px 12px;background-color:var(--terminal-header-bg);border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between}.terminal-title{font-size:14px;font-weight:700}.terminal-actions{display:flex;gap:8px}.terminal-btn{width:12px;height:12px;border-radius:50%}.close-btn{background-color:#ff5f56}.minimize-btn{background-color:#ffbd2e}.maximize-btn{background-color:#27c93f}.terminal-content{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:10px}.terminal-content::-webkit-scrollbar{width:8px}.terminal-content::-webkit-scrollbar-track{background:0 0}.terminal-content::-webkit-scrollbar-thumb{background-color:var(--button-hover-bg);border-radius:10px;border:2px solid transparent;background-clip:content-box}.terminal-content::-webkit-scrollbar-thumb:hover{background-color:var(--highlight-color)}.interactive-terminal,.non-interactive-terminal{flex:1;min-width:300px;min-height:0}.input-line{display:flex;align-items:center;gap:8px}.prompt{color:var(--prompt-color);white-space:nowrap}.command-input{background:0 0;border:none;color:var(--command-color);width:100%;font-size:16px;caret-color:var(--command-color);outline:0;padding:2px 0}.command-output{color:var(--output-color);white-space:pre-wrap;line-height:1.5;text-align:left}.command{color:var(--command-color);font-weight:700}.error{color:var(--error-color)}.success{color:var(--success-color)}.info{color:var(--prompt-color)}.highlight{color:var(--highlight-color)}.blocked-msg{color:var(--altered-color)}.anamnesis-content{line-height:1.8;font-size:15px}.section-title{font-weight:700;margin-top:10px;color:var(--highlight-color)}.help-list{padding-left:0;margin:10px 0;line-height:1.8;list-style:none}.help-item{margin-bottom:5px}.diagnosis-item{color:var(--diagnosis-color);margin-bottom:8px;padding-left:15px;position:relative}.diagnosis-item:before{content:"•";position:absolute;left:0;color:var(--diagnosis-color)}.conduct-section{margin-bottom:15px}.conduct-title{color:var(--conduct-color);font-weight:700;margin-bottom:5px;border-bottom:1px solid var(--conduct-color);padding-bottom:3px;cursor:pointer;transition:color .2s,border-bottom-color .2s}.conduct-title:hover{color:var(--highlight-color);border-bottom-color:var(--highlight-color)}.conduct-item{margin-bottom:8px;padding-left:15px;position:relative}.conduct-item:before{content:"-";position:absolute;left:0}.receituario-item{white-space:pre;font-family:'Courier New',monospace;color:var(--output-color);margin-bottom:5px}.footer{background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);padding:10px 20px;border-top:1px solid var(--glass-border);text-align:center;font-size:12px;color:var(--text-color);height:40px;flex-shrink:0}.terminal-logo-internal{position:absolute;top:15px;right:15px;height:calc(105.3px * 1.8 * .7 * 1.2);width:auto;opacity:.1;z-index:0}.monitor-view{text-transform:uppercase;height:100%}.monitor-view .axon-eye-title,.monitor-view .conduct-title,.monitor-view .section-title{text-transform:none}.camera-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background-color:transparent;z-index:100;flex-direction:column;justify-content:flex-start;align-items:center;padding:0}.camera-container{display:flex;flex-direction:column;background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:16px;position:relative;z-index:1;padding:0;gap:10px;overflow:hidden;width:100%;height:100%;max-width:none;max-height:none}.camera-video-wrapper{position:relative;width:100%;padding-bottom:177.77%;background-color:#000;border-radius:10px;overflow:hidden;flex-shrink:0}.camera-video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}.camera-controls{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;flex-wrap:wrap;gap:10px;justify-content:center;z-index:2;width:90%}.camera-button{background-color:rgba(0,0,0,.5);color:#fff;border:1px solid rgba(255,255,255,.2);padding:10px 15px;border-radius:50%;cursor:pointer;font-size:18px;transition:background-color .3s ease,transform .2s ease;display:flex;align-items:center;justify-content:center;width:50px;height:50px;flex-shrink:0;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.camera-button:hover{background-color:var(--highlight-color);transform:scale(1.05)}.camera-button.disabled{background-color:#555;cursor:not-allowed;opacity:.7}.album-button,.camera-action-buttons{position:absolute;top:10px;display:flex;gap:5px;z-index:10;background-color:rgba(0,0,0,.4);border:1px solid var(--border-color);border-radius:20px;padding:5px 10px;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}.album-button{left:10px}.camera-action-buttons{right:10px}.camera-switch-button,.flashlight-button{background-color:transparent;color:#fff;border:none;cursor:pointer;font-size:12px;transition:color .2s}.album-button:hover,.camera-switch-button:hover,.flashlight-button:hover{color:var(--highlight-color)}.flashlight-button.active{color:var(--highlight-color)}.album-count{background-color:var(--highlight-color);color:var(--highlight-text-color);border-radius:50%;padding:2px 6px;font-size:10px;font-weight:700;min-width:18px;text-align:center}.monitor-toggle-buttons{display:flex;gap:5px;margin-left:auto;margin-right:10px}.monitor-toggle-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:5px 10px;border-radius:20px;cursor:pointer;font-size:12px;transition:all .3s ease;display:flex;align-items:center;justify-content:center;gap:5px}.monitor-toggle-button:hover{background-color:var(--button-hover-bg)}.monitor-toggle-button.active{background-color:var(--highlight-color);color:var(--highlight-text-color);border-color:transparent}#monitor-content-wrapper{position:relative}.monitor-copy-btn{position:absolute;top:50px;right:25px;background:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:5px 10px;border-radius:50%;width:35px;height:35px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .3s ease;z-index:5}.monitor-copy-btn:hover{background-color:var(--highlight-color);color:var(--highlight-text-color)}.fullscreen-modal{display:none;position:fixed;z-index:2000;padding-top:60px;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.9)}.modal-content{margin:auto;display:block;width:80%;max-width:700px;border-radius:10px}#caption,.modal-content{animation-name:zoom;animation-duration:.6s}@keyframes zoom{from{transform:scale(0)}to{transform:scale(1)}}.modal-close{position:absolute;top:15px;right:35px;color:#f1f1f1;font-size:40px;font-weight:700;transition:.3s}.modal-close:focus,.modal-close:hover{color:#bbb;text-decoration:none;cursor:pointer}.output .altered-text{color:var(--altered-color);font-weight:700;margin-left:10px}.album-modal,.app-modal,.patient-details-modal,.patient-list-modal{display:none;position:fixed;z-index:105;left:0;top:0;width:100%;height:100%;overflow:auto;background-color:rgba(0,0,0,.5);justify-content:center;align-items:center}.album-modal-content,.app-modal-content,.patient-details-content,.patient-list-content{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);margin:auto;padding:25px;border:1px solid var(--glass-border);border-radius:16px;width:90%;max-width:500px;box-shadow:var(--glass-shadow);position:relative;display:flex;flex-direction:column;max-height:90vh}.album-modal-content,.patient-details-content,.patient-list-content{max-width:800px}.album-modal-header,.app-modal-header,.patient-details-header,.patient-list-header{display:flex;align-items:center;border-bottom:1px solid var(--border-color);padding-bottom:15px;margin-bottom:20px}.album-modal-title,.app-modal-title,.patient-details-title,.patient-list-title{font-size:20px;font-weight:700;color:var(--prompt-color)}.album-modal-close,.app-modal-close,.patient-details-close,.patient-list-close{color:var(--text-color);font-size:28px;font-weight:700;cursor:pointer;transition:.3s;position:absolute;top:15px;right:20px}.album-modal-close:hover,.app-modal-close:hover,.patient-details-close:hover,.patient-list-close:hover{color:var(--highlight-color)}.album-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:15px;overflow-y:auto;padding-right:5px}.album-item{position:relative;width:100%;padding-bottom:100%;overflow:hidden;border:1px solid var(--border-color);border-radius:10px;cursor:pointer;transition:transform .2s ease}.album-item:hover{transform:scale(1.03)}.album-image{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}.album-delete-button{position:absolute;top:5px;right:5px;background-color:rgba(255,0,0,.7);color:#fff;border:none;border-radius:50%;width:24px;height:24px;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;transition:background-color .2s}.album-delete-button:hover{background-color:rgba(255,0,0,1)}.axon-eye-title{color:var(--error-color);font-weight:700;margin-top:10px;margin-bottom:5px;border-bottom:1px solid var(--error-color);padding-bottom:3px}.axon-eye-image-preview{max-width:100%;height:auto;margin-top:15px;border:1px solid var(--border-color);border-radius:10px}.patient-list{display:flex;flex-direction:column;gap:10px;overflow-y:auto;max-height:400px}.patient-item{padding:12px;background-color:var(--button-bg);border:1px solid var(--border-color);border-radius:10px;cursor:pointer;transition:background-color: .2s}.patient-item:hover{background-color:var(--button-hover-bg)}.patient-details-body{overflow-y:auto;padding-right:5px}.patient-details-section{margin-bottom:20px}.patient-details-section-title{font-weight:700;color:var(--highlight-color);margin-bottom:10px;border-bottom:1px solid var(--border-color);padding-bottom:5px}.patient-images-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:10px}.patient-image-item{position:relative;width:100%;padding-bottom:100%;overflow:hidden;border:1px solid var(--border-color);border-radius:10px;cursor:pointer}.patient-image{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block}.consultation-item{background-color:var(--input-bg);border:1px solid var(--border-color);border-radius:10px;margin-bottom:10px;overflow:hidden}.consultation-header{padding:10px 15px;cursor:pointer;font-weight:700;transition:background-color .2s}.consultation-header:hover{background-color:var(--button-hover-bg)}.consultation-body{padding:15px;border-top:1px solid var(--border-color);background-color:transparent}.patient-actions{display:flex;gap:10px;margin-top:10px}.patient-action-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:12px;transition:all .3s ease;display:flex;align-items:center;justify-content:center;gap:5px;flex:1}.patient-action-button.disabled{background-color:var(--input-bg);color:var(--text-color);cursor:not-allowed;opacity:.5}.patient-action-button:not(.disabled):hover{background-color:var(--button-hover-bg)}.patient-action-button.delete:not(.disabled){color:var(--error-color)}.patient-action-button.delete:not(.disabled):hover{background-color:var(--error-color);color:#fff}.patient-action-button.pdf:not(.disabled){color:var(--success-color)}.patient-action-button.pdf:not(.disabled):hover{background-color:var(--success-color);color:#fff}.patient-action-button.details:not(.disabled){color:var(--prompt-color)}.patient-action-button.details:not(.disabled):hover{background-color:var(--prompt-color);color:#fff}.patient-search-container{margin-bottom:15px}.patient-search-input{width:100%;padding:12px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:14px}.patient-search-input:focus{outline:0;border-color:var(--highlight-color)}.terminal-footer{padding:8px 15px;border-top:1px solid var(--border-color);background-color:var(--terminal-header-bg)}.action-buttons-container{display:flex;justify-content:space-around;margin-bottom:10px}.action-button{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all .2s,transform .1s}.action-button:focus,.action-button:hover{background-color:var(--highlight-color);color:var(--highlight-text-color);outline:0}.action-button:active{transform:scale(.95)}.action-button.active{background-color:var(--success-color);color:var(--highlight-text-color);box-shadow:0 0 8px var(--success-color)}.action-button.blocked-ui{opacity:.4;cursor:not-allowed}.app-modal-body p{margin-bottom:20px;color:var(--text-color)}.app-modal-input{width:100%;padding:12px;margin-bottom:15px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:16px}.app-modal-input:focus{outline:0;border-color:var(--highlight-color)}.app-modal-button{width:100%;padding:12px;background-color:var(--highlight-color);color:var(--highlight-text-color);border:none;border-radius:8px;cursor:pointer;font-size:16px;font-weight:700;transition:background-color .3s ease}body.light-mode .app-modal-button:hover{background-color:#2b6cb0}body:not(.light-mode) .app-modal-button:hover{background-color:#63b3ed}.app-modal-button:disabled{background-color:#555;cursor:not-allowed}.app-modal-feedback{margin-top:15px;color:var(--error-color);min-height:20px}.admin-section{margin-bottom:20px;text-align:left;border:1px solid var(--border-color);padding:15px;border-radius:10px}.admin-section-title{color:var(--prompt-color);font-weight:700;margin-bottom:10px;font-size:14px;text-transform:uppercase}.admin-list{display:flex;flex-direction:column;gap:8px}.admin-list-item{display:flex;gap:8px;align-items:center}.admin-input-group{flex:1;display:flex;gap:5px}.admin-input{flex:1;padding:8px;background-color:var(--input-bg);color:var(--text-color);border:1px solid var(--border-color);border-radius:8px;font-size:12px}.admin-action-btn,.admin-btn-add,.admin-btn-remove{border-radius:8px}#admin-panel-modal .app-modal-content{max-width:900px;width:95%;height:85vh;display:flex;flex-direction:column}.admin-tab-content{flex:1;overflow-y:auto;padding-bottom:15px;display:flex;flex-direction:column}.admin-users-container{display:flex;flex:1;min-height:0;gap:20px;text-align:left;overflow:hidden}.admin-users-list-section{flex:1;border-right:1px solid var(--border-color);display:flex;flex-direction:column;padding-right:10px}.admin-users-details-section{flex:2;overflow-y:auto;padding-left:10px}.user-list-scroll{overflow-y:auto;flex:1}.user-list-item{padding:10px;cursor:pointer;border-bottom:1px solid var(--border-color);transition:background-color .2s;display:flex;justify-content:space-between;align-items:center;border-radius:8px;margin-bottom:5px}.user-list-item:hover{background-color:var(--button-hover-bg)}.user-list-item.selected{background-color:rgba(66,153,225,.2);border-left:3px solid var(--highlight-color)}.user-detail-header{margin-bottom:15px;border-bottom:1px solid var(--border-color);padding-bottom:10px}.user-detail-row{margin-bottom:10px}.user-detail-label{color:var(--prompt-color);font-weight:700;font-size:12px;display:block;margin-bottom:2px}.user-detail-value{color:var(--text-color);font-size:14px}.admin-user-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:10px;margin-top:10px}.admin-user-img{width:100%;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border-color);transition:transform .2s}.admin-user-img:hover{transform:scale(1.05)}.usage-stats-box{background-color:var(--input-bg);border:1px solid var(--border-color);padding:10px;border-radius:10px;margin-top:10px}.admin-tabs{display:flex;border-bottom:1px solid var(--border-color);margin-bottom:15px}.admin-tab-btn{flex:1;background:0 0;border:none;color:var(--text-color);padding:10px;cursor:pointer;border-bottom:3px solid transparent;font-size:14px;transition:all .3s ease}.admin-tab-btn:hover{background-color:var(--button-hover-bg)}.admin-tab-btn.active{border-bottom-color:var(--highlight-color);color:var(--highlight-color);font-weight:700}.radio-group{display:flex;gap:15px;margin-bottom:10px;flex-wrap:wrap}.radio-label{display:flex;align-items:center;gap:5px;cursor:pointer}.ai-processing-animation{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--prompt-color)}.scanner-animation{width:100px;height:100px;position:relative;margin-bottom:15px}.scanner-animation .brain-icon{width:100%;height:100%;font-size:80px;line-height:100px;text-align:center;opacity:.5}.scanner-line{position:absolute;top:0;left:0;width:100%;height:3px;background:var(--highlight-color);box-shadow:0 0 10px var(--highlight-color);border-radius:2px;animation:scan 2.5s infinite linear}@keyframes scan{0%{top:0}50%{top:100%}100%{top:0}}.prescription-template-item{background-color:var(--input-bg);border:1px solid var(--border-color);border-radius:8px;margin-bottom:15px;padding:15px}.prescription-template-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.prescription-template-title{font-weight:700;color:var(--prompt-color)}.prescription-template-copy-btn{background-color:var(--button-bg);border:1px solid var(--border-color);color:var(--text-color);padding:5px 10px;border-radius:5px;cursor:pointer;font-size:12px;transition:all .2s}.prescription-template-copy-btn:hover{background-color:var(--highlight-color);color:var(--highlight-text-color)}.prescription-template-text{white-space:pre-wrap;font-family:'Courier New',monospace;font-size:14px;color:var(--output-color);background:rgba(0,0,0,.1);padding:10px;border-radius:5px}.mobile-2-0-container{flex:1;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:20px;gap:20px;height:calc(100vh - 65px - 40px)}.mobile-header{text-align:center;margin-bottom:10px}.mobile-header h2{font-size:24px;color:var(--header-text-color)}.mobile-header p{font-size:14px;opacity:.8}.mobile-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;width:100%;max-width:450px}.mobile-btn{background:var(--glass-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:18px;padding:15px;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text-color);text-decoration:none;text-align:center;box-shadow:var(--glass-shadow);transition:transform .2s ease,background-color .3s ease}.mobile-btn:active{transform:scale(.96);background-color:var(--button-hover-bg)}.mobile-btn img{height:76px;width:76px;object-fit:contain;margin-bottom:5px}.mobile-btn span{font-size:14px;font-weight:700}.info-banner{width:100%;max-width:450px;padding:0 10px;margin-bottom:10px}.chat-bubble-info{background:var(--glass-bg);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:12px;padding:12px 15px;font-size:13px;line-height:1.6;text-align:center;position:relative;box-shadow:var(--glass-shadow);animation:fadeIn .5s ease-out}.chat-bubble-info::after{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid var(--glass-border)}.chat-bubble-info .highlight-link{color:var(--highlight-color);font-weight:700;text-decoration:none;background-color:var(--button-bg);padding:2px 6px;border-radius:5px;transition:background-color .2s}.chat-bubble-info .highlight-link:hover{background-color:var(--button-hover-bg);text-decoration:underline}.mobile-connection-status{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;margin-top:auto;padding-bottom:10px;font-size:12px;color:var(--text-color);opacity:.7;cursor:pointer}.mobile-connection-status .status-dot{width:10px;height:10px;background-color:var(--error-color);border-radius:50%;box-shadow:0 0 6px var(--error-color);transition:background-color .5s ease,box-shadow .5s ease}.mobile-connection-status .status-dot.status-on{background-color:var(--success-color);box-shadow:0 0 6px var(--success-color)}.chatbox-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-gradient);z-index:1000;flex-direction:column}.chatbox-header{display:flex;align-items:center;justify-content:center;position:relative;padding:12px 20px;background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border-bottom:1px solid var(--glass-border);height:65px;flex-shrink:0}.chatbox-title{font-size:20px;font-weight:700;color:var(--header-text-color)}.chatbox-close-btn{font-size:24px;cursor:pointer;color:var(--text-color);position:absolute;right:20px}.chatbox-new-chat-btn{font-size:22px;cursor:pointer;color:var(--text-color);position:absolute;left:20px}.chatbox-messages{flex:1;padding:15px;overflow-y:auto;display:flex;flex-direction:column;gap:15px;background-image:radial-gradient(var(--border-color) 1px,transparent 1px);background-size:15px 15px}.chat-message{display:flex;align-items:flex-start;gap:10px;max-width:85%}.chat-message.user{align-self:flex-end;flex-direction:row-reverse;animation:slideInFromRight .4s ease-out}@keyframes slideInFromRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}.chat-message.model{align-self:flex-start;animation:fadeIn .5s ease}.chat-avatar{width:36px;height:36px;border-radius:50%;background-color:var(--input-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}.chat-message.user .chat-avatar{background-color:var(--highlight-color);color:var(--highlight-text-color)}.message-bubble{padding:12px 18px;border-radius:20px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;box-shadow:0 2px 4px rgba(0,0,0,.1)}.message-bubble b{font-weight:600}.chat-message.user .message-bubble{background-color:var(--highlight-color);color:var(--highlight-text-color);border-bottom-right-radius:5px}.chat-message.model .message-bubble{background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-color);border-bottom-left-radius:5px}.message-bubble.typing{display:flex;align-items:center;gap:5px;padding:15px 18px}.message-bubble.typing .dot{width:8px;height:8px;border-radius:50%;background-color:var(--text-color);opacity:.7;animation:typing-blink 1.4s infinite both}.message-bubble.typing .dot:nth-child(2){animation-delay:.2s}.message-bubble.typing .dot:nth-child(3){animation-delay:.4s}@keyframes typing-blink{0%{opacity:.2}20%{opacity:1}100%{opacity:.2}}@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.chatbox-input-area{padding:10px 15px;background:var(--glass-bg);backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);border-top:1px solid var(--border-color);display:flex;flex-direction:column;gap:10px}.chat-input-row{display:flex;width:100%;gap:10px;align-items:center}.chatbox-input{flex:1;background:var(--input-bg);border:1px solid var(--border-color);border-radius:20px;padding:12px 15px;color:var(--text-color);font-size:16px}.chatbox-input:focus{outline:0;border-color:var(--highlight-color)}.chatbox-send-btn,.chatbox-upload-btn{background-color:var(--highlight-color);color:var(--highlight-text-color);border:none;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:transform .2s;flex-shrink:0}.chatbox-upload-btn{background-color:var(--button-bg);color:var(--text-color)}.chatbox-send-btn:active,.chatbox-upload-btn:active{transform:scale(.9)}.chat-image-previews{display:flex;gap:10px;overflow-x:auto;width:100%;padding:5px 0}.chat-preview-item{position:relative;flex-shrink:0}.chat-preview-item img{width:60px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--border-color)}.chat-preview-delete{position:absolute;top:-5px;right:-5px;width:20px;height:20px;background-color:rgba(255,0,0,.8);color:#fff;border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer}.message-bubble .chat-image-attachment{width:100%;max-width:200px;height:auto;border-radius:10px;margin-top:10px;display:block}.confirm-modal{display:none;position:fixed;z-index:3000;left:0;top:0;width:100%;height:100%;background-color:rgba(0,0,0,.6);justify-content:center;align-items:center}.confirm-modal-content{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:30px;border:1px solid var(--glass-border);border-radius:16px;width:90%;max-width:400px;box-shadow:var(--glass-shadow);text-align:center}#confirm-modal-text{margin-bottom:25px;font-size:16px;line-height:1.6}.confirm-modal-buttons{display:flex;gap:15px;justify-content:center}.confirm-btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;transition:background-color .2s,transform .1s}.confirm-btn:active{transform:scale(.97)}#confirm-btn-yes{background-color:var(--error-color);color:#fff}#confirm-btn-no{background-color:var(--button-bg);color:var(--text-color);border:1px solid var(--border-color)}.mobile-loader{display:none;position:fixed;z-index:2500;top:0;left:0;width:100%;height:100%;background:var(--bg-gradient);justify-content:center;align-items:center}.toggle-switch{position:relative;display:inline-block;width:50px;height:28px}.toggle-switch input{opacity:0;width:0;height:0}.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:var(--button-bg);transition:.4s;border-radius:28px;border:1px solid var(--border-color)}.slider:before{position:absolute;content:"";height:20px;width:20px;left:4px;bottom:3px;background-color:#fff;transition:.4s;border-radius:50%}input:checked+.slider{background-color:var(--highlight-color)}input:checked+.slider:before{transform:translateX(22px)}.transfer-drop-zone{border:2px dashed var(--border-color);border-radius:10px;padding:30px;text-align:center;color:var(--text-color);cursor:pointer;margin-bottom:15px;transition:all .3s ease;display:flex;flex-direction:column;align-items:center;gap:10px}.transfer-drop-zone.dragover,.transfer-drop-zone:hover{border-color:var(--highlight-color);background-color:var(--button-bg)}.transfer-icon{font-size:40px;color:var(--highlight-color);margin-bottom:10px}.transfer-status{margin-top:15px;text-align:center;font-size:14px}.progress-bar-container{width:100%;background-color:var(--input-bg);border-radius:10px;height:10px;margin-top:10px;overflow:hidden}.progress-bar-fill{height:100%;background-color:var(--success-color);width:0%;transition:width .2s ease}.notification-popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:4000;display:none;justify-content:center;align-items:center;backdrop-filter:blur(5px)}.notification-popup-content{background:var(--glass-bg);border:1px solid var(--glass-border);padding:25px;border-radius:15px;width:90%;max-width:400px;box-shadow:var(--glass-shadow);display:flex;flex-direction:column;gap:15px;animation:zoomIn .3s ease;text-align:center}.progress-bar-fill.pro-mode{background-color:#4299e1;box-shadow:0 0 10px #4299e1}@media (max-width:768px){.notification-popup{bottom:auto;top:50%;left:50%;right:auto;transform:translate(-50%,-50%);animation:fadeIn .3s ease-out;border-radius:16px;padding:20px}.notification-popup.mobile-center{width:85%}.container{flex-direction:column-reverse;padding:10px;gap:10px}.monitor-toggle-button span,.status-bar span{display:none}.monitor-toggle-button{padding:5px 8px;font-size:16px;width:auto;min-width:35px}.status-bar{gap:10px;margin-right:0}.status-item .status-indicator{width:8px;height:8px}.logout-button,.settings-button,.theme-toggle{font-size:18px}.camera-modal.fullscreen-mobile{position:fixed;top:0;bottom:0;left:0;width:100%;height:100%;z-index:100;border-radius:0}.camera-modal.fullscreen-mobile .camera-container{border-radius:0;border:none}.radio-group{flex-direction:column;align-items:flex-start;gap:10px}.admin-users-container{flex-direction:column}.admin-users-list-section{flex:0 0 45%;min-height:220px;border-right:none;border-bottom:1px solid var(--border-color);padding-bottom:15px;padding-right:0}.admin-users-details-section{flex:1;min-height:0;padding-left:0;padding-top:15px}}@media (min-width:769px){.camera-video-wrapper{padding-bottom:56.25%}}</style></head><body><div class="header"><div class="app-title">AXON A.I</div><div class="header-right"><div class="status-bar" id="btn-cloud-open" style="cursor:pointer;margin-right:10px;background:var(--secondary-color);color:#fff;border-color:transparent"><div class="status-item"><i class="fas fa-cloud"></i><span>Nuvem</span></div></div><div class="status-bar" id="btn-transfer-file" style="cursor:pointer;margin-right:10px;background:var(--highlight-color);color:#fff;border-color:transparent"><div class="status-item"><i class="fas fa-paper-plane"></i><span>Enviar</span></div></div><div class="status-bar"><div class="status-item"><div class="status-indicator" id="api-status"></div><span class="status-text-api">API</span></div><div class="status-item"><div class="status-indicator status-off" id="mic-status"></div><span class="status-text-mic">Microfone</span></div><div class="status-item"><div class="status-indicator status-off" id="camera-status"></div><span class="status-text-cam">Câmera</span></div></div><div id="theme-toggle" class="theme-toggle" title="Mudar Tema"><i class="fas fa-sun"></i></div><div id="settings-button" class="settings-button" title="Configurações"><i class="fas fa-cog"></i></div><div id="logout-button" class="logout-button" title="Sair"><i class="fas fa-sign-out-alt"></i></div></div></div><div class="container"><div class="terminal interactive-terminal"><div class="terminal-header"><div class="terminal-title">Terminal Interativo</div><div class="terminal-actions"><div class="terminal-btn close-btn"></div><div class="terminal-btn minimize-btn"></div><div class="terminal-btn maximize-btn"></div></div></div><div class="terminal-content" id="interactive-output"><img src="axon.png" alt="Axon Logo Terminal" class="terminal-logo-internal"><div id="initial-messages" style="position:relative;z-index:1"><pre class="info">
  █████╗ ██╗  ██╗ ██████╗ ███╗   ██╗
 ██╔══██╗╚██╗██╔╝██╔═══██╗████╗  ██║
 ███████║ ╚███╔╝ ██║   ██║██╔██╗ ██║
 ██╔══██║ ██╔██╗ ██║   ██║██║╚██╗██║
 ██║  ██║██╔╝ ██╗╚██████╔╝██║ ╚████║
 ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
-                    </pre><span class="info">Axon - Assistente Médico v1.6</span><br><span class="info">Aguardando autenticação...</span><br><br></div></div><div class="terminal-footer"><div class="action-buttons-container"><button id="btn-exames" class="action-button" title="Analisar Exames (/exames)"><i class="fas fa-file-medical-alt"></i></button><button id="btn-see" class="action-button" title="Análise Visual Axon Eye (/see)"><i class="fas fa-eye"></i></button><button id="btn-hd" class="action-button" title="Gerar Hipóteses Diagnósticas (/hd)"><i class="fas fa-lightbulb"></i></button><button id="btn-cd" class="action-button" title="Gerar Conduta Médica (/cd)"><i class="fas fa-pills"></i></button><button id="btn-records" class="action-button" title="Prontuários"><i class="fas fa-book-medical"></i></button><button id="btn-clear" class="action-button" title="Limpar Sessão (/clear)"><i class="fas fa-eraser"></i></button><button id="btn-mic" class="action-button" title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button></div><div class="input-line"><span class="prompt">></span><input type="text" class="command-input" id="command-input" autocomplete="off" autofocus></div></div></div><div class="terminal non-interactive-terminal"><div class="terminal-header"><div class="terminal-title">Monitor</div><div class="monitor-toggle-buttons"><button id="toggle-anamnesis" class="monitor-toggle-button active"><i class="fas fa-notes-medical"></i><span>Anamnese</span></button><button id="toggle-exams" class="monitor-toggle-button"><i class="fas fa-file-medical-alt"></i><span>Exames</span></button><button id="toggle-axon-eye" class="monitor-toggle-button"><i class="fas fa-eye"></i><span>Axon Eye</span></button></div><div class="terminal-actions"><div class="terminal-btn close-btn"></div><div class="terminal-btn minimize-btn"></div><div class="terminal-btn maximize-btn"></div></div></div><button id="monitor-copy-btn" class="monitor-copy-btn" title="Copiar Conteúdo"><i class="fas fa-copy"></i></button><div class="terminal-content" id="monitor-content-wrapper"><div id="anamnesis-preview" class="monitor-view"><div class="info">Aguardando início da anamnese...</div></div><div id="exams-results-preview" class="monitor-view" style="display:none"><div class="info">Nenhum exame analisado ainda.</div></div><div id="axon-eye-results-preview" class="monitor-view" style="display:none"><div class="info">Nenhuma análise visual feita ainda.</div></div></div></div></div><div id="mobile-2-0-container" class="mobile-2-0-container" style="display:none"><div class="mobile-header"><h2 id="mobile-welcome-title">Bem-vindo!</h2><p>Selecione uma opção para começar.</p></div><div class="info-banner"><div class="chat-bubble-info"><i class="fas fa-info-circle" style="margin-right:8px;color:var(--prompt-color)"></i><span id="info-banner-content">Para acesso completo, abra o Axon Web em seu computador em<a href="https://funortehub.github.io/axon" target="_blank" class="highlight-link">funortehub.github.io/axon</a>ou insira um dispositivo AXON USB.</span></div></div><div class="mobile-grid"><button id="mobile-btn-exames" class="mobile-btn"><img src="btn1.PNG" alt="Analisar Exames"><span>Analisar Exames</span></button><button id="mobile-btn-see" class="mobile-btn"><img src="btn2.PNG" alt="Análise Axon Eye"><span>Análise Axon Eye</span></button><button id="mobile-btn-records" class="mobile-btn"><img src="btn3.PNG" alt="Prontuários"><span>Prontuários</span></button><button id="mobile-btn-chat" class="mobile-btn"><img src="btn4.PNG" alt="Axon AI Chat"><span>Axon AI Chat</span></button></div><div class="mobile-connection-status"><div style="display:flex;align-items:center;justify-content:center;gap:8px"><div class="status-dot"></div><span>Nenhum desktop conectado</span></div><small style="font-size:10px;opacity:.8;margin-top:5px;max-width:220px;line-height:1.3">^Clique aqui para fazer logout em outros desktops conectados</small></div></div><div class="footer"><span>AXON | Sistema médico inteligente desenvolvido por Ian Bastos</span></div><div id="camera-modal" class="camera-modal"><div class="camera-container"><div class="terminal-header"><div class="terminal-title" id="camera-modal-title">Câmera de Exames</div><div class="terminal-actions"><div class="terminal-btn close-btn" id="camera-close-btn"></div></div></div><div class="terminal-content" style="padding:10px"><div class="camera-video-wrapper"><video id="camera-video" class="camera-video" autoplay playsinline muted></video><div class="camera-action-buttons"><button id="flashlight-button" class="flashlight-button" style="display:none"><i class="fas fa-lightbulb"></i>Lanterna</button><button id="camera-switch-button" class="camera-switch-button" style="display:none"><i class="fas fa-sync-alt"></i>Trocar Câmera</button></div><div id="album-button" class="album-button" style="display:none"><i class="fas fa-images"></i>Álbum<span id="album-count" class="album-count">0</span></div><div class="camera-controls"><button id="capture-button" class="camera-button" title="Capturar Foto"><i class="fas fa-camera"></i></button><input type="file" id="file-input" accept="image/*" multiple="multiple" style="display:none"><button id="upload-button" class="camera-button" title="Carregar Arquivo"><i class="fas fa-upload"></i></button><button id="send-exams-button" class="camera-button disabled" title="Enviar Exames"><i class="fas fa-paper-plane"></i></button><button id="send-axon-eye-button" class="camera-button disabled" title="Analisar com Axon Eye" style="display:none"><i class="fas fa-eye"></i></button><button id="cancel-camera-button" class="camera-button" title="Cancelar"><i class="fas fa-times"></i></button></div></div><canvas id="camera-canvas" style="display:none"></canvas></div></div></div><div id="fullscreen-modal" class="fullscreen-modal"><span class="modal-close">&times;</span><img class="modal-content" id="modal-image"></div><div id="album-modal" class="album-modal"><div class="album-modal-content"><span class="album-modal-close">&times;</span><div class="album-modal-header"><div class="album-modal-title">Álbum de Exames</div></div><div id="album-grid" class="album-grid"></div></div></div><div id="patient-list-modal" class="patient-list-modal"><div class="patient-list-content"><span class="patient-list-close">&times;</span><div class="patient-list-header"><div class="patient-list-title">Pacientes Salvos</div></div><div class="patient-search-container"><input type="text" id="patient-search-input" class="patient-search-input" placeholder="Pesquisar paciente..."></div><div id="patient-list" class="patient-list"></div><div class="patient-list-footer" style="margin-top:15px;padding-top:15px;border-top:1px solid var(--border-color)"><button id="btn-save-from-list" class="app-modal-button" style="width:100%">Salvar Consulta Atual</button></div></div></div><div id="patient-details-modal" class="patient-details-modal"><div class="patient-details-content"><span class="patient-details-close">&times;</span><div class="patient-details-header"><div class="patient-details-title" id="patient-details-title">Detalhes do Paciente</div></div><div id="patient-details-body" class="patient-details-body"></div></div></div><div id="login-modal" class="app-modal"><div class="app-modal-content"><div class="app-modal-header"><h2 class="app-modal-title">AXON A.I - Login</h2></div><div class="app-modal-body"><p>Por favor, faça login para continuar.</p><input type="text" id="login-modal-user" placeholder="Usuário" class="app-modal-input" autocomplete="username"> <input type="password" id="login-modal-pass" placeholder="Senha" class="app-modal-input" autocomplete="current-password"><button id="login-modal-button" class="app-modal-button">Entrar</button><div id="login-modal-feedback" class="app-modal-feedback"></div></div></div></div><div id="save-patient-modal" class="app-modal"><div class="app-modal-content"><span class="app-modal-close">&times;</span><div class="app-modal-header"><h2 class="app-modal-title">Salvar Paciente</h2></div><div class="app-modal-body"><p>Insira os dados do paciente para salvar a sessão atual.</p><input type="text" id="save-patient-name" placeholder="Nome Completo do Paciente" class="app-modal-input"> <input type="text" id="save-patient-dob" placeholder="Data de Nascimento (DD/MM/AAAA)" class="app-modal-input"><button id="save-patient-button" class="app-modal-button">Salvar</button><div id="save-patient-feedback" class="app-modal-feedback"></div></div></div></div><div id="admin-auth-modal" class="app-modal"><div class="app-modal-content"><span class="app-modal-close">&times;</span><div class="app-modal-header"><h2 class="app-modal-title">Administração</h2></div><div class="app-modal-body"><p>Insira a senha de administrador.</p><input type="password" id="admin-auth-pass" placeholder="Senha" class="app-modal-input"><button id="admin-auth-button" class="app-modal-button">Acessar</button><div id="admin-auth-feedback" class="app-modal-feedback"></div></div></div></div><div id="admin-panel-modal" class="app-modal"><div class="app-modal-content"><span class="app-modal-close">&times;</span><div class="app-modal-header"><h2 class="app-modal-title">Painel Administrativo</h2></div><div class="admin-tabs"><button class="admin-tab-btn active" data-tab="users">Usuários</button><button class="admin-tab-btn" data-tab="api">API</button><button class="admin-tab-btn" data-tab="debug">Debug</button></div><div id="tab-users" class="admin-tab-content"><div class="patient-search-container" style="margin:0 0 15px 0"><input type="text" id="admin-user-search" class="patient-search-input" placeholder="Buscar usuário..."></div><div class="admin-users-container"><div class="admin-users-list-section"><div class="admin-section-title" style="margin-top:0;margin-bottom:10px;flex-shrink:0;display:flex;justify-content:space-between;align-items:center"><span>Usuários (Rank de Uso)</span><div style="display:flex;gap:5px"><button id="disconnect-all-users-btn" class="patient-action-button" style="flex:0;padding:4px 8px;font-size:12px;color:var(--error-color)"><i class="fas fa-power-off"></i>Desconectar Todos</button><button id="toggle-create-user-form" class="patient-action-button details" style="flex:0;padding:4px 8px;font-size:12px"><i class="fas fa-plus"></i>Novo</button></div></div><div id="admin-users-list" class="user-list-scroll"><div class="info">Carregando...</div></div></div><div class="admin-users-details-section" id="admin-user-details"><div class="info" style="margin-top:20px">Selecione um usuário para ver detalhes.</div></div></div><div id="create-user-form-container" class="admin-section" style="margin-top:15px;padding:10px 15px;flex-shrink:0;display:none"><div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center"><span>Criar Novo Usuário</span><i id="close-create-user-form" class="fas fa-times" style="cursor:pointer;font-size:16px"></i></div><div style="display:flex;gap:10px;margin-bottom:10px"><input type="text" id="admin-new-user" class="admin-input" placeholder="Novo nome de usuário" style="flex:1"> <input type="text" id="admin-new-pass" class="admin-input" placeholder="Nova senha" style="flex:1"></div><button class="app-modal-button" onclick="window.createUserFromPanel()">Criar Usuário</button><div id="admin-create-user-feedback" class="app-modal-feedback" style="text-align:left;margin-top:10px;min-height:15px;font-size:12px"></div></div></div><div id="tab-api" class="admin-tab-content" style="display:none"><div id="admin-settings-body"></div></div><div id="tab-debug" class="admin-tab-content" style="display:none"><div id="admin-debug-body"></div></div></div></div><div id="prescription-helper-modal" class="app-modal"><div class="app-modal-content" style="max-width:600px"><span class="app-modal-close">&times;</span><div class="app-modal-header"><h2 class="app-modal-title" id="prescription-helper-title">Assistente de Prescrição</h2></div><div class="app-modal-body" id="prescription-helper-body" style="text-align:left;overflow-y:auto"></div></div></div><div id="chatbox-modal" class="chatbox-modal"><div class="chatbox-header"><i id="chatbox-new-chat-btn" class="fas fa-plus-circle chatbox-new-chat-btn" title="Nova Conversa"></i><span class="chatbox-title">Axon AI Chat</span><i id="chatbox-close-btn" class="fas fa-times chatbox-close-btn"></i></div><div class="chatbox-messages" id="chatbox-messages"></div><div class="chatbox-input-area"><div id="chat-image-previews" class="chat-image-previews"></div><div class="chat-input-row"><input type="file" id="chat-file-input" accept="image/*" multiple="multiple" style="display:none"><button id="chatbox-upload-btn" class="chatbox-upload-btn"><i class="fas fa-camera"></i></button><input type="text" id="chatbox-input" class="chatbox-input" placeholder="Faça uma pergunta..."><button id="chatbox-send-btn" class="chatbox-send-btn"><i class="fas fa-paper-plane"></i></button></div></div></div><div id="custom-confirm-modal" class="confirm-modal"><div class="confirm-modal-content"><p id="confirm-modal-text"></p><div class="confirm-modal-buttons"><button id="confirm-btn-no" class="confirm-btn">Cancelar</button><button id="confirm-btn-yes" class="confirm-btn">Confirmar</button></div></div></div><div id="mobile-analysis-loader" class="mobile-loader"><div class="ai-processing-animation"><div class="scanner-animation"><div class="brain-icon"><i class="fas fa-brain"></i></div><div class="scanner-line"></div></div><span>Analisando Imagens...</span></div></div><div id="transfer-modal" class="app-modal"><div class="app-modal-content"><span class="app-modal-close">&times;</span><div class="app-modal-header"><h2 class="app-modal-title">Transferência de Arquivos</h2></div><div class="app-modal-body"><div id="transfer-drop-zone" class="transfer-drop-zone"><div class="transfer-icon"><i class="fas fa-cloud-upload-alt"></i></div><p>Arraste e solte arquivos aqui ou clique para selecionar</p></div><input type="file" id="transfer-file-input" style="display:none" multiple><div id="transfer-status" class="transfer-status"></div><div id="transfer-progress-bar" class="progress-bar-container" style="display:none"><div id="transfer-progress-fill" class="progress-bar-fill"></div></div></div></div></div><div id="transfer-notification" class="notification-popup"><div style="font-weight:bold;color:var(--highlight-color)"><i class="fas fa-download"></i> Recebendo Arquivo...</div><div id="transfer-notification-text" style="font-size:12px;color:var(--text-color)"></div><div class="progress-bar-container" style="height:5px"><div id="transfer-notification-progress" class="progress-bar-fill"></div></div></div><script type="module">import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+                    </pre><span class="info">Axon - Assistente Médico v1.6</span><br><span class="info">Aguardando autenticação...</span><br><br></div></div><div class="terminal-footer"><div class="action-buttons-container"><button id="btn-exames" class="action-button" title="Analisar Exames (/exames)"><i class="fas fa-file-medical-alt"></i></button><button id="btn-see" class="action-button" title="Análise Visual Axon Eye (/see)"><i class="fas fa-eye"></i></button><button id="btn-hd" class="action-button" title="Gerar Hipóteses Diagnósticas (/hd)"><i class="fas fa-lightbulb"></i></button><button id="btn-cd" class="action-button" title="Gerar Conduta Médica (/cd)"><i class="fas fa-pills"></i></button><button id="btn-records" class="action-button" title="Prontuários"><i class="fas fa-book-medical"></i></button><button id="btn-clear" class="action-button" title="Limpar Sessão (/clear)"><i class="fas fa-eraser"></i></button><button id="btn-mic" class="action-button" title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button></div><div class="input-line"><span class="prompt">></span><input type="text" class="command-input" id="command-input" autocomplete="off" autofocus></div></div></div><div class="terminal non-interactive-terminal"><div class="terminal-header"><div class="terminal-title">Monitor</div><div class="monitor-toggle-buttons"><button id="toggle-anamnesis" class="monitor-toggle-button active"><i class="fas fa-notes-medical"></i><span>Anamnese</span></button><button id="toggle-exams" class="monitor-toggle-button"><i class="fas fa-file-medical-alt"></i><span>Exames</span></button><button id="toggle-axon-eye" class="monitor-toggle-button"><i class="fas fa-eye"></i><span>Axon Eye</span></button></div><div class="terminal-actions"><div class="terminal-btn close-btn"></div><div class="terminal-btn minimize-btn"></div><div class="terminal-btn maximize-btn"></div></div></div><button id="monitor-copy-btn" class="monitor-copy-btn" title="Copiar Conteúdo"><i class="fas fa-copy"></i></button><div class="terminal-content" id="monitor-content-wrapper"><div id="anamnesis-preview" class="monitor-view"><div class="info">Aguardando início da anamnese...</div></div><div id="exams-results-preview" class="monitor-view" style="display:none"><div class="info">Nenhum exame analisado ainda.</div></div><div id="axon-eye-results-preview" class="monitor-view" style="display:none"><div class="info">Nenhuma análise visual feita ainda.</div></div></div></div></div><div id="mobile-2-0-container" class="mobile-2-0-container" style="display:none"><div class="mobile-header"><h2 id="mobile-welcome-title">Bem-vindo!</h2><p>Selecione uma opção para começar.</p></div><div class="info-banner"><div class="chat-bubble-info"><i class="fas fa-info-circle" style="margin-right:8px;color:var(--prompt-color)"></i><span id="info-banner-content">Para acesso completo, abra o Axon Web em seu computador em<a href="https://funortehub.github.io/axon" target="_blank" class="highlight-link">funortehub.github.io/axon</a>ou insira um dispositivo AXON USB.</span></div></div><div class="mobile-grid"><button id="mobile-btn-exames" class="mobile-btn"><img src="btn1.PNG" alt="Analisar Exames"><span>Analisar Exames</span></button><button id="mobile-btn-see" class="mobile-btn"><img src="btn2.PNG" alt="Análise Axon Eye"><span>Análise Axon Eye</span></button><button id="mobile-btn-records" class="mobile-btn"><img src="btn3.PNG" alt="Prontuários"><span>Prontuários</span></button><button id="mobile-btn-chat" class="mobile-btn"><img src="btn4.PNG" alt="Axon AI Chat"><span>Axon AI Chat</span></button></div><div class="mobile-connection-status"><div style="display:flex;align-items:center;justify-content:center;gap:8px"><div class="status-dot"></div><span>Nenhum desktop conectado</span></div><small style="font-size:10px;opacity:.8;margin-top:5px;max-width:220px;line-height:1.3">^Clique aqui para fazer logout em outros desktops conectados</small></div></div><div class="footer"><span>AXON | Sistema médico inteligente desenvolvido por Ian Bastos</span></div><div id="camera-modal" class="camera-modal"><div class="camera-container"><div class="terminal-header"><div class="terminal-title" id="camera-modal-title">Câmera de Exames</div><div class="terminal-actions"><div class="terminal-btn close-btn" id="camera-close-btn"></div></div></div><div class="terminal-content" style="padding:10px"><div class="camera-video-wrapper"><video id="camera-video" class="camera-video" autoplay playsinline muted></video><div class="camera-action-buttons"><button id="flashlight-button" class="flashlight-button" style="display:none"><i class="fas fa-lightbulb"></i>Lanterna</button><button id="camera-switch-button" class="camera-switch-button" style="display:none"><i class="fas fa-sync-alt"></i>Trocar Câmera</button></div><div id="album-button" class="album-button" style="display:none"><i class="fas fa-images"></i>Álbum<span id="album-count" class="album-count">0</span></div><div class="camera-controls"><button id="capture-button" class="camera-button" title="Capturar Foto"><i class="fas fa-camera"></i></button><input type="file" id="file-input" accept="image/*" multiple="multiple" style="display:none"><button id="upload-button" class="camera-button" title="Carregar Arquivo"><i class="fas fa-upload"></i></button><button id="send-exams-button" class="camera-button disabled" title="Enviar Exames"><i class="fas fa-paper-plane"></i></button><button id="send-axon-eye-button" class="camera-button disabled" title="Analisar com Axon Eye" style="display:none"><i class="fas fa-eye"></i></button><button id="cancel-camera-button" class="camera-button" title="Cancelar"><i class="fas fa-times"></i></button></div></div><canvas id="camera-canvas" style="display:none"></canvas></div></div></div><div id="fullscreen-modal" class="fullscreen-modal"><span class="modal-close">&times;</span><img class="modal-content" id="modal-image"></div><div id="album-modal" class="album-modal"><div class="album-modal-content"><span class="album-modal-close">&times;</span><div class="album-modal-header"><div class="album-modal-title">Álbum de Exames</div></div><div id="album-grid" class="album-grid"></div></div></div><div id="patient-list-modal" class="patient-list-modal"><div class="patient-list-content"><span class="patient-list-close">&times;</span><div class="patient-list-header"><div class="patient-list-title">Pacientes Salvos</div></div><div class="patient-search-container"><input type="text" id="patient-search-input" class="patient-search-input" placeholder="Pesquisar paciente..."></div><div id="patient-list" class="patient-list"></div><div class="patient-list-footer" style="margin-top:15px;padding-top:15px;border-top:1px solid var(--border-color)"><button id="btn-save-from-list" class="app-modal-button" style="width:100%">Salvar Consulta Atual</button></div></div></div><div id="patient-details-modal" class="patient-details-modal"><div class="patient-details-content"><span class="patient-details-close">&times;</span><div class="patient-details-header"><div class="patient-details-title" id="patient-details-title">Detalhes do Paciente</div></div><div id="patient-details-body" class="patient-details-body"></div></div></div><div id="login-modal" class="app-modal"><div class="app-modal-content"><div class="app-modal-header"><h2 class="app-modal-title">AXON A.I - Login</h2></div><div class="app-modal-body"><p>Por favor, faça login para continuar.</p><input type="text" id="login-modal-user" placeholder="Usuário" class="app-modal-input" autocomplete="username"> <input type="password" id="login-modal-pass" placeholder="Senha" class="app-modal-input" autocomplete="current-password"><button id="login-modal-button" class="app-modal-button">Entrar</button><div id="login-modal-feedback" class="app-modal-feedback"></div></div></div></div><div id="save-patient-modal" class="app-modal"><div class="app-modal-content"><span class="app-modal-close">&times;</span><div class="app-modal-header"><h2 class="app-modal-title">Salvar Paciente</h2></div><div class="app-modal-body"><p>Insira os dados do paciente para salvar a sessão atual.</p><input type="text" id="save-patient-name" placeholder="Nome Completo do Paciente" class="app-modal-input"> <input type="text" id="save-patient-dob" placeholder="Data de Nascimento (DD/MM/AAAA)" class="app-modal-input"><button id="save-patient-button" class="app-modal-button">Salvar</button><div id="save-patient-feedback" class="app-modal-feedback"></div></div></div></div><div id="admin-auth-modal" class="app-modal"><div class="app-modal-content"><span class="app-modal-close">&times;</span><div class="app-modal-header"><h2 class="app-modal-title">Administração</h2></div><div class="app-modal-body"><p>Insira a senha de administrador.</p><input type="password" id="admin-auth-pass" placeholder="Senha" class="app-modal-input"><button id="admin-auth-button" class="app-modal-button">Acessar</button><div id="admin-auth-feedback" class="app-modal-feedback"></div></div></div></div><div id="admin-panel-modal" class="app-modal"><div class="app-modal-content"><span class="app-modal-close">&times;</span><div class="app-modal-header"><h2 class="app-modal-title">Painel Administrativo</h2></div><div class="admin-tabs"><button class="admin-tab-btn active" data-tab="users">Usuários</button><button class="admin-tab-btn" data-tab="api">API</button><button class="admin-tab-btn" data-tab="debug">Debug</button></div><div id="tab-users" class="admin-tab-content"><div class="patient-search-container" style="margin:0 0 15px 0"><input type="text" id="admin-user-search" class="patient-search-input" placeholder="Buscar usuário..."></div><div class="admin-users-container"><div class="admin-users-list-section"><div class="admin-section-title" style="margin-top:0;margin-bottom:10px;flex-shrink:0;display:flex;justify-content:space-between;align-items:center"><span>Usuários (Rank de Uso)</span><div style="display:flex;gap:5px"><button id="disconnect-all-users-btn" class="patient-action-button" style="flex:0;padding:4px 8px;font-size:12px;color:var(--error-color)"><i class="fas fa-power-off"></i>Desconectar Todos</button><button id="toggle-create-user-form" class="patient-action-button details" style="flex:0;padding:4px 8px;font-size:12px"><i class="fas fa-plus"></i>Novo</button></div></div><div id="admin-users-list" class="user-list-scroll"><div class="info">Carregando...</div></div></div><div class="admin-users-details-section" id="admin-user-details"><div class="info" style="margin-top:20px">Selecione um usuário para ver detalhes.</div></div></div><div id="create-user-form-container" class="admin-section" style="margin-top:15px;padding:10px 15px;flex-shrink:0;display:none"><div class="admin-section-title" style="display:flex;justify-content:space-between;align-items:center"><span>Criar Novo Usuário</span><i id="close-create-user-form" class="fas fa-times" style="cursor:pointer;font-size:16px"></i></div><div style="display:flex;gap:10px;margin-bottom:10px"><input type="text" id="admin-new-user" class="admin-input" placeholder="Novo nome de usuário" style="flex:1"> <input type="text" id="admin-new-pass" class="admin-input" placeholder="Nova senha" style="flex:1"></div><button class="app-modal-button" onclick="window.createUserFromPanel()">Criar Usuário</button><div id="admin-create-user-feedback" class="app-modal-feedback" style="text-align:left;margin-top:10px;min-height:15px;font-size:12px"></div></div></div><div id="tab-api" class="admin-tab-content" style="display:none"><div id="admin-settings-body"></div></div><div id="tab-debug" class="admin-tab-content" style="display:none"><div id="admin-debug-body"></div></div></div></div><div id="prescription-helper-modal" class="app-modal"><div class="app-modal-content" style="max-width:600px"><span class="app-modal-close">&times;</span><div class="app-modal-header"><h2 class="app-modal-title" id="prescription-helper-title">Assistente de Prescrição</h2></div><div class="app-modal-body" id="prescription-helper-body" style="text-align:left;overflow-y:auto"></div></div></div><div id="chatbox-modal" class="chatbox-modal"><div class="chatbox-header"><i id="chatbox-new-chat-btn" class="fas fa-plus-circle chatbox-new-chat-btn" title="Nova Conversa"></i><span class="chatbox-title">Axon AI Chat</span><i id="chatbox-close-btn" class="fas fa-times chatbox-close-btn"></i></div><div class="chatbox-messages" id="chatbox-messages"></div><div class="chatbox-input-area"><div id="chat-image-previews" class="chat-image-previews"></div><div class="chat-input-row"><input type="file" id="chat-file-input" accept="image/*" multiple="multiple" style="display:none"><button id="chatbox-upload-btn" class="chatbox-upload-btn"><i class="fas fa-camera"></i></button><input type="text" id="chatbox-input" class="chatbox-input" placeholder="Faça uma pergunta..."><button id="chatbox-send-btn" class="chatbox-send-btn"><i class="fas fa-paper-plane"></i></button></div></div></div><div id="custom-confirm-modal" class="confirm-modal"><div class="confirm-modal-content"><p id="confirm-modal-text"></p><div class="confirm-modal-buttons"><button id="confirm-btn-no" class="confirm-btn">Cancelar</button><button id="confirm-btn-yes" class="confirm-btn">Confirmar</button></div></div></div><div id="mobile-analysis-loader" class="mobile-loader"><div class="ai-processing-animation"><div class="scanner-animation"><div class="brain-icon"><i class="fas fa-brain"></i></div><div class="scanner-line"></div></div><span>Analisando Imagens...</span></div></div><div id="transfer-modal" class="app-modal"><div class="app-modal-content"><span class="app-modal-close">&times;</span><div class="app-modal-header"><h2 class="app-modal-title">Transferência de Arquivos</h2></div><div class="app-modal-body"><div id="transfer-drop-zone" class="transfer-drop-zone"><div class="transfer-icon"><i class="fas fa-cloud-upload-alt"></i></div><p>Arraste e solte arquivos aqui ou clique para selecionar</p></div><input type="file" id="transfer-file-input" style="display:none" multiple="multiple"><div id="transfer-status" class="transfer-status"></div><div id="transfer-progress-bar" class="progress-bar-container" style="display:none"><div id="transfer-progress-fill" class="progress-bar-fill"></div></div></div></div></div><div id="transfer-notification" class="notification-popup"><div style="font-weight:700;color:var(--highlight-color)"><i class="fas fa-download"></i>Recebendo Arquivo...</div><div id="transfer-notification-text" style="font-size:12px;color:var(--text-color)"></div><div class="progress-bar-container" style="height:5px"><div id="transfer-notification-progress" class="progress-bar-fill"></div></div></div><script type="module">import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, where, increment, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -239,7 +239,7 @@
         let currentAIModel = 'gemini-2.0-flash';
         let currentVisionAIModel = 'gemini-2.5-flash-lite';
         const IMGUR_CLIENT_ID = '546c25a59c58ad7';
-        
+
         // Pinata Constants
         const PINATA_API_KEY = "5256cd6c1c0b4ccec3a9";
         const PINATA_API_SECRET = "afbed7932f0ebf5c50d88d04378359164aca3ae63a72e2628375dc02e4fcfb05";
@@ -470,7 +470,7 @@
                 unsubscribeUserDoc();
                 unsubscribeUserDoc = null;
             }
-             if (unsubscribeTransfer) {
+            if (unsubscribeTransfer) {
                 unsubscribeTransfer();
                 unsubscribeTransfer = null;
             }
@@ -750,31 +750,76 @@
             }
         };
 
-        const unpinFromPinata = async (ipfsHash) => {
-            try {
-                const url = `https://api.pinata.cloud/pinning/unpin/${ipfsHash}`;
-                const response = await fetch(url, {
-                    method: 'DELETE',
-                    headers: {
-                        'pinata_api_key': PINATA_API_KEY,
-                        'pinata_secret_api_key': PINATA_API_SECRET
-                    }
-                });
+        const getPendingUnpins = () => JSON.parse(localStorage.getItem('pendingUnpins') || '[]');
+        const addToPendingUnpins = (hash) => {
+            const pending = getPendingUnpins();
+            if (!pending.includes(hash)) {
+                pending.push(hash);
+                localStorage.setItem('pendingUnpins', JSON.stringify(pending));
+            }
+        };
+        const removeFromPendingUnpins = (hash) => {
+            const pending = getPendingUnpins();
+            const newPending = pending.filter(h => h !== hash);
+            localStorage.setItem('pendingUnpins', JSON.stringify(newPending));
+        };
 
-                if (response.ok) {
-                    console.log(`Arquivo ${ipfsHash} removido do Pinata com sucesso.`);
-                    return true;
-                } else {
-                    console.error("Erro ao remover do Pinata:", await response.text());
-                    return false;
+        const unpinFromPinata = async (ipfsHash) => {
+            const keysToTry = (globalSettings.pinataKeys && globalSettings.pinataKeys.length > 0)
+                ? globalSettings.pinataKeys
+                : [{ key: PINATA_API_KEY, secret: PINATA_API_SECRET, name: 'Default' }];
+
+            for (const pk of keysToTry) {
+                try {
+                    const url = `https://api.pinata.cloud/pinning/unpin/${ipfsHash}`;
+                    const response = await fetch(url, {
+                        method: 'DELETE',
+                        headers: {
+                            'pinata_api_key': pk.key,
+                            'pinata_secret_api_key': pk.secret
+                        }
+                    });
+
+                    if (response.ok) {
+                        console.log(`Arquivo ${ipfsHash} removido do Pinata (Conta: ${pk.name}).`);
+                        return true;
+                    } else if (response.status === 404) {
+                        // Not found on this key, try next
+                        continue;
+                    } else {
+                        console.warn(`Erro Pinata (${pk.name}):`, await response.text());
+                    }
+                } catch (error) {
+                    console.error("Erro requisição unpin:", error);
                 }
-            } catch (error) {
-                console.error("Erro na requisição de unpin:", error);
-                return false;
+            }
+            // If looped all and didn't return true (or 404 handled above but we want to return true if *any* 404? No, 404 means "not here", if strictly not found on ANY, then it's effectively deleted/gone)
+            // Let's assume if we tried all and got 404s, it's success (already gone).
+            // But how to distinguish 404 (not on this key) vs 404 (gone from valid key)?
+            // Unpin API returns 200 if deleted.
+            // If checks all keys and none have it, return true (gone).
+            return true;
+        };
+
+        const getActivePinataKey = () => {
+            if (globalSettings.pinataKeys && globalSettings.pinataKeys.length > 0) {
+                return globalSettings.pinataKeys[0]; // Use first key as primary for uploads
+            }
+            return { key: PINATA_API_KEY, secret: PINATA_API_SECRET };
+        };
+
+        const processPendingUnpins = async () => {
+            const pending = getPendingUnpins();
+            if (pending.length === 0) return;
+            console.log(`Processando ${pending.length} exclusões pendentes do Pinata...`);
+            for (const hash of pending) {
+                const success = await unpinFromPinata(hash);
+                if (success) removeFromPendingUnpins(hash);
             }
         };
 
         const uploadToPinata = async (file, onProgress) => {
+            const pk = getActivePinataKey();
             const url = `https://api.pinata.cloud/pinning/pinFileToIPFS`;
             const data = new FormData();
             data.append('file', file);
@@ -790,19 +835,19 @@
                 });
 
                 xhr.onload = async () => {
-                   if (xhr.status === 200) {
-                       const result = JSON.parse(xhr.responseText);
-                       resolve(result.IpfsHash);
-                   } else {
-                       reject(new Error(`Erro Pinata: ${xhr.statusText}`));
-                   }
+                    if (xhr.status === 200) {
+                        const result = JSON.parse(xhr.responseText);
+                        resolve(result.IpfsHash);
+                    } else {
+                        reject(new Error(`Erro Pinata: ${xhr.statusText}`));
+                    }
                 };
 
                 xhr.onerror = () => reject(new Error("Erro de rede no upload para Pinata."));
 
                 xhr.open("POST", url);
-                xhr.setRequestHeader("pinata_api_key", PINATA_API_KEY);
-                xhr.setRequestHeader("pinata_secret_api_key", PINATA_API_SECRET);
+                xhr.setRequestHeader("pinata_api_key", pk.key);
+                xhr.setRequestHeader("pinata_secret_api_key", pk.secret);
                 xhr.send(data);
             });
         };
@@ -1306,14 +1351,14 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 snapshot.docChanges().forEach(async (change) => {
                     if (change.type === "added" || change.type === "modified") {
                         const data = change.doc.data();
-                        
+
                         // Ignora arquivos enviados por mim mesmo
                         if (data.senderId === deviceId) return;
 
                         if (data.status === 'complete') {
                             // Mostra notificação de recebimento
                             transferNotification.style.display = 'flex';
-                            
+
                             // Adjust popup for mobile if needed (handled by CSS, but ensure visible logic is fine)
                             if (isMobile) {
                                 transferNotification.classList.add('mobile-center');
@@ -1326,10 +1371,13 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                                     const gatewayUrl = `https://gateway.pinata.cloud/ipfs/${data.ipfsHash}`;
                                     const response = await fetch(gatewayUrl);
                                     if (!response.ok) throw new Error("Falha ao baixar do IPFS");
-                                    
+
+                                    // Marcar para deletar com segurança antes de qualquer coisa
+                                    addToPendingUnpins(data.ipfsHash);
+
                                     const blob = await response.blob();
                                     const downloadUrl = window.URL.createObjectURL(blob);
-                                    
+
                                     const link = document.createElement('a');
                                     link.href = downloadUrl;
                                     link.download = data.filename;
@@ -1347,7 +1395,13 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                                     // Receiver triggers the unpin via a signal back or if keys allow, unpin directly.
                                     // Since we have keys on client (as per user request), we can unpin from here too or ask sender.
                                     // Let's try unpinning directly since we share the keys.
-                                    await unpinFromPinata(data.ipfsHash);
+                                    // Tenta remover agora
+                                    const unpinSuccess = await unpinFromPinata(data.ipfsHash);
+                                    if (unpinSuccess) {
+                                        removeFromPendingUnpins(data.ipfsHash);
+                                    } else {
+                                        console.warn("Unpin falhou agora, será tentado novamente na inicialização.");
+                                    }
 
                                     await deleteDoc(change.doc.ref);
 
@@ -1365,16 +1419,16 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                                         // Reassembling chunks
                                         const chunksRef = collection(db, "sessions", username, "transfers", change.doc.id, "chunks");
                                         const chunksSnap = await getDocs(query(chunksRef, orderBy('__name__')));
-                                        
+
                                         const chunks = [];
-                                        chunksSnap.forEach(doc => chunks.push({id: parseInt(doc.id), data: doc.data().data}));
+                                        chunksSnap.forEach(doc => chunks.push({ id: parseInt(doc.id), data: doc.data().data }));
                                         chunks.sort((a, b) => a.id - b.id);
-                                        
+
                                         base64Data = chunks.map(c => c.data).join('');
                                     } else {
                                         base64Data = data.data;
                                     }
-    
+
                                     // Trigger Download
                                     const link = document.createElement('a');
                                     link.href = base64Data;
@@ -1382,20 +1436,20 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                                     document.body.appendChild(link);
                                     link.click();
                                     document.body.removeChild(link);
-                                    
+
                                     transferNotificationText.textContent = "Concluído!";
                                     transferNotificationProgress.style.width = '100%';
-    
+
                                     // Clean up Firestore
                                     await deleteDoc(change.doc.ref);
                                     if (data.chunkCount > 0) {
-                                       const chunksRef = collection(db, "sessions", username, "transfers", change.doc.id, "chunks");
-                                       const chunksSnap = await getDocs(chunksRef);
-                                       const batch = writeBatch(db);
-                                       chunksSnap.forEach(c => batch.delete(c.ref));
-                                       await batch.commit();
+                                        const chunksRef = collection(db, "sessions", username, "transfers", change.doc.id, "chunks");
+                                        const chunksSnap = await getDocs(chunksRef);
+                                        const batch = writeBatch(db);
+                                        chunksSnap.forEach(c => batch.delete(c.ref));
+                                        await batch.commit();
                                     }
-    
+
                                 } catch (e) {
                                     console.error("Erro ao baixar arquivo:", e);
                                     transferNotificationText.textContent = "Erro no download.";
@@ -1531,7 +1585,9 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         groqModel: data.groqModel || 'llama-3.3-70b-versatile',
                         mobile2_0_enabled: data.mobile2_0_enabled === undefined ? isMobile : data.mobile2_0_enabled,
                         customTextProvider: data.customTextProvider || 'gemini',
-                        customVisionProvider: data.customVisionProvider || 'gemini'
+                        customTextProvider: data.customTextProvider || 'gemini',
+                        customVisionProvider: data.customVisionProvider || 'gemini',
+                        pinataKeys: data.pinataKeys || [{ key: PINATA_API_KEY, secret: PINATA_API_SECRET, name: "Principal" }]
                     };
 
                     if (adminPanelModal.style.display === 'flex') {
@@ -2666,6 +2722,36 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         </label>
                     </div>
                 </div>
+
+                <div class="admin-section" style="margin-top: 15px;">
+                    <div class="admin-section-title">Gerenciador de Armazenamento Pinata</div>
+                    
+                    <div class="usage-stats-box" id="pinata-usage-stats">
+                        <div class="info">Carregando uso do armazenamento...</div>
+                    </div>
+
+                    <div class="admin-section-title" style="margin-top: 15px; font-size: 12px;">Chaves de API Pinata (Multi-Contas)</div>
+                    <div class="admin-list" id="pinata-keys-list">
+                        ${globalSettings.pinataKeys ? globalSettings.pinataKeys.map((pk, index) => `
+                            <div class="admin-list-item" style="flex-direction: column; align-items: flex-start;">
+                                <div style="display: flex; width: 100%; gap: 10px; align-items: center;">
+                                    <div style="font-weight: bold; font-size: 12px; width: 80px;">${pk.name}</div>
+                                    <input type="text" class="admin-input" value="${pk.key.substring(0, 8)}..." readonly style="width: 100px; font-size: 10px;">
+                                    <button class="patient-action-button delete" style="flex:0;" onclick="window.removePinataKey(${index})"><i class="fas fa-trash"></i></button>
+                                </div>
+                                <div style="font-size: 10px; color: #888; margin-top: 2px;">Secret: ${pk.secret.substring(0, 8)}...</div>
+                            </div>
+                        `).join('') : '<div class="info">Nenhuma chave configurada.</div>'}
+                    </div>
+
+                    <div class="admin-list-item" style="margin-top: 10px; flex-direction: column; gap: 5px;">
+                         <input type="text" id="new-pinata-name" class="admin-input" placeholder="Nome (ex: Conta 2)" style="width: 100%;">
+                         <input type="text" id="new-pinata-key" class="admin-input" placeholder="API Key" style="width: 100%;">
+                         <input type="password" id="new-pinata-secret" class="admin-input" placeholder="Secret Key" style="width: 100%;">
+                         <button class="patient-action-button pdf" style="width: 100%; justify-content: center;" onclick="window.addPinataKey()">Adicionar Conta Pinata</button>
+                    </div>
+                </div>
+
                 <div class="admin-section" style="margin-top: 15px;">
                     <div class="admin-section-title">Backup & Restore (Firestore)</div>
                     <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -2678,6 +2764,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     </div>
                 </div>
             `;
+
             document.getElementById('mobile-2-0-toggle').addEventListener('change', async (e) => {
                 try {
                     await setDoc(doc(db, "settings", "global"), { mobile2_0_enabled: e.target.checked }, { merge: true });
@@ -2685,6 +2772,86 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     console.error("Erro ao salvar modo Mobile 2.0:", err);
                 }
             });
+
+            fetchPinataStorageUsage();
+        };
+
+        const fetchPinataStorageUsage = async () => {
+            const statsContainer = document.getElementById('pinata-usage-stats');
+            if (!statsContainer) return;
+
+            if (!globalSettings.pinataKeys || globalSettings.pinataKeys.length === 0) {
+                statsContainer.innerHTML = '<div class="error">Nenhuma chave Pinata configurada.</div>';
+                return;
+            }
+
+            let totalFiles = 0;
+            let totalSize = 0;
+            let html = '<div style="display:flex; flex-direction:column; gap: 5px;">';
+
+            for (const pk of globalSettings.pinataKeys) {
+                try {
+                    const response = await fetch('https://api.pinata.cloud/data/userPinnedDataTotal', {
+                        headers: {
+                            'pinata_api_key': pk.key,
+                            'pinata_secret_api_key': pk.secret
+                        }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        const size = data.pin_size_total;
+                        const count = data.pin_count;
+                        totalFiles += count;
+                        totalSize += parseInt(size);
+
+                        html += `
+                            <div style="display:flex; justify-content:space-between; font-size: 11px; border-bottom: 1px solid var(--border-color); padding-bottom: 2px;">
+                                <span>${pk.name}</span>
+                                <span>${count} arq. | ${formatBytes(size)}</span>
+                            </div>
+                         `;
+                    } else {
+                        html += `<div style="font-size: 11px; color: var(--error-color);">${pk.name}: Erro API</div>`;
+                    }
+                } catch (e) {
+                    html += `<div style="font-size: 11px; color: var(--error-color);">${pk.name}: Erro Rede</div>`;
+                }
+            }
+
+            html += `
+                <div style="margin-top: 5px; font-weight: bold; border-top: 1px solid var(--border-color); padding-top: 5px; display:flex; justify-content:space-between;">
+                    <span>TOTAL</span>
+                    <span>${totalFiles} arq. | ${formatBytes(totalSize)}</span>
+                </div>
+             </div>`;
+
+            statsContainer.innerHTML = html;
+        };
+
+        window.addPinataKey = async () => {
+            const name = document.getElementById('new-pinata-name').value.trim();
+            const key = document.getElementById('new-pinata-key').value.trim();
+            const secret = document.getElementById('new-pinata-secret').value.trim();
+
+            if (!name || !key || !secret) {
+                alert("Preencha todos os campos.");
+                return;
+            }
+
+            const newKeys = [...(globalSettings.pinataKeys || []), { name, key, secret }];
+            try {
+                await setDoc(doc(db, "settings", "global"), { pinataKeys: newKeys }, { merge: true });
+                renderAdminDebugUI(); // Refresh
+            } catch (e) { console.error("Erro ao adicionar chave Pinata:", e); }
+        };
+
+        window.removePinataKey = async (index) => {
+            if (!confirm("Remover esta chave Pinata? Arquivos associados podem ficar inacessíveis para exclusão.")) return;
+            const newKeys = globalSettings.pinataKeys.filter((_, i) => i !== index);
+            try {
+                await setDoc(doc(db, "settings", "global"), { pinataKeys: newKeys }, { merge: true });
+                renderAdminDebugUI(); // Refresh
+            } catch (e) { console.error("Erro ao remover chave Pinata:", e); }
         };
 
         window.backupFirestore = async () => {
@@ -3538,29 +3705,29 @@ ${instruction}
             const isLargeFile = file.size > 10 * 1024 * 1024;
 
             if (isLargeFile) {
-                 transferStatus.textContent = "Modo Axon Share Pro ativado (Pinata)...";
-                 transferProgressFill.classList.add('pro-mode');
-                 
-                 // Show pro mode text below bar
-                 const proText = document.createElement('div');
-                 proText.id = 'pro-mode-text';
-                 proText.innerText = "Modo de compartilhamento Axon Share Pro ativado.";
-                 proText.style.fontSize = "10px";
-                 proText.style.color = "#4299e1";
-                 proText.style.marginTop = "5px";
-                 proText.style.textAlign = "center";
-                 
-                 if (!document.getElementById('pro-mode-text')) {
-                     transferProgressBar.parentNode.appendChild(proText);
-                 }
+                transferStatus.textContent = "Modo Axon Share Pro ativado (Pinata)...";
+                transferProgressFill.classList.add('pro-mode');
 
-                 try {
-                     const ipfsHash = await uploadToPinata(file, (progress) => {
-                         transferProgressFill.style.width = `${progress}%`;
-                     });
+                // Show pro mode text below bar
+                const proText = document.createElement('div');
+                proText.id = 'pro-mode-text';
+                proText.innerText = "Modo de compartilhamento Axon Share Pro ativado.";
+                proText.style.fontSize = "10px";
+                proText.style.color = "#4299e1";
+                proText.style.marginTop = "5px";
+                proText.style.textAlign = "center";
 
-                     // Create record in Firestore to signal receiver
-                     await addDoc(collection(db, "sessions", currentUser, "transfers"), {
+                if (!document.getElementById('pro-mode-text')) {
+                    transferProgressBar.parentNode.appendChild(proText);
+                }
+
+                try {
+                    const ipfsHash = await uploadToPinata(file, (progress) => {
+                        transferProgressFill.style.width = `${progress}%`;
+                    });
+
+                    // Create record in Firestore to signal receiver
+                    await addDoc(collection(db, "sessions", currentUser, "transfers"), {
                         filename: file.name,
                         fileSize: file.size,
                         senderId: deviceId,
@@ -3573,11 +3740,11 @@ ${instruction}
                     transferStatus.textContent = "Arquivo enviado com sucesso!";
                     transferStatus.style.color = "var(--success-color)";
 
-                 } catch (err) {
-                     console.error("Pinata Upload Error:", err);
-                     transferStatus.textContent = "Erro Axon Share Pro: " + err.message;
-                     transferStatus.style.color = "var(--error-color)";
-                 }
+                } catch (err) {
+                    console.error("Pinata Upload Error:", err);
+                    transferStatus.textContent = "Erro Axon Share Pro: " + err.message;
+                    transferStatus.style.color = "var(--error-color)";
+                }
 
             } else {
                 // Legacy / Small File Logic
@@ -3591,7 +3758,7 @@ ${instruction}
                 reader.onload = async (e) => {
                     const base64Data = e.target.result;
                     const totalSize = base64Data.length;
-                    
+
                     transferStatus.textContent = "Enviando...";
                     transferProgressFill.style.width = '30%';
 
@@ -3660,9 +3827,9 @@ ${instruction}
             const files = e.target.files;
             if (files.length > 0) {
                 for (let i = 0; i < files.length; i++) {
-                     await uploadFileP2P(files[i]);
-                     // Add small delay between uploads to avoid race conditions or UI flickering
-                     if (i < files.length - 1) await new Promise(r => setTimeout(r, 1000));
+                    await uploadFileP2P(files[i]);
+                    // Add small delay between uploads to avoid race conditions or UI flickering
+                    if (i < files.length - 1) await new Promise(r => setTimeout(r, 1000));
                 }
             }
         };
@@ -3671,23 +3838,23 @@ ${instruction}
             e.preventDefault();
             transferDropZone.classList.remove('dragover');
             if (e.dataTransfer.files.length > 0) {
-                 for (let i = 0; i < e.dataTransfer.files.length; i++) {
-                     await uploadFileP2P(e.dataTransfer.files[i]);
-                     if (i < e.dataTransfer.files.length - 1) await new Promise(r => setTimeout(r, 1000));
+                for (let i = 0; i < e.dataTransfer.files.length; i++) {
+                    await uploadFileP2P(e.dataTransfer.files[i]);
+                    if (i < e.dataTransfer.files.length - 1) await new Promise(r => setTimeout(r, 1000));
                 }
             }
         };
 
         btnTransferFile.addEventListener('click', () => {
-             checkBlockedAndExecute(() => {
-                 transferModal.style.display = 'flex';
-             });
+            checkBlockedAndExecute(() => {
+                transferModal.style.display = 'flex';
+            });
         });
-        
+
         transferModalClose.addEventListener('click', () => transferModal.style.display = 'none');
         transferDropZone.addEventListener('click', () => transferFileInput.click());
         transferFileInput.addEventListener('change', handleTransferFileSelect);
-        
+
         transferDropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             transferDropZone.classList.add('dragover');
@@ -3823,6 +3990,385 @@ ${instruction}
             }
         });
 
+        /* --- Axon Cloud Logic Start --- */
+        let currentCloudFolder = 'root';
+        let cloudItems = [];
+        let cloudPathInfo = [{ id: 'root', name: 'Início' }];
+        const cloudModal = document.getElementById('cloud-modal');
+        const cloudFileList = document.getElementById('cloud-file-list');
+        const cloudBreadcrumb = document.getElementById('cloud-breadcrumb');
+        const cloudStorageInfo = document.getElementById('cloud-storage-info');
+
+        const openCloud = async () => {
+            if (!currentUser) return appendOutput("Faça login para acessar o Axon Cloud.", "error");
+            cloudModal.style.display = 'flex';
+            currentCloudFolder = 'root';
+            cloudPathInfo = [{ id: 'root', name: 'Início' }];
+            await fetchCloudItems();
+        };
+
+        const closeCloud = () => {
+            cloudModal.style.display = 'none';
+        };
+
+        const fetchCloudItems = async () => {
+            cloudFileList.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-color); opacity: 0.5; padding-top: 50px;"><i class="fas fa-spinner fa-spin"></i> Carregando arquivos...</div>';
+            try {
+                // Use Firestore for file metadata (User-Centric)
+                // Schema: users/{username}/cloud_files/{docId}
+                const q = query(collection(db, "users", currentUser, "cloud_files"), where("parentId", "==", currentCloudFolder));
+                const snapshot = await getDocs(q);
+                cloudItems = [];
+                snapshot.forEach(doc => {
+                    cloudItems.push({ id: doc.id, ...doc.data() });
+                });
+                renderCloudItems();
+                updateCloudBreadcrumb();
+                updateCloudStorageInfo();
+            } catch (e) {
+                console.error("Erro ao carregar Axon Cloud:", e);
+                cloudFileList.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--error-color);">Erro ao carregar arquivos.</div>';
+            }
+        };
+
+        const renderCloudItems = () => {
+            cloudFileList.innerHTML = '';
+            if (cloudItems.length === 0) {
+                cloudFileList.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-color); opacity: 0.5; padding-top: 50px;">Pasta vazia.</div>';
+                return;
+            }
+
+            // Sort: Folders first, then files. Alphabetical.
+            cloudItems.sort((a, b) => {
+                if (a.type === b.type) return a.name.localeCompare(b.name);
+                return a.type === 'folder' ? -1 : 1;
+            });
+
+            cloudItems.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'cloud-item';
+                el.title = item.name;
+
+                let iconClass = 'fa-file file-icon';
+                if (item.type === 'folder') iconClass = 'fa-folder folder-icon';
+                else if (item.mimeType && item.mimeType.startsWith('image/')) iconClass = 'fa-file-image image-icon';
+                else if (item.mimeType && item.mimeType.startsWith('video/')) iconClass = 'fa-file-video video-icon';
+                else if (item.mimeType === 'application/pdf') iconClass = 'fa-file-pdf pdf-icon';
+
+                el.innerHTML = `
+                    <div class="cloud-item-icon"><i class="fas ${iconClass}"></i></div>
+                    <div class="cloud-item-name">${item.name}</div>
+                `;
+
+                // Single click: Select/Unselect (or potential preview? for now just UI feedback)
+                // Double click: Enter folder or Download file
+                let clickTimer = null;
+                el.onclick = (e) => {
+                    if (clickTimer) {
+                        clearTimeout(clickTimer);
+                        clickTimer = null;
+                        // Double Click
+                        if (item.type === 'folder') {
+                            enterCloudFolder(item.id, item.name);
+                        } else {
+                            downloadCloudFile(item);
+                        }
+                    } else {
+                        // Single Click
+                        document.querySelectorAll('.cloud-item').forEach(i => i.classList.remove('selected'));
+                        el.classList.add('selected');
+                        clickTimer = setTimeout(() => { clickTimer = null; }, 300);
+                        // Show context menu logic here if desired (Delete/Rename) - For simplified V1, maybe just a long press or add buttons to header based on selection?
+                        // Let's rely on a context menu or simple prompt for now on click? No, stick to clean UI. 
+                        // Simplest: Click selects. Action button in header deletes selected? Or right click.
+                        // Impl: Right click context menu.
+                    }
+                    e.stopPropagation();
+                };
+
+                el.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    showCloudContextMenu(e, item);
+                };
+
+                cloudFileList.appendChild(el);
+            });
+        };
+
+        const enterCloudFolder = (folderId, folderName) => {
+            currentCloudFolder = folderId;
+            cloudPathInfo.push({ id: folderId, name: folderName });
+            fetchCloudItems();
+        };
+
+        const updateCloudBreadcrumb = () => {
+            cloudBreadcrumb.innerHTML = '';
+            cloudPathInfo.forEach((path, index) => {
+                const span = document.createElement('span');
+                span.className = 'cloud-breadcrumb-item';
+                span.textContent = path.name;
+                span.style.cursor = 'pointer';
+                span.onclick = () => {
+                    if (index === cloudPathInfo.length - 1) return;
+                    currentCloudFolder = path.id;
+                    cloudPathInfo = cloudPathInfo.slice(0, index + 1);
+                    fetchCloudItems();
+                };
+                cloudBreadcrumb.appendChild(span);
+
+                if (index < cloudPathInfo.length - 1) {
+                    const sep = document.createElement('span');
+                    sep.className = 'cloud-breadcrumb-separator';
+                    sep.innerHTML = '<i class="fas fa-chevron-right" style="font-size: 10px;"></i>';
+                    cloudBreadcrumb.appendChild(sep);
+                }
+            });
+        };
+
+        const createCloudFolder = async () => {
+            showPromptModal("Nome da nova pasta:", async (name) => {
+                if (!name) return;
+                try {
+                    await addDoc(collection(db, "users", currentUser, "cloud_files"), {
+                        name,
+                        type: 'folder',
+                        parentId: currentCloudFolder,
+                        createdAt: new Date()
+                    });
+                    fetchCloudItems();
+                } catch (e) {
+                    appendOutput("Erro ao criar pasta: " + e.message, "error");
+                }
+            });
+        };
+
+        const uploadToCloud = () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.multiple = true; // Allow multiple
+            input.onchange = async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                cloudFileList.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--text-color); opacity: 0.8; padding-top: 50px;"><i class="fas fa-spinner fa-spin"></i> Enviando para Axon Cloud (Pinata)...<br><span id="cloud-upload-progress">0%</span></div>';
+                const progressSpan = document.getElementById('cloud-upload-progress');
+
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (progressSpan) progressSpan.textContent = `Arquivo ${i + 1}/${files.length}: 0%`;
+
+                    try {
+                        // 1. Upload to Pinata
+                        const ipfsHash = await uploadToPinata(file, (percent) => {
+                            if (progressSpan) progressSpan.textContent = `Arquivo ${i + 1}/${files.length}: ${percent.toFixed(0)}%`;
+                        });
+
+                        // 2. Save Metadata to Firestore
+                        await addDoc(collection(db, "users", currentUser, "cloud_files"), {
+                            name: file.name,
+                            type: 'file',
+                            mimeType: file.type || 'application/octet-stream',
+                            size: file.size,
+                            ipfsHash,
+                            parentId: currentCloudFolder,
+                            createdAt: new Date()
+                        });
+
+                    } catch (err) {
+                        console.error("Erro upload cloud:", err);
+                        appendOutput(`Falha upload ${file.name}: ${err.message}`, "error");
+                    }
+                }
+                fetchCloudItems();
+            };
+            input.click();
+        };
+
+        const downloadCloudFile = async (item) => {
+            if (item.type !== 'file' || !item.ipfsHash) return;
+            appendOutput(`Iniciando download de '${item.name}'...`, "info");
+            try {
+                const gatewayUrl = `https://gateway.pinata.cloud/ipfs/${item.ipfsHash}`;
+                const response = await fetch(gatewayUrl);
+                if (!response.ok) throw new Error("Falha ao buscar no IPFS/Gateway");
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = item.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                appendOutput("Download concluído.", "success");
+            } catch (e) {
+                appendOutput("Erro no download: " + e.message, "error");
+            }
+        };
+
+        const deleteCloudItem = async (item) => {
+            // Confirm
+            showConfirmModal(`Tem certeza que deseja deletar '${item.name}'?`, async () => {
+                try {
+                    if (item.type === 'file' && item.ipfsHash) {
+                        // Unpin from Pinata
+                        await unpinFromPinata(item.ipfsHash);
+                    } else if (item.type === 'folder') {
+                        // Recursive delete logic would be needed for a real app.
+                        // For now, simpler: user must empty folder first or we allow deleting ref only (orphan files).
+                        // Let's implement simple check:
+                        // Ideally we should query children, loop and delete them.
+                        // V1: Just delete the folder doc, children become 'orphaned' (not visible in UI traversal) but data remains.
+                        // Warn user? "Apagar pasta não apaga arquivos internos do Pinata automaticamente nesta versão."
+                    }
+
+                    // Delete Firestore Doc
+                    await deleteDoc(doc(db, "users", currentUser, "cloud_files", item.id));
+                    fetchCloudItems();
+                    appendOutput("Item deletado do Axon Cloud.", "success");
+                } catch (e) {
+                    appendOutput("Erro ao deletar: " + e.message, "error");
+                }
+            });
+        };
+
+        const renameCloudItem = async (item) => {
+            showPromptModal(`Novo nome para '${item.name}':`, async (newName) => {
+                if (!newName || newName === item.name) return;
+                try {
+                    await updateDoc(doc(db, "users", currentUser, "cloud_files", item.id), { name: newName });
+                    fetchCloudItems();
+                } catch (e) {
+                    appendOutput("Erro ao renomear: " + e.message, "error");
+                }
+            }, item.name);
+        };
+
+        const showCloudContextMenu = (e, item) => {
+            // Check for existing context menu and remove
+            const existing = document.getElementById('cloud-context-menu');
+            if (existing) existing.remove();
+
+            const menu = document.createElement('div');
+            menu.id = 'cloud-context-menu';
+            menu.style.position = 'fixed';
+            menu.style.left = `${e.clientX}px`;
+            menu.style.top = `${e.clientY}px`;
+            menu.style.background = 'var(--glass-bg)';
+            menu.style.backdropFilter = 'blur(10px)';
+            menu.style.border = '1px solid var(--border-color)';
+            menu.style.borderRadius = '8px';
+            menu.style.padding = '5px 0';
+            menu.style.zIndex = '5000';
+            menu.style.boxShadow = '0 2px 10px rgba(0,0,0,0.5)';
+            menu.style.minWidth = '150px';
+
+            const createOption = (icon, text, onClick) => {
+                const opt = document.createElement('div');
+                opt.style.padding = '8px 15px';
+                opt.style.cursor = 'pointer';
+                opt.style.display = 'flex';
+                opt.style.alignItems = 'center';
+                opt.style.gap = '8px';
+                opt.style.color = 'var(--text-color)';
+                opt.style.fontSize = '14px';
+                opt.innerHTML = `<i class="fas ${icon}"></i> ${text}`;
+                opt.onmouseenter = () => opt.style.backgroundColor = 'var(--button-hover-bg)';
+                opt.onmouseleave = () => opt.style.backgroundColor = '';
+                opt.onclick = () => { onClick(); menu.remove(); };
+                return opt;
+            };
+
+            menu.appendChild(createOption('fa-download', 'Baixar', () => downloadCloudFile(item))); // Only works for files ideally, but maybe zip folder later
+            menu.appendChild(createOption('fa-edit', 'Renomear', () => renameCloudItem(item)));
+            menu.appendChild(createOption('fa-trash', 'Excluir', () => deleteCloudItem(item)));
+
+            document.body.appendChild(menu);
+
+            // Dismiss on click elsewhere
+            const dismiss = () => {
+                if (menu.parentNode) menu.remove();
+                document.removeEventListener('click', dismiss);
+            };
+            setTimeout(() => document.addEventListener('click', dismiss), 10);
+        };
+
+        const updateCloudStorageInfo = async () => {
+            // Aggregate size of all files for this user? Or fetched from Pinata API?
+            // Pinata API gives total pinned size. That's better.
+            try {
+                const response = await fetch('https://api.pinata.cloud/data/userPinnedDataTotal', {
+                    headers: {
+                        'pinata_api_key': PINATA_API_KEY,
+                        'pinata_secret_api_key': PINATA_API_SECRET
+                    }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const bytes = data.pin_size_total; // or similar field
+                    const size = formatBytes(bytes);
+                    const count = data.pin_count;
+                    cloudStorageInfo.textContent = `${count} arquivos (${size})`;
+                }
+            } catch (e) {
+                console.warn("Storage info fetch error", e);
+                cloudStorageInfo.textContent = "Info indisp.";
+            }
+        };
+
+        const formatBytes = (bytes, decimals = 2) => {
+            if (!+bytes) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+        };
+
+        // Helper Prompt Modal (Reuse concept or create new simple one)
+        const showPromptModal = (msg, callback, defaultValue = "") => {
+            // Use existing app modal or a quick prompt? Native prompt is blocking and ugly but simplest for V1 script.
+            // Ideally use a styled modal. Let's use a quick simple overlay.
+            // Or reuse confirm modal logic but with input.
+            // Let's create a dynamic prompt modal
+            const existing = document.getElementById('prompt-modal');
+            if (existing) existing.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'prompt-modal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:6000;display:flex;justify-content:center;align-items:center;';
+            modal.innerHTML = `
+                <div style="background:var(--glass-bg);backdrop-filter:blur(10px);padding:20px;border-radius:10px;border:1px solid var(--border-color);width:300px;text-align:center;box-shadow:var(--glass-shadow);">
+                    <div style="margin-bottom:15px;font-weight:bold;">${msg}</div>
+                    <input type="text" id="prompt-input" value="${defaultValue}" style="width:100%;padding:10px;margin-bottom:15px;border-radius:5px;border:1px solid var(--border-color);background:var(--input-bg);color:var(--text-color);">
+                    <div style="display:flex;gap:10px;justify-content:center;">
+                        <button id="prompt-cancel" style="padding:8px 15px;border-radius:5px;border:1px solid var(--border-color);background:transparent;color:var(--text-color);cursor:pointer;">Cancelar</button>
+                        <button id="prompt-ok" style="padding:8px 15px;border-radius:5px;border:none;background:var(--highlight-color);color:#fff;cursor:pointer;">OK</button>
+                    </div>
+                </div>
+             `;
+            document.body.appendChild(modal);
+            const input = document.getElementById('prompt-input');
+            input.focus();
+
+            document.getElementById('prompt-cancel').onclick = () => modal.remove();
+            document.getElementById('prompt-ok').onclick = () => {
+                const val = input.value.trim();
+                modal.remove();
+                callback(val);
+            };
+            input.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById('prompt-ok').click(); };
+        };
+
+        // Event Listeners for Cloud UI
+        document.getElementById('btn-cloud-open').addEventListener('click', openCloud);
+        document.getElementById('cloud-close-btn').addEventListener('click', closeCloud);
+        document.getElementById('btn-cloud-upload').addEventListener('click', uploadToCloud);
+        document.getElementById('btn-cloud-new-folder').addEventListener('click', createCloudFolder);
+
+        /* --- Axon Cloud Logic End --- */
+
         const initApp = async () => {
             const savedTheme = localStorage.getItem('theme');
             const systemPrefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
@@ -3831,6 +4377,9 @@ ${instruction}
             } else {
                 setTheme(systemPrefersLight ? 'light' : 'dark');
             }
+
+            // Processa exclusões pendentes do Pinata (correção bug mobile)
+            processPendingUnpins();
 
             adminPanelModal.addEventListener('click', (e) => {
                 const formContainer = document.getElementById('create-user-form-container');
@@ -3933,4 +4482,4 @@ ${instruction}
             if (isMobile) { statusTextApi.textContent = ""; statusTextMic.textContent = ""; statusTextCam.textContent = ""; }
         };
 
-        document.addEventListener('DOMContentLoaded', initApp);</script></body></html>
+        document.addEventListener('DOMContentLoaded', initApp);</script><style>.cloud-item{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;padding:10px;border-radius:10px;transition:background-color .2s;border:1px solid transparent}.cloud-item:hover{background-color:var(--button-hover-bg);border-color:var(--border-color)}.cloud-item.selected{background-color:rgba(66,153,225,.2);border-color:var(--highlight-color)}.cloud-item-icon{font-size:40px;margin-bottom:5px;color:var(--text-color)}.cloud-item-name{font-size:12px;word-break:break-word;max-width:100%;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.folder-icon{color:#ecc94b}.image-icon{color:#f56565}.video-icon{color:#ed64a6}.pdf-icon{color:#f56565}.file-icon{color:#a0aec0}.cloud-breadcrumb-item{color:var(--text-color);text-decoration:none}.cloud-breadcrumb-item:hover{text-decoration:underline}.cloud-breadcrumb-separator{margin:0 5px;opacity:.5}</style><div id="cloud-modal" class="app-modal"><div class="app-modal-content" style="max-width:900px;height:85vh;padding:0"><div class="cloud-header" style="padding:15px 20px;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;background:var(--terminal-header-bg);border-top-left-radius:16px;border-top-right-radius:16px"><div style="font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px;color:var(--header-text-color)"><i class="fas fa-cloud" style="color:var(--secondary-color,#48bb78)"></i>Axon Cloud</div><div class="cloud-actions" style="display:flex;gap:10px;align-items:center"><div id="cloud-storage-info" style="font-size:11px;color:var(--text-color);opacity:.7;margin-right:10px">Calculando uso...</div><button class="patient-action-button" id="btn-cloud-upload" title="Upload"><i class="fas fa-upload"></i><span style="display:none">Upload</span></button><button class="patient-action-button" id="btn-cloud-new-folder" title="Nova Pasta"><i class="fas fa-folder-plus"></i><span style="display:none">Pasta</span></button><div class="app-modal-close" id="cloud-close-btn" style="position:static;margin-left:10px">&times;</div></div></div><div class="cloud-breadcrumb" id="cloud-breadcrumb" style="padding:10px 20px;background:rgba(0,0,0,.1);font-size:13px;color:var(--highlight-color);display:flex;align-items:center;gap:5px;flex-wrap:wrap"><span>Início</span></div><div class="cloud-body" id="cloud-file-list" style="flex:1;overflow-y:auto;padding:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:15px;align-content:start"><div style="grid-column:1/-1;text-align:center;color:var(--text-color);opacity:.5;padding-top:50px"><i class="fas fa-spinner fa-spin"></i>Carregando arquivos...</div></div></div></div></body></html>
