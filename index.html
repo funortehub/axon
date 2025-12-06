@@ -3384,7 +3384,7 @@
         </div>
     </div>
     <script type="module">import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, where, increment, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, where, increment, writeBatch, collectionGroup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA4bis9CVQkl1eJDfezsvUKTx1X_kFVT4M",
@@ -3739,23 +3739,39 @@
         };
 
         const appendOutput = (text, type = "output", logToFirebase = true) => {
+            const interactiveOutput = document.getElementById('interactive-output');
+            if (!interactiveOutput) return;
+
+            // Define phrases to hide if the setting is enabled
+            const hiddenPhrases = [
+                "tentando motor",
+                "sucesso com motor",
+                "verificando status",
+                "motor conectado",
+                "chave #",
+                "status da api",
+                "gemini",
+                "groq",
+                "openai",
+                "anthropic",
+                "llama",
+                "conectando",
+                "resposta vazia",
+                "erro na chamada",
+                "falha ao conectar"
+            ];
+
             // Check debug filter
             if (globalSettings && globalSettings.hideStatusMessages) {
                 const lowerText = text.toLowerCase();
-                if (
-                    lowerText.includes("tentando motor") ||
-                    lowerText.includes("sucesso com motor") ||
-                    lowerText.includes("verificando status") ||
-                    lowerText.includes("motor conectado") ||
-                    lowerText.includes("chave #") ||
-                    lowerText.includes("status da api") ||
-                    (type === 'info' && lowerText.includes("status")) // Generic catch
-                ) {
-                    return; // Skip rendering
+                // Check if text contains any hidden phrase
+                if (hiddenPhrases.some(phrase => lowerText.includes(phrase))) {
+                    return; // Suppress message
                 }
             }
 
             const outputElement = document.createElement('div');
+            outputElement.classList.add('command-output');
 
             if (type === "command") {
                 outputElement.innerHTML = `<span class="prompt">></span> <span class="command">${text}</span>`;
@@ -7032,13 +7048,19 @@ ${instruction}
             }
         };
 
-        const renderAdminAxonDrive = async () => {
+        // Admin Axon Drive State
+        let adminDriveCurrentView = 'users'; // 'users' or 'files'
+        let adminDriveSelectedUser = null;
+        let adminDriveAllFiles = []; // Cache for current render
+
+        window.renderAdminAxonDrive = async () => {
             try {
                 const settingsSnap = await getDoc(doc(db, "settings", "global"));
                 if (settingsSnap.exists()) globalSettings = { ...globalSettings, ...settingsSnap.data() };
             } catch (e) { console.error("Error fetching settings:", e); }
 
             let totalUsed = 0;
+            let totalFilesCount = 0;
             let keyCount = (globalSettings.pinataKeys && globalSettings.pinataKeys.length > 0) ? globalSettings.pinataKeys.length : 1;
             let totalLimit = keyCount * 1024 * 1024 * 1024;
 
@@ -7047,6 +7069,33 @@ ${instruction}
             const usageBar = document.getElementById('admin-pinata-usage-bar');
             const fileList = document.getElementById('admin-pinata-file-list');
             const keyList = document.getElementById('admin-pinata-key-list');
+
+            // Add Styles for clickable folders if not present
+            if (!document.getElementById('admin-drive-styles')) {
+                const style = document.createElement('style');
+                style.id = 'admin-drive-styles';
+                style.innerHTML = `
+                    .admin-drive-folder {
+                        display: flex;
+                        align-items: center;
+                        padding: 10px;
+                        border-bottom: 1px solid var(--border-color);
+                        cursor: pointer;
+                        transition: background-color 0.2s;
+                    }
+                    .admin-drive-folder:hover {
+                        background-color: var(--button-hover-bg);
+                    }
+                    .admin-drive-file {
+                        display: flex;
+                        align-items: center;
+                        padding: 8px;
+                        border-bottom: 1px solid var(--border-color);
+                        gap: 10px;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
 
             const btnAddKey = document.getElementById('btn-add-pinata-key');
             if (btnAddKey) {
@@ -7063,7 +7112,7 @@ ${instruction}
             // **Global File Manager Logic**
             const allFiles = [];
 
-            // Default keys if none in settings (from User Request)
+            // Default keys check
             const defaultKeys = [{
                 key: "5256cd6c1c0b4ccec3a9",
                 secret: "afbed7932f0ebf5c50d88d04378359164aca3ae63a72e2628375dc02e4fcfb05",
@@ -7071,15 +7120,6 @@ ${instruction}
                 addedAt: new Date().toISOString()
             }];
 
-            let keysToUse = globalSettings.pinataKeys || [];
-            if (keysToUse.length === 0) {
-                // Automatically inject default keys if missing
-                keysToUse = defaultKeys;
-                // Save them? Maybe not, just use valid ones for display. 
-                // Updating settings here might cause re-renders loop if not careful.
-                // Let's just use them for calculation.
-            }
-            // Actually, update globalSettings if empty for persistence
             if ((!globalSettings.pinataKeys || globalSettings.pinataKeys.length === 0)) {
                 globalSettings.pinataKeys = defaultKeys;
                 setDoc(doc(db, "settings", "global"), { pinataKeys: defaultKeys }, { merge: true }).catch(console.error);
@@ -7092,74 +7132,135 @@ ${instruction}
                 const filesSnapshot = await getDocs(query(collectionGroup(db, 'files')));
                 filesSnapshot.forEach(doc => {
                     const data = doc.data();
-                    // Parent of files is user, but collectionGroup flattens.
-                    // doc.ref.parent.parent.id gives the userId
                     const userId = doc.ref.parent.parent ? doc.ref.parent.parent.id : 'Desconhecido';
                     if (data.size) totalUsed += data.size;
                     allFiles.push({ ...data, id: doc.id, path: doc.ref.path, origin: 'Cloud', user: userId });
                 });
+                totalFilesCount = allFiles.length; // Count files
 
-                // Fetch transfers if needed (optional, keeping original logic)
+                // Fetch transfers if needed
                 const transfersSnapshot = await getDocs(query(collectionGroup(db, 'transfers')));
                 transfersSnapshot.forEach(doc => {
                     const data = doc.data();
+                    // Just count pinata files here to avoid double counting if logic changes, but assuming transfers are separate
                     const userId = doc.ref.parent.parent ? doc.ref.parent.parent.id : 'Desconhecido';
-                    if (data.size && (data.type === 'file' || data.type === 'pinata')) totalUsed += data.size;
-                    allFiles.push({ ...data, id: doc.id, path: doc.ref.path, origin: 'Share', user: userId });
+                    if (data.size && (data.type === 'file' || data.type === 'pinata')) {
+                        totalUsed += data.size;
+                        totalFilesCount++;
+                        allFiles.push({ ...data, id: doc.id, path: doc.ref.path, origin: 'Share', user: userId });
+                    }
                 });
 
             } catch (e) {
                 fileList.innerHTML = `<div class="error">Erro ao carregar arquivos globais: ${e.message}</div>`;
+                return;
             }
+
+            adminDriveAllFiles = allFiles; // Cache
 
             // Re-render Progress
             const percent = totalLimit > 0 ? Math.min((totalUsed / totalLimit) * 100, 100).toFixed(1) : 0;
             const gbUsed = (totalUsed / (1024 * 1024 * 1024)).toFixed(2);
             const gbTotal = (totalLimit / (1024 * 1024 * 1024)).toFixed(0);
 
-            if (usageText) usageText.textContent = `${gbUsed} GB / ${gbTotal} GB`;
+            // Update Status Text with File Count
+            if (usageText) usageText.innerHTML = `${gbUsed} GB / ${gbTotal} GB <span style="font-size:12px; margin-left:10px; opacity:0.8;">(${totalFilesCount} arquivos)</span>`;
             if (usagePercent) usagePercent.textContent = `${percent}%`;
             if (usageBar) usageBar.style.width = `${percent}%`;
 
-            // Render File List
+
+            // Render Logic depending on View
             fileList.innerHTML = '';
-            if (allFiles.length === 0) {
-                fileList.innerHTML = '<div style="padding:10px;text-align:center;opacity:0.5;">Nenhum arquivo encontrado em todo o sistema.</div>';
-            } else {
-                allFiles.sort((a, b) => b.size - a.size);
 
-                allFiles.forEach(file => {
-                    const div = document.createElement('div');
-                    div.className = 'pinata-file-row';
-                    div.style.display = 'flex';
-                    div.style.alignItems = 'center';
-                    div.style.padding = '8px';
-                    div.style.borderBottom = '1px solid var(--border-color)';
-                    div.style.gap = '10px';
-
-                    const icon = file.type === 'folder' ? '<i class="fas fa-folder" style="color:#ecc94b"></i>' : '<i class="fas fa-file" style="color:var(--text-color)"></i>';
-
-                    div.innerHTML = `
-                        <div style="width:30px; text-align:center;">${icon}</div>
-                        <div style="flex:1; overflow:hidden;">
-                            <div style="font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${file.name}</div>
-                            <div style="font-size:10px; opacity:0.7;">Usuário: ${file.user} | ${file.origin}</div>
-                        </div>
-                        <div style="font-size:12px; white-space:nowrap;">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
-                        <div style="display:flex; gap:5px;">
-                            ${file.link || file.ipfsHash ? `<button class="patient-action-button" onclick="window.adminOpenFile('${file.name}', '${file.mimeType}', '${file.ipfsHash}', '${file.path}')" title="Abrir"><i class="fas fa-eye"></i></button>` : ''}
-                            <button class="patient-action-button" onclick="window.adminRenameFile('${file.id}', '${file.path}', '${file.name}')" title="Renomear"><i class="fas fa-edit"></i></button>
-                             ${file.link || file.ipfsHash ? `<button class="patient-action-button" onclick="window.adminDownloadFile('${file.name}', '${file.ipfsHash}')" title="Download"><i class="fas fa-download"></i></button>` : ''}
-                            <button class="patient-action-button delete" onclick="window.adminDeleteFile('${file.id}', '${file.path}', '${file.ipfsHash}')" title="Excluir"><i class="fas fa-trash"></i></button>
-                        </div>
-                     `;
-                    fileList.appendChild(div);
+            if (adminDriveCurrentView === 'users') {
+                // Group by User
+                const userMap = {};
+                allFiles.forEach(f => {
+                    if (!userMap[f.user]) userMap[f.user] = { count: 0, size: 0, user: f.user };
+                    userMap[f.user].count++;
+                    userMap[f.user].size += (f.size || 0);
                 });
+
+                const users = Object.values(userMap).sort((a, b) => b.size - a.size);
+
+                if (users.length === 0) {
+                    fileList.innerHTML = '<div style="padding:10px;text-align:center;opacity:0.5;">Nenhum usuário com arquivos.</div>';
+                } else {
+                    users.forEach(u => {
+                        const div = document.createElement('div');
+                        div.className = 'admin-drive-folder';
+                        div.innerHTML = `
+                            <div style="width:30px; text-align:center;"><i class="fas fa-folder" style="color:#ecc94b; font-size:18px;"></i></div>
+                            <div style="flex:1;">
+                                <div style="font-weight:bold;">${u.user}</div>
+                                <div style="font-size:11px; opacity:0.7;">${u.count} arquivos</div>
+                            </div>
+                            <div style="font-size:12px;">${(u.size / 1024 / 1024).toFixed(2)} MB</div>
+                            <div style="margin-left:10px; opacity:0.5;"><i class="fas fa-chevron-right"></i></div>
+                        `;
+                        div.addEventListener('click', () => {
+                            adminDriveSelectedUser = u.user;
+                            adminDriveCurrentView = 'files';
+                            renderAdminAxonDrive(); // Re-render
+                        });
+                        fileList.appendChild(div);
+                    });
+                }
+
+            } else if (adminDriveCurrentView === 'files') {
+                // Header with Back Button
+                const header = document.createElement('div');
+                header.style.cssText = "display:flex; align-items:center; padding:10px; border-bottom:1px solid var(--border-color); background:rgba(0,0,0,0.1); margin-bottom:10px;";
+                header.innerHTML = `
+                    <button class="patient-action-button" style="width:auto; padding:5px 10px; margin-right:10px;" id="admin-drive-back">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div style="font-weight:bold;">Arquivos de: ${adminDriveSelectedUser}</div>
+                `;
+                fileList.appendChild(header);
+                // Bind click after append
+                fileList.querySelector('#admin-drive-back').onclick = () => {
+                    adminDriveCurrentView = 'users';
+                    adminDriveSelectedUser = null;
+                    renderAdminAxonDrive();
+                };
+
+                const userFiles = allFiles.filter(f => f.user === adminDriveSelectedUser).sort((a, b) => b.size - a.size);
+
+                if (userFiles.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.innerHTML = '<div style="padding:20px; text-align:center;">Nenhum arquivo encontrado.</div>';
+                    fileList.appendChild(empty);
+                } else {
+                    userFiles.forEach(file => {
+                        const div = document.createElement('div');
+                        div.className = 'admin-drive-file'; // Use new class
+
+                        const icon = file.type === 'folder' ? '<i class="fas fa-folder" style="color:#ecc94b"></i>' : '<i class="fas fa-file" style="color:var(--text-color)"></i>';
+
+                        div.innerHTML = `
+                            <div style="width:30px; text-align:center;">${icon}</div>
+                            <div style="flex:1; overflow:hidden;">
+                                <div style="font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${file.name}</div>
+                                <div style="font-size:10px; opacity:0.7;">${file.origin}</div>
+                            </div>
+                            <div style="font-size:12px; white-space:nowrap;">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                            <div style="display:flex; gap:5px;">
+                                ${file.link || file.ipfsHash ? `<button class="patient-action-button" onclick="window.adminOpenFile('${file.name}', '${file.mimeType}', '${file.ipfsHash}', '${file.path}')" title="Abrir"><i class="fas fa-eye"></i></button>` : ''}
+                                <button class="patient-action-button" onclick="window.adminRenameFile('${file.id}', '${file.path}', '${file.name}')" title="Renomear"><i class="fas fa-edit"></i></button>
+                                 ${file.link || file.ipfsHash ? `<button class="patient-action-button" onclick="window.adminDownloadFile('${file.name}', '${file.ipfsHash}')" title="Download"><i class="fas fa-download"></i></button>` : ''}
+                                <button class="patient-action-button delete" onclick="window.adminDeleteFile('${file.id}', '${file.path}', '${file.ipfsHash}')" title="Excluir"><i class="fas fa-trash"></i></button>
+                            </div>
+                         `;
+                        fileList.appendChild(div);
+                    });
+                }
             }
+
 
             if (keyList) {
                 keyList.innerHTML = '';
-                const keysToDisplay = globalSettings.pinataKeys || []; // Should be populated now
+                const keysToDisplay = globalSettings.pinataKeys || [];
                 if (keysToDisplay.length === 0) {
                     keyList.innerHTML = '<div style="padding:10px;opacity:0.5;">Nenhuma chave registrada.</div>';
                 } else {
