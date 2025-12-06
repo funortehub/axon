@@ -4943,9 +4943,11 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             if (isMobile && globalSettings.mobile2_0_enabled) {
                 document.querySelector('.container').style.display = 'none';
                 mobileContainer.style.display = 'flex';
+                if (btnCloud) btnCloud.style.display = 'none';
             } else {
                 document.querySelector('.container').style.display = 'flex';
                 mobileContainer.style.display = 'none';
+                if (btnCloud) btnCloud.style.display = 'flex';
             }
             initializeAIModel();
         };
@@ -8092,9 +8094,23 @@ ${instruction}
                 } else if (action === 'download') {
                     if (item.type === 'folder') return;
                     const url = `https://gateway.pinata.cloud/ipfs/${item.ipfsHash}`;
-                    const link = document.createElement('a');
-                    link.href = url; link.download = item.name; link.target = '_blank';
-                    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+
+                    // Direct Download Logic
+                    try {
+                        const response = await fetch(url);
+                        if (!response.ok) throw new Error("Falha na rede ao baixar.");
+                        const blob = await response.blob();
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = downloadUrl;
+                        link.download = item.name;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(downloadUrl);
+                    } catch (e) {
+                        appendOutput(`Erro ao baixar arquivo: ${e.message}`, "error");
+                    }
                 } else if (action === 'delete') {
                     this.showCustomConfirm(`Excluir ${item.name}?`, async () => {
                         if (item.type === 'file') await unpinFromPinata(item.ipfsHash);
@@ -8227,8 +8243,30 @@ ${instruction}
                 previewContent.innerHTML = '';
                 previewTitle.textContent = item.name;
                 const fileUrl = `https://gateway.pinata.cloud/ipfs/${item.ipfsHash}`;
-                downloadBtn.href = fileUrl;
-                downloadBtn.download = item.name;
+
+                // Direct Download Handlers for Preview
+                downloadBtn.onclick = async (e) => {
+                    e.preventDefault();
+                    downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    try {
+                        const response = await fetch(fileUrl);
+                        if (!response.ok) throw new Error("Falha ao baixar.");
+                        const blob = await response.blob();
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = downloadUrl;
+                        link.download = item.name;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(downloadUrl);
+                        downloadBtn.innerHTML = '<i class="fas fa-download"></i>';
+                    } catch (err) {
+                        alert("Erro no download: " + err.message);
+                        downloadBtn.innerHTML = '<i class="fas fa-download"></i>';
+                    }
+                };
+                downloadBtn.href = "#"; // Disable default link
 
                 if (item.mimeType && item.mimeType.startsWith('image/')) {
                     const img = document.createElement('img');
