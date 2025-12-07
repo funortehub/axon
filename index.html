@@ -3100,10 +3100,7 @@
                         <div class="admin-section-title"
                             style="margin-top:0;margin-bottom:10px;flex-shrink:0;display:flex;justify-content:space-between;align-items:center">
                             <span>Usuários (Rank de Uso)</span>
-                            <div style="display:flex;gap:5px"><button onclick="window.openLogSettings()"
-                                    class="patient-action-button details"
-                                    style="flex:0;padding:4px 8px;font-size:12px; background-color: var(--button-bg); color: var(--text-color); border: 1px solid var(--border-color);"><i
-                                        class="fas fa-cog"></i> Logs</button><button id="disconnect-all-users-btn"
+                            <div style="display:flex;gap:5px"><button id="disconnect-all-users-btn"
                                     class="patient-action-button"
                                     style="flex:0;padding:4px 8px;font-size:12px;color:var(--error-color)"><i
                                         class="fas fa-power-off"></i>Desconectar Todos</button><button
@@ -3584,6 +3581,7 @@
         let isListening = false;
         let isLoggedIn = false;
         let isUserBlocked = false;
+        let isCloudDisabled = false;
         let currentUser = null;
         let recognition = null;
         let audioStream = null;
@@ -3591,6 +3589,7 @@
         let examsResults = "";
         let axonEyeResults = "";
         let lastAnamnesisInfo = "";
+        // let isCloudDisabled = false; // This was already here, but the instruction was to add it. I'll keep the one I added above with other state variables.
         let apiConnectionStatus = "Desconhecido";
         let unsubscribeSnapshot = null;
         let lastClearTimestamp = 0;
@@ -3863,6 +3862,7 @@
             if (requireLogin) {
                 isLoggedIn = false;
                 isUserBlocked = false;
+                isCloudDisabled = false;
                 currentUser = null;
                 localStorage.removeItem('axon_logged_in_user');
                 if (unsubscribeSnapshot) {
@@ -4242,6 +4242,22 @@
             } catch (e) {
                 console.error("Erro na chamada Groq:", e);
                 throw e;
+            }
+        };
+
+        window.toggleUserCloudAccess = async (username, shouldDisable) => {
+            try {
+                const userRef = doc(db, "users", username);
+                await updateDoc(userRef, { isCloudDisabled: shouldDisable });
+                // Optimistic update
+                const userIdx = adminUsersData.findIndex(u => u.username === username);
+                if (userIdx !== -1) {
+                    adminUsersData[userIdx].isCloudDisabled = shouldDisable;
+                    window.selectAdminUser(username); // Re-render details
+                }
+            } catch (e) {
+                console.error("Erro ao alterar acesso cloud:", e);
+                alert("Erro ao alterar acesso cloud: " + e.message);
             }
         };
 
@@ -5097,7 +5113,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 const userRef = doc(db, "users", username);
                 const docSnap = await getDoc(userRef);
                 if (docSnap.exists()) appendOutput(`Usuário '${username}' já existe.`, "error");
-                else { await setDoc(userRef, { password, createdAt: new Date(), textRequests: 0, visionRequests: 0, isBlocked: false }); appendOutput(`Usuário '${username}' registrado com sucesso.`, "success"); }
+                else { await setDoc(userRef, { password, createdAt: new Date(), textRequests: 0, visionRequests: 0, isBlocked: false, isCloudDisabled: false }); appendOutput(`Usuário '${username}' registrado com sucesso.`, "success"); }
             } catch (e) { appendOutput(`Erro ao registrar: ${e.message}`, "error"); }
         };
         const deleteUser = async (adminPassword, username) => {
@@ -5114,14 +5130,14 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             } catch (e) { appendOutput(`Erro ao deletar: ${e.message}`, "error"); }
         };
         const authenticateUser = async (username, password) => {
-            if (username === 'ian' && password === 'ian123') return { success: true, isBlocked: false };
+            if (username === 'ian' && password === 'ian123') return { success: true, isBlocked: false, isCloudDisabled: false };
             try {
                 const userRef = doc(db, "users", username);
                 const docSnap = await getDoc(userRef);
                 if (docSnap.exists()) {
                     const userData = docSnap.data();
                     if (userData.password === password) {
-                        return { success: true, isBlocked: userData.isBlocked || false };
+                        return { success: true, isBlocked: userData.isBlocked || false, isCloudDisabled: userData.isCloudDisabled || false };
                     }
                 }
                 return { success: false };
@@ -5154,6 +5170,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 adminPanelModal.style.display = 'none';
                 chatboxModal.style.display = 'none';
                 transferModal.style.display = 'none';
+                if (btnCloud) btnCloud.classList.add('blocked-ui');
 
                 if (isMobile && globalSettings.mobile2_0_enabled && infoBannerBubble && infoBannerContent) {
                     infoBannerBubble.style.backgroundColor = 'var(--altered-color)';
@@ -5164,6 +5181,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 appendOutput("Sua conta foi desbloqueada.", "success");
                 buttons.forEach(btn => btn.classList.remove('blocked-ui'));
                 commandInput.disabled = false;
+                if (btnCloud) btnCloud.classList.remove('blocked-ui');
 
                 if (isMobile && globalSettings.mobile2_0_enabled && infoBannerBubble && infoBannerContent) {
                     infoBannerBubble.style.backgroundColor = '';
@@ -5730,7 +5748,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             const pdfDoc = new jsPDF();
 
             pdfDoc.setFontSize(18).text('AXON A.I - Prontuário Médico', 105, 20, { align: 'center' });
-            pdfDoc.setFontSize(14).text(`Paciente: ${patientName}`, 14, 35);
+            pdfDoc.setFontSize(14).text(`Paciente: ${patient.patientName}`, 14, 35);
             pdfDoc.setFontSize(12).text(`Gerado em: ${new Date().toLocaleString()}`, 14, 42);
             pdfDoc.line(14, 45, 196, 45);
 
@@ -5867,8 +5885,18 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 } else if (docSnap.exists()) {
                     const userData = docSnap.data();
                     if (userData.isBlocked !== isUserBlocked) {
-                        isUserBlocked = userData.isBlocked;
+                        isUserBlocked = userData.isBlocked || false;
                         updateBlockedUI();
+                    }
+                    if (userData.isCloudDisabled !== isCloudDisabled) {
+                        isCloudDisabled = userData.isCloudDisabled || false;
+                        if (btnCloud) {
+                            if (isCloudDisabled) {
+                                btnCloud.classList.add('blocked-ui');
+                            } else {
+                                btnCloud.classList.remove('blocked-ui');
+                            }
+                        }
                     }
                 }
             }, (error) => {
@@ -6565,9 +6593,12 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
 
                      <div class="user-detail-row" style="margin-top: 15px;">
                          <span class="user-detail-label">AÇÕES DA CONTA</span>
-                         <div style="display: flex; margin-top: 5px; gap: 10px;">
+                         <div style="display: flex; margin-top: 5px; gap: 10px; flex-wrap: wrap;">
                              <button class="patient-action-button" style="flex: 1;" onclick="window.toggleBlockUser('${user.username}', ${!user.isBlocked})">
                                 ${user.isBlocked ? '<i class="fas fa-unlock"></i> Desbloquear' : '<i class="fas fa-ban"></i> Bloquear'}
+                             </button>
+                             <button class="patient-action-button" style="flex: 1;" onclick="window.toggleUserCloudAccess('${user.username}', ${!user.isCloudDisabled})">
+                                ${user.isCloudDisabled ? '<i class="fas fa-cloud"></i> Ativar Cloud' : '<i class="fas fa-cloud-slash"></i> Desativar Cloud'}
                              </button>
                              <button class="patient-action-button delete" style="flex: 1;" onclick="window.deleteUserFromPanel('${user.username}')">
                                 <i class="fas fa-trash"></i> Excluir Usuário
@@ -7783,6 +7814,11 @@ ${instruction}
             checkBlockedAndExecute(() => {
                 // Mobile 2.0 Check for visibility (redundant if hidden by CSS/hide logic)
                 if (isMobile && globalSettings.mobile2_0_enabled) return;
+
+                if (isCloudDisabled) {
+                    showConfirmModal("Ops! você não tem acesso aos recusos de armazenamento em nuvem da Axon.", () => { }, true); // True to hide cancel button (make it an alert)
+                    return;
+                }
 
                 if (axonCloud) {
                     document.getElementById('axon-cloud-modal').style.display = 'flex';
