@@ -300,6 +300,18 @@
             color: var(--success-color)
         }
 
+        .technical-log {
+            opacity: 0.7;
+            font-size: 0.9em;
+            border-left: 2px solid var(--border-color);
+            padding-left: 5px;
+            margin: 2px 0;
+        }
+
+        .hide-technical-logs .technical-log {
+            display: none !important;
+        }
+
         .info {
             color: var(--prompt-color)
         }
@@ -3088,7 +3100,10 @@
                         <div class="admin-section-title"
                             style="margin-top:0;margin-bottom:10px;flex-shrink:0;display:flex;justify-content:space-between;align-items:center">
                             <span>Usuários (Rank de Uso)</span>
-                            <div style="display:flex;gap:5px"><button id="disconnect-all-users-btn"
+                            <div style="display:flex;gap:5px"><button onclick="window.openLogSettings()"
+                                    class="patient-action-button details"
+                                    style="flex:0;padding:4px 8px;font-size:12px; background-color: var(--button-bg); color: var(--text-color); border: 1px solid var(--border-color);"><i
+                                        class="fas fa-cog"></i> Logs</button><button id="disconnect-all-users-btn"
                                     class="patient-action-button"
                                     style="flex:0;padding:4px 8px;font-size:12px;color:var(--error-color)"><i
                                         class="fas fa-power-off"></i>Desconectar Todos</button><button
@@ -3201,6 +3216,41 @@
             <p id="confirm-modal-text"></p>
             <div class="confirm-modal-buttons"><button id="confirm-btn-no" class="confirm-btn">Cancelar</button><button
                     id="confirm-btn-yes" class="confirm-btn">Confirmar</button></div>
+        </div>
+    </div>
+
+    <!-- LOG SETTINGS MODAL -->
+    <div id="log-settings-modal" class="app-modal">
+        <div class="app-modal-content" style="max-width: 400px; text-align: center;">
+            <span class="app-modal-close"
+                onclick="document.getElementById('log-settings-modal').style.display='none'">&times;</span>
+            <div class="app-modal-header">
+                <h2 class="app-modal-title">Configurações de Log</h2>
+            </div>
+            <div class="app-modal-body">
+                <div
+                    style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <div style="font-size: 40px; margin-bottom: 15px; color: var(--prompt-color);">
+                        <i class="fas fa-terminal"></i>
+                    </div>
+                    <p style="margin-bottom: 20px; font-size: 14px; opacity: 0.8;">
+                        Gerencie quais mensagens aparecem no terminal. Ocultar logs técnicos deixa a interface mais
+                        limpa.
+                    </p>
+
+                    <div
+                        style="display: flex; align-items: center; justify-content: space-between; background: var(--glass-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <span style="font-weight: bold;">Ocultar Logs Técnicos</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="modal-hide-status-toggle"
+                                onchange="window.toggleLogSuppression(this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <button class="app-modal-button"
+                    onclick="document.getElementById('log-settings-modal').style.display='none'">Fechar</button>
+            </div>
         </div>
     </div>
     <div id="mobile-analysis-loader" class="mobile-loader">
@@ -3762,12 +3812,11 @@
             ];
 
             // Check debug filter
-            if (globalSettings && globalSettings.hideStatusMessages) {
-                const lowerText = text.toLowerCase();
-                // Check if text contains any hidden phrase
-                if (hiddenPhrases.some(phrase => lowerText.includes(phrase))) {
-                    return; // Suppress message
-                }
+            // Check debug filter and tag message
+            let isTechnicalLog = false;
+            // Check if text contains any hidden phrase
+            if (hiddenPhrases.some(phrase => text.toLowerCase().includes(phrase))) {
+                isTechnicalLog = true;
             }
 
             const outputElement = document.createElement('div');
@@ -3787,6 +3836,10 @@
             }
             else {
                 outputElement.innerHTML = `<span class="${type}">${text}</span>`;
+            }
+
+            if (isTechnicalLog) {
+                outputElement.classList.add('technical-log');
             }
 
             interactiveOutput.appendChild(outputElement);
@@ -4965,50 +5018,69 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 mobileContainer.style.display = 'none';
                 if (btnCloud) btnCloud.style.display = 'flex';
             }
+
+            // Apply Log Suppression CSS Class
+            const interactiveOutput = document.getElementById('interactive-output');
+            if (interactiveOutput) {
+                if (globalSettings.hideStatusMessages) {
+                    interactiveOutput.classList.add('hide-technical-logs');
+                } else {
+                    interactiveOutput.classList.remove('hide-technical-logs');
+                }
+            }
+
             initializeAIModel();
         };
 
         const setupGlobalSettingsListener = () => {
-            if (unsubscribeSettings) unsubscribeSettings();
-            const docRef = doc(db, "settings", "global");
-            unsubscribeSettings = onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    globalSettings = {
-                        apiKeys: data.apiKeys || [...defaultApiKeys],
-                        apiModels: data.apiModels || [...defaultApiModels],
-                        mode: data.mode || 'automatic',
-                        manualTextModel: data.manualTextModel || '',
-                        manualVisionModel: data.manualVisionModel || '',
-                        manualApiKey: data.manualApiKey || '',
-                        apiProvider: data.apiProvider || 'gemini',
-                        openRouterKey: data.openRouterKey || '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',
-                        groqKey: data.groqKey || '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',
-                        groqModel: data.groqModel || 'llama-3.3-70b-versatile',
-                        mobile2_0_enabled: data.mobile2_0_enabled === undefined ? isMobile : data.mobile2_0_enabled,
-                        customTextProvider: data.customTextProvider || 'gemini',
-                        customVisionProvider: data.customVisionProvider || 'gemini',
-                        pinataKeys: data.pinataKeys || [
-                            { key: "5256cd6c1c0b4ccec3a9", secret: "afbed7932f0ebf5c50d88d04378359164aca3ae63a72e2628375dc02e4fcfb05" }
-                        ]
-                    };
+            return new Promise((resolve) => {
+                if (unsubscribeSettings) unsubscribeSettings();
+                const docRef = doc(db, "settings", "global");
+                let isAllocated = false;
 
-                    if (adminPanelModal.style.display === 'flex') {
-                        if (document.querySelector('.admin-tab-btn[data-tab="api"]').classList.contains('active')) {
-                            renderAdminSettingsUI();
+                unsubscribeSettings = onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        globalSettings = {
+                            apiKeys: data.apiKeys || [...defaultApiKeys],
+                            apiModels: data.apiModels || [...defaultApiModels],
+                            mode: data.mode || 'automatic',
+                            manualTextModel: data.manualTextModel || '',
+                            manualVisionModel: data.manualVisionModel || '',
+                            manualApiKey: data.manualApiKey || '',
+                            apiProvider: data.apiProvider || 'gemini',
+                            openRouterKey: data.openRouterKey || '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',
+                            groqKey: data.groqKey || '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',
+                            groqModel: data.groqModel || 'llama-3.3-70b-versatile',
+                            mobile2_0_enabled: data.mobile2_0_enabled === undefined ? isMobile : data.mobile2_0_enabled,
+                            hideStatusMessages: data.hideStatusMessages || false,
+                            customTextProvider: data.customTextProvider || 'gemini',
+                            customVisionProvider: data.customVisionProvider || 'gemini',
+                            pinataKeys: data.pinataKeys || [
+                                { key: "5256cd6c1c0b4ccec3a9", secret: "afbed7932f0ebf5c50d88d04378359164aca3ae63a72e2628375dc02e4fcfb05" }
+                            ]
+                        };
+
+                        if (adminPanelModal.style.display === 'flex') {
+                            if (document.querySelector('.admin-tab-btn[data-tab="api"]').classList.contains('active')) {
+                                renderAdminSettingsUI();
+                            }
+                            if (document.querySelector('.admin-tab-btn[data-tab="debug"]').classList.contains('active')) {
+                                renderAdminDebugUI();
+                            }
                         }
-                        if (document.querySelector('.admin-tab-btn[data-tab="debug"]').classList.contains('active')) {
-                            renderAdminDebugUI();
-                        }
+
+                        applySettings();
+                        if (!isAllocated) { isAllocated = true; resolve(); }
+                    } else {
+                        globalSettings.mobile2_0_enabled = isMobile;
+                        setDoc(docRef, globalSettings);
+                        if (!isAllocated) { isAllocated = true; resolve(); }
                     }
-
-                    applySettings();
-                } else {
-                    globalSettings.mobile2_0_enabled = isMobile;
-                    setDoc(docRef, globalSettings);
-                }
-            }, (error) => {
-                console.error("Erro ao sincronizar configurações globais:", error);
+                }, (error) => {
+                    console.error("Erro ao sincronizar configurações globais:", error);
+                    if (!isAllocated) { isAllocated = true; resolve(); }
+                });
             });
         };
 
@@ -5803,7 +5875,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
 
             setupFirebaseListener(currentUser);
             setupTransferListener(currentUser); // Setup P2P Transfer Listener
-            setupGlobalSettingsListener();
+            // setupGlobalSettingsListener(); // Moved to initApp
 
             axonCloud = new AxonCloud(currentUser);
 
@@ -6121,14 +6193,11 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         </label>
                     </div>
                 </div>
-                 <div class="admin-section" style="margin-top: 15px;">
+                <div class="admin-section" style="margin-top: 15px;">
                     <div class="admin-section-title">Feedback e Logs</div>
                      <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <span>Ocultar mensagens de status (Tentando motor..., Sucesso, etc.)</span>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="hide-status-toggle" ${globalSettings.hideStatusMessages ? 'checked' : ''}>
-                            <span class="slider"></span>
-                        </label>
+                        <span>Gerenciar Logs do Terminal</span>
+                        <button class="app-modal-button" onclick="window.openLogSettings()" style="width: auto; padding: 5px 15px;">Configurar</button>
                     </div>
                 </div>
                 <div class="admin-section" style="margin-top: 15px;">
@@ -6295,6 +6364,32 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     ...updates
                 }, { merge: true });
             } catch (e) { console.error("Erro ao salvar seleção manual:", e); }
+        };
+
+        window.openLogSettings = () => {
+            const modal = document.getElementById('log-settings-modal');
+            const toggle = document.getElementById('modal-hide-status-toggle');
+            if (modal && toggle) {
+                toggle.checked = globalSettings.hideStatusMessages || false;
+                modal.style.display = 'flex';
+            }
+        };
+
+        window.toggleLogSuppression = async (isChecked) => {
+            try {
+                // Optimistic UI update
+                globalSettings.hideStatusMessages = isChecked;
+                applySettings(); // Immediately applies CSS class
+
+                await setDoc(doc(db, "settings", "global"), {
+                    hideStatusMessages: isChecked
+                }, { merge: true });
+            } catch (e) {
+                console.error("Erro ao salvar configuração de log:", e);
+                // Revert if error
+                globalSettings.hideStatusMessages = !isChecked;
+                applySettings();
+            }
         };
 
         window.addApiKey = async () => {
@@ -8477,6 +8572,9 @@ ${instruction}
         }
 
         const initApp = async () => {
+            // Initialize settings FIRST to ensure listeners and preferences (like log suppression) are active
+            await setupGlobalSettingsListener();
+
             const savedTheme = localStorage.getItem('theme');
             const systemPrefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
             if (savedTheme) {
