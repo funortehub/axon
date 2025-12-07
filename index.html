@@ -5013,10 +5013,14 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 document.querySelector('.container').style.display = 'none';
                 mobileContainer.style.display = 'flex';
                 if (btnCloud) btnCloud.style.display = 'none';
+                if (btnExames) btnExames.style.display = 'none';
+                if (btnSee) btnSee.style.display = 'none';
             } else {
                 document.querySelector('.container').style.display = 'flex';
                 mobileContainer.style.display = 'none';
                 if (btnCloud) btnCloud.style.display = 'flex';
+                if (btnExames) btnExames.style.display = 'flex';
+                if (btnSee) btnSee.style.display = 'flex';
             }
 
             // Apply Log Suppression CSS Class
@@ -7946,6 +7950,7 @@ ${instruction}
                 this.filterType = 'all';
                 this.unsubscribe = null;
                 this.clipboard = null;
+                this.handleKeyDown = this.handleKeyDown.bind(this);
                 this.init();
             }
 
@@ -7978,6 +7983,9 @@ ${instruction}
                 this.searchInput = document.getElementById('cloud-search');
                 this.contextMenu = document.getElementById('cloud-context-menu');
                 this.bgContextMenu = document.getElementById('cloud-bg-context-menu');
+
+                document.removeEventListener('keydown', this.handleKeyDown);
+                document.addEventListener('keydown', this.handleKeyDown);
 
                 // Sidebar
                 this.sidebarItems.forEach(item => {
@@ -8097,6 +8105,7 @@ ${instruction}
                     const el = document.createElement('div');
                     el.className = 'cloud-item';
                     el.draggable = true;
+                    el.dataset.id = item.id; // Added ID for lookups
                     el.dataset.type = item.type;
 
                     let icon = 'fa-file';
@@ -8136,8 +8145,15 @@ ${instruction}
                     el.onclick = () => {
                         document.querySelectorAll('.cloud-item').forEach(i => i.classList.remove('selected'));
                         el.classList.add('selected');
+                        el.classList.add('selected');
                         this.selectedItem = item;
                     };
+
+                    // For keyboard nav to work, we need to update selectedItem when selection changes via keyboard.
+                    // But keyboard handler relies on DOM.
+                    // So I need to reverse lookup item from DOM ID. 
+                    // I will do that in handleKeyDown using dataset.id
+
 
                     el.ondblclick = () => {
                         if (item.type === 'folder') {
@@ -8342,6 +8358,84 @@ ${instruction}
 
                 if (this.contextMenu) this.contextMenu.style.display = 'none';
                 if (this.bgContextMenu) this.bgContextMenu.style.display = 'none';
+            }
+
+            handleKeyDown(e) {
+                const modal = document.getElementById('axon-cloud-modal');
+                if (!modal || modal.style.display === 'none') return;
+
+                // Ignore if creating/renaming (input focused in custom modal)
+                if (document.getElementById('custom-input-modal').style.display === 'flex') return;
+
+                if (e.key === 'Escape') {
+                    modal.style.display = 'none';
+                    return;
+                }
+
+                if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) {
+                    if (this.selectedItem) {
+                        this.handleContextAction('copy');
+                        // Visual feedback?
+                    }
+                    return;
+                }
+
+                if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) {
+                    this.handleContextAction('paste');
+                    return;
+                }
+
+                if (e.key === 'Delete') {
+                    if (this.selectedItem) this.handleContextAction('delete');
+                    return;
+                }
+
+                if (e.key === 'Enter') {
+                    if (this.selectedItem) {
+                        if (this.selectedItem.type === 'folder') {
+                            this.currentPath.push({ id: this.selectedItem.id, name: this.selectedItem.name });
+                            this.render();
+                        } else {
+                            this.openPreview(this.selectedItem);
+                        }
+                    }
+                    return;
+                }
+
+                const items = Array.from(document.querySelectorAll('.cloud-item'));
+                if (items.length === 0) return;
+
+                let selectedIndex = items.findIndex(el => el.classList.contains('selected'));
+
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                    if (selectedIndex === -1) {
+                        selectedIndex = 0;
+                    } else {
+                        const gridStyle = window.getComputedStyle(this.grid);
+                        const gridCols = gridStyle.getPropertyValue('grid-template-columns').split(' ').length || 1;
+                        // Note: split(' ').length might not work if it returns "repeat(...)" or auto-fill. 
+                        // Better to estimate based on item width and container width.
+                        const itemWidth = items[0].offsetWidth + 20; // + gap approx
+                        const containerWidth = this.grid.clientWidth;
+                        const cols = Math.floor(containerWidth / itemWidth) || 1;
+
+                        if (e.key === 'ArrowRight') selectedIndex = Math.min(items.length - 1, selectedIndex + 1);
+                        else if (e.key === 'ArrowLeft') selectedIndex = Math.max(0, selectedIndex - 1);
+                        else if (e.key === 'ArrowDown') selectedIndex = Math.min(items.length - 1, selectedIndex + cols);
+                        else if (e.key === 'ArrowUp') selectedIndex = Math.max(0, selectedIndex - cols);
+                    }
+
+                    // Update selection
+                    items.forEach(i => i.classList.remove('selected'));
+                    items[selectedIndex].classList.add('selected');
+                    items[selectedIndex].scrollIntoView({ block: 'nearest' });
+
+                    // Update selectedItem from DOM
+                    const newSelectedEl = items[selectedIndex];
+                    const newId = newSelectedEl.dataset.id;
+                    this.selectedItem = this.files.find(f => f.id === newId);
+                }
             }
 
             showCustomInput(title, callback, defaultValue = "") {
