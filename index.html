@@ -5013,15 +5013,17 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 document.querySelector('.container').style.display = 'none';
                 mobileContainer.style.display = 'flex';
                 if (btnCloud) btnCloud.style.display = 'none';
-                if (btnExames) btnExames.style.display = 'none';
-                if (btnSee) btnSee.style.display = 'none';
             } else {
                 document.querySelector('.container').style.display = 'flex';
                 mobileContainer.style.display = 'none';
                 if (btnCloud) btnCloud.style.display = 'flex';
-                if (btnExames) btnExames.style.display = 'flex';
-                if (btnSee) btnSee.style.display = 'flex';
             }
+
+            // Mobile 2.0 Button Visibility (Global Rule)
+            // Hides specific action buttons if Mobile 2.0 is enabled, even on Desktop
+            const shouldHideActionButtons = globalSettings.mobile2_0_enabled;
+            if (btnExames) btnExames.style.display = shouldHideActionButtons ? 'none' : 'flex';
+            if (btnSee) btnSee.style.display = shouldHideActionButtons ? 'none' : 'flex';
 
             // Apply Log Suppression CSS Class
             const interactiveOutput = document.getElementById('interactive-output');
