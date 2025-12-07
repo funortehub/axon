@@ -8404,6 +8404,8 @@ ${instruction}
 
                 // Ignore if creating/renaming (input focused in custom modal)
                 if (document.getElementById('custom-input-modal').style.display === 'flex') return;
+                // Ignore if text editor is open
+                if (document.getElementById('text-editor-modal').style.display === 'flex') return;
 
                 if (e.key === 'Escape') {
                     modal.style.display = 'none';
