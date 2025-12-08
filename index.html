@@ -5142,6 +5142,28 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             }
 
             initializeAIModel();
+
+            // Enforce Global Prescription Assistant Visibility
+            const btnPrescAssist = document.getElementById('btn-prescription-assist');
+            if (btnPrescAssist) {
+                // Determine if we should show it based on Global Settings
+                // Default to true if somehow undefined, but globalSettings shoud have it.
+                const shouldShow = globalSettings.showPrescriptionAssistant !== false;
+
+                // If Mobile 2.0 hides actions, we might want to respect that OR let this override?
+                // Usually global toggle means "feature enabled/disabled".
+                // If feature is disabled globally -> Hide.
+                // If feature is enabled globally -> Check local/mobile context.
+
+                if (!shouldShow) {
+                    btnPrescAssist.style.display = 'none';
+                } else {
+                    // Feature is enabled globally.
+                    // If we are NOT covering it by other logic (like mobile 2.0 hiding everything), show it.
+                    // But wait, existing logic uses display: flex;
+                    btnPrescAssist.style.display = 'flex';
+                }
+            }
         };
 
         const setupGlobalSettingsListener = () => {
@@ -5172,7 +5194,8 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                             customVisionProvider: data.customVisionProvider || 'gemini',
                             pinataKeys: data.pinataKeys || [
                                 { key: "5256cd6c1c0b4ccec3a9", secret: "afbed7932f0ebf5c50d88d04378359164aca3ae63a72e2628375dc02e4fcfb05" }
-                            ]
+                            ],
+                            showPrescriptionAssistant: data.showPrescriptionAssistant !== undefined ? data.showPrescriptionAssistant : true
                         };
 
                         if (adminPanelModal.style.display === 'flex') {
@@ -6376,14 +6399,27 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             });
 
             // Prescription Assistant Toggles
+            // Prescription Assistant Toggles
             const toggleAssistBtn = document.getElementById('toggle-assist-btn-visibility');
             if (toggleAssistBtn) {
-                const savedState = localStorage.getItem('show_assist_btn');
-                toggleAssistBtn.checked = savedState !== 'false';
-                toggleAssistBtn.addEventListener('change', (e) => {
-                    const btn = document.getElementById('btn-prescription-assist');
-                    if (btn) btn.style.display = e.target.checked ? 'flex' : 'none';
-                    localStorage.setItem('show_assist_btn', e.target.checked);
+                // Load saved state from Global Settings
+                const shouldShow = globalSettings.showPrescriptionAssistant !== false;
+                toggleAssistBtn.checked = shouldShow;
+
+                toggleAssistBtn.addEventListener('change', async (e) => {
+                    try {
+                        await setDoc(doc(db, "settings", "global"), { showPrescriptionAssistant: e.target.checked }, { merge: true });
+                        // Local update for immediate feedback (though listener will confirm)
+                        const btn = document.getElementById('btn-prescription-assist');
+                        // We rely on the global listener, but immediate feedback is nice if online.
+                        // But to be consistent with "Real-time", let's wait for listener or do optimistic UI?
+                        // Optimistic is better for toggle responsiveness.
+                        if (btn) btn.style.display = e.target.checked ? 'flex' : 'none';
+                    } catch (err) {
+                        console.error("Erro ao salvar visibilidade do assistente:", err);
+                        // Revert toggle if failed?
+                        e.target.checked = !e.target.checked;
+                    }
                 });
             }
 
