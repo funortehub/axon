@@ -740,6 +740,13 @@
             max-height: 90vh
         }
 
+        .app-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+            /* Prevent scrollbar overlap */
+        }
+
         .album-modal-content,
         .patient-details-content,
         .patient-list-content {
@@ -2851,6 +2858,90 @@
         .text-editor-textarea:focus {
             border-color: var(--highlight-color);
         }
+
+
+
+        /* Liquid Glass Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+
+
+        /* Adjust main btn used in wrapper to have square right edges when wrapper is used? 
+           Ideally, yes, but simpler to just slap it next to it. 
+           Let's style the wrapper to visually group them. */
+
+        /* Prescription Modal Styles - Compact & Scroll */
+        .compact-input {
+            padding: 8px !important;
+            font-size: 13px !important;
+            margin-bottom: 10px !important;
+        }
+
+        .prescription-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .prescription-result-container {
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 15px;
+            padding-right: 5px;
+        }
+
+        .prescription-suggestion-card {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .prescription-suggestion-text {
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .suggestion-copy-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--button-bg);
+            border: 1px solid var(--border-color);
+            padding: 2px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .suggestion-copy-btn:hover {
+            background: var(--highlight-color);
+            color: white;
+        }
     </style>
 </head>
 
@@ -2913,13 +3004,17 @@
                         title="Analisar Exames (/exames)"><i class="fas fa-file-medical-alt"></i></button><button
                         id="btn-see" class="action-button" title="Análise Visual Axon Eye (/see)"><i
                             class="fas fa-eye"></i></button><button id="btn-hd" class="action-button"
-                        title="Gerar Hipóteses Diagnósticas (/hd)"><i class="fas fa-lightbulb"></i></button><button
-                        id="btn-cd" class="action-button" title="Gerar Conduta Médica (/cd)"><i
-                            class="fas fa-pills"></i></button><button id="btn-records" class="action-button"
+                        title="Gerar Hipóteses Diagnósticas (/hd)"><i class="fas fa-lightbulb"></i></button>
+                    <button id="btn-cd" class="action-button" title="Gerar Conduta Médica (/cd)"><i
+                            class="fas fa-pills"></i></button>
+                    <button id="btn-prescription-assist" class="action-button" title="Assistente de Prescrição"><i
+                            class="fas fa-heartbeat"></i></button>
+                    <button id="btn-records" class="action-button" <button id="btn-records" class="action-button"
                         title="Prontuários"><i class="fas fa-book-medical"></i></button><button id="btn-clear"
                         class="action-button" title="Limpar Sessão (/clear)"><i
                             class="fas fa-eraser"></i></button><button id="btn-mic" class="action-button"
-                        title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button></div>
+                        title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button>
+                </div>
                 <div class="input-line"><span class="prompt">></span><input type="text" class="command-input"
                         id="command-input" autocomplete="off" autofocus></div>
             </div>
@@ -4549,9 +4644,9 @@ Seja técnico, objetivo e resumido.`;
                 const response = await callGeminiAPI(prompt);
                 const boldedResponse = response.replace(/\*(.*?)\*/g, '<b>$1</b>');
                 const formattedConduct = boldedResponse
-                    .replace(/CONDUTA FARMACOLÓGICA \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTA FARMACOLÓGICA (SUS)">CONDUTA FARMACOLÓGICA (SUS):</div>')
-                    .replace(/EXAMES COMPLEMENTARES \(SUS\):/gi, '<div class="conduct-title" data-category="EXAMES COMPLEMENTARES (SUS)">EXAMES COMPLEMENTARES (SUS):</div>')
-                    .replace(/CONDUTAS NÃO FARMACOLÓGICAS \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTAS NÃO FARMACOLÓGICAS (SUS)">CONDUTAS NÃO FARMACOLÓGICAS (SUS):</div>')
+                    .replace(/CONDUTA FARMACOLÓGICA \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTA FARMACOLÓGICA (SUS)">CONDUTA FARMACOLÓGICA (SUS): <span style="font-size: 11px; opacity: 0.7; font-weight: normal; margin-left: 5px;">(Clique para ver conduta pronta)</span></div>')
+                    .replace(/EXAMES COMPLEMENTARES \(SUS\):/gi, '<div class="conduct-title" data-category="EXAMES COMPLEMENTARES (SUS)">EXAMES COMPLEMENTARES (SUS): <span style="font-size: 11px; opacity: 0.7; font-weight: normal; margin-left: 5px;">(Clique para ver conduta pronta)</span></div>')
+                    .replace(/CONDUTAS NÃO FARMACOLÓGICAS \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTAS NÃO FARMACOLÓGICAS (SUS)">CONDUTAS NÃO FARMACOLÓGICAS (SUS): <span style="font-size: 11px; opacity: 0.7; font-weight: normal; margin-left: 5px;">(Clique para ver conduta pronta)</span></div>')
                     .replace(/^RECOMENDAÇÕES:/gim, '<div class="conduct-title" data-category="RECOMENDAÇÕES">RECOMENDAÇÕES:</div>')
                     .split('\n').map(line => {
                         const cleanedLine = line.trim().replace(/^\d+\.\s*/, '');
@@ -6243,6 +6338,17 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     </div>
                 </div>
                 <div class="admin-section" style="margin-top: 15px;">
+                    <div class="admin-section-title">Assistente de Prescrição</div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Mostrar Botão Assistente</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-assist-btn-visibility">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                </div>
+                <div class="admin-section" style="margin-top: 15px;">
                     <div class="admin-section-title">Feedback e Logs</div>
                      <div style="display: flex; align-items: center; justify-content: space-between;">
                         <span>Gerenciar Logs do Terminal</span>
@@ -6268,14 +6374,20 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     console.error("Erro ao salvar modo Mobile 2.0:", err);
                 }
             });
-            document.getElementById('hide-status-toggle').addEventListener('change', async (e) => {
-                try {
-                    await setDoc(doc(db, "settings", "global"), { hideStatusMessages: e.target.checked }, { merge: true });
-                    globalSettings.hideStatusMessages = e.target.checked;
-                } catch (err) {
-                    console.error("Erro ao salvar opção de log:", err);
-                }
-            });
+
+            // Prescription Assistant Toggles
+            const toggleAssistBtn = document.getElementById('toggle-assist-btn-visibility');
+            if (toggleAssistBtn) {
+                const savedState = localStorage.getItem('show_assist_btn');
+                toggleAssistBtn.checked = savedState !== 'false';
+                toggleAssistBtn.addEventListener('change', (e) => {
+                    const btn = document.getElementById('btn-prescription-assist');
+                    if (btn) btn.style.display = e.target.checked ? 'flex' : 'none';
+                    localStorage.setItem('show_assist_btn', e.target.checked);
+                });
+            }
+
+
         };
 
         window.backupFirestore = async () => {
@@ -7691,6 +7803,147 @@ ${instruction}
         btnSee.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/see')));
         btnHd.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/hd')));
         btnCd.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/cd')));
+
+        // Prescription Assistant Logic
+        const btnPrescAssist = document.getElementById('btn-prescription-assist');
+        const prescModal = document.getElementById('prescription-modal');
+        const btnGeneratePresc = document.getElementById('btn-generate-prescription');
+        // btn-show-med-info removed
+        const medInfoModal = document.getElementById('med-info-modal');
+
+        if (btnPrescAssist && prescModal) {
+            btnPrescAssist.addEventListener('click', (e) => {
+                e.stopPropagation();
+                prescModal.style.display = 'flex';
+            });
+        }
+
+        if (btnGeneratePresc) {
+            btnGeneratePresc.addEventListener('click', async () => {
+                const query = document.getElementById('presc-input').value;
+                const age = document.getElementById('presc-age').value;
+                const weight = document.getElementById('presc-weight').value;
+                const source = document.querySelector('input[name="presc-source"]:checked').value;
+
+                if (!query) {
+                    alert("Por favor, digite a doença ou medicação.");
+                    return;
+                }
+
+                const resultArea = document.getElementById('presc-result-area');
+                const output = document.getElementById('presc-text-output'); // Not used directly now, we render list
+
+                resultArea.style.display = 'block';
+                // Clear previous
+                const resultContainer = document.getElementById('presc-list-container');
+                resultContainer.innerHTML = '<div style="text-align:center; padding: 20px;">Gerando prescrições... <i class="fas fa-spinner fa-spin"></i></div>';
+
+                // Construct Prompt
+                const prompt = `Atue como um Assistente de Prescrição Médica Sênior.
+                O médico solicitou assistência para: "${query}".
+                
+                Dados do Paciente:
+                - Idade: ${age || 'Não informado'}
+                - Peso: ${weight || 'Não informado'}
+                
+                Preferência: ${source === 'sus' ? 'Priorizar SUS' : 'Todas as opções'}.
+                
+                TAREFA CRÍTICA:
+                   1. Gere 2 ou 3 opções de receita médica para este caso.
+                2. O texto da receita DEVE ser TOTALMENTE EM CAIXA ALTA (UPPERCASE).
+                3. TODA RECEITA DEVE INICIAR ESTRITAMENTE COM A VIA DE ADMINISTRAÇÃO (EX: "USO ORAL:", "USO TÓPICO:", "USO OFTÁLMICO:", ETC).
+                4. O formato de cada receita deve ser:
+                   VIA DE ADMINISTRAÇÃO
+                   NOME MEDICAMENTO + CONCENTRAÇÃO + APRESENTAÇÃO ---------------- USO (CONTÍNUO OU QUANTIDADE TOTAL)
+                   POSOLOGIA (COMO TOMAR).
+
+                   IMPORTANTE: SE O USO FOR TEMPORÁRIO, SUBSTITUA "USO TEMPORÁRIO" PELA QUANTIDADE TOTAL (EX: "01 FRASCO", "30 COMPRIMIDOS", "01 CAIXA"). SE FOR CONTÍNUO, MANTENHA "USO CONTÍNUO".
+                   
+                   Exemplo 1 (Contínuo):
+                   USO ORAL:
+                   LOSARTANA 50 MG COMPRIMIDO ---------------------------- USO CONTÍNUO
+                   TOMAR 01 COMPRIMIDO PELA MANHÃ.
+
+                   Exemplo 2 (Temporário):
+                   USO ORAL:
+                   AMOXICILINA 500 MG CÁPSULA ---------------------------- 21 CÁPSULAS
+                   TOMAR 01 CÁPSULA DE 8 EM 8 HORAS POR 7 DIAS.
+                   
+                5. Forneça alertas separados.
+
+                FORMATO DE RESPOSTA JSON RETORNE APENAS O JSON:
+                {
+                    "prescriptions": [
+                        "TEXTO DA RECEITA 1...",
+                        "TEXTO DA RECEITA 2..."
+                    ],
+                    "info": "<h1>Informações</h1>..."
+                }
+                `;
+
+                try {
+                    let responseText = "";
+                    if (typeof callGeminiAPI === 'function') {
+                        responseText = await callGeminiAPI(prompt, null, true);
+                    } else {
+                        responseText = await callGeminiAPI(prompt + "\n\nResponda estritamente em JSON.");
+                    }
+
+                    // Parse JSON
+                    let data = { prescriptions: [], info: "Sem info." };
+                    try {
+                        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            data = JSON.parse(jsonMatch[0]);
+                        } else {
+                            // Fallback if structured failed
+                            data = { prescriptions: [responseText], info: "Verifique o texto." };
+                        }
+                    } catch (e) {
+                        data = { prescriptions: ["Erro na geração."], info: "Falha no parse." };
+                    }
+
+                    // Render List
+                    resultContainer.innerHTML = '';
+
+                    if (data.prescriptions && Array.isArray(data.prescriptions)) {
+                        data.prescriptions.forEach((text, idx) => {
+                            const card = document.createElement('div');
+                            card.className = 'prescription-suggestion-card';
+                            card.innerHTML = `
+                                <button class="suggestion-copy-btn" onclick="window.copyToClipboard(this)">Copiar</button>
+                                <div class="prescription-suggestion-text">${text}</div>
+                            `;
+                            resultContainer.appendChild(card);
+                        });
+                    } else if (data.prescription) { // Legacy single
+                        const card = document.createElement('div');
+                        card.className = 'prescription-suggestion-card';
+                        card.innerHTML = `
+                                <button class="suggestion-copy-btn" onclick="window.copyToClipboard(this)">Copiar</button>
+                                <div class="prescription-suggestion-text">${data.prescription}</div>
+                            `;
+                        resultContainer.appendChild(card);
+                    }
+
+                    // Setup info button
+                    window.currentMedInfo = data.info;
+
+                } catch (e) {
+                    resultContainer.innerHTML = `<div style="color:red">Erro: ${e.message}</div>`;
+                }
+            });
+        }
+
+        window.copyToClipboard = (btn) => {
+            const text = btn.nextElementSibling.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const original = btn.textContent;
+                btn.textContent = "Copiado!";
+                setTimeout(() => btn.textContent = original, 2000);
+            });
+        }
+
         btnRecords.addEventListener('click', () => checkBlockedAndExecute(() => processCommand('/load')));
         btnClear.addEventListener('click', () => checkBlockedAndExecute(() => resetSession()));
         btnMic.addEventListener('click', () => checkBlockedAndExecute(() => processCommand(isListening ? '/hear off' : '/hear on')));
@@ -8890,7 +9143,123 @@ ${instruction}
             if (isMobile) { statusTextApi.textContent = ""; statusTextMic.textContent = ""; statusTextCam.textContent = ""; }
         };
 
+        // Prescription Assistant Interactions & Admin Logic
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const prescModal = document.getElementById('prescription-modal');
+                if (prescModal && prescModal.style.display === 'flex') {
+                    prescModal.style.display = 'none';
+                }
+            }
+        });
+
+        ['presc-input', 'presc-age', 'presc-weight'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        document.getElementById('btn-generate-prescription').click();
+                    }
+                });
+            }
+        });
+
+        // Prescription Assistant Interactions
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const prescModal = document.getElementById('prescription-modal');
+                if (prescModal && prescModal.style.display === 'flex') {
+                    prescModal.style.display = 'none';
+                }
+            }
+        });
+
+        ['presc-input', 'presc-age', 'presc-weight'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        document.getElementById('btn-generate-prescription').click();
+                    }
+                });
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', initApp);</script>
+    <!-- PRESCRIPTION ASSISTANT MODAL -->
+    <div id="prescription-modal" class="app-modal">
+        <div class="app-modal-content" style="max-width: 800px; width: 90%;">
+            <span class="app-modal-close"
+                onclick="document.getElementById('prescription-modal').style.display='none'">&times;</span>
+            <div class="app-modal-header">
+                <h2 class="app-modal-title"><i class="fas fa-file-prescription"></i> Assistente de Prescrição <span
+                        class="badge-beta"
+                        style="font-size: 10px; background: var(--highlight-color); color: #fff; font-weight: 800; padding: 2px 5px; border-radius: 4px; vertical-align: middle; margin-left: 5px;">BETA</span>
+                </h2>
+            </div>
+            <div class="app-modal-body">
+                <div class="prescription-row">
+                    <div style="flex: 2.5;">
+                        <div class="prescription-form-group">
+                            <label>Doença ou Medicação</label>
+                            <input type="text" id="presc-input" class="app-modal-input compact-input"
+                                placeholder="Ex: Cefaleia">
+                        </div>
+                    </div>
+                    <div style="flex: 1;">
+                        <div class="prescription-form-group">
+                            <label>Idade</label>
+                            <input type="text" id="presc-age" class="app-modal-input compact-input" placeholder="Anos">
+                        </div>
+                    </div>
+                    <div style="flex: 1;">
+                        <div class="prescription-form-group">
+                            <label>Peso</label>
+                            <input type="text" id="presc-weight" class="app-modal-input compact-input" placeholder="Kg">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="prescription-options"
+                    style="padding: 5px; margin-bottom: 10px; display: flex; gap: 15px; align-items: center;">
+                    <label class="radio-label" style="font-size: 13px;">
+                        <input type="radio" name="presc-source" value="sus" checked> Apenas SUS
+                    </label>
+                    <label class="radio-label" style="font-size: 13px;">
+                        <input type="radio" name="presc-source" value="all"> Todas (Genéricos/Ref)
+                    </label>
+                </div>
+
+                <button id="btn-generate-prescription" class="app-modal-button"
+                    style="width: 100%; margin-bottom: 10px; padding: 10px;">
+                    <i class="fas fa-magic"></i> Gerar Prescrição
+                </button>
+
+                <div id="presc-result-area" style="display: none;">
+                    <div class="prescription-form-group">
+                        <label>Sugestões de Receita</label>
+                        <div id="presc-list-container" class="prescription-result-container">
+                            <!-- List will be injected here -->
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- INFO MODAL -->
+    <div id="med-info-modal" class="app-modal" style="z-index: 9500;">
+        <div class="app-modal-content" style="max-width: 600px;">
+            <span class="app-modal-close"
+                onclick="document.getElementById('med-info-modal').style.display='none'">&times;</span>
+            <div class="app-modal-header">
+                <h2 class="app-modal-title">Detalhes e Alertas</h2>
+            </div>
+            <div class="app-modal-body" id="med-info-body" style="text-align: left; line-height: 1.6;"></div>
+        </div>
+    </div>
 </body>
 
 </html>
