@@ -3726,11 +3726,23 @@
             { id: 6, name: 'gemini-1.5-flash', vision: true }
         ];
         const openRouterModels = [
-            { name: 'x-ai/grok-4.1-fast:free', vision: true },
-            { name: 'deepseek/deepseek-r1:free', vision: false },
-            { name: 'google/gemini-2.0-flash-exp:free', vision: true },
-            { name: 'mistralai/mistral-small-3.1-24b-instruct:free', vision: true },
-            { name: 'nvidia/nemotron-nano-12b-v2-vl:free', vision: true }
+            { name: 'amazon/nova-2-lite-v1:free', vision: false },
+            { name: 'arcee-ai/trinity-mini:free', vision: false },
+            { name: 'tngtech/deepseek-r1t-chimera:free', vision: false },
+            { name: 'allenai/olmo-3-32b-think:free', vision: false },
+            { name: 'kwaipilot/kat-coder-pro:free', vision: false },
+            { name: 'nvidia/nemotron-nano-12b-v2-vl:free', vision: true },
+            { name: 'alibaba/tongyi-deepresearch-30b-a3b:free', vision: false },
+            { name: 'meituan/longcat-flash-chat:free', vision: false },
+            { name: 'nvidia/nemotron-nano-9b-v2:free', vision: true },
+            { name: 'openai/gpt-oss-120b', vision: false },
+            { name: 'openai/gpt-oss-20b', vision: false },
+            { name: 'z-ai/glm-4.5-air', vision: false },
+            { name: 'qwen/qwen3-coder-480b-a35b-07-25:free', vision: false },
+            { name: 'moonshotai/kimi-k2:free', vision: false },
+            { name: 'cognitivecomputations/dolphin-mistral-24b-venice-edition:free', vision: false }, // Uncensored (free)
+            { name: 'google/gemma-3n-e2b-it:free', vision: false },
+            { name: 'google/gemini-2.0-flash-exp:free', vision: true }
         ];
         const groqModels = []; // Deprecated in favor of dynamic fetching
 
@@ -5184,6 +5196,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                             manualApiKey: data.manualApiKey || '',
                             apiProvider: data.apiProvider || 'gemini',
                             openRouterKey: data.openRouterKey || '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',
+                            openRouterModel: data.openRouterModel || '',
                             groqKey: data.groqKey || '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',
                             groqTextModel: data.groqTextModel || 'llama-3.3-70b-versatile',
                             groqVisionModel: data.groqVisionModel || 'llama-3.2-90b-vision-preview',
