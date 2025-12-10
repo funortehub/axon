@@ -4656,10 +4656,10 @@ Seja técnico, objetivo e resumido.`;
                 const response = await callGeminiAPI(prompt);
                 const boldedResponse = response.replace(/\*(.*?)\*/g, '<b>$1</b>');
                 const formattedConduct = boldedResponse
-                    .replace(/CONDUTA FARMACOLÓGICA \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTA FARMACOLÓGICA (SUS)">CONDUTA FARMACOLÓGICA (SUS): <span style="font-size: 11px; opacity: 0.7; font-weight: normal; margin-left: 5px;">(Clique para ver conduta pronta)</span></div>')
-                    .replace(/EXAMES COMPLEMENTARES \(SUS\):/gi, '<div class="conduct-title" data-category="EXAMES COMPLEMENTARES (SUS)">EXAMES COMPLEMENTARES (SUS): <span style="font-size: 11px; opacity: 0.7; font-weight: normal; margin-left: 5px;">(Clique para ver conduta pronta)</span></div>')
-                    .replace(/CONDUTAS NÃO FARMACOLÓGICAS \(SUS\):/gi, '<div class="conduct-title" data-category="CONDUTAS NÃO FARMACOLÓGICAS (SUS)">CONDUTAS NÃO FARMACOLÓGICAS (SUS): <span style="font-size: 11px; opacity: 0.7; font-weight: normal; margin-left: 5px;">(Clique para ver conduta pronta)</span></div>')
-                    .replace(/^RECOMENDAÇÕES:/gim, '<div class="conduct-title" data-category="RECOMENDAÇÕES">RECOMENDAÇÕES:</div>')
+                    .replace(/(?:<[bB]>\s*)?(?:[\d\.]+\s*)?[\*#]*\s*CONDUTA\s+FARMACOLÓGICA(?:\s*\(SUS\))?[\s\:\*#]*(?:<\/[bB]>)?/gi, '<div class="conduct-title" data-category="CONDUTA FARMACOLÓGICA (SUS)">CONDUTA FARMACOLÓGICA (SUS): <span style="font-size: 11px; opacity: 0.7; font-weight: normal; margin-left: 5px;">(Clique para ver conduta pronta)</span></div>')
+                    .replace(/(?:<[bB]>\s*)?(?:[\d\.]+\s*)?[\*#]*\s*EXAMES\s+COMPLEMENTARES(?:\s*\(SUS\))?[\s\:\*#]*(?:<\/[bB]>)?/gi, '<div class="conduct-title" data-category="EXAMES COMPLEMENTARES (SUS)">EXAMES COMPLEMENTARES (SUS): <span style="font-size: 11px; opacity: 0.7; font-weight: normal; margin-left: 5px;">(Clique para ver conduta pronta)</span></div>')
+                    .replace(/(?:<[bB]>\s*)?(?:[\d\.]+\s*)?[\*#]*\s*CONDUTAS\s+NÃO\s+FARMACOLÓGICAS(?:\s*\(SUS\))?[\s\:\*#]*(?:<\/[bB]>)?/gi, '<div class="conduct-title" data-category="CONDUTAS NÃO FARMACOLÓGICAS (SUS)">CONDUTAS NÃO FARMACOLÓGICAS (SUS): <span style="font-size: 11px; opacity: 0.7; font-weight: normal; margin-left: 5px;">(Clique para ver conduta pronta)</span></div>')
+                    .replace(/(?:<[bB]>\s*)?(?:[\d\.]+\s*)?[\*#]*\s*RECOMENDAÇÕES[\s\:\*#]*(?:<\/[bB]>)?/gi, '<div class="conduct-title" data-category="RECOMENDAÇÕES">RECOMENDAÇÕES:</div>')
                     .split('\n').map(line => {
                         const cleanedLine = line.trim().replace(/^\d+\.\s*/, '');
                         if (cleanedLine === '' || line.includes('<div')) return line;
