@@ -2101,6 +2101,219 @@
             box-shadow: 0 0 10px #4299e1
         }
 
+        /* Plugin System Styles */
+        .plugin-modal-content {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 0;
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 900px;
+            height: 80vh;
+            box-shadow: var(--glass-shadow);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            margin: auto;
+        }
+
+        .plugin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .plugin-card {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .plugin-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--highlight-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .plugin-icon-area {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .plugin-icon-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: var(--button-bg);
+        }
+
+        .plugin-info {
+            flex: 1;
+        }
+
+        .plugin-name {
+            font-weight: bold;
+            font-size: 16px;
+            color: var(--header-text-color);
+            margin-bottom: 2px;
+        }
+
+        .plugin-author {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .plugin-desc {
+            font-size: 13px;
+            opacity: 0.8;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 36px;
+        }
+
+        .plugin-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .plugin-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+
+        .btn-install {
+            background: var(--button-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-install:hover {
+            background: var(--highlight-color);
+            color: white;
+            border-color: transparent;
+        }
+
+        .btn-open-plugin {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-uninstall {
+            background: transparent;
+            color: var(--error-color);
+            border: 1px solid var(--border-color);
+            width: 30px;
+            flex: 0 0 30px;
+        }
+
+        .btn-uninstall:hover {
+            background: rgba(255, 0, 0, 0.1);
+            border-color: var(--error-color);
+        }
+
+        /* Floating Window */
+        .floating-plugin-window {
+            position: fixed;
+            top: 100px;
+            left: 100px;
+            width: 400px;
+            height: 500px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 200px;
+            min-height: 150px;
+            resize: both;
+        }
+
+        .floating-header {
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: grab;
+        }
+
+        .floating-header:active {
+            cursor: grabbing;
+        }
+
+        .floating-title {
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .floating-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .float-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .floating-content {
+            flex: 1;
+            position: relative;
+            background: white;
+            /* Plugins are usually white-bg designed */
+        }
+
+        body.dark-mode .floating-content {
+            background: #1a202c;
+            /* Or matching theme */
+        }
+
+        .floating-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+        }
+
         /* Axon Cloud Styles */
         .cloud-container {
             display: flex;
@@ -3009,11 +3222,11 @@
                             class="fas fa-pills"></i></button>
                     <button id="btn-prescription-assist" class="action-button" title="Assistente de Prescrição"><i
                             class="fas fa-heartbeat"></i></button>
-                    <button id="btn-records" class="action-button" <button id="btn-records" class="action-button"
-                        title="Prontuários"><i class="fas fa-book-medical"></i></button><button id="btn-clear"
-                        class="action-button" title="Limpar Sessão (/clear)"><i
-                            class="fas fa-eraser"></i></button><button id="btn-mic" class="action-button"
-                        title="Ativar/Desativar Microfone"><i class="fas fa-microphone-slash"></i></button>
+                    <button id="btn-records" class="action-button" title="Prontuários"><i
+                            class="fas fa-book-medical"></i></button><button id="btn-clear" class="action-button"
+                        title="Limpar Sessão (/clear)"><i class="fas fa-eraser"></i></button><button id="btn-mic"
+                        class="action-button" title="Ativar/Desativar Microfone"><i
+                            class="fas fa-microphone-slash"></i></button>
                 </div>
                 <div class="input-line"><span class="prompt">></span><input type="text" class="command-input"
                         id="command-input" autocomplete="off" autofocus></div>
@@ -3186,7 +3399,7 @@
             <div class="admin-tabs"><button class="admin-tab-btn active" data-tab="users">Usuários</button><button
                     class="admin-tab-btn" data-tab="api">API</button><button class="admin-tab-btn"
                     data-tab="axon-drive">Axon Drive</button><button class="admin-tab-btn"
-                    data-tab="debug">Debug</button></div>
+                    data-tab="bridge">Bridge</button><button class="admin-tab-btn" data-tab="debug">Debug</button></div>
             <div id="tab-users" class="admin-tab-content">
                 <div class="patient-search-container" style="margin:0 0 15px 0"><input type="text"
                         id="admin-user-search" class="patient-search-input" placeholder="Buscar usuário..."></div>
@@ -3276,6 +3489,17 @@
                                     (+1GB)</button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+            <!-- AXON BRIDGE TAB -->
+            <div id="tab-bridge" class="admin-tab-content" style="display:none">
+                <div class="admin-section">
+                    <h3>Gerenciamento de APIs (Axon Bridge)</h3>
+                    <div style="font-size:12px; opacity:0.7; margin-bottom:15px">Controle quais APIs de sistema os
+                        plugins podem acessar.</div>
+                    <div id="admin-bridge-body">
+                        <!-- Dynamically populated -->
                     </div>
                 </div>
             </div>
@@ -3504,6 +3728,51 @@
         <div class="context-menu-item" id="ctx-bg-new-text"><i class="fas fa-file-alt"></i> Novo Arquivo de Texto</div>
         <div class="context-menu-item" id="ctx-bg-paste"><i class="fas fa-paste"></i> Colar</div>
         <div class="context-menu-item" id="ctx-bg-upload"><i class="fas fa-upload"></i> Upload</div>
+    </div>
+
+    <!-- Plugin Manager Modal -->
+    <div id="plugin-manager-modal" class="app-modal">
+        <div class="plugin-modal-content">
+            <div class="app-modal-header" style="padding: 20px; border-bottom: 1px solid var(--border-color);">
+                <div style="display:flex; align-items:center; gap: 10px;">
+                    <h2 class="app-modal-title"><i class="fas fa-cubes"></i> Ferramentas & Plugins</h2>
+                    <div
+                        style="display:flex; background: var(--input-bg); border-radius: 20px; padding: 2px; margin-left: 20px;">
+                        <button class="monitor-toggle-button active" id="tab-installed-plugins"
+                            onclick="window.axonPluginManager.switchTab('installed')">Instalados</button>
+                        <button class="monitor-toggle-button" id="tab-axon-store"
+                            onclick="window.axonPluginManager.switchTab('store')">Axon Store</button>
+                    </div>
+                </div>
+                <span class="app-modal-close"
+                    onclick="document.getElementById('plugin-manager-modal').style.display='none'">&times;</span>
+            </div>
+
+            <!-- Installed Tab -->
+            <div id="view-installed-plugins" class="app-modal-body" style="padding: 0; display: block;">
+                <div id="installed-plugins-list" class="plugin-grid">
+                    <!-- Plugins injected here -->
+                </div>
+                <div id="no-plugins-msg" style="text-align:center; padding: 50px; opacity: 0.6; display: none;">
+                    <i class="fas fa-box-open" style="font-size: 40px; margin-bottom: 15px;"></i>
+                    <p>Nenhum plugin instalado.</p>
+                    <button class="confirmation-btn" onclick="window.axonPluginManager.switchTab('store')"
+                        style="margin-top:10px; background: var(--highlight-color); border:none; color:white; padding:8px 15px; border-radius:6px; cursor:pointer;">Ir
+                        para Loja</button>
+                </div>
+            </div>
+
+            <!-- Store Tab -->
+            <div id="view-axon-store" class="app-modal-body" style="padding: 0; display: none;">
+                <div style="padding: 15px; border-bottom: 1px solid var(--border-color); display: flex; gap: 10px;">
+                    <input type="text" id="store-search" class="admin-input" placeholder="Buscar na Axon Store..."
+                        style="flex:1;" oninput="window.axonPluginManager.renderStore()">
+                </div>
+                <div id="store-plugins-list" class="plugin-grid">
+                    <!-- Store Items injected here -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Text Editor Modal -->
@@ -3764,7 +4033,13 @@
             customVisionProvider: 'gemini',
             pinataKeys: [
                 { key: "5256cd6c1c0b4ccec3a9", secret: "afbed7932f0ebf5c50d88d04378359164aca3ae63a72e2628375dc02e4fcfb05" }
-            ]
+            ],
+            bridgePermissions: {
+                sendToChat: true,
+                callAI: true,
+                getAnamnesis: true,
+                storage: true
+            }
         };
 
         let currentApiKeyIndex = 0;
@@ -5208,7 +5483,13 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                             pinataKeys: data.pinataKeys || [
                                 { key: "5256cd6c1c0b4ccec3a9", secret: "afbed7932f0ebf5c50d88d04378359164aca3ae63a72e2628375dc02e4fcfb05" }
                             ],
-                            showPrescriptionAssistant: data.showPrescriptionAssistant !== undefined ? data.showPrescriptionAssistant : true
+                            showPrescriptionAssistant: data.showPrescriptionAssistant !== undefined ? data.showPrescriptionAssistant : true,
+                            bridgePermissions: data.bridgePermissions || {
+                                sendToChat: true,
+                                callAI: true,
+                                getAnamnesis: true,
+                                storage: true
+                            }
                         };
 
                         if (adminPanelModal.style.display === 'flex') {
@@ -6037,6 +6318,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
 
             setupFirebaseListener(currentUser);
             setupTransferListener(currentUser); // Setup P2P Transfer Listener
+            if (window.axonPluginManager) window.axonPluginManager.startPluginListener();
             // setupGlobalSettingsListener(); // Moved to initApp
 
             axonCloud = new AxonCloud(currentUser);
@@ -7193,6 +7475,7 @@ ${instruction}
             if (tabName === 'api') renderAdminSettingsUI();
             if (tabName === 'debug') renderAdminDebugUI();
             if (tabName === 'axon-drive') renderAdminAxonDrive();
+            if (tabName === 'bridge') renderAdminBridgeUI();
         };
 
         const validatePinataKey = async (apiKey, apiSecret) => {
@@ -7400,6 +7683,56 @@ ${instruction}
 
             } else {
                 window.open(fileUrl, '_blank');
+            }
+        };
+
+        window.renderAdminBridgeUI = () => {
+            const bridgeBody = document.getElementById('admin-bridge-body');
+            if (!bridgeBody) return;
+
+            const permissions = [
+                { key: 'sendToChat', label: 'Enviar para Chat (/ask)' },
+                { key: 'callAI', label: 'Solicitar Análise de IA (Texto/Visão)' },
+                { key: 'getAnamnesis', label: 'Ler Anamnese e Exames' },
+                { key: 'storage', label: 'Armazenamento (Pinata/IPFS)' }
+            ];
+
+            if (!globalSettings.bridgePermissions) {
+                globalSettings.bridgePermissions = {
+                    sendToChat: true,
+                    callAI: true,
+                    getAnamnesis: true,
+                    storage: true
+                };
+            }
+
+            let html = '';
+            permissions.forEach(p => {
+                const isEnabled = globalSettings.bridgePermissions[p.key] !== false; // Default true
+                html += `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--input-bg); padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid var(--border-color);">
+                        <span class="admin-bridge-label" style="font-weight:500;">${p.label} <code style="font-size:10px; opacity:0.6; margin-left:5px">${p.key}</code></span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="window.toggleBridgePermission('${p.key}', this.checked)">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                `;
+            });
+
+            bridgeBody.innerHTML = html;
+        };
+
+        window.toggleBridgePermission = async (key, value) => {
+            if (!globalSettings.bridgePermissions) globalSettings.bridgePermissions = {};
+            globalSettings.bridgePermissions[key] = value;
+
+            try {
+                await setDoc(doc(db, "settings", "global"), { bridgePermissions: globalSettings.bridgePermissions }, { merge: true });
+                appendOutput(`Permissão Bridge '${key}' alterada para ${value}`, "info");
+            } catch (e) {
+                console.error("Erro ao salvar permissão Bridge:", e);
+                appendOutput("Erro ao salvar permissão.", "error");
             }
         };
 
@@ -8469,6 +8802,22 @@ ${instruction}
                 document.getElementById('ctx-bg-new-text').onclick = () => this.createNewTextFile();
                 document.getElementById('ctx-bg-paste').onclick = () => this.handleContextAction('paste');
                 document.getElementById('ctx-bg-upload').onclick = () => document.getElementById('cloud-file-input').click();
+
+                // Locking Context Menu
+                const ctxLock = document.getElementById('ctx-lock');
+                if (ctxLock) ctxLock.onclick = () => this.handleContextAction('lock');
+                else {
+                    // Inject if not exists (fallback) - Direct append to container as div
+                    const ctxMenu = document.getElementById('cloud-context-menu');
+                    if (ctxMenu) {
+                        const div = document.createElement('div');
+                        div.id = 'ctx-lock';
+                        div.className = 'context-menu-item';
+                        div.innerHTML = '<i class="fas fa-lock"></i> Trancar/Destrancar';
+                        div.onclick = () => this.handleContextAction('lock');
+                        ctxMenu.appendChild(div);
+                    }
+                }
             }
 
             updateStorageUI() {
@@ -8516,9 +8865,15 @@ ${instruction}
                     else if (item.mimeType?.startsWith('video')) icon = 'fa-file-video';
                     else if (item.mimeType?.includes('pdf')) icon = 'fa-file-pdf';
 
+                    // Lock Icon
+                    let lockIcon = '';
+                    if (item.isLocked) {
+                        lockIcon = '<i class="fas fa-lock" style="color:var(--error-color); font-size: 10px; margin-left: 5px;" title="Protegido por senha"></i>';
+                    }
+
                     el.innerHTML = `
                         <div class="cloud-item-icon"><i class="fas ${icon}"></i></div>
-                        <div class="cloud-item-name">${item.name}</div>
+                        <div class="cloud-item-name">${item.name} ${lockIcon}</div>
                     `;
 
                     // Drag Events for Move
@@ -8559,8 +8914,10 @@ ${instruction}
 
                     el.ondblclick = () => {
                         if (item.type === 'folder') {
-                            this.currentPath.push({ id: item.id, name: item.name });
-                            this.render();
+                            this.verifyLockedFolderAccess(item, () => {
+                                this.currentPath.push({ id: item.id, name: item.name });
+                                this.render();
+                            });
                         } else {
                             this.openPreview(item);
                         }
@@ -8571,6 +8928,14 @@ ${instruction}
                         document.querySelectorAll('.cloud-item').forEach(i => i.classList.remove('selected'));
                         el.classList.add('selected');
                         this.selectedItem = item;
+
+
+                        // Update Lock Context label dynamically
+                        const ctxLockItem = document.getElementById('ctx-lock');
+                        if (ctxLockItem) {
+                            if (item.isLocked) ctxLockItem.innerHTML = '<i class="fas fa-lock-open"></i> Destrancar';
+                            else ctxLockItem.innerHTML = '<i class="fas fa-lock"></i> Trancar';
+                        }
 
                         if (this.contextMenu) {
                             this.contextMenu.style.display = 'block';
@@ -8688,28 +9053,90 @@ ${instruction}
                 } catch (e) { console.error("Move error", e); }
             }
 
+            showErrorModal(message) {
+                // Reuse showConfirmModal logic but simplified, or create a specific one.
+                // Using alert for simplicity if custom modal overhead is high, but user asked for pop-up.
+                // Let's use showConfirmModal with a single callback that does nothing, effectively an OK button loop or just hide cancel button?
+                // Actually, let's implement a quick custom "Alert" modal using the existing structure or inject one.
+                // Reusing showConfirmModal is easiest if we can tweak it.
+                // Or just showCustomConfirm with no cancel action? 
+
+                // Let's try to inject a simple alert modal structure similar to notification but persistent until clicked.
+                const overlay = document.createElement('div');
+                overlay.className = 'custom-modal';
+                overlay.style.display = 'flex';
+                overlay.style.zIndex = '9999';
+
+                const content = document.createElement('div');
+                content.className = 'custom-modal-content';
+                content.style.border = '1px solid var(--error-color)';
+
+                content.innerHTML = `
+                    <div class="custom-modal-title" style="color:var(--error-color)"><i class="fas fa-exclamation-triangle"></i> Erro</div>
+                    <div style="color:var(--text-color); margin-bottom:10px;">${message}</div>
+                    <div class="custom-modal-actions">
+                        <button class="app-modal-button" id="btn-err-ok">OK</button>
+                    </div>
+                `;
+
+                overlay.appendChild(content);
+                document.body.appendChild(overlay);
+
+                document.getElementById('btn-err-ok').onclick = () => overlay.remove();
+            }
+
+            verifyLockedFolderAccess(item, callback) {
+                if (!item) return;
+                // If it's a file, check parent? For now, requirement implies locking folders prevents access/action on folder itself.
+                // But does it prevent deleting a file inside a locked folder? 
+                // The current structure tracks "isLocked" on the folder item. 
+                // If the item itself is the folder being acted upon (rename, delete, move), we check it.
+
+                if (item.type === 'folder' && item.isLocked) {
+                    this.showCustomInput("Esta pasta está trancada. Digite a senha:", (password) => {
+                        if (password === item.lockPassword) {
+                            callback();
+                        } else {
+                            this.showErrorModal("Senha incorreta! Acesso negado.");
+                        }
+                    });
+                } else {
+                    callback();
+                }
+            }
+
             async handleContextAction(action) {
                 if (!this.selectedItem && action !== 'paste') return;
                 const item = this.selectedItem;
 
                 if (action === 'open') {
                     if (item.type === 'folder') {
-                        this.currentPath.push({ id: item.id, name: item.name });
-                        this.render();
+                        this.verifyLockedFolderAccess(item, () => {
+                            this.currentPath.push({ id: item.id, name: item.name });
+                            this.render();
+                        });
                     } else {
                         this.openPreview(item);
                     }
                 } else if (action === 'move') {
-                    this.showFolderSelection((targetFolderId) => {
-                        if (targetFolderId && targetFolderId !== item.id) {
-                            this.moveItem(item.id, targetFolderId);
-                        }
+                    this.verifyLockedFolderAccess(item, () => {
+                        this.showFolderSelection((targetFolderId) => {
+                            if (targetFolderId && targetFolderId !== item.id) {
+                                this.moveItem(item.id, targetFolderId);
+                            }
+                        });
                     });
                 } else if (action === 'download') {
-                    if (item.type === 'folder') return;
-                    const url = `https://gateway.pinata.cloud/ipfs/${item.ipfsHash}`;
+                    if (item.type === 'folder') {
+                        this.verifyLockedFolderAccess(item, () => {
+                            // Folder download not fully implemented usually, but if it were, it's protected now.
+                            // Current code just returns.
+                            return;
+                        });
+                        return;
+                    }
 
-                    // Direct Download Logic
+                    const url = `https://gateway.pinata.cloud/ipfs/${item.ipfsHash}`;
                     try {
                         const response = await fetch(url);
                         if (!response.ok) throw new Error("Falha na rede ao baixar.");
@@ -8726,19 +9153,26 @@ ${instruction}
                         appendOutput(`Erro ao baixar arquivo: ${e.message}`, "error");
                     }
                 } else if (action === 'delete') {
-                    this.showCustomConfirm(`Excluir ${item.name}?`, async () => {
-                        if (item.type === 'file') await unpinFromPinata(item.ipfsHash);
-                        await deleteDoc(doc(db, "users", this.username, "files", item.id));
+                    this.verifyLockedFolderAccess(item, () => {
+                        this.showCustomConfirm(`Excluir ${item.name}?`, async () => {
+                            if (item.type === 'file') await unpinFromPinata(item.ipfsHash);
+                            await deleteDoc(doc(db, "users", this.username, "files", item.id));
+                        });
                     });
                 } else if (action === 'rename') {
-                    this.showCustomInput("Renomear", async (newName) => {
-                        if (newName && newName !== item.name) {
-                            await updateDoc(doc(db, "users", this.username, "files", item.id), { name: newName });
-                        }
-                    }, item.name);
+                    this.verifyLockedFolderAccess(item, () => {
+                        this.showCustomInput("Renomear", async (newName) => {
+                            if (newName && newName !== item.name) {
+                                await updateDoc(doc(db, "users", this.username, "files", item.id), { name: newName });
+                            }
+                        }, item.name);
+                    });
                 } else if (action === 'copy') {
-                    this.clipboard = { action: 'copy', item: item };
-                    this.contextMenu.style.display = 'none';
+                    // Copying a locked folder? Maybe check access before copying?
+                    this.verifyLockedFolderAccess(item, () => {
+                        this.clipboard = { action: 'copy', item: item };
+                        this.contextMenu.style.display = 'none';
+                    });
                 } else if (action === 'paste') {
                     if (this.clipboard) {
                         const currentParentId = this.currentPath.length > 0 ? this.currentPath[this.currentPath.length - 1].id : 'root';
@@ -8746,7 +9180,7 @@ ${instruction}
 
                         if (this.clipboard.action === 'copy') {
                             const newItem = { ...item };
-                            delete newItem.id; // Ensure new ID generation
+                            delete newItem.id;
 
                             await addDoc(collection(db, "users", this.username, "files"), {
                                 ...newItem,
@@ -8755,6 +9189,36 @@ ${instruction}
                                 createdAt: new Date()
                             });
                         }
+                    }
+                } else if (action === 'lock') {
+                    if (!this.selectedItem) return;
+                    if (this.selectedItem.type !== 'folder') {
+                        return this.showErrorModal("Apenas pastas podem ser trancadas.");
+                    }
+
+                    if (this.selectedItem.isLocked) {
+                        // UNLOCK FLOW
+                        this.showCustomInput("Digite a senha para destrancar:", async (password) => {
+                            if (password === this.selectedItem.lockPassword) {
+                                await updateDoc(doc(db, "users", this.username, "files", this.selectedItem.id), {
+                                    isLocked: false,
+                                    lockPassword: null
+                                });
+                                appendOutput("Pasta destrancada.", "success");
+                            } else {
+                                this.showErrorModal("Senha incorreta.");
+                            }
+                        });
+                    } else {
+                        // LOCK FLOW
+                        this.showCustomInput("Crie uma senha para esta pasta:", async (password) => {
+                            if (!password) return;
+                            await updateDoc(doc(db, "users", this.username, "files", this.selectedItem.id), {
+                                isLocked: true,
+                                lockPassword: password
+                            });
+                            appendOutput("Pasta trancada com sucesso.", "success");
+                        });
                     }
                 }
 
@@ -8797,6 +9261,17 @@ ${instruction}
                 if (e.key === 'Enter') {
                     if (this.selectedItem) {
                         if (this.selectedItem.type === 'folder') {
+                            if (this.selectedItem.isLocked) {
+                                this.showCustomInput("Esta pasta está trancada. Digite a senha:", (password) => {
+                                    if (password === this.selectedItem.lockPassword) {
+                                        this.currentPath.push({ id: this.selectedItem.id, name: this.selectedItem.name });
+                                        this.render();
+                                    } else {
+                                        appendOutput("Senha incorreta! Acesso negado.", "error");
+                                    }
+                                });
+                                return;
+                            }
                             this.currentPath.push({ id: this.selectedItem.id, name: this.selectedItem.name });
                             this.render();
                         } else {
@@ -9231,6 +9706,764 @@ ${instruction}
                         document.getElementById('btn-generate-prescription').click();
                     }
                 });
+            }
+        });
+
+
+
+        // --- AXON PLUGIN SYSTEM ---
+        class AxonPluginManager {
+            constructor() {
+                this.plugins = [];
+                this.activeWindows = [];
+                this.storePlugins = []; // Will load from mock or file
+                this.unsubscribePlugins = null;
+            }
+
+            init() {
+                this.injectButton();
+                this.loadStoreData();
+                this.startPluginListener(); // Real-time Firestore sync
+                // Ensure tabs are correct on init
+                this.switchTab('installed');
+            }
+
+            // Listen for user's plugins from Firestore
+            startPluginListener() {
+                if (!currentUser) return;
+                const q = query(collection(db, "users", currentUser, "files"), where("type", "==", "axon_plugin"));
+
+                this.unsubscribePlugins = onSnapshot(q, (snapshot) => {
+                    this.plugins = [];
+                    snapshot.forEach(doc => {
+                        this.plugins.push({ dbId: doc.id, ...doc.data() });
+                    });
+                    this.renderInstalled();
+                });
+            }
+
+            async loadStoreData() {
+                // Base plugins (Local backup or core)
+                const localPlugins = [
+                    {
+                        id: 'quick-notes-pro',
+                        name: 'Notas Rápidas Pro',
+                        author: 'Community',
+                        description: 'Bloco de notas persistente. Salva suas anotações automaticamente.',
+                        icon: 'https://cdn-icons-png.flaticon.com/512/3209/3209265.png',
+                        version: '2.0',
+                        html: `
+                            <style>body{margin:0;display:flex;flex-direction:column;height:100vh; font-family: sans-serif;} textarea{flex:1;border:none;padding:15px;font-size: 14px; resize:none;outline:none;background:#fffaf0; line-height: 1.5; color: #444;} ::placeholder { color: #aaa; }</style>
+                            <textarea id="note" placeholder="Digite suas notas aqui..."></textarea>
+                            <script>
+                                const area = document.getElementById('note');
+                                // Load from local storage inside iframe (sandboxed per domain/origin)
+                                area.value = localStorage.getItem('axon_quick_note') || '';
+                                area.addEventListener('input', () => localStorage.setItem('axon_quick_note', area.value));
+                                
+                                // Also listen for requests 
+                                window.addEventListener('message', (event) => {
+                                    if(event.data && event.data.type === 'GET_NOTES') {
+                                        // Reply?
+                                    }
+                                });
+                            <\/script>
+                        `
+                    }
+                ];
+
+                this.storePlugins = [...localPlugins];
+
+                // Fetch from Local JSON file (plugins.json)
+                // This requires the file to be served via HTTP (localhost) or permissive browser settings.
+                const localManifestUrl = './plugins.json';
+
+                try {
+                    console.log(`Axon Store: Fetching local plugins from ${localManifestUrl}...`);
+                    const response = await fetch(localManifestUrl);
+                    if (response.ok) {
+                        const remotePlugin = await response.json();
+                        // If remote is an array, spread it. If single object, push it.
+                        if (Array.isArray(remotePlugin)) {
+                            this.storePlugins = [...this.storePlugins, ...remotePlugin];
+                        } else {
+                            this.storePlugins.push(remotePlugin);
+                        }
+                        console.log("Axon Store: Plugins loaded from local JSON.");
+                    } else {
+                        // 404 is common if file doesn't exist yet, just warn silently or log info
+                        console.log("Axon Store: No local 'plugins.json' found or fetch failed. Status:", response.status);
+                    }
+                } catch (e) {
+                    // Common error with file:// protocol or missing file
+                    console.warn("Axon Store: Could not load local 'plugins.json'. Ensure you are running a local server if using this feature. Error:", e);
+                }
+
+                // Re-render store if view is active
+                this.renderStore();
+            }
+
+            injectButton() {
+                // Target: Header 'Enviar' button (btn-transfer-file)
+                const refBtn = document.getElementById('btn-transfer-file');
+
+                if (refBtn && refBtn.parentNode) {
+                    // Check if already exists
+                    if (document.getElementById('btn-tools')) return;
+
+                    const btn = document.createElement('div');
+                    btn.id = 'btn-tools';
+                    btn.className = 'status-bar';
+                    btn.style.cssText = 'cursor:pointer;margin-right:10px;background:var(--highlight-color);color:#fff;border-color:transparent';
+                    btn.innerHTML = '<div class="status-item"><i class="fas fa-cubes"></i><span>Ferramentas</span></div>';
+                    btn.onclick = () => this.openManager();
+
+                    // Insert after btn-transfer-file
+                    if (refBtn.nextSibling) {
+                        refBtn.parentNode.insertBefore(btn, refBtn.nextSibling);
+                    } else {
+                        refBtn.parentNode.appendChild(btn);
+                    }
+                } else {
+                    // Fallback to footer logic removed or simplied if needed, but Header is preferred.
+                }
+            }
+
+            openManager() {
+                document.getElementById('plugin-manager-modal').style.display = 'flex';
+                this.renderInstalled();
+                this.renderStore(); // Ensure store is rendered
+            }
+
+            switchTab(tab) {
+                const installedView = document.getElementById('view-installed-plugins');
+                const storeView = document.getElementById('view-axon-store');
+                const tabInstalled = document.getElementById('tab-installed-plugins');
+                const tabStore = document.getElementById('tab-axon-store');
+
+                if (installedView) installedView.style.display = tab === 'installed' ? 'block' : 'none';
+                if (storeView) storeView.style.display = tab === 'store' ? 'block' : 'none';
+                if (tabInstalled) tabInstalled.classList.toggle('active', tab === 'installed');
+                if (tabStore) tabStore.classList.toggle('active', tab === 'store');
+
+                if (tab === 'store') this.renderStore();
+            }
+
+            renderInstalled() {
+                const container = document.getElementById('installed-plugins-list');
+                const emptyMsg = document.getElementById('no-plugins-msg');
+                if (!container) return;
+
+                container.innerHTML = '';
+
+                // Add Import Button at the top/start of the list as a special card or header action
+                // User asked for "Import button layout... similar to other buttons... in Installed tab"
+                // Let's create a header area for the installed tab
+                // Wait, the HTML structure for 'view-installed-plugins' is just the grid. 
+                // I'll prepend a toolbar div.
+                const toolbar = document.createElement('div');
+                toolbar.style.cssText = 'width: 100%; padding: 10px 15px; display: flex; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--border-color); margin-bottom: 10px;';
+                toolbar.innerHTML = `
+                    <button class="patient-action-button" onclick="window.axonPluginManager.importFromFile()">
+                        <i class="fas fa-file-import"></i> Importar Plugin
+                    </button>
+                `;
+                // If I append to container, it messes up grid. 
+                // Grid is 'plugin-grid'. 
+                // I should clear container and insert toolbar BEFORE the logic of items? 
+                // No, grid should only contain cards. Toolbar should be outside.
+                // But the HTML for tab body is hardcoded. 
+                // I will inject the toolbar into the parent of container if not exists?
+                // Or just clear container AND add toolbar? But toolbar shouldn't be a grid item.
+                // Let's modify the modal HTML dynamically properly or just assume grid handles full width items? No.
+                // I will manipulate the DOM of 'view-installed-plugins' to ensure toolbar exists.
+
+                const installedView = document.getElementById('view-installed-plugins');
+                let existingToolbar = installedView.querySelector('.installed-toolbar');
+                if (!existingToolbar) {
+                    existingToolbar = toolbar;
+                    existingToolbar.className = 'installed-toolbar';
+                    installedView.insertBefore(existingToolbar, container);
+                }
+
+                if (this.plugins.length === 0) {
+                    if (emptyMsg) emptyMsg.style.display = 'block';
+                    return;
+                }
+                if (emptyMsg) emptyMsg.style.display = 'none';
+
+                this.plugins.forEach(p => {
+                    const card = this.createCard(p, true);
+                    container.appendChild(card);
+                });
+            }
+
+            renderStore() {
+                const container = document.getElementById('store-plugins-list');
+                const searchEl = document.getElementById('store-search');
+                if (!container) return;
+
+                const search = searchEl ? searchEl.value.toLowerCase() : "";
+                container.innerHTML = '';
+
+                // Styling explicitly for Store to look like an App Store
+                container.style.display = 'grid';
+                container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+                container.style.gap = '20px';
+
+                this.storePlugins
+                    .filter(p => p.name.toLowerCase().includes(search) || p.description.toLowerCase().includes(search))
+                    .forEach(p => {
+                        const card = this.createStoreCard(p);
+                        container.appendChild(card);
+                    });
+            }
+
+            createCard(plugin, isInstalled) {
+                const div = document.createElement('div');
+                div.className = 'plugin-card';
+                // Use a database ID or fallback to id field
+                const pId = plugin.dbId || plugin.id;
+
+                div.innerHTML = `
+                    <div class="plugin-icon-area">
+                        <img src="${plugin.icon || 'default_icon.png'}" class="plugin-icon-img" onerror="this.src='https://via.placeholder.com/50'">
+                        <div class="plugin-info">
+                            <div class="plugin-name">${plugin.name}</div>
+                            <div class="plugin-author">v${plugin.version} • ${plugin.author}</div>
+                        </div>
+                    </div>
+                    <div class="plugin-desc">${plugin.description || 'Sem descrição.'}</div>
+                    <div class="plugin-actions">
+                        <button class="plugin-btn btn-open-plugin" onclick="window.axonPluginManager.openPlugin('${pId}')"><i class="fas fa-play"></i> Abrir</button>
+                        <button class="plugin-btn btn-uninstall" onclick="window.axonPluginManager.uninstallPlugin('${pId}')" title="Desinstalar"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                return div;
+            }
+
+            createStoreCard(plugin) {
+                const div = document.createElement('div');
+                div.className = 'plugin-store-card';
+                div.style.cssText = `
+                    background: var(--glass-bg);
+                    border: 1px solid var(--border-color);
+                    border-radius: 12px;
+                    padding: 20px;
+                    display: flex;
+                    flex-direction: column;
+                    transition: transform 0.2s;
+                `;
+                div.onmouseover = () => div.style.transform = 'translateY(-2px)';
+                div.onmouseout = () => div.style.transform = 'translateY(0)';
+
+                const isAlreadyInstalled = this.plugins.some(p => p.id === plugin.id); // Simple check by internal ID
+
+                div.innerHTML = `
+                    <div style="display:flex; gap: 15px; margin-bottom: 15px;">
+                        <img src="${plugin.icon}" style="width: 60px; height: 60px; border-radius: 12px; object-fit: cover; background: #fff;">
+                        <div>
+                            <div style="font-weight: bold; font-size: 16px; color: var(--text-color);">${plugin.name}</div>
+                            <div style="font-size: 12px; opacity: 0.7; margin-top: 4px;">${plugin.author}</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-color); opacity: 0.8; margin-bottom: 20px; flex: 1; line-height: 1.4;">
+                        ${plugin.description}
+                    </div>
+                    <button class="app-modal-button" 
+                        onclick="window.axonPluginManager.installPlugin('${plugin.id}')"
+                        style="width: 100%; ${isAlreadyInstalled ? 'background: var(--success-color); cursor: default;' : ''}"
+                        ${isAlreadyInstalled ? 'disabled' : ''}>
+                        ${isAlreadyInstalled ? '<i class="fas fa-check"></i> Instalado' : '<i class="fas fa-download"></i> Obter'}
+                    </button>
+                `;
+                return div;
+            }
+
+            async installPlugin(storePluginId) {
+                const plugin = this.storePlugins.find(p => p.id === storePluginId);
+                if (!plugin) return;
+
+                // 1. Convert plugin content to File for Pinata
+                const jsonContent = JSON.stringify(plugin);
+                const blob = new Blob([jsonContent], { type: 'application/json' });
+                const file = new File([blob], plugin.name + ".json", { type: "application/json" });
+
+                // 2. Upload to Pinata (Persist content)
+                appendOutput(`Instalando ${plugin.name} na nuvem...`, "info");
+                try {
+                    const uploadResult = await uploadToPinata(file);
+
+                    // 3. Save reference to Firestore (Persist user registry)
+                    // We use type 'axon_plugin' to distinguish from regular files
+                    await addDoc(collection(db, "users", currentUser, "files"), {
+                        name: plugin.name,
+                        type: 'axon_plugin',
+                        originalId: plugin.id,
+                        icon: plugin.icon,
+                        description: plugin.description,
+                        author: plugin.author,
+                        version: plugin.version,
+                        createdAt: new Date(),
+                        size: file.size,
+                        ipfsHash: uploadResult.ipfsHash,
+                        pinataKey: uploadResult.pinataKey,
+                        content: plugin.html
+                    });
+
+                    // Optimistic Update
+                    const newPlugin = { ...plugin, dbId: 'temp_' + Date.now() };
+                    if (!this.plugins.some(p => p.originalId === plugin.id)) {
+                        this.plugins.push(newPlugin);
+                    }
+                    this.renderInstalled();
+
+                    appendOutput("Plugin instalado e salvo com sucesso!", "success");
+                    this.switchTab('installed');
+                } catch (e) {
+                    console.error(e);
+                    appendOutput("Erro ao instalar plugin: " + e.message, "error");
+                }
+            }
+
+            async uninstallPlugin(dbId) {
+                showConfirmModal("Tem certeza que deseja remover este plugin?", async () => {
+                    try {
+                        await deleteDoc(doc(db, "users", currentUser, "files", dbId));
+                        // Optimistic
+                        this.plugins = this.plugins.filter(p => p.dbId !== dbId);
+                        this.renderInstalled();
+                        appendOutput("Plugin removido.", "success");
+                    } catch (e) {
+                        appendOutput("Erro ao remover: " + e.message, "error");
+                    }
+                });
+            }
+
+            async importFromFile() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = async event => {
+                        try {
+                            const plugin = JSON.parse(event.target.result);
+                            if (plugin.name && plugin.html) {
+                                // Check for duplicates
+                                const existing = this.plugins.find(p => p.name === plugin.name);
+                                if (existing) {
+                                    appendOutput(`O plugin '${plugin.name}' já está instalado!`, "error");
+                                    return;
+                                }
+
+                                // Install it properly via Pinata
+                                const blob = new Blob([JSON.stringify(plugin)], { type: 'application/json' });
+                                const uploadFile = new File([blob], plugin.name + ".json", { type: "application/json" });
+
+                                appendOutput("Importando e salvando plugin...", "info");
+                                const uploadResult = await uploadToPinata(uploadFile);
+
+                                const docData = {
+                                    name: plugin.name,
+                                    type: 'axon_plugin',
+                                    originalId: plugin.id || 'custom-' + Date.now(),
+                                    icon: plugin.icon || 'https://via.placeholder.com/50',
+                                    description: plugin.description || 'Plugin importado',
+                                    author: plugin.author || 'User',
+                                    version: plugin.version || '1.0',
+                                    createdAt: new Date(),
+                                    size: uploadFile.size,
+                                    ipfsHash: uploadResult.ipfsHash,
+                                    pinataKey: uploadResult.pinataKey,
+                                    content: plugin.html
+                                };
+
+                                await addDoc(collection(db, "users", currentUser, "files"), docData);
+
+                                // Optimistic Update removed to prevent duplication (Firestore listener handles it)
+                                // this.plugins.push({ ...docData, dbId: 'temp_imp_' + Date.now() });
+                                this.renderInstalled();
+
+                                this.switchTab('installed');
+                                appendOutput("Plugin importado com sucesso.", "success");
+                            } else {
+                                throw new Error("Formato inválido (requer name e html).");
+                            }
+                        } catch (err) {
+                            appendOutput("Erro ao importar: " + err.message, "error");
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            }
+
+            openPlugin(dbIdOrId) {
+                // Find in loaded plugins
+                // plugins array now has firestore data
+                let plugin = this.plugins.find(p => p.dbId === dbIdOrId);
+
+                // If not found (maybe manual ID passed?), try to find by original ID?
+                if (!plugin) plugin = this.plugins.find(p => p.originalId === dbIdOrId);
+
+                if (!plugin) return;
+
+                document.getElementById('plugin-manager-modal').style.display = 'none';
+                this.createFloatingWindow(plugin);
+            }
+
+            createFloatingWindow(plugin) {
+                const id = 'win_' + Date.now();
+                const win = document.createElement('div');
+                win.className = 'floating-plugin-window';
+                win.id = id;
+                win.style.top = (100 + this.activeWindows.length * 20) + 'px';
+                win.style.left = (100 + this.activeWindows.length * 20) + 'px';
+
+                // Loading Screen Overlay
+                const loadingId = 'loading_' + id;
+
+                win.innerHTML = `
+                    <div class="floating-header" id="${id}_header">
+                        <div class="floating-title">
+                            <img src="${plugin.icon}" style="width:16px;height:16px;"> ${plugin.name}
+                        </div>
+                        <div class="floating-controls">
+                            <div class="float-btn minimize-btn" onclick="window.axonPluginManager.minimizeWindow('${id}')"></div>
+                            <div class="float-btn close-btn" onclick="document.getElementById('${id}').remove()"></div>
+                        </div>
+                    </div>
+                    <div class="floating-content" style="position:relative;">
+                        <iframe class="floating-iframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+                        <div id="${loadingId}" style="position:absolute;top:0;left:0;width:100%;height:100%;background:var(--bg-color);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;">
+                            <i class="fas fa-spinner fa-spin" style="font-size:24px;color:var(--highlight-color);margin-bottom:10px;"></i>
+                            <span style="font-size:12px;opacity:0.8;">Carregando Plugin...</span>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(win);
+                this.makeDraggable(win);
+
+                const iframe = win.querySelector('iframe');
+                const loadingOverlay = document.getElementById(loadingId);
+
+                // Hide loading when iframe loads
+                iframe.onload = () => {
+                    setTimeout(() => {
+                        loadingOverlay.style.opacity = '0';
+                        setTimeout(() => loadingOverlay.style.display = 'none', 300);
+                    }, 500); // Small delay for smooth effect
+                };
+
+                // Use the cached content if available, otherwise fetch from IPFS (not implemented in this snippet for simplicity, assuming content is cached)
+                let htmlContent = plugin.content;
+                // Inject the bridge script
+                // We use postMessage, so we need to inject a helper script into the iframe to make it easier for developers?
+                /*
+                   We inject a script that defines window.AxonPluginBridge for backward compatibility 
+                   or simply a helper that proxies to postMessage
+                */
+                const bridgeScript = `
+                    <script>
+                        window.AxonPluginBridge = {
+                            sendToChat: (text) => window.parent.postMessage({ type: 'AXON_PLUGIN_MESSAGE', action: 'sendToChat', payload: text }, '*'),
+                            getAnamnesis: () => { window.parent.postMessage({ type: 'AXON_PLUGIN_MESSAGE', action: 'getAnamnesis', reqId: Date.now() }, '*'); },
+                            callAI: (prompt) => { window.parent.postMessage({ type: 'AXON_PLUGIN_MESSAGE', action: 'callAI', payload: prompt, reqId: Date.now() }, '*'); }
+                        };
+                    <\/script>
+                `;
+
+                // Fix: Properly inject the bridge script into the content
+                htmlContent = bridgeScript + htmlContent;
+
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                iframe.src = URL.createObjectURL(blob);
+
+                this.activeWindows.push(win);
+            }
+
+            makeDraggable(elmnt) {
+                var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+                const header = elmnt.querySelector('.floating-header');
+                if (header) {
+                    header.onmousedown = dragMouseDown;
+                }
+
+                function dragMouseDown(e) {
+                    e = e || window.event;
+                    e.preventDefault();
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    document.onmouseup = closeDragElement;
+                    document.onmousemove = elementDrag;
+
+                    // Simple Z-index mgmt
+                    elmnt.style.zIndex = 1500;
+                }
+
+                function elementDrag(e) {
+                    e = e || window.event;
+                    e.preventDefault();
+                    pos1 = pos3 - e.clientX;
+                    pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                    elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+                }
+
+                function closeDragElement() {
+                    document.onmouseup = null;
+                    document.onmousemove = null;
+                }
+            }
+
+
+            minimizeWindow(id) {
+                const win = document.getElementById(id);
+                if (!win) return;
+
+                // Store original dimensions before hiding? 
+                // Actually display:none might reset iframe state in some browsers, but usually just hides.
+                // The "half screen" bug might be due to re-render issues.
+                // Let's ensure we save the size? CSS handles it? 
+                // If the bug is "half screen content" inside iframe, it's a resize event issue.
+                // If it's "half window visible", it's a position issue.
+                // Assuming content issue: force redraw on restore.
+
+                win.style.display = 'none';
+
+                // Add to HEADER (header-right) taskbar
+                let taskbar = document.getElementById('plugin-taskbar-header');
+                if (!taskbar) {
+                    // Create it if not exists, look for header-right
+                    const headerRight = document.querySelector('.header-right');
+                    if (headerRight) {
+                        taskbar = document.createElement('div');
+                        taskbar.id = 'plugin-taskbar-header';
+                        taskbar.style.cssText = 'display: flex; gap: 8px; margin-right: 15px; align-items: center;';
+                        // Insert before the first child or search/theme buttons? 
+                        // Let's insert at the beginning of header-right
+                        headerRight.insertBefore(taskbar, headerRight.firstChild);
+                    } else {
+                        // Fallback to body or footer if header not found (unlikely)
+                        console.warn("Header Right not found for taskbar");
+                        return;
+                    }
+                }
+
+                // Get icon from header
+                const img = win.querySelector('.floating-header img');
+                const iconSrc = img ? img.src : 'https://via.placeholder.com/20';
+                const titleEl = win.querySelector('.floating-title');
+                const title = titleEl ? titleEl.textContent.trim() : 'Plugin';
+
+                const tab = document.createElement('div');
+                tab.id = 'tab_' + id;
+                // ROUNDED STYLE as requested
+                tab.style.cssText = `
+                    cursor: pointer; 
+                    background: rgba(255, 255, 255, 0.1); 
+                    padding: 5px 12px; 
+                    border-radius: 20px; 
+                    border: 1px solid rgba(255,255,255,0.2); 
+                    display: flex; 
+                    align-items: center; 
+                    gap: 6px;
+                    transition: all 0.2s;
+                    backdrop-filter: blur(5px);
+                `;
+                tab.onmouseover = () => tab.style.background = 'rgba(255, 255, 255, 0.2)';
+                tab.onmouseout = () => tab.style.background = 'rgba(255, 255, 255, 0.1)';
+
+                tab.innerHTML = `<img src="${iconSrc}" style="width:16px;height:16px;border-radius:50%;"> <span style="font-size: 11px; color: var(--text-color);">${title}</span>`;
+                tab.title = "Restaurar " + title;
+                tab.onclick = () => this.restoreWindow(id);
+
+                taskbar.appendChild(tab);
+            }
+
+            restoreWindow(id) {
+                const win = document.getElementById(id);
+                if (win) {
+                    win.style.display = 'flex'; // Was 'block', flex matches css usually
+                    // Force Layout Recalculation to fix text/half-screen glitches
+                    // Trigger a resize event on the window to help iframe content adjust
+                    window.dispatchEvent(new Event('resize'));
+
+                    // Simple fix for "half screen" if it means the iframe didn't fill:
+                    const container = win.querySelector('.floating-content');
+                    if (container) {
+                        container.style.display = 'none';
+                        container.offsetHeight; // force reflow
+                        container.style.display = 'flex'; // or block
+                    }
+
+                    // Bring to front
+                    this.activeWindows.forEach(w => w.style.zIndex = 1000);
+                    win.style.zIndex = 1500;
+                }
+                const tab = document.getElementById('tab_' + id);
+                if (tab) tab.remove();
+            }
+        }
+
+        // --- MESSAGE HANDLER FOR PLUGINS ---
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'AXON_PLUGIN_MESSAGE') {
+                const { action, payload, reqId } = event.data;
+
+                // PERMISSION CHECK
+                if (globalSettings.bridgePermissions && globalSettings.bridgePermissions[action] === false) {
+                    if (reqId) {
+                        event.source.postMessage({
+                            type: 'AXON_PLUGIN_RESPONSE',
+                            reqId: reqId,
+                            error: `Permissão negada para '${action}'. Admin desativou.`
+                        }, '*');
+                    }
+                    appendOutput(`Plugin tentou usar '${action}' mas foi bloqueado.`, 'error');
+                    return;
+                }
+
+                if (action === 'sendToChat') {
+                    const input = document.getElementById('command-input');
+                    const cmdInput = document.getElementById('command-input');
+                    if (cmdInput) {
+                        cmdInput.value = payload;
+                        cmdInput.focus();
+                        // Auto-submit via Enter key event
+                        const enterEvent = new KeyboardEvent('keydown', {
+                            bubbles: true, cancelable: true, keyCode: 13, key: 'Enter', code: 'Enter'
+                        });
+                        cmdInput.dispatchEvent(enterEvent);
+                    }
+                }
+
+                // Add more handlers here (getAnamnesis, etc) if we implement two-way sync
+                if (action === 'getAnamnesis') {
+                    // Send back
+                    if (event.source) {
+                        event.source.postMessage({
+                            type: 'AXON_PLUGIN_RESPONSE',
+                            reqId: reqId,
+                            data: typeof anamnesis !== 'undefined' ? anamnesis : {}
+                        }, '*');
+                    }
+                }
+
+                if (action === 'callAI') {
+                    // Call Gemini API (or current provider)
+                    if (event.source && payload) {
+                        // Async operation, but we don't want to block the listener
+                        callGeminiAPI(payload).then(response => {
+                            event.source.postMessage({
+                                type: 'AXON_PLUGIN_RESPONSE',
+                                reqId: reqId,
+                                data: response
+                            }, '*');
+                        }).catch(err => {
+                            event.source.postMessage({
+                                type: 'AXON_PLUGIN_RESPONSE',
+                                reqId: reqId,
+                                error: err.message,
+                                data: "Erro ao consultar IA: " + err.message
+                            }, '*');
+                        });
+
+                    }
+                }
+
+                if (action === 'storage') {
+                    // payload: { content: string/blob, filename: string }
+                    if (event.source && payload && payload.content && payload.filename) {
+                        const blob = new Blob([payload.content]);
+                        const file = new File([blob], payload.filename);
+
+                        uploadToPinata(file).then(res => {
+                            event.source.postMessage({
+                                type: 'AXON_PLUGIN_RESPONSE',
+                                reqId: reqId,
+                                data: {
+                                    success: true,
+                                    ipfsHash: res.ipfsHash,
+                                    gatewayUrl: `https://gateway.pinata.cloud/ipfs/${res.ipfsHash}`
+                                }
+                            }, '*');
+                        }).catch(err => {
+                            event.source.postMessage({
+                                type: 'AXON_PLUGIN_RESPONSE',
+                                reqId: reqId,
+                                error: "Falha no upload: " + err.message
+                            }, '*');
+                        });
+                    }
+                }
+
+                if (action === 'storageList') {
+                    // List files from Firestore for current user
+                    try {
+                        const q = query(collection(db, "users", currentUser, "files"), orderBy("lastModified", "desc"));
+                        getDocs(q).then(snapshot => {
+                            const files = [];
+                            snapshot.forEach(doc => {
+                                files.push({ id: doc.id, ...doc.data() });
+                            });
+                            event.source.postMessage({
+                                type: 'AXON_PLUGIN_RESPONSE',
+                                reqId: reqId,
+                                data: { success: true, files: files }
+                            }, '*');
+                        }).catch(e => {
+                            event.source.postMessage({ type: 'AXON_PLUGIN_RESPONSE', reqId: reqId, error: e.message }, '*');
+                        });
+                    } catch (e) {
+                        event.source.postMessage({ type: 'AXON_PLUGIN_RESPONSE', reqId: reqId, error: e.message }, '*');
+                    }
+                }
+
+                if (action === 'storageRegister') {
+                    // Register a file in Firestore (metadata only)
+                    // payload: { name, ipfsHash, size, mimeType }
+                    if (payload && payload.name && payload.ipfsHash) {
+                        try {
+                            const fileData = {
+                                name: payload.name,
+                                ipfsHash: payload.ipfsHash,
+                                size: payload.size || 0,
+                                type: payload.mimeType || 'application/octet-stream',
+                                pinataKey: 'shared', // or specific if available
+                                lastModified: new Date()
+                            };
+                            addDoc(collection(db, "users", currentUser, "files"), fileData).then(docRef => {
+                                event.source.postMessage({
+                                    type: 'AXON_PLUGIN_RESPONSE',
+                                    reqId: reqId,
+                                    data: { success: true, id: docRef.id }
+                                }, '*');
+                            }).catch(e => {
+                                event.source.postMessage({ type: 'AXON_PLUGIN_RESPONSE', reqId: reqId, error: e.message }, '*');
+                            });
+                        } catch (e) {
+                            event.source.postMessage({ type: 'AXON_PLUGIN_RESPONSE', reqId: reqId, error: e.message }, '*');
+                        }
+                    } else {
+                        event.source.postMessage({ type: 'AXON_PLUGIN_RESPONSE', reqId: reqId, error: "Dados incompletos (name, ipfsHash obrigatórios)" }, '*');
+                    }
+                }
+            }
+        });
+
+        window.axonPluginManager = new AxonPluginManager();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof initApp === 'function') {
+                // Wait a bit for auth
+                setTimeout(() => window.axonPluginManager.init(), 2000);
             }
         });
 
