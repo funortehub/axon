@@ -9773,30 +9773,48 @@ ${instruction}
                 ];
 
                 this.storePlugins = [...localPlugins];
+                this.storeStatusMessage = ""; // Reset status
 
                 // Fetch from Local JSON file (plugins.json)
-                // This requires the file to be served via HTTP (localhost) or permissive browser settings.
                 const localManifestUrl = './plugins.json';
 
                 try {
                     console.log(`Axon Store: Fetching local plugins from ${localManifestUrl}...`);
+                    this.storeStatusMessage = "Carregando plugins locais...";
+                    this.renderStore(); // Show loading state
+
                     const response = await fetch(localManifestUrl);
                     if (response.ok) {
-                        const remotePlugin = await response.json();
-                        // If remote is an array, spread it. If single object, push it.
-                        if (Array.isArray(remotePlugin)) {
-                            this.storePlugins = [...this.storePlugins, ...remotePlugin];
-                        } else {
-                            this.storePlugins.push(remotePlugin);
+                        try {
+                            const remotePlugin = await response.json();
+                            if (Array.isArray(remotePlugin)) {
+                                this.storePlugins = [...this.storePlugins, ...remotePlugin];
+                            } else {
+                                this.storePlugins.push(remotePlugin);
+                            }
+                            console.log("Axon Store: Plugins loaded from local JSON.");
+                            this.storeStatusMessage = ""; // Clear on success
+                        } catch (parseErr) {
+                            console.error("Axon Store: Error parsing JSON:", parseErr);
+                            this.storeStatusMessage = "Erro: plugins.json inválido (JSON malformado).";
                         }
-                        console.log("Axon Store: Plugins loaded from local JSON.");
                     } else {
-                        // 404 is common if file doesn't exist yet, just warn silently or log info
                         console.log("Axon Store: No local 'plugins.json' found or fetch failed. Status:", response.status);
+                        // Don't show error for 404, just silent fallback (or maybe a hint if empty)
+                        if (response.status === 404) {
+                            this.storeStatusMessage = ""; // Silent, just use defaults
+                        } else {
+                            this.storeStatusMessage = `Erro ao carregar plugins: HTTP ${response.status}`;
+                        }
                     }
                 } catch (e) {
-                    // Common error with file:// protocol or missing file
-                    console.warn("Axon Store: Could not load local 'plugins.json'. Ensure you are running a local server if using this feature. Error:", e);
+                    console.warn("Axon Store: Fetch error:", e);
+                    // Helpful message for file:// protocol
+                    if (window.location.protocol === 'file:') {
+                        this.storeStatusMessage = "Aviso: Navegadores bloqueiam leitura de arquivo local (CORS). Use um servidor local ou publique no GitHub Pages.";
+                    } else {
+                        this.storeStatusMessage = "Erro de conexão ao buscar plugins.json";
+                    }
                 }
 
                 // Re-render store if view is active
@@ -9832,7 +9850,8 @@ ${instruction}
             openManager() {
                 document.getElementById('plugin-manager-modal').style.display = 'flex';
                 this.renderInstalled();
-                this.renderStore(); // Ensure store is rendered
+                // Trigger load again when opening, to catch new file changes if possible (though browser caches)
+                this.loadStoreData().then(() => this.renderStore());
             }
 
             switchTab(tab) {
@@ -9905,6 +9924,19 @@ ${instruction}
 
                 const search = searchEl ? searchEl.value.toLowerCase() : "";
                 container.innerHTML = '';
+
+                // Show Status/Error Message if exists
+                if (this.storeStatusMessage) {
+                    const msgDiv = document.createElement('div');
+                    msgDiv.style.cssText = 'grid-column: 1 / -1; padding: 15px; margin-bottom: 20px; background: rgba(50,50,50,0.05); border-left: 4px solid var(--highlight-color); border-radius: 4px; color: var(--text-color); font-size: 14px;';
+                    // Use error color if it contains "Erro"
+                    if (this.storeStatusMessage.toLowerCase().includes('erro') || this.storeStatusMessage.toLowerCase().includes('aviso')) {
+                        msgDiv.style.borderLeftColor = 'var(--error-color)';
+                        msgDiv.style.background = 'rgba(255,0,0,0.05)';
+                    }
+                    msgDiv.innerHTML = `<strong>Status:</strong> ${this.storeStatusMessage}`;
+                    container.appendChild(msgDiv);
+                }
 
                 // Styling explicitly for Store to look like an App Store
                 container.style.display = 'grid';
