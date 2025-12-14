@@ -3502,6 +3502,29 @@
                         <!-- Dynamically populated -->
                     </div>
                 </div>
+
+                <div class="admin-section"
+                    style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                    <h3>Gerenciamento de Plugins (Axon Store)</h3>
+                    <div style="font-size:12px; opacity:0.7; margin-bottom:15px">Carregue plugins (.json) para a Axon
+                        Store global.</div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button class="app-modal-button"
+                            onclick="document.getElementById('admin-plugin-upload').click()">
+                            <i class="fas fa-upload"></i> Upload Plugin (.json)
+                        </button>
+                        <input type="file" id="admin-plugin-upload" accept=".json" style="display: none;"
+                            onchange="window.adminUploadPlugin(this)">
+                    </div>
+
+                    <div id="admin-plugins-list" class="pinata-file-list">
+                        <!-- List populated by JS -->
+                        <div style="padding: 10px; text-align: center; color: var(--text-color); opacity: 0.5;">
+                            Carregando plugins...
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -9757,68 +9780,50 @@ ${instruction}
                             <textarea id="note" placeholder="Digite suas notas aqui..."></textarea>
                             <script>
                                 const area = document.getElementById('note');
-                                // Load from local storage inside iframe (sandboxed per domain/origin)
                                 area.value = localStorage.getItem('axon_quick_note') || '';
                                 area.addEventListener('input', () => localStorage.setItem('axon_quick_note', area.value));
-                                
-                                // Also listen for requests 
-                                window.addEventListener('message', (event) => {
-                                    if(event.data && event.data.type === 'GET_NOTES') {
-                                        // Reply?
-                                    }
-                                });
                             <\/script>
                         `
                     }
                 ];
 
                 this.storePlugins = [...localPlugins];
-                this.storeStatusMessage = ""; // Reset status
 
-                // Fetch from Local JSON file (plugins.json)
-                const localManifestUrl = './plugins.json';
-
-                try {
-                    console.log(`Axon Store: Fetching local plugins from ${localManifestUrl}...`);
-                    this.storeStatusMessage = "Carregando plugins locais...";
-                    this.renderStore(); // Show loading state
-
-                    const response = await fetch(localManifestUrl);
-                    if (response.ok) {
-                        try {
-                            const remotePlugin = await response.json();
-                            if (Array.isArray(remotePlugin)) {
-                                this.storePlugins = [...this.storePlugins, ...remotePlugin];
-                            } else {
-                                this.storePlugins.push(remotePlugin);
-                            }
-                            console.log("Axon Store: Plugins loaded from local JSON.");
-                            this.storeStatusMessage = ""; // Clear on success
-                        } catch (parseErr) {
-                            console.error("Axon Store: Error parsing JSON:", parseErr);
-                            this.storeStatusMessage = "Erro: plugins.json inválido (JSON malformado).";
-                        }
-                    } else {
-                        console.log("Axon Store: No local 'plugins.json' found or fetch failed. Status:", response.status);
-                        // Don't show error for 404, just silent fallback (or maybe a hint if empty)
-                        if (response.status === 404) {
-                            this.storeStatusMessage = ""; // Silent, just use defaults
-                        } else {
-                            this.storeStatusMessage = `Erro ao carregar plugins: HTTP ${response.status}`;
-                        }
-                    }
-                } catch (e) {
-                    console.warn("Axon Store: Fetch error:", e);
-                    // Helpful message for file:// protocol
-                    if (window.location.protocol === 'file:') {
-                        this.storeStatusMessage = "Aviso: Navegadores bloqueiam leitura de arquivo local (CORS). Use um servidor local ou publique no GitHub Pages.";
-                    } else {
-                        this.storeStatusMessage = "Erro de conexão ao buscar plugins.json";
-                    }
+                // Show Loading Animation
+                const storeList = document.getElementById('store-plugins-list');
+                if (storeList) {
+                    storeList.innerHTML = `
+                        <div style="grid-column: 1 / -1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 50px; color: var(--text-color); opacity: 0.8;">
+                            <div class="ai-processing-animation" style="transform:scale(0.8); margin-bottom:15px;">
+                                <div class="scanner-animation">
+                                    <div class="brain-icon"><i class="fas fa-cubes"></i></div>
+                                    <div class="scanner-line"></div>
+                                </div>
+                            </div>
+                            <div style="font-size:14px; font-weight:500;">Conectando à Axon Store...</div>
+                            <div style="font-size:11px; opacity:0.6; margin-top:5px;">Buscando plugins via satélite Pinata...</div>
+                        </div>
+                     `;
                 }
 
-                // Re-render store if view is active
-                this.renderStore();
+                if (this.unsubscribeStore) this.unsubscribeStore();
+
+                // Real-time listener to Global Store
+                this.unsubscribeStore = onSnapshot(collection(db, "axon_store_plugins"), (snapshot) => {
+                    // Update list
+                    this.storePlugins = [...localPlugins];
+
+                    snapshot.forEach(doc => {
+                        this.storePlugins.push(doc.data());
+                    });
+
+                    this.storeStatusMessage = "";
+                    this.renderStore();
+                }, (error) => {
+                    console.error("Store Error", error);
+                    this.storeStatusMessage = "Erro de conexão com a loja. Verifique sua internet.";
+                    this.renderStore();
+                });
             }
 
             injectButton() {
@@ -10491,6 +10496,111 @@ ${instruction}
         });
 
         window.axonPluginManager = new AxonPluginManager();
+
+        // --- ADMIN PLUGIN MANAGEMENT ---
+        window.adminUploadPlugin = async (input) => {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const pluginData = JSON.parse(e.target.result);
+                    if (!pluginData.name || !pluginData.id || !pluginData.version) {
+                        alert("JSON inválido. Requer name, id e version.");
+                        return;
+                    }
+                    appendOutput(`Enviando plugin ${pluginData.name} para Pinata...`, "info");
+
+                    const uploadResult = await uploadToPinata(file);
+
+                    const docData = {
+                        id: pluginData.id,
+                        name: pluginData.name,
+                        description: pluginData.description || "",
+                        version: pluginData.version,
+                        author: pluginData.author || "Admin",
+                        icon: pluginData.icon || "https://via.placeholder.com/150",
+                        ipfsHash: uploadResult.ipfsHash,
+                        pinataKey: uploadResult.pinataKey,
+                        size: file.size,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                        html: pluginData.html || ""
+                    };
+
+                    await addDoc(collection(db, "axon_store_plugins"), docData);
+
+                    appendOutput(`Plugin ${pluginData.name} publicado na Store!`, "success");
+                    alert("Plugin publicado com sucesso!");
+                    input.value = ''; // Reset input
+                } catch (err) {
+                    console.error(err);
+                    alert("Erro ao processar plugin: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        window.deleteStorePlugin = async (docId) => {
+            if (!confirm("Tem certeza que deseja apagar este plugin da Loja?")) return;
+            try {
+                await deleteDoc(doc(db, "axon_store_plugins", docId));
+                alert("Plugin removido.");
+            } catch (e) {
+                alert("Erro: " + e.message);
+            }
+        };
+
+        let unsubscribeAdminPlugins = null;
+        const initAdminPluginsListener = () => {
+            if (unsubscribeAdminPlugins) return; // Already listening
+            const listContainer = document.getElementById('admin-plugins-list');
+            if (!listContainer) return;
+
+            unsubscribeAdminPlugins = onSnapshot(collection(db, "axon_store_plugins"), (snapshot) => {
+                if (snapshot.empty) {
+                    listContainer.innerHTML = '<div style="padding:10px;text-align:center;opacity:0.5;">Nenhum plugin na loja.</div>';
+                    return;
+                }
+
+                listContainer.innerHTML = '';
+                snapshot.forEach(docSnap => {
+                    const p = docSnap.data();
+                    const el = document.createElement('div'); // Using default div, style with css class
+                    el.className = 'pinata-file-row';
+                    el.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <img src="${p.icon}" style="width:24px;height:24px;border-radius:4px;object-fit:cover;">
+                            <div>
+                                <div style="font-weight:bold;font-size:13px;">${p.name} <span style="font-weight:normal;opacity:0.7;font-size:11px;">v${p.version}</span></div>
+                                <div style="font-size:10px;opacity:0.6;">ID: ${p.id}</div>
+                            </div>
+                        </div>
+                        <div>
+                             <button class="patient-action-button delete" style="padding:4px 8px; width:auto;" onclick="window.deleteStorePlugin('${docSnap.id}')" title="Remover da Loja">
+                                <i class="fas fa-trash"></i>
+                             </button>
+                        </div>
+                    `;
+                    listContainer.appendChild(el);
+                });
+            });
+        };
+
+        // Hook into Admin Tab Switching
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('admin-tab-btn')) {
+                const tab = e.target.dataset.tab;
+                if (tab === 'bridge') {
+                    setTimeout(initAdminPluginsListener, 100);
+                } else {
+                    if (unsubscribeAdminPlugins) {
+                        unsubscribeAdminPlugins();
+                        unsubscribeAdminPlugins = null;
+                    }
+                }
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof initApp === 'function') {
