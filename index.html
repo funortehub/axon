@@ -8551,10 +8551,13 @@ ${instruction}
 
         // Hide Cloud Button on Mobile 2.0 Init
         const updateMobileVisibility = () => {
+            const btnTools = document.getElementById('btn-tools');
             if (isMobile && globalSettings.mobile2_0_enabled) {
                 if (btnCloud) btnCloud.style.display = 'none';
+                if (btnTools) btnTools.style.display = 'none';
             } else {
-                if (btnCloud) btnCloud.style.display = 'flex'; // Restore if needed
+                if (btnCloud) btnCloud.style.display = 'flex';
+                if (btnTools) btnTools.style.display = 'flex';
             }
         };
         // Call it initially and potentially on listeners if settings change (not implemented here but good to have)
@@ -9847,6 +9850,9 @@ ${instruction}
                     } else {
                         refBtn.parentNode.appendChild(btn);
                     }
+
+                    // Apply mobile visibility rules immediately
+                    if (typeof updateMobileVisibility === 'function') updateMobileVisibility();
                 } else {
                     // Fallback to footer logic removed or simplied if needed, but Header is preferred.
                 }
