@@ -10510,7 +10510,10 @@ ${instruction}
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
-                    const pluginData = JSON.parse(e.target.result);
+                    const decoder = new TextDecoder("utf-8");
+                    const text = decoder.decode(e.target.result);
+                    const pluginData = JSON.parse(text);
+
                     if (!pluginData.name || !pluginData.id || !pluginData.version) {
                         alert("JSON inválido. Requer name, id e version.");
                         return;
@@ -10544,7 +10547,7 @@ ${instruction}
                     alert("Erro ao processar plugin: " + err.message);
                 }
             };
-            reader.readAsText(file);
+            reader.readAsArrayBuffer(file);
         };
 
         window.deleteStorePlugin = async (docId) => {
