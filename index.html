@@ -10672,6 +10672,45 @@ ${instruction}
 
         window.axonPluginManager = new AxonPluginManager();
 
+        // --- GLOBAL SETTINGS LISTENER (Real-time Sync) ---
+        try {
+            onSnapshot(doc(db, "settings", "global"), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+
+                    // Sync globalSettings object
+                    if (typeof globalSettings !== 'undefined') {
+                        globalSettings.showToolsButton = data.showToolsButton;
+                        globalSettings.mobile2_0_enabled = data.mobile2_0_enabled;
+                        globalSettings.showPrescriptionAssistant = data.showPrescriptionAssistant;
+                    }
+
+                    // Update Tools Button UI
+                    const btnTools = document.getElementById('btn-tools');
+                    if (btnTools) {
+                        const show = data.showToolsButton !== false; // Default true
+                        btnTools.style.display = show ? 'flex' : 'none';
+                    }
+
+                    // Update Admin Toggle UI if present (Real-time sync for other admins)
+                    const toggleTools = document.getElementById('toggle-tools-btn-visibility');
+                    if (toggleTools) {
+                        toggleTools.checked = data.showToolsButton !== false;
+                    }
+
+                    // Update Prescription Assistant UI if present
+                    const btnAssist = document.getElementById('btn-prescription-assist');
+                    if (btnAssist && typeof data.showPrescriptionAssistant !== 'undefined') {
+                        btnAssist.style.display = data.showPrescriptionAssistant ? 'flex' : 'none';
+                    }
+                }
+            }, (error) => {
+                console.warn("Error listening to global settings:", error);
+            });
+        } catch (e) {
+            console.warn("Failed to setup global settings listener:", e);
+        }
+
         // --- ADMIN PLUGIN MANAGEMENT ---
         window.adminUploadPlugin = async (input) => {
             if (!input.files || !input.files[0]) return;
@@ -10950,6 +10989,45 @@ ${instruction}
             </div>
         </div>
     </div>
+    <script>
+        // Real-time listener for Global Settings (Tools Button Visibility)
+        document.addEventListener('DOMContentLoaded', () => {
+            // Ensure db is initialized (it is in main script, but this runs after)
+            // We need to wait for Firebase/DB to be ready if it's async? 
+            // Usually it's synchronous ref creation.
+            // We'll wrap in a check or timeout, or just run it since this is at the end of body.
+
+            if (typeof onSnapshot !== 'undefined' && typeof doc !== 'undefined' && typeof db !== 'undefined') {
+                onSnapshot(doc(db, "settings", "global"), (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+
+                        // Sync globalSettings object
+                        if (typeof globalSettings !== 'undefined') {
+                            globalSettings.showToolsButton = data.showToolsButton;
+                            globalSettings.mobile2_0_enabled = data.mobile2_0_enabled;
+                            globalSettings.showPrescriptionAssistant = data.showPrescriptionAssistant;
+                        }
+
+                        // Update Tools Button UI
+                        const btnTools = document.getElementById('btn-tools');
+                        if (btnTools) {
+                            const show = data.showToolsButton !== false; // Default true
+                            btnTools.style.display = show ? 'flex' : 'none';
+                        }
+
+                        // Update Admin Toggle UI if present (Real-time sync for other admins)
+                        const toggleTools = document.getElementById('toggle-tools-btn-visibility');
+                        if (toggleTools) {
+                            toggleTools.checked = data.showToolsButton !== false;
+                        }
+                    }
+                }, (error) => {
+                    console.warn("Error listening to global settings:", error);
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>
