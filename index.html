@@ -13,6 +13,7 @@
     <link rel="apple-touch-icon" href="https://i.imgur.com/ZsfZEh2.png">
     <meta name="theme-color" id="theme-color-meta" content="#1a202c">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #1a202c, #2d3748);
@@ -9235,18 +9236,83 @@ ${instruction}
                     });
                 } else if (action === 'download') {
                     if (item.type === 'folder') {
-                        this.verifyLockedFolderAccess(item, () => {
-                            // Folder download not fully implemented usually, but if it were, it's protected now.
-                            // Current code just returns.
-                            return;
+                        this.verifyLockedFolderAccess(item, async () => {
+                            if (typeof JSZip === 'undefined') {
+                                appendOutput("Erro: Biblioteca JSZip não carregada.", "error");
+                                return;
+                            }
+
+                            appendOutput(`Preparando download da pasta "${item.name}"...`, "info");
+                            const zip = new JSZip();
+                            let fileCount = 0;
+
+                            // Recursive function to add files/folders
+                            const processFolder = async (folderId, zipFolder) => {
+                                // Find children
+                                const children = this.files.filter(f => f.parent === folderId);
+
+                                for (const child of children) {
+                                    if (child.type === 'folder') {
+                                        const newZipFolder = zipFolder.folder(child.name);
+                                        await processFolder(child.id, newZipFolder);
+                                    } else {
+                                        if (child.ipfsHash) {
+                                            try {
+                                                const url = `https://gateway.pinata.cloud/ipfs/${child.ipfsHash}`;
+                                                const response = await fetch(url);
+                                                if (response.ok) {
+                                                    const blob = await response.blob();
+                                                    zipFolder.file(child.name, blob);
+                                                    fileCount++;
+                                                }
+                                            } catch (e) {
+                                                console.warn(`Skipped ${child.name}:`, e);
+                                            }
+                                        }
+                                    }
+                                }
+                            };
+
+                            try {
+                                const rootZip = zip.folder(item.name);
+                                await processFolder(item.id, rootZip);
+
+                                if (fileCount === 0) {
+                                    appendOutput("A pasta está vazia ou os arquivos não puderam ser baixados.", "error");
+                                    return;
+                                }
+
+                                appendOutput("Gerando arquivo ZIP...", "info");
+                                const content = await zip.generateAsync({ type: "blob" });
+                                const downloadUrl = window.URL.createObjectURL(content);
+                                const link = document.createElement('a');
+                                link.href = downloadUrl;
+                                link.download = `${item.name}.zip`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(downloadUrl);
+                                appendOutput("Download da pasta concluído!", "success");
+
+                            } catch (e) {
+                                appendOutput(`Erro ao criar ZIP: ${e.message}`, "error");
+                            }
                         });
                         return;
                     }
 
+                    if (!item.ipfsHash) {
+                        appendOutput("Erro: Hash IPFS não encontrado para este arquivo.", "error");
+                        return;
+                    }
+
                     const url = `https://gateway.pinata.cloud/ipfs/${item.ipfsHash}`;
+                    appendOutput(`Iniciando download de ${item.name}...`, "info");
+
                     try {
+                        // Attempt Fetch first to preserve filename
                         const response = await fetch(url);
-                        if (!response.ok) throw new Error("Falha na rede ao baixar.");
+                        if (!response.ok) throw new Error(`Status ${response.status}`);
                         const blob = await response.blob();
                         const downloadUrl = window.URL.createObjectURL(blob);
                         const link = document.createElement('a');
@@ -9256,8 +9322,22 @@ ${instruction}
                         link.click();
                         document.body.removeChild(link);
                         window.URL.revokeObjectURL(downloadUrl);
+                        appendOutput("Download concluído.", "success");
                     } catch (e) {
-                        appendOutput(`Erro ao baixar arquivo: ${e.message}`, "error");
+                        console.warn("Fetch download failed, trying fallback:", e);
+                        // Fallback: Direct link (works even if CORS blocks fetch)
+                        try {
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = item.name;
+                            link.target = "_blank"; // Force new tab if download attribute ignored
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            appendOutput("Download iniciado (Link Direto).", "success");
+                        } catch (errFallback) {
+                            appendOutput(`Erro ao baixar arquivo: ${errFallback.message}`, "error");
+                        }
                     }
                 } else if (action === 'delete') {
                     this.verifyLockedFolderAccess(item, () => {
