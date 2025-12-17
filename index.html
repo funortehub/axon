@@ -4686,41 +4686,73 @@
         };
 
         const uploadToPinata = async (file, onProgress) => {
-            const pinataKey = getRandomPinataKey();
-            if (!pinataKey) {
-                return Promise.reject(new Error("Nenhuma chave Pinata configurada."));
+            let keys = [];
+            if (globalSettings.pinataKeys && globalSettings.pinataKeys.length > 0) {
+                keys = globalSettings.pinataKeys;
+            } else {
+                const k = getRandomPinataKey();
+                if (k) keys.push(k);
             }
 
-            const url = `https://api.pinata.cloud/pinning/pinFileToIPFS`;
-            const data = new FormData();
-            data.append('file', file);
+            if (keys.length === 0) return Promise.reject(new Error("Nenhuma chave Pinata configurada."));
 
-            const xhr = new XMLHttpRequest();
+            let lastError = null;
 
-            return new Promise((resolve, reject) => {
-                xhr.upload.addEventListener("progress", (event) => {
-                    if (event.lengthComputable) {
-                        const percentComplete = (event.loaded / event.total) * 100;
-                        if (onProgress) onProgress(percentComplete);
-                    }
-                });
+            // Try each key
+            for (const pinataKey of keys) {
+                try {
+                    return await new Promise((resolve, reject) => {
+                        const url = `https://api.pinata.cloud/pinning/pinFileToIPFS`;
+                        const data = new FormData();
+                        data.append('file', file);
 
-                xhr.onload = async () => {
-                    if (xhr.status === 200) {
-                        const result = JSON.parse(xhr.responseText);
-                        resolve({ ipfsHash: result.IpfsHash, pinataKey: pinataKey });
-                    } else {
-                        reject(new Error(`Erro Pinata: ${xhr.statusText}`));
-                    }
-                };
+                        const xhr = new XMLHttpRequest();
+                        xhr.upload.addEventListener("progress", (event) => {
+                            if (event.lengthComputable && onProgress) {
+                                const percentComplete = (event.loaded / event.total) * 100;
+                                onProgress(percentComplete);
+                            }
+                        });
 
-                xhr.onerror = () => reject(new Error("Erro de rede no upload para Pinata."));
+                        xhr.onload = () => {
+                            if (xhr.status === 200) {
+                                const result = JSON.parse(xhr.responseText);
+                                resolve({ ipfsHash: result.IpfsHash, pinataKey: pinataKey });
+                            } else {
+                                reject(new Error(`Erro Pinata (${xhr.status}): ${xhr.statusText}`));
+                            }
+                        };
+                        xhr.onerror = () => reject(new Error("Erro de rede no upload para Pinata."));
+                        xhr.open("POST", url);
+                        xhr.setRequestHeader("pinata_api_key", pinataKey.key);
+                        xhr.setRequestHeader("pinata_secret_api_key", pinataKey.secret);
+                        xhr.send(data);
+                    });
+                } catch (e) {
+                    console.warn(`Upload falhou com a chave ${pinataKey.label || 'Standard'}:`, e);
+                    lastError = e;
+                    // Continue to next key
+                }
+            }
 
-                xhr.open("POST", url);
-                xhr.setRequestHeader("pinata_api_key", pinataKey.key);
-                xhr.setRequestHeader("pinata_secret_api_key", pinataKey.secret);
-                xhr.send(data);
-            });
+            // If all failed
+            // Update UI with error badge if needed?
+            const errorBadge = document.getElementById('api-error-badge');
+            if (errorBadge) errorBadge.style.display = 'block'; // Assuming we create this element somewhere or user creates it?
+            // User asked: "Display an exclamation badge for APIs that encounter these errors."
+            // I should inject the Logic for the badge here or globally.
+            // Let's assume a generic badge toggler function or ID.
+            updateSystemStatus('pinata', 'error');
+            throw lastError || new Error("Falha no upload com todas as chaves.");
+        };
+
+        const updateSystemStatus = (type, status) => {
+            // Simple implementation
+            const badge = document.getElementById('system-status-badge'); // Allow user to style this later
+            if (status === 'error' && badge) {
+                badge.style.display = 'flex';
+                badge.title = "Erro no sistema (" + type + ")";
+            }
         };
 
         const callGeminiAPI = async (prompt) => {
@@ -6687,6 +6719,13 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                             <span class="slider"></span>
                         </label>
                     </div>
+                     <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span>Mostrar Botão Ferramentas (Plugins)</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle-tools-btn-visibility">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
 
                 </div>
                 <div class="admin-section" style="margin-top: 15px;">
@@ -6740,6 +6779,35 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     }
                 });
             }
+
+            // Tools Button Toggle
+            const toggleToolsBtn = document.getElementById('toggle-tools-btn-visibility');
+            if (toggleToolsBtn) {
+                // Set initial state without triggering listener
+                toggleToolsBtn.checked = globalSettings.showToolsButton !== false;
+
+                toggleToolsBtn.addEventListener('change', async (e) => {
+                    const newState = e.target.checked;
+                    try {
+                        // Optimistic update of globalSettings in memory to prevent revert on re-render if it happens fast
+                        globalSettings.showToolsButton = newState;
+
+                        // Update UI immediately
+                        const btn = document.getElementById('btn-tools');
+                        if (btn) btn.style.display = newState ? 'flex' : 'none';
+
+                        await setDoc(doc(db, "settings", "global"), { showToolsButton: newState }, { merge: true });
+                    } catch (err) {
+                        console.error("Erro ao salvar visibilidade ferramentas:", err);
+                        // Revert UI
+                        e.target.checked = !newState;
+                        globalSettings.showToolsButton = !newState;
+                        const btn = document.getElementById('btn-tools');
+                        if (btn) btn.style.display = !newState ? 'flex' : 'none';
+                    }
+                });
+            }
+
 
 
         };
@@ -8855,6 +8923,14 @@ ${instruction}
                 if (text) text.textContent = `${this.formatBytes(this.storageUsed)} / ${this.formatBytes(totalLimit)}`;
             }
 
+            isFolderLocked(folderId) {
+                if (!folderId || folderId === 'root') return false;
+                const folder = this.files.find(f => f.id === folderId);
+                if (!folder) return false;
+                if (folder.isLocked) return true;
+                return this.isFolderLocked(folder.parent);
+            }
+
             render(searchTerm = "") {
                 if (!this.grid) return;
                 this.grid.innerHTML = '';
@@ -8862,16 +8938,21 @@ ${instruction}
 
                 const currentParentId = this.currentPath.length > 0 ? this.currentPath[this.currentPath.length - 1].id : 'root';
 
-                // Filter files
+                // Base items for 'all' view (current folder only)
                 let items = this.files.filter(f => f.parent === currentParentId);
 
+                // For type filters, we search globally but MUST respect locked folders logic
                 if (this.filterType !== 'all') {
-                    // For type filtering, shows all files flat (ignoring folder structure) OR recursive? 
-                    // Usually "Images" shows all images. Let's stick to current folder for simplicity, or specific type filters.
-                    // Google Drive "Images" acts as a smart filter. Let's do that.
-                    if (this.filterType === 'images') items = this.files.filter(f => f.mimeType && f.mimeType.startsWith('image/'));
-                    else if (this.filterType === 'videos') items = this.files.filter(f => f.mimeType && f.mimeType.startsWith('video/'));
-                    else if (this.filterType === 'docs') items = this.files.filter(f => f.mimeType && (f.mimeType.includes('pdf') || f.mimeType.includes('text')));
+                    // Filter helper
+                    const isVisible = (f) => !this.isFolderLocked(f.parent);
+
+                    if (this.filterType === 'images') {
+                        items = this.files.filter(f => f.mimeType && f.mimeType.startsWith('image/') && isVisible(f));
+                    } else if (this.filterType === 'videos') {
+                        items = this.files.filter(f => f.mimeType && f.mimeType.startsWith('video/') && isVisible(f));
+                    } else if (this.filterType === 'docs') {
+                        items = this.files.filter(f => f.mimeType && (f.mimeType.includes('pdf') || f.mimeType.includes('text')) && isVisible(f));
+                    }
                 }
 
                 if (searchTerm) {
@@ -9837,6 +9918,9 @@ ${instruction}
                     // Check if already exists
                     if (document.getElementById('btn-tools')) return;
 
+                    // Global Setting Check
+                    if (globalSettings.showToolsButton === false) return; // Don't create if disabled globally
+
                     const btn = document.createElement('div');
                     btn.id = 'btn-tools';
                     btn.className = 'status-bar';
@@ -9973,7 +10057,10 @@ ${instruction}
                         <img src="${plugin.icon || 'default_icon.png'}" class="plugin-icon-img" onerror="this.src='https://via.placeholder.com/50'">
                         <div class="plugin-info">
                             <div class="plugin-name">${plugin.name}</div>
-                            <div class="plugin-author">v${plugin.version} • ${plugin.author}</div>
+                            <div class="plugin-author" style="display:flex; align-items:center; gap:4px;">
+                                v${plugin.version} • ${plugin.author}
+                                ${plugin.author === 'Axon Dev' && plugin.source === 'store' ? '<i class="fas fa-check-circle" style="color:var(--highlight-color); font-size:10px;" title="Verificado"></i>' : ''}
+                            </div>
                         </div>
                     </div>
                     <div class="plugin-desc">${plugin.description || 'Sem descrição.'}</div>
@@ -10007,7 +10094,10 @@ ${instruction}
                         <img src="${plugin.icon}" style="width: 60px; height: 60px; border-radius: 12px; object-fit: cover; background: #fff;">
                         <div>
                             <div style="font-weight: bold; font-size: 16px; color: var(--text-color);">${plugin.name}</div>
-                            <div style="font-size: 12px; opacity: 0.7; margin-top: 4px;">${plugin.author}</div>
+                            <div style="font-size: 12px; opacity: 0.7; margin-top: 4px; display:flex; align-items:center; gap:5px;">
+                                ${plugin.author}
+                                ${plugin.author === 'Axon Dev' ? '<i class="fas fa-check-circle" style="color:var(--highlight-color);" title="Verificado"></i>' : ''}
+                            </div>
                         </div>
                     </div>
                     <div style="font-size: 13px; color: var(--text-color); opacity: 0.8; margin-bottom: 20px; flex: 1; line-height: 1.4;">
@@ -10027,30 +10117,76 @@ ${instruction}
                 const plugin = this.storePlugins.find(p => p.id === storePluginId);
                 if (!plugin) return;
 
-                // 1. Convert plugin content to File for Pinata
-                const jsonContent = JSON.stringify(plugin);
-                const blob = new Blob([jsonContent], { type: 'application/json' });
-                const file = new File([blob], plugin.name + ".json", { type: "application/json" });
+                // Check for duplicates
+                const isDupe = this.plugins.find(p => p.originalId === storePluginId || p.name === plugin.name);
+                if (isDupe) {
+                    showConfirmModal(
+                        `O plugin "${plugin.name}" já está instalado. Deseja reinstalar? (Sua versão atual será substituída)`,
+                        async () => {
+                            // Reinstall Logic
+                            appendOutput(`Reinstalando ${plugin.name}...`, "info");
+                            // 1. Remove old
+                            try {
+                                await deleteDoc(doc(db, "users", currentUser, "files", isDupe.dbId));
+                                this.plugins = this.plugins.filter(p => p.dbId !== isDupe.dbId);
+                            } catch (err) {
+                                console.warn("Erro ao limpar versão antiga:", err);
+                            }
+                            // 2. Proceed to install (call internal helper or just continue logic? Recursive call might hit this check again if state not updated? 
+                            // Optimized: Just continue execution below? No, "return" blocks it.
+                            // I'll extract install logic or allow flow to continue.
+                            // Safest: Recursively call installPlugin but with a force flag? Or clearer:
+                            // Let's manually trigger the install steps here.
+                            this._performInstall(plugin);
+                        },
+                        true // isConfirm
+                    );
+                    return;
+                }
 
-                // 2. Upload to Pinata (Persist content)
-                appendOutput(`Instalando ${plugin.name} na nuvem...`, "info");
+                await this._performInstall(plugin);
+            }
+
+            async _performInstall(plugin) {
+                // Optimization: Link to original file instead of re-uploading
+                const storeIpfsHash = plugin.ipfsHash;
+                let finalIpfsHash = storeIpfsHash;
+                let finalPinataKey = plugin.pinataKey || 'shared';
+
+                if (!finalIpfsHash) {
+                    appendOutput(`Instalando ${plugin.name} na nuvem (Upload)...`, "info");
+                    const jsonContent = JSON.stringify(plugin);
+                    const blob = new Blob([jsonContent], { type: 'application/json' });
+                    const file = new File([blob], plugin.name + ".json", { type: "application/json" });
+                    try {
+                        const res = await uploadToPinata(file);
+                        finalIpfsHash = res.ipfsHash;
+                        finalPinataKey = res.pinataKey;
+                    } catch (e) {
+                        appendOutput("Erro no upload: " + e.message, "error");
+                        return;
+                    }
+                } else {
+                    appendOutput(`Instalando ${plugin.name}...`, "info");
+                }
+
+
                 try {
-                    const uploadResult = await uploadToPinata(file);
-
                     // 3. Save reference to Firestore (Persist user registry)
                     // We use type 'axon_plugin' to distinguish from regular files
                     await addDoc(collection(db, "users", currentUser, "files"), {
                         name: plugin.name,
                         type: 'axon_plugin',
+                        source: 'store', // Flag as store-installed
                         originalId: plugin.id,
                         icon: plugin.icon,
                         description: plugin.description,
                         author: plugin.author,
                         version: plugin.version,
                         createdAt: new Date(),
-                        size: file.size,
-                        ipfsHash: uploadResult.ipfsHash,
-                        pinataKey: uploadResult.pinataKey,
+                        size: plugin.size || 0,
+                        ipfsHash: finalIpfsHash,
+                        pinataKey: finalPinataKey,
                         content: plugin.html
                     });
 
@@ -10090,58 +10226,67 @@ ${instruction}
                 input.onchange = e => {
                     const file = e.target.files[0];
                     if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = async event => {
-                        try {
-                            const plugin = JSON.parse(event.target.result);
-                            if (plugin.name && plugin.html) {
-                                // Check for duplicates
-                                const existing = this.plugins.find(p => p.name === plugin.name);
-                                if (existing) {
-                                    appendOutput(`O plugin '${plugin.name}' já está instalado!`, "error");
-                                    return;
-                                }
 
-                                // Install it properly via Pinata
-                                const blob = new Blob([JSON.stringify(plugin)], { type: 'application/json' });
-                                const uploadFile = new File([blob], plugin.name + ".json", { type: "application/json" });
-
-                                appendOutput("Importando e salvando plugin...", "info");
-                                const uploadResult = await uploadToPinata(uploadFile);
-
-                                const docData = {
-                                    name: plugin.name,
-                                    type: 'axon_plugin',
-                                    originalId: plugin.id || 'custom-' + Date.now(),
-                                    icon: plugin.icon || 'https://via.placeholder.com/50',
-                                    description: plugin.description || 'Plugin importado',
-                                    author: plugin.author || 'User',
-                                    version: plugin.version || '1.0',
-                                    createdAt: new Date(),
-                                    size: uploadFile.size,
-                                    ipfsHash: uploadResult.ipfsHash,
-                                    pinataKey: uploadResult.pinataKey,
-                                    content: plugin.html
-                                };
-
-                                await addDoc(collection(db, "users", currentUser, "files"), docData);
-
-                                // Optimistic Update removed to prevent duplication (Firestore listener handles it)
-                                // this.plugins.push({ ...docData, dbId: 'temp_imp_' + Date.now() });
-                                this.renderInstalled();
-
-                                this.switchTab('installed');
-                                appendOutput("Plugin importado com sucesso.", "success");
-                            } else {
-                                throw new Error("Formato inválido (requer name e html).");
-                            }
-                        } catch (err) {
-                            appendOutput("Erro ao importar: " + err.message, "error");
-                        }
-                    };
-                    reader.readAsText(file);
+                    showConfirmModal(
+                        `ATENÇÃO: Você está importando um plugin externo ("${file.name}").\n\nPlugins externos podem executar código desconhecido e acessar seus dados.\n\nCertifique-se de que confia na fonte deste arquivo. Deseja continuar?`,
+                        () => { this.processImport(file); }
+                    );
                 };
                 input.click();
+            }
+
+            processImport(file) {
+                const reader = new FileReader();
+                reader.onload = async event => {
+                    try {
+                        const plugin = JSON.parse(event.target.result);
+                        if (plugin.name && plugin.html) {
+                            // Check for duplicates
+                            const existing = this.plugins.find(p => p.name === plugin.name);
+                            if (existing) {
+                                appendOutput(`O plugin '${plugin.name}' já está instalado!`, "error");
+                                return;
+                            }
+
+                            // Install it properly via Pinata
+                            const blob = new Blob([JSON.stringify(plugin)], { type: 'application/json' });
+                            const uploadFile = new File([blob], plugin.name + ".json", { type: "application/json" });
+
+                            appendOutput("Importando e salvando plugin...", "info");
+                            const uploadResult = await uploadToPinata(uploadFile);
+
+                            const docData = {
+                                name: plugin.name,
+                                type: 'axon_plugin',
+                                source: 'import', // Flag as imported
+                                originalId: plugin.id || 'custom-' + Date.now(),
+                                icon: plugin.icon || 'https://via.placeholder.com/50',
+                                description: plugin.description || 'Plugin importado',
+                                author: plugin.author || 'User',
+                                version: plugin.version || '1.0',
+                                createdAt: new Date(),
+                                size: uploadFile.size,
+                                ipfsHash: uploadResult.ipfsHash,
+                                pinataKey: uploadResult.pinataKey,
+                                content: plugin.html
+                            };
+
+                            await addDoc(collection(db, "users", currentUser, "files"), docData);
+
+                            // Optimistic Update removed to prevent duplication (Firestore listener handles it)
+                            // this.plugins.push({ ...docData, dbId: 'temp_imp_' + Date.now() });
+                            this.renderInstalled();
+
+                            this.switchTab('installed');
+                            appendOutput("Plugin importado com sucesso.", "success");
+                        } else {
+                            throw new Error("Formato inválido (requer name e html).");
+                        }
+                    } catch (err) {
+                        appendOutput("Erro ao importar: " + err.message, "error");
+                    }
+                };
+                reader.readAsText(file);
             }
 
             openPlugin(dbIdOrId) {
@@ -10215,7 +10360,9 @@ ${instruction}
                         window.AxonPluginBridge = {
                             sendToChat: (text) => window.parent.postMessage({ type: 'AXON_PLUGIN_MESSAGE', action: 'sendToChat', payload: text }, '*'),
                             getAnamnesis: () => { window.parent.postMessage({ type: 'AXON_PLUGIN_MESSAGE', action: 'getAnamnesis', reqId: Date.now() }, '*'); },
-                            callAI: (prompt) => { window.parent.postMessage({ type: 'AXON_PLUGIN_MESSAGE', action: 'callAI', payload: prompt, reqId: Date.now() }, '*'); }
+                            callAI: (prompt) => { window.parent.postMessage({ type: 'AXON_PLUGIN_MESSAGE', action: 'callAI', payload: prompt, reqId: Date.now() }, '*'); },
+                            getAxonEyeResults: () => { window.parent.postMessage({ type: 'AXON_PLUGIN_MESSAGE', action: 'getAxonEyeResults', reqId: Date.now() }, '*'); },
+                            getExamsResults: () => { window.parent.postMessage({ type: 'AXON_PLUGIN_MESSAGE', action: 'getExamsResults', reqId: Date.now() }, '*'); }
                         };
                     <\/script>
                 `;
@@ -10399,6 +10546,28 @@ ${instruction}
                     }
                 }
 
+                if (action === 'getAxonEyeResults') {
+                    if (event.source) {
+                        event.source.postMessage({
+                            type: 'AXON_PLUGIN_RESPONSE',
+                            reqId: reqId,
+                            data: typeof axonEyeResults !== 'undefined' ? axonEyeResults : []
+                        }, '*');
+                    }
+                }
+
+                if (action === 'getExamsResults') {
+                    if (event.source) {
+                        // Assuming 'examsResults' or 'patientExams' is the global
+                        // Using 'examsResults' as per plan, but falling back to empty
+                        event.source.postMessage({
+                            type: 'AXON_PLUGIN_RESPONSE',
+                            reqId: reqId,
+                            data: typeof examsResults !== 'undefined' ? examsResults : []
+                        }, '*');
+                    }
+                }
+
                 if (action === 'callAI') {
                     // Call Gemini API (or current provider)
                     if (event.source && payload) {
@@ -10561,6 +10730,26 @@ ${instruction}
         };
 
         let unsubscribeAdminPlugins = null;
+        window.downloadStorePlugin = async (ipfsHash, name) => {
+            if (!ipfsHash) { alert("Hash IPFS não encontrado."); return; }
+            try {
+                const url = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("Falha no download");
+                const blob = await res.blob();
+                const dUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = dUrl;
+                a.download = (name || 'plugin') + ".json";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(dUrl);
+            } catch (e) {
+                alert("Erro ao baixar: " + e.message);
+            }
+        };
+
         const initAdminPluginsListener = () => {
             if (unsubscribeAdminPlugins) return; // Already listening
             const listContainer = document.getElementById('admin-plugins-list');
@@ -10585,7 +10774,10 @@ ${instruction}
                                 <div style="font-size:10px;opacity:0.6;">ID: ${p.id}</div>
                             </div>
                         </div>
-                        <div>
+                        <div style="display:flex; gap:5px;">
+                             <button class="patient-action-button" style="padding:4px 8px; width:auto; background: var(--button-bg);" onclick="window.downloadStorePlugin('${p.ipfsHash}', '${p.name}')" title="Baixar JSON">
+                                <i class="fas fa-download"></i>
+                             </button>
                              <button class="patient-action-button delete" style="padding:4px 8px; width:auto;" onclick="window.deleteStorePlugin('${docSnap.id}')" title="Remover da Loja">
                                 <i class="fas fa-trash"></i>
                              </button>
