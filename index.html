@@ -36,7 +36,8 @@
             --input-bg: rgba(0, 0, 0, 0.2);
             --terminal-header-bg: rgba(0, 0, 0, 0.2);
             --button-bg: rgba(255, 255, 255, 0.1);
-            --button-hover-bg: rgba(255, 255, 255, 0.2)
+            --button-hover-bg: rgba(255, 255, 255, 0.2);
+            --free-mode-bg: rgba(0, 0, 0, 0.2)
         }
 
         body.light-mode {
@@ -60,7 +61,8 @@
             --input-bg: rgba(0, 0, 0, 0.05);
             --terminal-header-bg: rgba(0, 0, 0, 0.05);
             --button-bg: rgba(0, 0, 0, 0.05);
-            --button-hover-bg: rgba(0, 0, 0, 0.1)
+            --button-hover-bg: rgba(0, 0, 0, 0.1);
+            --free-mode-bg: #f7f9fc
         }
 
         * {
@@ -3156,6 +3158,28 @@
             background: var(--highlight-color);
             color: white;
         }
+
+        /* Free Mode Styles */
+        #free-mode-textarea {
+            flex: 1;
+            width: 100%;
+            background: transparent;
+            color: var(--success-color);
+            /* Matches terminal aesthetic */
+            border: none;
+            outline: none;
+            resize: none;
+            padding: 15px;
+            font-family: inherit;
+            font-size: 16px;
+            line-height: 1.5;
+            overflow-y: auto;
+        }
+
+        #free-mode-textarea::placeholder {
+            color: var(--text-color);
+            opacity: 0.5;
+        }
     </style>
 </head>
 
@@ -3198,7 +3222,8 @@
                     <div class="terminal-btn minimize-btn"></div>
                     <div class="terminal-btn maximize-btn"></div>
                 </div>
-            </div>
+            </div><button id="btn-free-mode" class="monitor-copy-btn" style="top: 50px; right: 25px;"
+                title="Modo Livre"><i class="fas fa-edit"></i></button>
             <div class="terminal-content" id="interactive-output"><img src="axon.png" alt="Axon Logo Terminal"
                     class="terminal-logo-internal">
                 <div id="initial-messages" style="position:relative;z-index:1">
@@ -3211,6 +3236,19 @@
 ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝
                     </pre><span class="info">Axon - Assistente Médico v1.6</span><br><span class="info">Aguardando
                         autenticação...</span><br><br>
+                </div>
+            </div>
+            <div id="free-mode-board" class="terminal-content"
+                style="display:none; flex-direction:column; padding:20px; background: var(--free-mode-bg); border-radius: 10px; margin: 10px; height: calc(100% - 20px);">
+                <textarea id="free-mode-textarea" placeholder="Digite livremente aqui... (Texto salvo automaticamente)"
+                    spellcheck="false"
+                    style="flex: 1; background: transparent; border: none; color: var(--text-color); font-family: 'Courier New', monospace; resize: none; font-size: 14px; outline: none; line-height: 1.5;"></textarea>
+                <div
+                    style="padding-top: 10px; border-top: 1px solid var(--border-color); display:flex; justify-content:flex-end;">
+                    <button id="btn-process-free-mode" class="action-button"
+                        style="width:auto; padding: 6px 15px; border-radius: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                        <i class="fas fa-paper-plane"></i> Processar
+                    </button>
                 </div>
             </div>
             <div class="terminal-footer">
@@ -3973,7 +4011,13 @@
         let currentUser = null;
         let recognition = null;
         let audioStream = null;
-        let anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+        let anamnesis = {
+            qp: "", hma: "", hp: "", hf: "", hps: "",
+            hgo: "", ha: "",
+            ectoscopia: "",
+            dados_vitais: "",
+            exame_fisico: { scv: "", sr: "", sd: "", dermatologico: "" }
+        };
         let examsResults = "";
         let axonEyeResults = "";
         let lastAnamnesisInfo = "";
@@ -4310,7 +4354,13 @@
             lastClearTimestamp = Date.now();
 
             // Reset local state immediately
-            anamnesis = { qp: "", hma: "", hp: "", hf: "", hps: "" };
+            anamnesis = {
+                qp: "", hma: "", hp: "", hf: "", hps: "",
+                hgo: "", ha: "",
+                ectoscopia: "",
+                dados_vitais: "",
+                exame_fisico: { scv: "", sr: "", sd: "", dermatologico: "" }
+            };
             examsResults = ""; axonEyeResults = ""; conversationHistory = [];
             lastAnamnesisInfo = "";
 
@@ -4323,7 +4373,13 @@
             if (currentUser) {
                 const userRef = doc(db, "sessions", currentUser);
                 const resetData = {
-                    anamnesis: { qp: "", hma: "", hp: "", hf: "", hps: "" },
+                    anamnesis: {
+                        qp: "", hma: "", hp: "", hf: "", hps: "",
+                        hgo: "", ha: "",
+                        ectoscopia: "",
+                        dados_vitais: "",
+                        exame_fisico: { scv: "", sr: "", sd: "", dermatologico: "" }
+                    },
                     examsResults: "",
                     axonEyeResults: "",
                     conversationHistory: [],
@@ -4335,6 +4391,8 @@
                     console.error("Erro ao limpar sessão no Firestore:", e);
                 }
             }
+
+            if (window.clearFreeModeData) await window.clearFreeModeData();
 
             resetInteractiveTerminal(false);
             appendOutput("Sessão limpa.", "success");
@@ -4371,6 +4429,8 @@
         };
 
         const updateAnamnesisPreview = (logToFirebase = true) => {
+            const hasValue = (val) => val && val !== "Nenhuma" && val.trim() !== "";
+
             let previewHTML = `
                 <div class="anamnesis-content">
                     <div class="section-title">Queixa Principal (QP):</div>
@@ -4383,6 +4443,25 @@
                     <div>${anamnesis.hf || "Ainda não informado."}</div><br>
                     <div class="section-title">História Psicossocial (HPS):</div>
                     <div>${anamnesis.hps || "Ainda não informado."}</div>
+                    
+                    ${hasValue(anamnesis.hgo) ? `<br><div class="section-title">História Gineco-obstétrica (HGO):</div><div>${anamnesis.hgo}</div>` : ''}
+                    ${hasValue(anamnesis.ha) ? `<br><div class="section-title">História Alimentar (HA):</div><div>${anamnesis.ha}</div>` : ''}
+
+                    <div style="margin: 15px 0; border-top: 1px solid var(--border-color); opacity: 0.3;"></div>
+
+                    <div class="section-title">ECTOSCOPIA:</div>
+                    <div>${anamnesis.ectoscopia || "Ainda não informado."}</div><br>
+
+                    <div class="section-title">DADOS VITAIS:</div>
+                    <div>${anamnesis.dados_vitais || "Ainda não informado."}</div><br>
+
+                    <div class="section-title">EXAME FÍSICO:</div>
+                    <div style="padding-left: 10px;">
+                        <div><span style="font-weight:600; opacity:0.8;">SCV:</span> ${anamnesis.exame_fisico?.scv || "Não informado"}</div>
+                        <div><span style="font-weight:600; opacity:0.8;">SR:</span> ${anamnesis.exame_fisico?.sr || "Não informado"}</div>
+                        <div><span style="font-weight:600; opacity:0.8;">SD:</span> ${anamnesis.exame_fisico?.sd || "Não informado"}</div>
+                        ${hasValue(anamnesis.exame_fisico?.dermatologico) ? `<div><span style="font-weight:600; opacity:0.8; color:var(--highlight-color);">Dermatológico:</span> ${anamnesis.exame_fisico.dermatologico}</div>` : ''}
+                    </div>
                 </div>`;
             anamnesisPreview.innerHTML = previewHTML;
             if (logToFirebase && isLoggedIn && currentUser) {
@@ -4919,25 +4998,57 @@
 
         const processAnamnesisInfo = async (info) => {
             lastAnamnesisInfo = info;
-            const prompt = `Você é um assistente médico especialista em semiologia. Sua tarefa é redigir uma anamnese médica profissional, organizando as informações fornecidas em seções adequadas. A anamnese deve ser bem redigida, coesa e utilizar termos médicos apropriados.
+            const prompt = `Você é um assistente médico especialista em semiologia. Sua tarefa é redigir uma anamnese médica profissional e estruturar o exame físico, organizando as informações fornecidas em seções adequadas. A anamnese deve ser bem redigida, coesa e utilizar termos médicos apropriados.
+
             Contexto da consulta atual (informações existentes):
             - QP (Queixa Principal): "${anamnesis.qp || "Nenhuma"}"
             - HMA (História da Moléstia Atual): "${anamnesis.hma || "Nenhuma"}"
             - HP (História Patológica): "${anamnesis.hp || "Nenhuma"}"
             - HF (História Familiar): "${anamnesis.hf || "Nenhuma"}"
             - HPS (História Psicossocial): "${anamnesis.hps || "Nenhuma"}"
+            - HGO (História Gineco-obstétrica): "${anamnesis.hgo || "Nenhuma"}"
+            - HA (História Alimentar): "${anamnesis.ha || "Nenhuma"}"
+            
+            - ECTOSCOPIA: "${anamnesis.ectoscopia || "Nenhuma"}"
+            - DADOS VITAIS: "${anamnesis.dados_vitais || "Nenhuma"}"
+
+            - EXAME FÍSICO:
+              -- SCV (Cardiovascular): "${anamnesis.exame_fisico?.scv || "Nenhuma"}"
+              -- SR (Respiratório): "${anamnesis.exame_fisico?.sr || "Nenhuma"}"
+              -- SD (Digestivo): "${anamnesis.exame_fisico?.sd || "Nenhuma"}"
+              -- Dermatológico: "${anamnesis.exame_fisico?.dermatologico || "Nenhuma"}"
 
             Nova informação recebida (diálogo médico-paciente): "${info}"
 
             Instruções cruciais:
             1.  **Analise o contexto completo**: Considere tanto as informações existentes quanto a "nova informação recebida" para construir a anamnese mais precisa.
-            2.  **Ordene logicamente**: Mesmo que as informações sejam fornecidas fora de ordem, organize-as de forma coerente dentro da seção correta (QP, HMA, HP, HF, HPS).
-            3.  **Seja Fiel ao Conteúdo**: NÃO adicione, invente ou presuma informações que não foram explicitamente ditas. Frases como "Paciente não relata outros sintomas" ou "Paciente não sabe especificar" só devem ser incluídas se o médico ou paciente as tiverem mencionado.
-            4.  **Distinga os interlocutores e filtre as perguntas**: Sua tarefa é extrair APENAS as respostas e relatos do paciente. IGNORE completamente as perguntas diretas feitas pelo médico. Por exemplo, se o diálogo for "Médico: Você tem febre? Paciente: Sim, desde ontem.", a informação a ser registrada é "Paciente relata febre desde o dia anterior". A pergunta "Você tem febre?" NÃO DEVE ser incluída no texto da anamnese.
-            5.  **Atualize, não substitua**: Integre a nova informação à seção apropriada, complementando o que já existe. Mantenha o conteúdo das outras seções inalterado.
-            6.  **Filtro Rigoroso de Relevância Clínica**: Ignore A-B-S-O-L-U-T-A-M-E-N-T-E qualquer parte da conversa que não seja estritamente sobre a saúde do paciente. Isso inclui, mas não se limita a: saudações (bom dia, olá), cumprimentos, despedidas, comentários sobre o tempo, trânsito, amenidades sociais ou qualquer diálogo que não descreva um sintoma, um histórico médico, um hábito de vida relevante (fumo, álcool) ou uma queixa. Seu foco é 100% clínico.
+            2.  **Ordene logicamente**: Integre a nova informação à seção apropriada (QP, HMA, HP, HF, HPS, HGO, HA, Ectoscopia, Dados Vitais, Exame Físico).
+            3.  **Seja Fiel ao Conteúdo**: NÃO adicione, invente ou presuma informações que não foram explicitamente ditas.
+            4.  **Distinga os interlocutores**: Extraia APENAS as respostas e relatos do paciente ou observações ditadas pelo médico. Ignore perguntas.
+            5.  **Atualize, não substitua**: Integre a nova informação à seção apropriada, complementando o que já existe.
+            6.  **Filtro Rigoroso**: Ignore saudações e conversas não clínicas.
+            7.  **Exame Físico**:
+                - Separe em SCV, SR, SD.
+                - **Dermatológico**: Preencha APENAS se houver descrição explícita de lesões de pele ou anexos. Caso contrário, deixe como string vazia.
 
-            Formato da Resposta: Retorne EXCLUSIVAMENTE um objeto JSON, contendo TODAS as chaves (qp, hma, hp, hf, hps) com os textos atualizados.`;
+            Formato da Resposta: Retorne EXCLUSIVAMENTE um objeto JSON com a seguinte estrutura:
+            {
+               "qp": "...",
+               "hma": "...",
+               "hp": "...",
+               "hf": "...",
+               "hps": "...",
+               "hgo": "...",
+               "ha": "... (descreva hábitos alimentares se citados)",
+               "ectoscopia": "... (estado geral, fácies, atitude, etc)",
+               "dados_vitais": "... (PA, FC, FR, Temp, SatO2 - se citados)",
+               "exame_fisico": {
+                   "scv": "...",
+                   "sr": "...",
+                   "sd": "...",
+                   "dermatologico": "..." (ou vazio)
+               }
+            }`;
             try {
                 const callTimestamp = Date.now();
                 const response = await callGeminiAPI(prompt);
@@ -4951,13 +5062,27 @@
                 const jsonEnd = response.lastIndexOf('}') + 1;
                 const jsonString = response.substring(jsonStart, jsonEnd);
                 const updatedAnamnesis = JSON.parse(jsonString);
+
+                // Merge logic to ensure we don't lose sub-objects if AI sends partial
                 anamnesis = {
-                    qp: updatedAnamnesis.qp || "", hma: updatedAnamnesis.hma || "",
-                    hp: updatedAnamnesis.hp || "", hf: updatedAnamnesis.hf || "",
-                    hps: updatedAnamnesis.hps || ""
+                    qp: updatedAnamnesis.qp || anamnesis.qp || "",
+                    hma: updatedAnamnesis.hma || anamnesis.hma || "",
+                    hp: updatedAnamnesis.hp || anamnesis.hp || "",
+                    hf: updatedAnamnesis.hf || anamnesis.hf || "",
+                    hps: updatedAnamnesis.hps || anamnesis.hps || "",
+                    hgo: updatedAnamnesis.hgo || anamnesis.hgo || "",
+                    ha: updatedAnamnesis.ha || anamnesis.ha || "",
+                    ectoscopia: updatedAnamnesis.ectoscopia || anamnesis.ectoscopia || "",
+                    dados_vitais: updatedAnamnesis.dados_vitais || anamnesis.dados_vitais || "",
+                    exame_fisico: {
+                        scv: updatedAnamnesis.exame_fisico?.scv || anamnesis.exame_fisico?.scv || "",
+                        sr: updatedAnamnesis.exame_fisico?.sr || anamnesis.exame_fisico?.sr || "",
+                        sd: updatedAnamnesis.exame_fisico?.sd || anamnesis.exame_fisico?.sd || "",
+                        dermatologico: updatedAnamnesis.exame_fisico?.dermatologico || anamnesis.exame_fisico?.dermatologico || ""
+                    }
                 };
                 updateAnamnesisPreview();
-                appendOutput("Anamnese atualizada com sucesso.", "success");
+                appendOutput("Anamnese e Exame Físico atualizados.", "success");
             } catch (error) {
                 appendOutput(`Erro ao atualizar a anamnese: ${error.message}.`, "error");
             }
@@ -6171,7 +6296,14 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     if (y + 15 > pageHeight - 20) { doc.addPage(); y = 20; }
                     doc.setFontSize(12).setFont(undefined, 'bold').text(title, 14, y); y += 7;
 
-                    const text = typeof content === 'object' ? Object.entries(content).map(([k, v]) => `${k.toUpperCase()}: ${v || 'Não informado'}`).join('\n') : content;
+                    const text = typeof content === 'object' ? Object.entries(content).map(([k, v]) => {
+                        if (k === 'exame_fisico' && typeof v === 'object') {
+                            return `EXAME FÍSICO:\n` + Object.entries(v).map(([subK, subV]) => `   - ${subK.toUpperCase()}: ${subV || 'Não informado'}`).join('\n');
+                        }
+                        if ((k === 'hgo' || k === 'ha') && !v) return null;
+                        return `${k.toUpperCase().replace(/_/g, ' ')}: ${v || 'Não informado'}`;
+                    }).filter(Boolean).join('\n') : content;
+
                     const splitText = doc.splitTextToSize(text, 180);
 
                     if (y + (splitText.length * 5) > pageHeight - 20) { doc.addPage(); y = 20; }
@@ -6226,8 +6358,15 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 if (y + 15 > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
                 pdfDoc.setFontSize(12).setFont(undefined, 'bold').text(title, 14, y); y += 7;
 
-                const text = typeof content === 'object' ? Object.entries(content).map(([k, v]) => `${k.toUpperCase()}: ${v || 'Não informado'}`).join('\n') : content;
-                const splitText = doc.splitTextToSize(text, 180);
+                const text = typeof content === 'object' ? Object.entries(content).map(([k, v]) => {
+                    if (k === 'exame_fisico' && typeof v === 'object') {
+                        return `EXAME FÍSICO:\n` + Object.entries(v).map(([subK, subV]) => `   - ${subK.toUpperCase()}: ${subV || 'Não informado'}`).join('\n');
+                    }
+                    if ((k === 'hgo' || k === 'ha') && !v) return null;
+                    return `${k.toUpperCase().replace(/_/g, ' ')}: ${v || 'Não informado'}`;
+                }).filter(Boolean).join('\n') : content;
+
+                const splitText = pdfDoc.splitTextToSize(text, 180);
 
                 if (y + (splitText.length * 5) > pageHeight - 20) { pdfDoc.addPage(); y = 20; }
                 pdfDoc.setFontSize(10).setFont(undefined, 'normal').text(splitText, 14, y);
@@ -6250,10 +6389,21 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 if (!content || (typeof content === 'string' && !content.trim()) || (typeof content === 'object' && Object.values(content).every(v => !v))) return '';
                 let body = '';
                 if (title === 'ANAMNESE' && typeof content === 'object') {
-                    const order = ['qp', 'hma', 'hp', 'hf', 'hps'];
+                    const order = ['qp', 'hma', 'hp', 'hf', 'hps', 'hgo', 'ha', 'ectoscopia', 'dados_vitais', 'exame_fisico'];
                     body = order
                         .map(key => {
                             if (content.hasOwnProperty(key)) {
+                                if (key === 'exame_fisico' && typeof content[key] === 'object') {
+                                    const ef = content[key];
+                                    let efHtml = '<br><strong>EXAME FÍSICO:</strong><div style="padding-left: 10px; border-left: 2px solid var(--border-color); margin-left: 5px;">';
+                                    efHtml += `<div><strong>SCV:</strong> ${ef.scv || "Não informado"}</div>`;
+                                    efHtml += `<div><strong>SR:</strong> ${ef.sr || "Não informado"}</div>`;
+                                    efHtml += `<div><strong>SD:</strong> ${ef.sd || "Não informado"}</div>`;
+                                    if (ef.dermatologico) efHtml += `<div><strong>DERMATOLÓGICO:</strong> ${ef.dermatologico}</div>`;
+                                    efHtml += '</div><br>';
+                                    return efHtml;
+                                }
+                                if ((key === 'hgo' || key === 'ha') && !content[key]) return ''; // Skip empty conditional fields
                                 return `<strong>${key.toUpperCase()}:</strong> ${content[key] || "Não informado"}<br>`;
                             }
                             return '';
@@ -6379,6 +6529,8 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
 
             axonCloud = new AxonCloud(currentUser);
 
+
+            if (window.loadFreeModeData) window.loadFreeModeData();
             toggleMonitorView('anamnesis');
         };
 
@@ -8168,6 +8320,7 @@ ${instruction}
                 case '/exit': logoutUser(); break;
                 case '/clear':
                     await performSessionClear();
+
                     break;
                 case '/hear':
                     if (parts[1] === 'on') toggleListening();
@@ -10928,6 +11081,157 @@ ${instruction}
                 setTimeout(() => window.axonPluginManager.init(), 2000);
             }
         });
+
+
+        // --- Free Mode (Board) Implementation ---
+        const btnFreeMode = document.getElementById('btn-free-mode');
+        const freeModeBoard = document.getElementById('free-mode-board');
+
+
+        const textareaFreeMode = document.getElementById('free-mode-textarea');
+        const btnProcessFreeMode = document.getElementById('btn-process-free-mode');
+        const inputLine = document.querySelector('.input-line');
+        let isFreeMode = false;
+
+        if (btnFreeMode && freeModeBoard && interactiveOutput && textareaFreeMode) {
+            const updateFreeModeUI = (active) => {
+                isFreeMode = active;
+                if (isFreeMode) {
+                    interactiveOutput.style.display = 'none';
+                    if (inputLine) inputLine.style.display = 'none';
+                    freeModeBoard.style.display = 'flex';
+                    textareaFreeMode.focus();
+                    btnFreeMode.style.color = 'var(--highlight-color)';
+                    btnFreeMode.innerHTML = '<i class="fas fa-terminal"></i>';
+                    btnFreeMode.title = "Voltar ao Terminal";
+                } else {
+                    interactiveOutput.style.display = 'block';
+                    if (inputLine) inputLine.style.display = 'flex';
+                    freeModeBoard.style.display = 'none';
+                    btnFreeMode.style.color = '';
+                    btnFreeMode.innerHTML = '<i class="fas fa-edit"></i>';
+                    btnFreeMode.title = "Modo Livre";
+                }
+            };
+
+            btnFreeMode.addEventListener('click', () => updateFreeModeUI(!isFreeMode));
+
+            // Auto-close listeners
+            ['btn-hd', 'btn-cd', 'btn-mic'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.addEventListener('click', () => {
+                    if (isFreeMode) updateFreeModeUI(false);
+                });
+            });
+
+            // Persistence
+            let saveTimeout;
+            const saveFreeModeText = (text) => {
+                localStorage.setItem('axon_free_mode_text', text);
+                if (saveTimeout) clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(async () => {
+                    if (currentUser && typeof setDoc !== 'undefined' && typeof doc !== 'undefined' && typeof db !== 'undefined') {
+                        try {
+                            await setDoc(doc(db, "users", currentUser.uid), {
+                                freeModeText: text,
+                                lastUpdate: new Date().toISOString()
+                            }, { merge: true });
+                        } catch (e) {
+                            console.error("Erro saving Free Mode:", e);
+                        }
+                    }
+                }, 2000); // 2s Debounce
+            };
+
+            textareaFreeMode.addEventListener('input', (e) => {
+                saveFreeModeText(e.target.value);
+            });
+
+            // AI Processing
+            btnProcessFreeMode.addEventListener('click', async () => {
+                const text = textareaFreeMode.value.trim();
+                if (!text) {
+                    // Visual shake or feedback needed? alert is annoying.
+                    const originalText = btnProcessFreeMode.innerHTML;
+                    btnProcessFreeMode.innerHTML = '<i class="fas fa-exclamation-circle"></i> Vazio!';
+                    setTimeout(() => btnProcessFreeMode.innerHTML = originalText, 1500);
+                    return;
+                }
+
+                // Visual feedback
+                const originalText = btnProcessFreeMode.innerHTML;
+                const originalBg = btnProcessFreeMode.style.background;
+                btnProcessFreeMode.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+                btnProcessFreeMode.disabled = true;
+                btnProcessFreeMode.style.cursor = 'wait';
+
+                try {
+                    // Call existing AI function
+                    await processAnamnesisInfo(`
+                    [MODO LIVRE - INPUT DO MÉDICO]
+                    O médico digitou as seguintes informações livremente no quadro:
+                    "${text}"
+                    
+                    Por favor, extraia e atualize a anamnese.
+                    `);
+
+                    // Success Feedback
+                    btnProcessFreeMode.innerHTML = '<i class="fas fa-check"></i> Enviado!';
+                    btnProcessFreeMode.style.background = 'var(--success-color)';
+                    setTimeout(() => {
+                        btnProcessFreeMode.innerHTML = originalText;
+                        btnProcessFreeMode.disabled = false;
+                        btnProcessFreeMode.style.background = originalBg;
+                        btnProcessFreeMode.style.cursor = 'pointer';
+                    }, 2000);
+
+                } catch (e) {
+                    // Error Feedback
+                    btnProcessFreeMode.innerHTML = '<i class="fas fa-times"></i> Erro';
+                    btnProcessFreeMode.style.background = 'var(--error-color)';
+                    console.error(e);
+                    setTimeout(() => {
+                        btnProcessFreeMode.innerHTML = originalText;
+                        btnProcessFreeMode.disabled = false;
+                        btnProcessFreeMode.style.background = originalBg;
+                        btnProcessFreeMode.style.cursor = 'pointer';
+                    }, 2000);
+                }
+            });
+
+            // Load Data
+            window.loadFreeModeData = async () => {
+                const local = localStorage.getItem('axon_free_mode_text');
+                if (local) textareaFreeMode.value = local;
+
+                if (currentUser && typeof getDoc !== 'undefined' && typeof doc !== 'undefined' && typeof db !== 'undefined') {
+                    try {
+                        const snap = await getDoc(doc(db, "users", currentUser.uid));
+                        if (snap.exists()) {
+                            const data = snap.data();
+                            // Load if server has data. Assuming server sync is key.
+                            // If local is empty, use server.
+                            // If both, prioritizing server for cross-device persistence as requested.
+                            if (data.freeModeText) {
+                                textareaFreeMode.value = data.freeModeText;
+                                localStorage.setItem('axon_free_mode_text', data.freeModeText);
+                            }
+                        }
+                    } catch (e) { console.error(e); }
+                }
+            };
+
+            // Clear Data
+            window.clearFreeModeData = async () => {
+                textareaFreeMode.value = '';
+                localStorage.removeItem('axon_free_mode_text');
+                if (currentUser && typeof updateDoc !== 'undefined' && typeof deleteField !== 'undefined' && typeof doc !== 'undefined' && typeof db !== 'undefined') {
+                    try {
+                        await updateDoc(doc(db, "users", currentUser.uid), { freeModeText: deleteField() });
+                    } catch (e) { console.error(e); }
+                }
+            };
+        }
 
         document.addEventListener('DOMContentLoaded', initApp);</script>
     <!-- PRESCRIPTION ASSISTANT MODAL -->
