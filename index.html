@@ -12308,6 +12308,13 @@ ${instruction}
                             globalSettings.showToolsButton = data.showToolsButton;
                             globalSettings.mobile2_0_enabled = data.mobile2_0_enabled;
                             globalSettings.showPrescriptionAssistant = data.showPrescriptionAssistant;
+
+                            // Sync Axon Eye Storage & Supabase Settings
+                            if (data.axonEyeStorageProvider) globalSettings.axonEyeStorageProvider = data.axonEyeStorageProvider;
+                            if (data.supabaseEnabled !== undefined) globalSettings.supabaseEnabled = data.supabaseEnabled;
+                            if (data.supabaseUrl) globalSettings.supabaseUrl = data.supabaseUrl;
+                            if (data.supabaseKey) globalSettings.supabaseKey = data.supabaseKey;
+                            if (data.supabaseBucket) globalSettings.supabaseBucket = data.supabaseBucket;
                         }
 
                         // Update Tools Button UI
