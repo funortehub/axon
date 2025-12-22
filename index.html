@@ -4441,6 +4441,14 @@
             updateExamsResultsPreview(false);
             updateAxonEyeResultsPreview(false);
 
+            // Clear captured images (Monitor/Album)
+            capturedImages = [];
+            updateAlbumCount();
+            renderAlbum();
+
+            // Force clear preview content
+            if (axonEyeResultsPreview) axonEyeResultsPreview.innerHTML = '';
+
             // Close Patient Details Modal to remove lingering "Saved Patient" images from screen
             if (patientDetailsModal) patientDetailsModal.style.display = 'none';
             if (patientListModal) patientListModal.style.display = 'none';
@@ -4459,6 +4467,7 @@
                     },
                     examsResults: "",
                     axonEyeResults: "",
+                    axonEyeImages: [], // Clear images from Firestore session
                     conversationHistory: [],
                     isAnalyzing: { status: false, type: null }
                 };
@@ -6431,11 +6440,11 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     if (docSnap.exists()) {
                         const patientData = docSnap.data();
                         if (patientData.consultations && patientData.consultations.length > 0) {
-                            appendOutput("Excluindo imagens associadas do Imgur...", "info");
+                            appendOutput("Excluindo imagens associadas (Imgur/Axon Storage)...", "info");
                             for (const consult of patientData.consultations) {
                                 if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
                                     for (const img of consult.axonEyeImages) {
-                                        await deleteFromImgur(img.deleteHash);
+                                        await deleteAxonEyeImage(img);
                                     }
                                 }
                             }
@@ -6616,10 +6625,8 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
                         detailsHTML += `<div class="patient-details-section"><div class="patient-details-section-title">IMAGENS (${consult.axonEyeImages.length})</div><div class="patient-images-grid">`;
                         consult.axonEyeImages.forEach((img, i) => {
-                            // Fix for Pinata/Supabase URLs that might break onclick string parsing
-                            // We access the global array or pass specific data safely
-                            const safeLink = img.link ? img.link.replace(/'/g, "\\'") : '';
-                            detailsHTML += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" onclick="openFullscreenModal('${safeLink}')" alt="Imagem do paciente"></div>`;
+                            // Robust click handler using data attributes to avoid string quoting issues
+                            detailsHTML += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" data-url="${img.link}" onclick="openFullscreenModal(this.getAttribute('data-url'))" alt="Imagem do paciente"></div>`;
                         });
                         detailsHTML += `</div></div>`;
                     }
