@@ -4441,6 +4441,10 @@
             updateExamsResultsPreview(false);
             updateAxonEyeResultsPreview(false);
 
+            // Close Patient Details Modal to remove lingering "Saved Patient" images from screen
+            if (patientDetailsModal) patientDetailsModal.style.display = 'none';
+            if (patientListModal) patientListModal.style.display = 'none';
+
             await clearTemporaryUploads();
 
             if (currentUser) {
@@ -6127,6 +6131,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
         };
 
         window.openFullscreenModal = (imageDataURL) => {
+            if (!imageDataURL) return;
             modalImage.src = imageDataURL;
             fullscreenModal.style.display = 'block';
         };
@@ -6610,8 +6615,11 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                                             ${addDetailSection('ANÁLISE VISUAL (AXON EYE)', consult.axonEyeResults)}`;
                     if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
                         detailsHTML += `<div class="patient-details-section"><div class="patient-details-section-title">IMAGENS (${consult.axonEyeImages.length})</div><div class="patient-images-grid">`;
-                        consult.axonEyeImages.forEach(img => {
-                            detailsHTML += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" onclick="openFullscreenModal('${img.link}')" alt="Imagem do paciente"></div>`;
+                        consult.axonEyeImages.forEach((img, i) => {
+                            // Fix for Pinata/Supabase URLs that might break onclick string parsing
+                            // We access the global array or pass specific data safely
+                            const safeLink = img.link ? img.link.replace(/'/g, "\\'") : '';
+                            detailsHTML += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" onclick="openFullscreenModal('${safeLink}')" alt="Imagem do paciente"></div>`;
                         });
                         detailsHTML += `</div></div>`;
                     }
