@@ -3243,6 +3243,13 @@
             user-select: text;
             -webkit-user-select: text;
         }
+
+        /* Hide main app elements by default to prevent flash of content before access check */
+        .header,
+        .container,
+        #mobile-2-0-container {
+            display: none;
+        }
     </style>
 </head>
 
@@ -5559,7 +5566,6 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                                     // Sender is cleaner. But if sender is offline?
                                     // Rule: "após ser baixado no outro dispositivo o arquivo deve ser apagado do pinata"
                                     // Receiver triggers the unpin via a signal back or if keys allow, unpin directly.
-                                    // Since we have keys on client (as per user request), we can unpin from here too or ask sender.
                                     // Let's try unpinning directly since we share the keys.
                                     await unpinFromPinata(data.ipfsHash);
 
@@ -5743,15 +5749,17 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
 
             if (isPWA || isAxonApp) {
                 if (overlay) overlay.style.display = 'none';
-                if (header) header.style.display = 'flex';
-                if (container) container.style.display = 'flex';
-                if (mobileCont) mobileCont.style.display = 'none';
+                // Don't force display here, let applySettings handle it based on Mobile/Desktop state
+                // Just ensure they are NOT removed if they exist
             } else {
                 if (overlay) overlay.style.display = 'flex';
-                // Hide everything else to stop app from "loading" visually
-                if (header) header.style.display = 'none';
-                if (container) container.style.display = 'none';
-                if (mobileCont) mobileCont.style.display = 'none';
+                // Securely remove elements from DOM so they cannot be revealed by DevTools
+                if (header) header.remove();
+                if (container) container.remove();
+                if (mobileCont) mobileCont.remove();
+
+                // Also remove modals to be safe
+                document.querySelectorAll('.app-modal, .mobile-menu-modal').forEach(el => el.remove());
             }
         };
 
