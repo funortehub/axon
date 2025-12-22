@@ -6015,9 +6015,24 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
 
         const clearTemporaryUploads = async () => {
             if (temporaryImgurUploads.length > 0) {
-                appendOutput('Limpando visualização da sessão...', 'info');
-                // Images are preserved in cloud (Imgur/Supabase/Pinata) for history/Saved Patients.
-                // We only clear the local session array.
+                appendOutput('Limpando imagens não salvas...', 'info');
+
+                // Temporary Draft Logic:
+                // If image.saved === true, it belongs to a Saved Patient record -> KEEP in cloud.
+                // If image.saved !== true, it was just a draft/analysis -> DELETE from cloud.
+
+                const deletionPromises = [];
+                for (const img of temporaryImgurUploads) {
+                    if (img.saved !== true) {
+                        deletionPromises.push(deleteAxonEyeImage(img));
+                    }
+                }
+
+                if (deletionPromises.length > 0) {
+                    appendOutput(`Apagando ${deletionPromises.length} imagem(ns) temporária(s)...`, 'info');
+                    await Promise.all(deletionPromises);
+                }
+
                 temporaryImgurUploads = [];
             }
         };
@@ -6354,6 +6369,12 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         consultations: [newConsultation],
                         lastUpdated: new Date()
                     });
+
+                    // Mark images as saved so they are not deleted by clearTemporaryUploads
+                    if (temporaryImgurUploads && temporaryImgurUploads.length > 0) {
+                        temporaryImgurUploads.forEach(img => img.saved = true);
+                    }
+
                     appendOutput(`Paciente '${patientName}' e primeira consulta salvos com sucesso.`, "success");
                 }
 
