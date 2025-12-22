@@ -6652,7 +6652,11 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                                 img.deleteHash = newPath;
                                 // Reconstruct the full public URL explicitly to allow viewing
                                 const bucket = globalSettings.supabaseBucket || 'axon-drive';
-                                img.link = `${globalSettings.supabaseUrl}/storage/v1/object/public/${bucket}/${newPath}`;
+                                let urlPrefix = globalSettings.supabaseUrl;
+                                if (!urlPrefix.startsWith('http')) {
+                                    urlPrefix = `https://${urlPrefix}`;
+                                }
+                                img.link = `${urlPrefix}/storage/v1/object/public/${bucket}/${newPath}`;
                                 img.isTemp = false;
                             }
                         }
