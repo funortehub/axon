@@ -5406,7 +5406,9 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             if (navigator.appVersion.indexOf("Linux") != -1) os = "Linux";
 
             // Browser Detection
-            if (ua.indexOf("Edg/") !== -1) {
+            if (ua.toLowerCase().indexOf("axon") !== -1) {
+                browser = `Axon USB App`;
+            } else if (ua.indexOf("Edg/") !== -1) {
                 browser = `Edge ${ua.split('Edg/')[1].split(' ')[0]}`;
             } else if (ua.indexOf("Firefox/") !== -1) {
                 browser = `Firefox ${ua.split('Firefox/')[1].split(' ')[0]}`;
@@ -5416,7 +5418,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 browser = `Safari ${ua.split('Version/')[1].split(' ')[0]}`;
             }
 
-            return { os, browser };
+            return { os, browser, userAgent: ua };
         };
 
         const updateMobileConnectionStatus = (desktopData) => {
@@ -5430,7 +5432,12 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
 
             dot.classList.toggle('status-on', isConnected);
             if (isConnected) {
-                text.textContent = `Conectado em desktop: ${desktopData.os} - ${desktopData.browser}`;
+                const isAxon = (desktopData.userAgent && desktopData.userAgent.toLowerCase().includes('axon')) || (desktopData.browser && desktopData.browser.toLowerCase().includes('axon'));
+                if (isAxon) {
+                    text.innerHTML = `<span style="color: #68d391; border: 1px solid #68d391; padding: 2px 6px; border-radius: 4px; font-weight: bold; background: rgba(104, 211, 145, 0.1);">CONECTADO VIA UNIDADE AXON USB</span>`;
+                } else {
+                    text.textContent = `Conectado em desktop: ${desktopData.os} - ${desktopData.browser}`;
+                }
             } else {
                 text.textContent = 'Nenhum desktop conectado';
             }
@@ -6526,6 +6533,10 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             loginModal.style.display = 'none';
             if (isRestoredSession) appendOutput(`Sessão restaurada para: ${currentUser}`, "success", false);
             else appendOutput(`Login bem-sucedido. Bem-vindo, ${currentUser}.`, "success", false);
+
+            // DEBUG: Check Real User Agent
+            appendOutput(`[SYS] UA: ${navigator.userAgent}`, "info", false);
+
             initialMessagesContainer.style.display = 'none';
 
             mobileWelcomeTitle.textContent = `Bem-vindo, ${currentUser}!`;
@@ -6946,6 +6957,17 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                      <div style="display: flex; align-items: center; justify-content: space-between;">
                         <span>Gerenciar Logs do Terminal</span>
                         <button class="app-modal-button" onclick="window.openLogSettings()" style="width: auto; padding: 5px 15px;">Configurar</button>
+                    </div>
+                </div>
+                <div class="admin-section" style="margin-top: 15px;">
+                    <div class="admin-section-title">Diagnóstico</div>
+                     <div style="display: flex; gap: 10px;">
+                         <button class="app-modal-button" onclick="alert('User Agent: ' + navigator.userAgent)" style="width: auto;">
+                            <i class="fas fa-info-circle"></i> Ver User Agent
+                        </button>
+                        <button class="app-modal-button" onclick="console.log(navigator.userAgent); appendOutput('[SYS] TEST UA: ' + navigator.userAgent, 'info');" style="width: auto;">
+                            <i class="fas fa-terminal"></i> Logar UA
+                        </button>
                     </div>
                 </div>
                 <div class="admin-section" style="margin-top: 15px;">
