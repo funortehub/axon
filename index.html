@@ -6534,9 +6534,6 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             if (isRestoredSession) appendOutput(`Sessão restaurada para: ${currentUser}`, "success", false);
             else appendOutput(`Login bem-sucedido. Bem-vindo, ${currentUser}.`, "success", false);
 
-            // DEBUG: Check Real User Agent
-            appendOutput(`[SYS] UA: ${navigator.userAgent}`, "info", false);
-
             initialMessagesContainer.style.display = 'none';
 
             mobileWelcomeTitle.textContent = `Bem-vindo, ${currentUser}!`;
@@ -6957,17 +6954,6 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                      <div style="display: flex; align-items: center; justify-content: space-between;">
                         <span>Gerenciar Logs do Terminal</span>
                         <button class="app-modal-button" onclick="window.openLogSettings()" style="width: auto; padding: 5px 15px;">Configurar</button>
-                    </div>
-                </div>
-                <div class="admin-section" style="margin-top: 15px;">
-                    <div class="admin-section-title">Diagnóstico</div>
-                     <div style="display: flex; gap: 10px;">
-                         <button class="app-modal-button" onclick="alert('User Agent: ' + navigator.userAgent)" style="width: auto;">
-                            <i class="fas fa-info-circle"></i> Ver User Agent
-                        </button>
-                        <button class="app-modal-button" onclick="console.log(navigator.userAgent); appendOutput('[SYS] TEST UA: ' + navigator.userAgent, 'info');" style="width: auto;">
-                            <i class="fas fa-terminal"></i> Logar UA
-                        </button>
                     </div>
                 </div>
                 <div class="admin-section" style="margin-top: 15px;">
