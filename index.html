@@ -6060,6 +6060,15 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
 
         const uploadAxonEyeImage = async (base64Image) => {
             const provider = globalSettings.axonEyeStorageProvider || 'imgur';
+            console.log("DEBUG: uploadAxonEyeImage called.");
+            console.log("DEBUG: Provider:", provider);
+            console.log("DEBUG: Supabase Config:", {
+                enabled: globalSettings.supabaseEnabled,
+                url: !!globalSettings.supabaseUrl,
+                key: !!globalSettings.supabaseKey,
+                bucket: globalSettings.supabaseBucket
+            });
+
             if (provider === 'axon_storage') {
                 try {
                     const filename = `axon_eye_${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
@@ -6083,17 +6092,21 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         // To be safe and minimal: Let's use a new helper `uploadToSupabasePath`.
 
                         const uploadToSupabasePath = async (file, path) => {
-                            const formData = new FormData();
-                            formData.append('file', file);
+                            // Match working uploadToSupabase implementation: Raw Body + apikey header
                             const response = await fetch(`${globalSettings.supabaseUrl}/storage/v1/object/${globalSettings.supabaseBucket || 'axon-drive'}/${path}`, {
                                 method: 'POST',
                                 headers: {
-                                    'Authorization': `Bearer ${globalSettings.supabaseKey}`,
-                                    // 'Content-Type': 'multipart/form-data' // Let browser set boundary
+                                    'Authorization': `Bearer ${globalSettings.supabaseKey.trim()}`,
+                                    'apikey': globalSettings.supabaseKey.trim()
+                                    // 'Content-Type': file.type // Optional, Supabase handles it
                                 },
-                                body: formData
+                                body: file
                             });
-                            if (!response.ok) throw new Error('Supabase upload failed');
+                            if (!response.ok) {
+                                const errorText = await response.text();
+                                console.error("Supabase Error Response:", errorText);
+                                throw new Error(`Supabase upload failed: ${errorText} (${response.status})`);
+                            }
                             const data = await response.json();
                             return {
                                 url: `${globalSettings.supabaseUrl}/storage/v1/object/public/${globalSettings.supabaseBucket || 'axon-drive'}/${path}`,
@@ -6122,10 +6135,11 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         };
                     }
                 } catch (e) {
-                    console.error("Erro no upload Axon Storage:", e);
-                    appendOutput(`Erro no Axon Storage (${e.message}). Tentando Imgur...`, "error");
+                    console.error("Erro no upload Axon Storage (Stack):", e);
+                    appendOutput(`Erro no Axon Storage (${e.message}). Detalhes no console. Tentando Imgur...`, "error");
                 }
             }
+            console.log("DEBUG: Falling back to Imgur upload.");
             // Default Imgur
             const result = await uploadToImgur(base64Image);
             if (result) result.provider = 'imgur';
@@ -6154,7 +6168,8 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 const response = await fetch(`${globalSettings.supabaseUrl}/storage/v1/object/move`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${globalSettings.supabaseKey}`,
+                        'Authorization': `Bearer ${globalSettings.supabaseKey.trim()}`,
+                        'apikey': globalSettings.supabaseKey.trim(),
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
@@ -6623,12 +6638,33 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 const patientId = `${currentUser}_${patientName.replace(/\s+/g, '_').toLowerCase()}_${birthDate.replace(/\//g, '')}`;
                 const patientRef = doc(db, "patients", patientId);
 
+                // PROCESS IMAGES FIRST (Move & Update Links)
+                if (temporaryImgurUploads && temporaryImgurUploads.length > 0) {
+                    for (const img of temporaryImgurUploads) {
+                        img.saved = true;
+                        // Move from TEMP to PERMANENT if Supabase
+                        if (img.provider === 'supabase' && img.isTemp) {
+                            const filename = img.deleteHash.split('/').pop(); // Extract filename from temp/user/file.jpg
+                            const newPath = `${currentUser}/${filename}`;
+
+                            const moveSuccess = await moveInSupabase(img.deleteHash, newPath);
+                            if (moveSuccess) {
+                                img.deleteHash = newPath;
+                                // Reconstruct the full public URL explicitly to allow viewing
+                                const bucket = globalSettings.supabaseBucket || 'axon-drive';
+                                img.link = `${globalSettings.supabaseUrl}/storage/v1/object/public/${bucket}/${newPath}`;
+                                img.isTemp = false;
+                            }
+                        }
+                    }
+                }
+
                 const newConsultation = {
                     date: new Date(),
                     anamnesis: { ...anamnesis },
                     examsResults,
                     axonEyeResults,
-                    axonEyeImages: [...temporaryImgurUploads],
+                    axonEyeImages: [...temporaryImgurUploads], // Now contains UPDATED links
                 };
 
                 const docSnap = await getDoc(patientRef);
@@ -6650,25 +6686,6 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         consultations: [newConsultation],
                         lastUpdated: new Date()
                     });
-
-                    // Mark images as saved so they are not deleted by clearTemporaryUploads
-                    if (temporaryImgurUploads && temporaryImgurUploads.length > 0) {
-                        for (const img of temporaryImgurUploads) {
-                            img.saved = true;
-                            // Move from TEMP to PERMANENT if Supabase
-                            if (img.provider === 'supabase' && img.isTemp) {
-                                const filename = img.deleteHash.split('/').pop(); // Extract filename from temp/user/file.jpg
-                                const newPath = `${currentUser}/${filename}`;
-
-                                const moveSuccess = await moveInSupabase(img.deleteHash, newPath);
-                                if (moveSuccess) {
-                                    img.deleteHash = newPath;
-                                    img.link = `${globalSettings.supabaseUrl}/storage/v1/object/public/${globalSettings.supabaseBucket || 'axon-drive'}/${newPath}`;
-                                    img.isTemp = false;
-                                }
-                            }
-                        }
-                    }
 
                     appendOutput(`Paciente '${patientName}' e primeira consulta salvos com sucesso.`, "success");
                 }
@@ -10253,6 +10270,31 @@ ${instruction}
                                     if (child.type === 'folder') {
                                         const newZipFolder = zipFolder.folder(child.name);
                                         await processFolder(child.id, newZipFolder);
+                                        // Move Supabase items from temp to permanent
+                                        for (let i = 0; i < temporaryImgurUploads.length; i++) {
+                                            const img = temporaryImgurUploads[i];
+                                            console.log("DEBUG: Processing image for save:", img);
+                                            if (img.provider === 'supabase' && img.isTemp) {
+                                                try {
+                                                    const oldPath = img.deleteHash; // stored as path
+                                                    const filename = oldPath.split('/').pop();
+                                                    const newPath = `${currentUser}/${filename}`;
+
+                                                    await moveInSupabase(oldPath, newPath);
+
+                                                    // Reconstruct the full public URL explicitly to allow viewing
+                                                    const bucket = globalSettings.supabaseBucket || 'axon-drive';
+                                                    img.link = `${globalSettings.supabaseUrl}/storage/v1/object/public/${bucket}/${newPath}`;
+                                                    img.deleteHash = newPath;
+                                                    img.isTemp = false;
+                                                    img.saved = true; // Mark as saved
+                                                } catch (e) {
+                                                    console.error("Failed to move Supabase image:", e);
+                                                }
+                                            } else {
+                                                img.saved = true; // Mark other providers as saved too
+                                            }
+                                        }
                                     } else {
                                         if (child.ipfsHash) {
                                             try {
