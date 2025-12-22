@@ -5748,7 +5748,9 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                             supabaseKey: data.supabaseKey || '',
                             supabaseBucket: data.supabaseBucket || 'axon-drive',
                             supabaseEnabled: data.supabaseEnabled || false,
-                            showPrescriptionAssistant: data.showPrescriptionAssistant !== undefined ? data.showPrescriptionAssistant : true,
+                            showPrescriptionAssistant: data.showPrescriptionAssistant !== false,
+                            showToolsButton: data.showToolsButton !== false, // default true
+                            axonEyeStorageProvider: data.axonEyeStorageProvider || 'imgur',
                             bridgePermissions: data.bridgePermissions || {
                                 sendToChat: true,
                                 callAI: true,
@@ -5769,7 +5771,37 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         applySettings();
                         if (!isAllocated) { isAllocated = true; resolve(); }
                     } else {
-                        globalSettings.mobile2_0_enabled = isMobile;
+                        // Default settings if doc doesn't exist
+                        globalSettings = {
+                            apiKeys: [...defaultApiKeys],
+                            apiModels: [...defaultApiModels],
+                            mode: 'automatic',
+                            manualTextModel: '',
+                            manualVisionModel: '',
+                            manualApiKey: '',
+                            apiProvider: 'gemini',
+                            openRouterKey: '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',
+                            openRouterModel: '',
+                            groqKey: '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',
+                            groqTextModel: 'llama-3.3-70b-versatile',
+                            groqVisionModel: 'llama-3.2-90b-vision-preview',
+                            groqAvailableModels: [],
+                            mobile2_0_enabled: isMobile,
+                            hideStatusMessages: false,
+                            customTextProvider: 'gemini',
+                            customVisionProvider: 'gemini',
+                            pinataKeys: [
+                                { key: "5256cd6c1c0b4ccec3a9", secret: "afbed7932f0ebf5c50d88d04378359164aca3ae63a72e2628375dc02e4fcfb05" }
+                            ],
+                            supabaseUrl: '',
+                            supabaseKey: '',
+                            supabaseBucket: 'axon-drive',
+                            supabaseEnabled: false,
+                            showPrescriptionAssistant: true,
+                            showToolsButton: true,
+                            axonEyeStorageProvider: 'imgur',
+                            bridgePermissions: { sendToChat: true, callAI: true, getAnamnesis: true, storage: true }
+                        };
                         setDoc(docRef, globalSettings);
                         if (!isAllocated) { isAllocated = true; resolve(); }
                     }
@@ -5907,12 +5939,72 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             }
         };
 
+        const dataURLtoFile = (dataurl, filename) => {
+            let arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+            while (n--) {
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new File([u8arr], filename, { type: mime });
+        };
+
+        const uploadAxonEyeImage = async (base64Image) => {
+            const provider = globalSettings.axonEyeStorageProvider || 'imgur';
+            if (provider === 'axon_storage') {
+                try {
+                    const filename = `axon_eye_${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
+                    const file = dataURLtoFile(base64Image, filename);
+
+                    // Check Supabase
+                    if ((globalSettings.supabaseEnabled === true || globalSettings.supabaseEnabled === 'true') && globalSettings.supabaseUrl && globalSettings.supabaseKey) {
+                        const result = await uploadToSupabase(file);
+                        return {
+                            link: result.url,
+                            deleteHash: result.path,
+                            provider: 'supabase',
+                            fullPath: result.fullPath
+                        };
+                    } else {
+                        // Fallback Pinata
+                        const result = await uploadToPinata(file);
+                        const ipfsUrl = `https://gateway.pinata.cloud/ipfs/${result.ipfsHash}`;
+                        return {
+                            link: ipfsUrl,
+                            deleteHash: result.ipfsHash,
+                            provider: 'pinata'
+                        };
+                    }
+                } catch (e) {
+                    console.error("Erro no upload Axon Storage:", e);
+                    appendOutput(`Erro no Axon Storage (${e.message}). Tentando Imgur...`, "error");
+                }
+            }
+            // Default Imgur
+            const result = await uploadToImgur(base64Image);
+            if (result) result.provider = 'imgur';
+            return result;
+        };
+
+        const deleteAxonEyeImage = async (imageObj) => {
+            if (!imageObj) return;
+            try {
+                if (imageObj.provider === 'supabase') {
+                    await deleteFromSupabase(imageObj.deleteHash);
+                } else if (imageObj.provider === 'pinata') {
+                    await unpinFromPinata(imageObj.deleteHash);
+                } else {
+                    await deleteFromImgur(imageObj.deleteHash);
+                }
+            } catch (e) {
+                console.warn("Erro ao deletar imagem Axon Eye:", e);
+            }
+        };
+
         const clearTemporaryUploads = async () => {
             if (temporaryImgurUploads.length > 0) {
-                appendOutput('Limpando imagens temporárias não salvas...', 'info');
-                for (const upload of temporaryImgurUploads) {
-                    await deleteFromImgur(upload.deleteHash);
-                }
+                appendOutput('Limpando visualização da sessão...', 'info');
+                // Images are preserved in cloud (Imgur/Supabase/Pinata) for history/Saved Patients.
+                // We only clear the local session array.
                 temporaryImgurUploads = [];
             }
         };
@@ -6128,7 +6220,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             try {
                 const currentUploads = [];
                 for (const imgBase64 of capturedImages) {
-                    const uploadResult = await uploadToImgur(imgBase64);
+                    const uploadResult = await uploadAxonEyeImage(imgBase64);
                     if (uploadResult) {
                         currentUploads.push(uploadResult);
                     }
@@ -6964,6 +7056,19 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                             <span class="slider"></span>
                         </label>
                     </div>
+                    <div style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                        <span style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 5px;">Armazenamento Axon Eye</span>
+                         <div class="radio-group" style="display: flex; flex-direction: column; gap: 5px;">
+                            <label class="radio-label">
+                                <input type="radio" name="axonEyeStorage" value="imgur" ${globalSettings.axonEyeStorageProvider !== 'axon_storage' ? 'checked' : ''}>
+                                Imgur (Padrão - Temporário)
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="axonEyeStorage" value="axon_storage" ${globalSettings.axonEyeStorageProvider === 'axon_storage' ? 'checked' : ''}>
+                                Axon Storage (Supabase/Pinata - Permanente)
+                            </label>
+                        </div>
+                    </div>
 
                 </div>
                 <div class="admin-section" style="margin-top: 15px;">
@@ -7045,6 +7150,21 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     }
                 });
             }
+
+            // Axon Eye Storage Toggle
+            const axonEyeRadios = document.getElementsByName('axonEyeStorage');
+            axonEyeRadios.forEach(radio => {
+                radio.addEventListener('change', async (e) => {
+                    if (e.target.checked) {
+                        try {
+                            await setDoc(doc(db, "settings", "global"), { axonEyeStorageProvider: e.target.value }, { merge: true });
+                            globalSettings.axonEyeStorageProvider = e.target.value; // Optimistic update
+                        } catch (err) {
+                            console.error("Erro ao salvar provider Axon Eye:", err);
+                        }
+                    }
+                });
+            });
 
 
 
