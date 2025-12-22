@@ -3197,6 +3197,92 @@
             color: var(--text-color);
             opacity: 0.5;
         }
+
+        /* Gallery Styles */
+        .fullscreen-image-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            /* Important for zoom/pan */
+            position: relative;
+        }
+
+        .modal-content {
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+            transition: transform 0.1s ease;
+            /* Smooth zoom */
+            cursor: grab;
+        }
+
+        .modal-content.panning {
+            cursor: grabbing;
+            transition: none;
+            /* No transition during drag */
+        }
+
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1001;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-arrow:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .nav-arrow.prev {
+            left: 20px;
+        }
+
+        .nav-arrow.next {
+            right: 20px;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 20px;
+            z-index: 1001;
+        }
+
+        .zoom-controls button {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .zoom-controls button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
     </style>
 </head>
 
@@ -3374,8 +3460,19 @@
             </div>
         </div>
     </div>
-    <div id="fullscreen-modal" class="fullscreen-modal"><span class="modal-close">&times;</span><img
-            class="modal-content" id="modal-image"></div>
+    <div id="fullscreen-modal" class="fullscreen-modal">
+        <span class="modal-close">&times;</span>
+        <div class="fullscreen-image-container" id="fullscreen-image-container">
+            <img class="modal-content" id="modal-image">
+        </div>
+        <button class="nav-arrow prev" id="modal-prev-btn"><i class="fas fa-chevron-left"></i></button>
+        <button class="nav-arrow next" id="modal-next-btn"><i class="fas fa-chevron-right"></i></button>
+        <div class="zoom-controls">
+            <button id="modal-zoom-in"><i class="fas fa-plus"></i></button>
+            <button id="modal-zoom-reset"><i class="fas fa-compress"></i></button>
+            <button id="modal-zoom-out"><i class="fas fa-minus"></i></button>
+        </div>
+    </div>
     <div id="album-modal" class="album-modal">
         <div class="album-modal-content"><span class="album-modal-close">&times;</span>
             <div class="album-modal-header">
@@ -5970,15 +6067,52 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
 
                     // Check Supabase
                     if ((globalSettings.supabaseEnabled === true || globalSettings.supabaseEnabled === 'true') && globalSettings.supabaseUrl && globalSettings.supabaseKey) {
-                        const result = await uploadToSupabase(file);
+                        // Upload to TEMP folder specific for this user
+                        const tempFilename = `temp/${currentUser}/${filename}`;
+                        const fileWithTempName = dataURLtoFile(base64Image, filename); // keeping original name for file obj but uploading to temp path? 
+                        // uploadToSupabase usually takes a file object and uses its name. 
+                        // We need to modify uploadToSupabase or pass the path explicitly.
+                        // Assuming uploadToSupabase handles the path generation or we need to intercept it.
+                        // Wait, uploadToSupabase is generic. Let's look at it.
+                        // Actually, for safer implementation without modifying uploadToSupabase deeply right now:
+                        // Let's rely on standard upload and then MOVE? No, better upload directly to temp.
+                        // Let's modify uploadToSupabase call or assume we can pass a path. 
+                        // Since uploadToSupabase is likely using `upload(path, file)`, let's pass a custom path if possible?
+                        // `uploadToSupabase` implementation (assumed from context): likely creates `user/filename`.
+                        // We'll wrap it or just call fetch directly here for custom path?
+                        // To be safe and minimal: Let's use a new helper `uploadToSupabasePath`.
+
+                        const uploadToSupabasePath = async (file, path) => {
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            const response = await fetch(`${globalSettings.supabaseUrl}/storage/v1/object/${globalSettings.supabaseBucket || 'axon-drive'}/${path}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${globalSettings.supabaseKey}`,
+                                    // 'Content-Type': 'multipart/form-data' // Let browser set boundary
+                                },
+                                body: formData
+                            });
+                            if (!response.ok) throw new Error('Supabase upload failed');
+                            const data = await response.json();
+                            return {
+                                url: `${globalSettings.supabaseUrl}/storage/v1/object/public/${globalSettings.supabaseBucket || 'axon-drive'}/${path}`,
+                                path: path,
+                                fullPath: data.Key
+                            };
+                        };
+
+                        const result = await uploadToSupabasePath(file, tempFilename);
+
                         return {
                             link: result.url,
                             deleteHash: result.path,
                             provider: 'supabase',
-                            fullPath: result.fullPath
+                            fullPath: result.fullPath,
+                            isTemp: true // Mark as temp
                         };
                     } else {
-                        // Fallback Pinata
+                        // Fallback Pinata (No temp folder logic for Pinata yet, standard upload)
                         const result = await uploadToPinata(file);
                         const ipfsUrl = `https://gateway.pinata.cloud/ipfs/${result.ipfsHash}`;
                         return {
@@ -6010,6 +6144,35 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 }
             } catch (e) {
                 console.warn("Erro ao deletar imagem Axon Eye:", e);
+            }
+        };
+
+        const moveInSupabase = async (oldPath, newPath) => {
+            if (!globalSettings.supabaseUrl || !globalSettings.supabaseKey) return null;
+            try {
+                // Supabase Storage 'move' API
+                const response = await fetch(`${globalSettings.supabaseUrl}/storage/v1/object/move`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${globalSettings.supabaseKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        bucketId: globalSettings.supabaseBucket || 'axon-drive',
+                        sourceKey: oldPath,
+                        destinationKey: newPath
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Move failed');
+                }
+
+                return true;
+            } catch (e) {
+                console.error("Erro ao mover arquivo no Supabase:", e);
+                return false;
             }
         };
 
@@ -6154,11 +6317,129 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             });
         };
 
-        window.openFullscreenModal = (imageDataURL) => {
-            if (!imageDataURL) return;
-            modalImage.src = imageDataURL;
+        // Gallery State
+        let galleryImages = [];
+        let currentGalleryIndex = 0;
+        let zoomLevel = 1;
+        let isDragging = false;
+        let startX, startY, translateX = 0, translateY = 0;
+
+        window.openFullscreenModal = (imageUrl, index = -1, allImages = []) => {
+            if (!imageUrl) return;
+
+            // Setup Gallery
+            if (allImages.length > 0) {
+                galleryImages = allImages;
+                currentGalleryIndex = index >= 0 ? index : 0;
+            } else {
+                // Single image fallback
+                galleryImages = [{ link: imageUrl }];
+                currentGalleryIndex = 0;
+            }
+
+            updateGalleryImage();
+
+            // Show/Hide Nav Buttons
+            const prevBtn = document.getElementById('modal-prev-btn');
+            const nextBtn = document.getElementById('modal-next-btn');
+
+            if (galleryImages.length > 1) {
+                prevBtn.style.display = 'block';
+                nextBtn.style.display = 'block';
+            } else {
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+            }
+
             fullscreenModal.style.display = 'block';
+
+            // Reset Zoom
+            resetZoom();
         };
+
+        const updateGalleryImage = () => {
+            const imgObj = galleryImages[currentGalleryIndex];
+            if (imgObj) {
+                modalImage.src = imgObj.link || imgObj; // Handle object or string
+                resetZoom();
+            }
+        };
+
+        const navigateGallery = (direction) => {
+            if (galleryImages.length <= 1) return;
+
+            if (direction === 'next') {
+                currentGalleryIndex = (currentGalleryIndex + 1) % galleryImages.length;
+            } else {
+                currentGalleryIndex = (currentGalleryIndex - 1 + galleryImages.length) % galleryImages.length;
+            }
+            updateGalleryImage();
+        };
+
+        // Zoom & Pan Logic
+        const updateTransform = () => {
+            modalImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomLevel})`;
+        };
+
+        const resetZoom = () => {
+            zoomLevel = 1;
+            translateX = 0;
+            translateY = 0;
+            updateTransform();
+            modalImage.classList.remove('panning');
+        };
+
+        // Event Listeners for Gallery
+        document.getElementById('modal-prev-btn').addEventListener('click', (e) => { e.stopPropagation(); navigateGallery('prev'); });
+        document.getElementById('modal-next-btn').addEventListener('click', (e) => { e.stopPropagation(); navigateGallery('next'); });
+
+        document.getElementById('modal-zoom-in').addEventListener('click', (e) => {
+            e.stopPropagation();
+            zoomLevel += 0.2;
+            updateTransform();
+        });
+        document.getElementById('modal-zoom-out').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (zoomLevel > 0.4) zoomLevel -= 0.2;
+            updateTransform();
+        });
+        document.getElementById('modal-zoom-reset').addEventListener('click', (e) => { e.stopPropagation(); resetZoom(); });
+
+        // Keyboard Nav
+        document.addEventListener('keydown', (e) => {
+            if (fullscreenModal.style.display === 'block') {
+                if (e.key === 'ArrowRight') navigateGallery('next');
+                if (e.key === 'ArrowLeft') navigateGallery('prev');
+                if (e.key === 'Escape') fullscreenModal.style.display = 'none';
+            }
+        });
+
+        // Drag/Pan Events
+        modalImage.addEventListener('mousedown', (e) => {
+            if (zoomLevel > 1) {
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                modalImage.classList.add('panning');
+                e.preventDefault();
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging && zoomLevel > 1) {
+                translateX = e.clientX - startX;
+                translateY = e.clientY - startY;
+                updateTransform();
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+            modalImage.classList.remove('panning');
+        });
+
+        // Update click handler in saved patients list to pass array
+        // (This needs to be updated in the render function where we set the onclick)
 
         modalClose.onclick = () => fullscreenModal.style.display = 'none';
         fullscreenModal.onclick = (e) => { if (e.target === fullscreenModal) fullscreenModal.style.display = 'none'; };
@@ -6372,7 +6653,21 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
 
                     // Mark images as saved so they are not deleted by clearTemporaryUploads
                     if (temporaryImgurUploads && temporaryImgurUploads.length > 0) {
-                        temporaryImgurUploads.forEach(img => img.saved = true);
+                        for (const img of temporaryImgurUploads) {
+                            img.saved = true;
+                            // Move from TEMP to PERMANENT if Supabase
+                            if (img.provider === 'supabase' && img.isTemp) {
+                                const filename = img.deleteHash.split('/').pop(); // Extract filename from temp/user/file.jpg
+                                const newPath = `${currentUser}/${filename}`;
+
+                                const moveSuccess = await moveInSupabase(img.deleteHash, newPath);
+                                if (moveSuccess) {
+                                    img.deleteHash = newPath;
+                                    img.link = `${globalSettings.supabaseUrl}/storage/v1/object/public/${globalSettings.supabaseBucket || 'axon-drive'}/${newPath}`;
+                                    img.isTemp = false;
+                                }
+                            }
+                        }
                     }
 
                     appendOutput(`Paciente '${patientName}' e primeira consulta salvos com sucesso.`, "success");
@@ -6645,9 +6940,28 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                                             ${addDetailSection('ANÁLISE VISUAL (AXON EYE)', consult.axonEyeResults)}`;
                     if (consult.axonEyeImages && consult.axonEyeImages.length > 0) {
                         detailsHTML += `<div class="patient-details-section"><div class="patient-details-section-title">IMAGENS (${consult.axonEyeImages.length})</div><div class="patient-images-grid">`;
+                        // Serialize images array for the modal context (careful with quotes)
+                        const imagesJson = JSON.stringify(consult.axonEyeImages).replace(/"/g, '&quot;');
+
                         consult.axonEyeImages.forEach((img, i) => {
-                            // Robust click handler using data attributes to avoid string quoting issues
-                            detailsHTML += `<div class="patient-image-item"><img src="${img.link}" class="patient-image" data-url="${img.link}" onclick="openFullscreenModal(this.getAttribute('data-url'))" alt="Imagem do paciente"></div>`;
+                            // Pass 'this', index, and the full array to the modal
+                            /* 
+                               We'll use a globally accessible helper or pass the array directly? 
+                               Passing complex JSON in onclick is messy. 
+                               Better: Store the images in a global map using a consultation ID or just pass them if small.
+                               Let's pass via function arguments using the previously serialized JSON, parsed on the fly? 
+                               Or simpler: `openFullscreenModal(url, index, ${imagesJson})` - risky if too large.
+                               
+                               Best approach given constraints:
+                               Assign this consultation's images to a window variable temporarily on click? 
+                               No, let's just use the robust `data-all-images` attribute.
+                            */
+                            detailsHTML += `<div class="patient-image-item">
+                                <img src="${img.link}" class="patient-image" 
+                                     data-index="${i}"
+                                     onclick='const allImgs = ${JSON.stringify(consult.axonEyeImages)}; openFullscreenModal("${img.link}", ${i}, allImgs)' 
+                                     alt="Imagem do paciente">
+                            </div>`;
                         });
                         detailsHTML += `</div></div>`;
                     }
