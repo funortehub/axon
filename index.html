@@ -4823,7 +4823,9 @@
                     const content = data.choices?.[0]?.message?.content;
                     if (content) {
                         await incrementUserUsage(images.length > 0 ? 'vision' : 'text');
-                        appendOutput(`Sucesso via OpenRouter.`, "success", false);
+                        if (!globalSettings.hideStatusMessages) {
+                            appendOutput(`Sucesso via OpenRouter.`, "success", false);
+                        }
                         return content;
                     }
                     throw new Error("Resposta vazia do OpenRouter.");
@@ -5971,13 +5973,18 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             }
         };
 
+        let wasUserBlocked = false; // Track previous state to prevent spam
+
         const updateBlockedUI = () => {
             const buttons = document.querySelectorAll('.action-button, .mobile-btn');
             const infoBannerBubble = document.querySelector('.info-banner .chat-bubble-info');
             const infoBannerContent = document.getElementById('info-banner-content');
 
             if (isUserBlocked) {
-                appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
+                if (!wasUserBlocked) {
+                    appendOutput("Sua conta foi bloqueada! Funcionalidade indisponível.", "highlight");
+                    wasUserBlocked = true;
+                }
                 buttons.forEach(btn => btn.classList.add('blocked-ui'));
                 commandInput.disabled = true;
                 if (cameraModal.style.display === 'flex') stopCamera();
@@ -5994,7 +6001,10 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     infoBannerContent.innerHTML = 'Sua conta do usuário foi bloqueada.';
                 }
             } else {
-                appendOutput("Sua conta foi desbloqueada.", "success");
+                if (wasUserBlocked) {
+                    appendOutput("Sua conta foi desbloqueada.", "success");
+                    wasUserBlocked = false;
+                }
                 buttons.forEach(btn => btn.classList.remove('blocked-ui'));
                 commandInput.disabled = false;
                 if (btnCloud) btnCloud.classList.remove('blocked-ui');
@@ -6939,7 +6949,12 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 } else if (typeof content === 'object') {
                     body = Object.entries(content).map(([k, v]) => `<strong>${k.toUpperCase()}:</strong> ${v || "Não informado"}<br>`).join('');
                 } else {
-                    body = content.replace(/\n/g, '<br>');
+                    // Helper to format markdown bold
+                    const formatMarkdown = (text) => {
+                        if (!text) return text;
+                        return text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                    };
+                    body = formatMarkdown(content).replace(/\n/g, '<br>');
                 }
                 return `<div class="patient-details-section"><div class="patient-details-section-title">${title}</div><div>${body}</div></div>`;
             };
