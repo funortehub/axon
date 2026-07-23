@@ -7210,7 +7210,26 @@
                     formattedResults = boldedResults.split('\n').filter(line => line.trim() !== '').map(line => `<div class="output">${line.trim()}</div>`).join('');
                 }
             }
-            axonEyeResultsPreview.innerHTML = `<div class="section-title">ANÁLISE AXON EYE:</div>${formattedResults || '<div class="info">Nenhuma análise visual feita ainda.</div>'}${imageHtml}`;
+            const currentAnimation = axonEyeResultsPreview.querySelector('.ai-processing-animation');
+            if (currentAnimation && !formattedResults) {
+                Array.from(axonEyeResultsPreview.children).forEach(child => {
+                    if (!child.classList.contains('ai-processing-animation')) {
+                        child.remove();
+                    }
+                });
+                
+                // Also remove any stray text nodes
+                Array.from(axonEyeResultsPreview.childNodes).forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE) node.remove();
+                });
+                
+                if (imageHtml) {
+                    axonEyeResultsPreview.insertAdjacentHTML('beforeend', imageHtml);
+                }
+            } else {
+                axonEyeResultsPreview.innerHTML = `<div class="section-title">ANÁLISE AXON EYE:</div>${formattedResults || '<div class="info">Nenhuma análise visual feita ainda.</div>'}${imageHtml}`;
+            }
+
             if (logToFirebase && isLoggedIn && currentUser) {
                 saveAxonEyeResultsToFirestore(currentUser, axonEyeResults);
             }
@@ -8070,69 +8089,37 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             navigator.clipboard.writeText(contentToCopy).then(() => appendOutput("Conteúdo copiado.", "success"), () => appendOutput("Erro ao copiar.", "error"));
         };
 
-        const copyExamSummary = () => {
+        const copyExamSummary = async () => {
             if (currentMonitorView !== 'exams') return;
             
-            let rawText = examsResultsPreview.innerText.replace("RESULTADOS DOS EXAMES:", "").trim();
-            if (!rawText || rawText === "Nenhum exame analisado ainda.") {
+            let rawText = examsResultsPreview.innerText.replace("RESULTADOS DOS EXAMES:", "").replace("Analisando Imagens...", "").trim();
+            if (!rawText || rawText === "Nenhum exame analisado ainda." || rawText === "") {
                 appendOutput("Nenhum resultado para resumir.", "error");
                 return;
             }
 
-            const abbreviations = {
-                "HEMOGLOBINA": "HB",
-                "HEMATÓCRITO": "HT",
-                "LEUCOCITOS": "LEUCO",
-                "LEUCÓCITOS": "LEUCO",
-                "PLAQUETAS": "PLQ",
-                "GLICOSE": "GLI",
-                "GLICEMIA": "GLI",
-                "CREATININA": "CR",
-                "UREIA": "UR",
-                "SÓDIO": "NA",
-                "POTÁSSIO": "K",
-                "COLESTEROL TOTAL": "CT",
-                "TRIGLICERÍDEOS": "TG",
-                "COLESTEROL HDL": "HDL",
-                "COLESTEROL LDL": "LDL",
-                "PROTEÍNA C REATIVA": "PCR",
-                "ÁCIDO ÚRICO": "AU",
-                "TRANSAMINASE GLUTÂMICA OXALACÉTICA": "TGO",
-                "TRANSAMINASE GLUTÂMICA PIRÚVICA": "TGP",
-                "ASPARTATO AMINOTRANSFERASE": "AST",
-                "ALANINA AMINOTRANSFERASE": "ALT",
-                "FOSFATASE ALCALINA": "FA",
-                "GAMA GLUTAMIL TRANSFERASE": "GGT",
-                "TSH": "TSH",
-                "T4 LIVRE": "T4L",
-                "T3": "T3",
-                "VITAMINA B12": "VIT B12",
-                "VITAMINA D": "VIT D",
-                "CÁLCIO": "CA",
-                "MAGNÉSIO": "MG",
-                "FERRO": "FE",
-                "FERRITINA": "FERR",
-                "TRANSFERRINA": "TRF"
-            };
+            appendOutput("Resumindo exames com IA, aguarde...", "info");
 
-            let lines = rawText.split('\n').map(l => l.trim()).filter(l => l);
-            let summarizedParts = lines.map(line => {
-                let upperLine = line.toUpperCase();
-                for (const [fullName, abbr] of Object.entries(abbreviations)) {
-                    if (upperLine.includes(fullName)) {
-                        return line.replace(new RegExp(fullName, 'i'), abbr);
-                    }
-                }
-                return line;
-            });
+            const prompt = `Resuma os seguintes resultados de exames médicos. 
+REGRAS OBRIGATÓRIAS:
+1. Retire TODAS as informações desnecessárias.
+2. Deixe APENAS o nome do exame de forma abreviada (sigla) e seu respectivo resultado.
+3. Se o resultado do exame estiver marcado como "(Alterado)" ou equivalente, coloque exatos dois asteriscos (**) colados ANTES do número/resultado (ex: **140). NÃO coloque asteriscos em exames normais.
+4. Formate tudo em uma única linha, separando cada exame pelo caractere " | ".
+5. Exemplo de saída esperada: HB: 12.5 | NA: **140 | GLI: 90
+6. Retorne APENAS a string final, sem aspas, sem formatação markdown adicional e sem explicações.
 
-            let finalSummary = summarizedParts.join(' | ');
-            
-            navigator.clipboard.writeText(finalSummary).then(() => {
-                appendOutput("Exames resumidos copiados.", "success");
-            }, () => {
-                appendOutput("Erro ao copiar exames resumidos.", "error");
-            });
+TEXTO A SER RESUMIDO:
+${rawText}`;
+
+            try {
+                let summary = await callGeminiAPI(prompt);
+                summary = summary.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+                await navigator.clipboard.writeText(summary);
+                appendOutput("Exames resumidos copiados para a área de transferência.", "success");
+            } catch (error) {
+                appendOutput(`Erro ao resumir exames: ${error.message}`, "error");
+            }
         };
 
         const checkApiStatus = async (modelName = currentAIModel) => {
@@ -8566,18 +8553,24 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         anamnesis = data.anamnesis;
                         updateAnamnesisPreview(false);
                     }
-                    if (data.examsResults !== undefined && data.examsResults !== examsResults) {
+
+                    const isExamsAnalyzing = data.isAnalyzing && data.isAnalyzing.status && data.isAnalyzing.type === 'exams';
+                    if (data.examsResults !== undefined && data.examsResults !== examsResults && !isExamsAnalyzing) {
                         examsResults = data.examsResults;
                         updateExamsResultsPreview(false);
                     }
-                    if (data.axonEyeImages && JSON.stringify(data.axonEyeImages) !== JSON.stringify(temporaryImgurUploads)) {
+
+                    const isAxonEyeAnalyzing = data.isAnalyzing && data.isAnalyzing.status && data.isAnalyzing.type === 'axon-eye';
+
+                    if (data.axonEyeImages && JSON.stringify(data.axonEyeImages) !== JSON.stringify(temporaryImgurUploads) && !isAxonEyeAnalyzing) {
                         temporaryImgurUploads = data.axonEyeImages;
                         updateAxonEyeResultsPreview(false);
-                    } else if (!data.axonEyeImages && temporaryImgurUploads.length > 0) {
+                    } else if (!data.axonEyeImages && temporaryImgurUploads.length > 0 && !isAxonEyeAnalyzing) {
                         temporaryImgurUploads = [];
                         updateAxonEyeResultsPreview(false);
                     }
-                    if (data.axonEyeResults !== undefined && data.axonEyeResults !== axonEyeResults) {
+
+                    if (data.axonEyeResults !== undefined && data.axonEyeResults !== axonEyeResults && !isAxonEyeAnalyzing) {
                         axonEyeResults = data.axonEyeResults;
                         updateAxonEyeResultsPreview(false);
                     }
@@ -9466,12 +9459,21 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             const callTimestamp = Date.now();
             if (capturedImages.length === 0) return appendOutput("Nenhuma imagem de exame para analisar.", "info");
 
+            examsResults = "";
+            updateExamsResultsPreview(false);
+
             if (!isMobile || !globalSettings.mobile2_0_enabled) {
                 toggleMonitorView('exams');
             } else {
                 showMobileLoader();
             }
-            await setAnalyzingStateInFirestore(true, 'exams');
+            
+            if (currentUser) {
+                await setDoc(doc(db, "sessions", currentUser), {
+                    isAnalyzing: { status: true, type: 'exams' },
+                    examsResults: ""
+                }, { merge: true });
+            }
 
             try {
                 const prompt = `Você é um assistente especialista em análise de exames médicos. Sua tarefa é extrair e transcrever os dados dos exames fornecidos. Siga estas regras ESTRITAMENTE:\n\n1. **Resultados Laboratoriais:** Transcreva os resultados em formato de lista. Se um valor estiver alterado, adicione "(Alterado)" ao final da linha. Exemplo: Glicose: 90 mg/dL (Alterado).\n2. **Laudos de Imagem:** Se for um laudo de texto, transcreva o texto completo, palavra por palavra, sem NENHUMA alteração ou resumo.\n3. **Formato Rígido:** NUNCA comece sua resposta com frases como "Aqui estão os resultados...", "Analisando os exames...", etc. Sua resposta DEVE começar DIRETAMENTE com o primeiro item do resultado. Retorne APENAS a lista de resultados ou o texto do laudo.`;
@@ -9542,6 +9544,9 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
 
             await clearTemporaryUploads();
 
+            axonEyeResults = "";
+            updateAxonEyeResultsPreview(false);
+
             if (!isMobile || !globalSettings.mobile2_0_enabled) {
                 toggleMonitorView('axon-eye');
             } else {
@@ -9549,7 +9554,12 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             }
 
             // Start Animation immediately (sets isAnalyzing = true in Firestore)
-            await setAnalyzingStateInFirestore(true, 'axon-eye');
+            if (currentUser) {
+                await setDoc(doc(db, "sessions", currentUser), {
+                    isAnalyzing: { status: true, type: 'axon-eye' },
+                    axonEyeResults: ""
+                }, { merge: true });
+            }
 
             try {
                 // 1. Upload Images to Storage (Imgur/Supabase)
