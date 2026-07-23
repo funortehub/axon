@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -6787,8 +6788,11 @@
             groqModel: 'llama-3.3-70b-versatile',
             mobile2_0_enabled: true,
             customTextProvider: 'gemini',
-            customTextProvider: 'gemini',
             customVisionProvider: 'gemini',
+            mistralKey: '',
+            mistralOcrModel: 'mistral-ocr-latest',
+            mistralTextModel: 'mistral-large-latest',
+            useMistralOcr: false,
             pinataKeys: [
                 { key: "", secret: "" }
             ],
@@ -7549,6 +7553,99 @@
             }
         };
 
+        const callMistralAPI = async (prompt) => {
+            prompt = applyGlobalPrompt(prompt);
+            const apiKey = globalSettings.mistralKey;
+            const model = globalSettings.mistralTextModel || 'mistral-large-latest';
+
+            if (!apiKey) {
+                throw new Error("Chave de API do Mistral não configurada.");
+            }
+
+            if (!isMobile || !globalSettings.mobile2_0_enabled) {
+                appendOutput(`Tentando motor Mistral: ${model}...`, "info", false);
+            }
+
+            const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [{ role: "user", content: prompt }]
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                await incrementUserUsage('text');
+                if (!isMobile || !globalSettings.mobile2_0_enabled) {
+                    appendOutput(`Sucesso com motor Mistral ${model}.`, "success", false);
+                }
+                return data.choices?.[0]?.message?.content || "Não foi possível obter uma resposta do Mistral.";
+            }
+
+            const errorData = await response.json().catch(() => ({}));
+            const errMsg = errorData.message || `Erro HTTP: ${response.status}`;
+            throw new Error(`Erro na API Mistral: ${errMsg}`);
+        };
+
+        const runMistralOCR = async (imageUrls) => {
+            const apiKey = globalSettings.mistralKey;
+            const model = globalSettings.mistralOcrModel || 'mistral-ocr-latest';
+
+            if (!apiKey) {
+                throw new Error("Chave de API do Mistral não configurada para OCR.");
+            }
+
+            if (!isMobile || !globalSettings.mobile2_0_enabled) {
+                appendOutput(`Executando OCR com Mistral (${model}) em ${imageUrls.length} imagem(ns)...`, "info", false);
+            }
+
+            let allExtractedText = "";
+
+            for (let i = 0; i < imageUrls.length; i++) {
+                const url = imageUrls[i];
+                try {
+                    const response = await fetch("https://api.mistral.ai/v1/ocr", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: model,
+                            document: {
+                                type: "image_url",
+                                image_url: url
+                            }
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.pages && data.pages.length > 0) {
+                            const text = data.pages.map(p => p.markdown).join('\n\n');
+                            allExtractedText += `--- Texto da Imagem ${i + 1} ---\n${text}\n\n`;
+                        }
+                    } else {
+                        const errData = await response.json().catch(() => ({}));
+                        throw new Error(errData.message || `Erro HTTP ${response.status}`);
+                    }
+                } catch (e) {
+                    throw new Error(`Falha no OCR da imagem ${i + 1}: ${e.message}`);
+                }
+            }
+
+            if (!isMobile || !globalSettings.mobile2_0_enabled) {
+                appendOutput("OCR Mistral concluído com sucesso.", "success", false);
+            }
+
+            return allExtractedText;
+        };
+
         const callGeminiAPI = async (prompt) => {
             // Apply global custom prompt
             prompt = applyGlobalPrompt(prompt);
@@ -7558,6 +7655,9 @@
                 provider = globalSettings.customTextProvider || 'gemini';
             }
 
+            if (provider === 'mistral') {
+                return await callMistralAPI(prompt);
+            }
             if (provider === 'openrouter') {
                 return await callOpenRouterAPI(prompt);
             }
@@ -8504,6 +8604,10 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                             customTextProvider: data.customTextProvider || 'gemini',
                             customVisionProvider: data.customVisionProvider || 'gemini',
                             customPrompt: data.customPrompt || { mode: 'ignore', text: '' },
+                            mistralKey: data.mistralKey || '',
+                            mistralOcrModel: data.mistralOcrModel || 'mistral-ocr-latest',
+                            mistralTextModel: data.mistralTextModel || 'mistral-large-latest',
+                            useMistralOcr: data.useMistralOcr || false,
                             pinataKeys: data.pinataKeys || [
                                 { key: "", secret: "" }
                             ],
@@ -8579,6 +8683,10 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                             hideStatusMessages: false,
                             customTextProvider: 'gemini',
                             customVisionProvider: 'gemini',
+                            mistralKey: '',
+                            mistralOcrModel: 'mistral-ocr-latest',
+                            mistralTextModel: 'mistral-large-latest',
+                            useMistralOcr: false,
                             pinataKeys: [
                                 { key: "", secret: "" }
                             ],
@@ -9254,21 +9362,29 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 const prompt = `Você é um assistente especialista em análise de exames médicos. Sua tarefa é extrair e transcrever os dados dos exames fornecidos. Siga estas regras ESTRITAMENTE:\n\n1. **Resultados Laboratoriais:** Transcreva os resultados em formato de lista. Se um valor estiver alterado, adicione "(Alterado)" ao final da linha. Exemplo: Glicose: 90 mg/dL (Alterado).\n2. **Laudos de Imagem:** Se for um laudo de texto, transcreva o texto completo, palavra por palavra, sem NENHUMA alteração ou resumo.\n3. **Formato Rígido:** NUNCA comece sua resposta com frases como "Aqui estão os resultados...", "Analisando os exames...", etc. Sua resposta DEVE começar DIRETAMENTE com o primeiro item do resultado. Retorne APENAS a lista de resultados ou o texto do laudo.`;
 
                 let fullResponse = "";
-                const isGroq = globalSettings.apiProvider === 'groq' || (globalSettings.apiProvider === 'custom' && globalSettings.customVisionProvider === 'groq');
-
-                if (isGroq && capturedImages.length > 5) {
-                    appendOutput(`Groq: Detectadas ${capturedImages.length} imagens. Enviando em lotes de até 5...`, "info", false);
-                    const chunks = [];
-                    for (let i = 0; i < capturedImages.length; i += 5) {
-                        chunks.push(capturedImages.slice(i, i + 5));
-                    }
-                    for (let i = 0; i < chunks.length; i++) {
-                        appendOutput(`Enviando lote ${i + 1}/${chunks.length}...`, "info", false);
-                        const chunkResponse = await callVisionAPI(chunks[i], prompt);
-                        fullResponse += chunkResponse + "\n";
-                    }
+                
+                if (globalSettings.useMistralOcr) {
+                    appendOutput("Extraindo texto via Mistral OCR...", "info", false);
+                    const ocrText = await runMistralOCR(capturedImages);
+                    const secondaryPrompt = `Os seguintes textos foram extraídos via OCR de exames médicos. Por favor, processe-os segundo as seguintes regras:\n\n1. **Resultados Laboratoriais:** Transcreva os resultados em formato de lista. Se um valor estiver alterado, adicione "(Alterado)" ao final da linha.\n2. **Laudos de Imagem:** Se for um laudo de texto, transcreva o texto completo, palavra por palavra, sem resumo.\n3. **Formato Rígido:** NUNCA comece sua resposta com frases como "Aqui estão os resultados...", etc. Sua resposta DEVE começar DIRETAMENTE com o primeiro item do resultado. Retorne APENAS a lista de resultados ou o texto do laudo.\n\nTEXTO EXTRAÍDO:\n${ocrText}`;
+                    fullResponse = await callGeminiAPI(secondaryPrompt); // Pass to text model for final processing
                 } else {
-                    fullResponse = await callVisionAPI(capturedImages, prompt);
+                    const isGroq = globalSettings.apiProvider === 'groq' || (globalSettings.apiProvider === 'custom' && globalSettings.customVisionProvider === 'groq');
+
+                    if (isGroq && capturedImages.length > 5) {
+                        appendOutput(`Groq: Detectadas ${capturedImages.length} imagens. Enviando em lotes de até 5...`, "info", false);
+                        const chunks = [];
+                        for (let i = 0; i < capturedImages.length; i += 5) {
+                            chunks.push(capturedImages.slice(i, i + 5));
+                        }
+                        for (let i = 0; i < chunks.length; i++) {
+                            appendOutput(`Enviando lote ${i + 1}/${chunks.length}...`, "info", false);
+                            const chunkResponse = await callVisionAPI(chunks[i], prompt);
+                            fullResponse += chunkResponse + "\n";
+                        }
+                    } else {
+                        fullResponse = await callVisionAPI(capturedImages, prompt);
+                    }
                 }
 
                 if (callTimestamp < lastClearTimestamp) {
@@ -9357,21 +9473,28 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     imagesForApiCall = capturedImages;
                 }
 
-                const isGroq = globalSettings.apiProvider === 'groq' || (globalSettings.apiProvider === 'custom' && globalSettings.customVisionProvider === 'groq');
-
-                if (isGroq && imagesForApiCall.length > 5) {
-                    appendOutput(`Groq: Detectadas ${imagesForApiCall.length} imagens. Enviando em lotes de até 5...`, "info", false);
-                    const chunks = [];
-                    for (let i = 0; i < imagesForApiCall.length; i += 5) {
-                        chunks.push(imagesForApiCall.slice(i, i + 5));
-                    }
-                    for (let i = 0; i < chunks.length; i++) {
-                        appendOutput(`Enviando lote ${i + 1}/${chunks.length}...`, "info", false);
-                        const chunkResponse = await callVisionAPI(chunks[i], prompt);
-                        fullResponse += chunkResponse + "\n\n";
-                    }
+                if (globalSettings.useMistralOcr) {
+                    appendOutput("Extraindo texto/dados das imagens via Mistral OCR...", "info", false);
+                    const ocrText = await runMistralOCR(imagesForApiCall);
+                    const secondaryPrompt = `Os seguintes textos e dados foram extraídos via OCR das imagens do paciente. Analise-os e forneça uma opinião clínica detalhada. Descreva achados, lesões, ou sintomas evidentes no texto extraído. Ao final, inclua uma seção "Impressão Diagnóstica:" ou "Interpretação Clínica:" com sua conclusão.\n\nDADOS EXTRAÍDOS:\n${ocrText}`;
+                    fullResponse = await callGeminiAPI(secondaryPrompt);
                 } else {
-                    fullResponse = await callVisionAPI(imagesForApiCall, prompt);
+                    const isGroq = globalSettings.apiProvider === 'groq' || (globalSettings.apiProvider === 'custom' && globalSettings.customVisionProvider === 'groq');
+
+                    if (isGroq && imagesForApiCall.length > 5) {
+                        appendOutput(`Groq: Detectadas ${imagesForApiCall.length} imagens. Enviando em lotes de até 5...`, "info", false);
+                        const chunks = [];
+                        for (let i = 0; i < imagesForApiCall.length; i += 5) {
+                            chunks.push(imagesForApiCall.slice(i, i + 5));
+                        }
+                        for (let i = 0; i < chunks.length; i++) {
+                            appendOutput(`Enviando lote ${i + 1}/${chunks.length}...`, "info", false);
+                            const chunkResponse = await callVisionAPI(chunks[i], prompt);
+                            fullResponse += chunkResponse + "\n\n";
+                        }
+                    } else {
+                        fullResponse = await callVisionAPI(imagesForApiCall, prompt);
+                    }
                 }
 
                 if (callTimestamp < lastClearTimestamp) {
@@ -10008,6 +10131,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             const isGoogle = globalSettings.apiProvider === 'gemini';
             const isOpenRouter = globalSettings.apiProvider === 'openrouter';
             const isGroq = globalSettings.apiProvider === 'groq';
+            const isMistral = globalSettings.apiProvider === 'mistral';
             const isCustom = globalSettings.apiProvider === 'custom';
 
             const textModelsOptions = globalSettings.apiModels.map(m =>
@@ -10053,6 +10177,9 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                             <input type="radio" name="apiProvider" value="groq" ${isGroq ? 'checked' : ''} onchange="window.updateProvider('groq')"> Groq (Ultra Rápido)
                         </label>
                         <label class="radio-label">
+                            <input type="radio" name="apiProvider" value="mistral" ${isMistral ? 'checked' : ''} onchange="window.updateProvider('mistral')"> Mistral AI
+                        </label>
+                        <label class="radio-label">
                             <input type="radio" name="apiProvider" value="custom" ${isCustom ? 'checked' : ''} onchange="window.updateProvider('custom')"> Customizado (Misto)
                         </label>
                     </div>
@@ -10069,6 +10196,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         <option value="gemini" ${globalSettings.customTextProvider === 'gemini' ? 'selected' : ''}>Google Gemini</option>
                         <option value="openrouter" ${globalSettings.customTextProvider === 'openrouter' ? 'selected' : ''}>OpenRouter</option>
                         <option value="groq" ${globalSettings.customTextProvider === 'groq' ? 'selected' : ''}>Groq</option>
+                        <option value="mistral" ${globalSettings.customTextProvider === 'mistral' ? 'selected' : ''}>Mistral AI</option>
                     </select>
 
                     <label>Provedor para Tarefas de Visão (Imagens):</label>
@@ -10076,6 +10204,7 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                         <option value="gemini" ${globalSettings.customVisionProvider === 'gemini' ? 'selected' : ''}>Google Gemini</option>
                         <option value="openrouter" ${globalSettings.customVisionProvider === 'openrouter' ? 'selected' : ''}>OpenRouter</option>
                         <option value="groq" ${globalSettings.customVisionProvider === 'groq' ? 'selected' : ''}>Groq</option>
+                        <option value="mistral" ${globalSettings.customVisionProvider === 'mistral' ? 'selected' : ''}>Mistral AI</option>
                     </select>
                     
                     <div class="info" style="font-size: 12px; margin-top: 10px;">
@@ -10198,6 +10327,28 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     </select>
                 </div>
                 `;
+            } else if (isMistral) {
+                html += `
+                <div class="admin-section">
+                    <div class="admin-section-title">Configuração Mistral AI</div>
+                    <label>Chave de API Mistral:</label>
+                    <input type="text" id="mistral-key-input" class="admin-input" style="width:100%; margin-bottom:10px;" value="${globalSettings.mistralKey || ''}" onchange="window.saveManualSelection()">
+                    
+                    <label>Modelo de Texto:</label>
+                    <select id="mistral-text-model-select" class="admin-input" style="width:100%; margin-bottom:10px;" onchange="window.saveManualSelection()">
+                        <option value="mistral-large-latest" ${globalSettings.mistralTextModel === 'mistral-large-latest' ? 'selected' : ''}>mistral-large-latest (Recomendado)</option>
+                        <option value="pixtral-large-latest" ${globalSettings.mistralTextModel === 'pixtral-large-latest' ? 'selected' : ''}>pixtral-large-latest</option>
+                        <option value="open-mistral-nemo" ${globalSettings.mistralTextModel === 'open-mistral-nemo' ? 'selected' : ''}>open-mistral-nemo</option>
+                        <option value="mistral-small-latest" ${globalSettings.mistralTextModel === 'mistral-small-latest' ? 'selected' : ''}>mistral-small-latest</option>
+                        <option value="codestral-latest" ${globalSettings.mistralTextModel === 'codestral-latest' ? 'selected' : ''}>codestral-latest</option>
+                    </select>
+
+                    <label>Modelo de OCR:</label>
+                    <select id="mistral-ocr-model-select" class="admin-input" style="width:100%;" onchange="window.saveManualSelection()">
+                        <option value="mistral-ocr-latest" ${globalSettings.mistralOcrModel === 'mistral-ocr-latest' ? 'selected' : ''}>mistral-ocr-latest</option>
+                    </select>
+                </div>
+                `;
             }
 
             if (isGoogle) {
@@ -10296,6 +10447,16 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     </div>
 
                 </div>
+                 <div class="admin-section" style="margin-top: 15px;">
+                     <div class="admin-section-title">Processamento e OCR</div>
+                     <div style="display: flex; align-items: center; justify-content: space-between;">
+                         <span>Usar Mistral OCR em análises (Exames / Axon Eye)</span>
+                         <label class="toggle-switch">
+                             <input type="checkbox" id="toggle-mistral-ocr" ${globalSettings.useMistralOcr ? 'checked' : ''}>
+                             <span class="slider"></span>
+                         </label>
+                     </div>
+                 </div>
                 <div class="admin-section" style="margin-top: 15px;">
                     <div class="admin-section-title">Feedback e Logs</div>
                      <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -10335,6 +10496,19 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                     console.error("Erro ao salvar modo Mobile 2.0:", err);
                 }
             });
+
+            const toggleMistralOcrBtn = document.getElementById('toggle-mistral-ocr');
+            if (toggleMistralOcrBtn) {
+                toggleMistralOcrBtn.addEventListener('change', async (e) => {
+                    try {
+                        await setDoc(doc(db, "settings", "global"), { useMistralOcr: e.target.checked }, { merge: true });
+                        globalSettings.useMistralOcr = e.target.checked; // Optimistic update
+                    } catch (err) {
+                        console.error("Erro ao salvar modo OCR Mistral:", err);
+                        e.target.checked = !e.target.checked;
+                    }
+                });
+            }
 
             // Prescription Assistant Toggles
             // Prescription Assistant Toggles
@@ -10560,6 +10734,15 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
                 updates = {
                     customTextProvider: textProvider,
                     customVisionProvider: visionProvider
+                };
+            } else if (globalSettings.apiProvider === 'mistral') {
+                const mistralKey = document.getElementById('mistral-key-input')?.value;
+                const mistralTextModel = document.getElementById('mistral-text-model-select')?.value;
+                const mistralOcrModel = document.getElementById('mistral-ocr-model-select')?.value;
+                updates = {
+                    mistralKey: mistralKey,
+                    mistralTextModel: mistralTextModel,
+                    mistralOcrModel: mistralOcrModel
                 };
             }
 
