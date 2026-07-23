@@ -5304,6 +5304,9 @@
                     <button class="fab-trigger" id="monitor-copy-btn" style="width:32px; height:32px; font-size:12px;">
                         <i class="fas fa-copy"></i>
                     </button>
+                    <button class="fab-trigger" id="monitor-copy-exams-btn" style="width:32px; height:32px; font-size:12px; display:none;" title="Copiar Exames Resumidos">
+                        <i class="fas fa-compress-arrows-alt"></i>
+                    </button>
                 </div>
             </div>
             <div class="panel-body">
@@ -7232,12 +7235,17 @@
             toggleAnamnesisButton.classList.remove('active');
             toggleExamsButton.classList.remove('active');
             toggleAxonEyeButton.classList.remove('active');
+            
+            const copyExamsBtn = document.getElementById('monitor-copy-exams-btn');
+            if(copyExamsBtn) copyExamsBtn.style.display = 'none';
+
             if (view === 'anamnesis') {
                 anamnesisPreview.style.display = 'block';
                 toggleAnamnesisButton.classList.add('active');
             } else if (view === 'exams') {
                 examsResultsPreview.style.display = 'block';
                 toggleExamsButton.classList.add('active');
+                if(copyExamsBtn) copyExamsBtn.style.display = 'flex';
             } else if (view === 'axon-eye') {
                 axonEyeResultsPreview.style.display = 'block';
                 toggleAxonEyeButton.classList.add('active');
@@ -7592,6 +7600,45 @@
             throw new Error(`Erro na API Mistral: ${errMsg}`);
         };
 
+        const callMistralVisionAPI = async (imageUrls, prompt) => {
+            const apiKey = globalSettings.mistralKey;
+            const model = globalSettings.mistralTextModel || 'pixtral-large-latest';
+            
+            if (!apiKey) throw new Error("Chave de API do Mistral não configurada.");
+            
+            if (!isMobile || !globalSettings.mobile2_0_enabled) {
+                appendOutput(`Tentando motor de visão Mistral: ${model}...`, "info", false);
+            }
+            
+            const contentParts = [{ type: "text", text: prompt }];
+            imageUrls.forEach(url => {
+                contentParts.push({ type: "image_url", image_url: url });
+            });
+
+            const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [{ role: "user", content: contentParts }]
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                await incrementUserUsage('vision');
+                if (!isMobile || !globalSettings.mobile2_0_enabled) {
+                    appendOutput(`Sucesso com motor de visão Mistral ${model}.`, "success", false);
+                }
+                return data.choices?.[0]?.message?.content || "Sem resposta.";
+            }
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Erro na API de Visão Mistral: ${errorData.message || response.status}`);
+        };
+
         const runMistralOCR = async (imageUrls) => {
             const apiKey = globalSettings.mistralKey;
             const model = globalSettings.mistralOcrModel || 'mistral-ocr-latest';
@@ -7741,6 +7788,9 @@
             }
             if (provider === 'groq') {
                 return await callGroqAPI(prompt, imageUrls);
+            }
+            if (provider === 'mistral') {
+                return await callMistralVisionAPI(imageUrls, prompt);
             }
 
             let strategyModels = [];
@@ -8018,6 +8068,71 @@ Analise a(s) imagem(ns) e responda diretamente à pergunta.`;
             else if (currentMonitorView === 'exams') contentToCopy = examsResultsPreview.innerText.replace("RESULTADOS DOS EXAMES:", "").trim();
             else if (currentMonitorView === 'axon-eye') contentToCopy = axonEyeResultsPreview.innerText.replace("ANÁLISE AXON EYE:", "").trim();
             navigator.clipboard.writeText(contentToCopy).then(() => appendOutput("Conteúdo copiado.", "success"), () => appendOutput("Erro ao copiar.", "error"));
+        };
+
+        const copyExamSummary = () => {
+            if (currentMonitorView !== 'exams') return;
+            
+            let rawText = examsResultsPreview.innerText.replace("RESULTADOS DOS EXAMES:", "").trim();
+            if (!rawText || rawText === "Nenhum exame analisado ainda.") {
+                appendOutput("Nenhum resultado para resumir.", "error");
+                return;
+            }
+
+            const abbreviations = {
+                "HEMOGLOBINA": "HB",
+                "HEMATÓCRITO": "HT",
+                "LEUCOCITOS": "LEUCO",
+                "LEUCÓCITOS": "LEUCO",
+                "PLAQUETAS": "PLQ",
+                "GLICOSE": "GLI",
+                "GLICEMIA": "GLI",
+                "CREATININA": "CR",
+                "UREIA": "UR",
+                "SÓDIO": "NA",
+                "POTÁSSIO": "K",
+                "COLESTEROL TOTAL": "CT",
+                "TRIGLICERÍDEOS": "TG",
+                "COLESTEROL HDL": "HDL",
+                "COLESTEROL LDL": "LDL",
+                "PROTEÍNA C REATIVA": "PCR",
+                "ÁCIDO ÚRICO": "AU",
+                "TRANSAMINASE GLUTÂMICA OXALACÉTICA": "TGO",
+                "TRANSAMINASE GLUTÂMICA PIRÚVICA": "TGP",
+                "ASPARTATO AMINOTRANSFERASE": "AST",
+                "ALANINA AMINOTRANSFERASE": "ALT",
+                "FOSFATASE ALCALINA": "FA",
+                "GAMA GLUTAMIL TRANSFERASE": "GGT",
+                "TSH": "TSH",
+                "T4 LIVRE": "T4L",
+                "T3": "T3",
+                "VITAMINA B12": "VIT B12",
+                "VITAMINA D": "VIT D",
+                "CÁLCIO": "CA",
+                "MAGNÉSIO": "MG",
+                "FERRO": "FE",
+                "FERRITINA": "FERR",
+                "TRANSFERRINA": "TRF"
+            };
+
+            let lines = rawText.split('\n').map(l => l.trim()).filter(l => l);
+            let summarizedParts = lines.map(line => {
+                let upperLine = line.toUpperCase();
+                for (const [fullName, abbr] of Object.entries(abbreviations)) {
+                    if (upperLine.includes(fullName)) {
+                        return line.replace(new RegExp(fullName, 'i'), abbr);
+                    }
+                }
+                return line;
+            });
+
+            let finalSummary = summarizedParts.join(' | ');
+            
+            navigator.clipboard.writeText(finalSummary).then(() => {
+                appendOutput("Exames resumidos copiados.", "success");
+            }, () => {
+                appendOutput("Erro ao copiar exames resumidos.", "error");
+            });
         };
 
         const checkApiStatus = async (modelName = currentAIModel) => {
@@ -12545,6 +12660,8 @@ ${instruction}
 
         commandInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') processCommand(commandInput.value); });
         monitorCopyBtn.addEventListener('click', copyMonitorContent);
+        const monitorCopyExamsBtn = document.getElementById('monitor-copy-exams-btn');
+        if (monitorCopyExamsBtn) monitorCopyExamsBtn.addEventListener('click', copyExamSummary);
 
         // Monitor Reload Logic
         const monitorReloadBtn = document.getElementById('monitor-reload-btn');
